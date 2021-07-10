@@ -12,7 +12,7 @@ function start() {
     params.context = 'amp';
     params.maxwidth = window.context.data.width;
     params.fixedheight = window.context.data.height; 
-    params.container = 'c';
+    params.container = 'c'; //Yup, with amp 3p, the div is always called 'c'
     if (window.context.data.unit) {
         params.unit = window.context.data.unit;
     }
