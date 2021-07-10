@@ -31,6 +31,7 @@ window.JX = {
         return (makePlayer(options, null));
     },
     ampplayer : function(options, ampIntegration) {
+        //Have not tested this after the big refactoring and componentization
         _helpers.sendScriptLoadedTrackerAMP(ampIntegration);
         return (makePlayer(options, ampIntegration));
     }

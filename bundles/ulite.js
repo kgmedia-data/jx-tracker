@@ -6,8 +6,8 @@ if (window.jxuniversallite) {
     return;
 }
 
-//yes we should move the adrequest formation(ids, pageinfo) outside
-//of renderer so that renderer can be as small as possible
+//TODO TODO TODO yes we should move the adrequest formation(ids, pageinfo) 
+//outside of renderer so that renderer can be as small as possible
 //e.g. hbrenderer does not need all those junk
 
 //const madreq        = require('../components/basic/adreq');
@@ -26,11 +26,9 @@ function start_(options) {
     //TODO 
     //var ids = mids.get();
     //var pginfo = mpginfo.get(option); 
-    //Where to form the adtag
+    //form adtag and give it to renderer to use
     var uliteInst = mrenderer.createInstance(options);
     instMap.set(hashStr, uliteInst);
-    console.log(hashStr);
-    console.log("added to hash: new siz=" + instMap.size);
 }
 
 window.jxuniversallite = start_;

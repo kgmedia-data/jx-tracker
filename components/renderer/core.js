@@ -39,7 +39,6 @@ function addGAMNoAdNotifyMaybe(str) {
         var t = `googletag.pubads().addEventListener('slotRenderEnded', function(event) {
                 if (event.isEmpty) {
                     var id = event.slot.getSlotElementId();
-                    console.log("WOOYANYU really really firing NO ad!!");
                     parent.postMessage('jxnoad', '*');
                 }
             });
@@ -447,14 +446,12 @@ function addGAMNoAdNotifyMaybe(str) {
 
         }
         if (fire != -1) {
-            console.log(`WOOYANYU HUH we are firing something fire = ${fire}`);
             this.notifyFcn(fire == 1 ? true: false);
             this.lastFired = fire;
         }
     }
 
     function fireTracker(trackers, action, extra) {
-        console.log(`WOOYANYU we are firing tracker ${action}`);
         let url = trackers.baseurl + '?' + trackers.parameters + '&action='+action;
         fetch(url, {
             method: 'get',
@@ -1161,10 +1158,8 @@ function addGAMNoAdNotifyMaybe(str) {
      * called as bound function . See comment above "START OF : POSITION AND SIZE MANIPULATION FUNCTIONS."
      **/
     function __cleanup() {
-        console.log(`WOOYANYU CLEAN UP!`);
         let unhook = this.unhook;
         if (unhook.observer) {
-            console.log(`WOOYANYU UNOBSERVE COMMENTED OUT`);
             unhook.unobserve(unhook.observer, unhook.container);
         }
         if (unhook.listeners) {
@@ -1634,7 +1629,7 @@ function addGAMNoAdNotifyMaybe(str) {
          * @param {*} jxContainer 
          *  handles 1 level of the waterfall                     
          */
-        var oneJixieCr = function(jxContainer, remainingCreativesArr, next) {
+        var _startP = function(jxContainer, remainingCreativesArr, next) {
             let instId = "jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
         
             let divObjs = {}; //this will get filled in (all the outer div, inner div, master div,...
@@ -1752,7 +1747,6 @@ function addGAMNoAdNotifyMaybe(str) {
              */
             msghandlers['jxadended'] = boundCleanupThisCreative;
             msghandlers['jxnoad'] = function() {
-                console.log("WOOYANYU LITE NO AD RECEIVED!!!");
                 boundCleanupThisCreative();
                 if (remainingCreativesArr.length > 0){
                     //waterfall to next layer
@@ -1942,11 +1936,7 @@ function addGAMNoAdNotifyMaybe(str) {
                 }
                 catch(err) {  }
             }
-            //HACK
-            //put teads first coz if it does not have.
-            //it can waterfalldown
-            //then UNRULY.
-            //THEN JIXIE.
+           
             let adUrl = 'https://ad.jixie.io/v1/universal?source=sdk&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=800'; //1007|1005|800';
             //let fetchedCreativesProm = respBlob && respBlob.creatives ? Promise.resolve(respBlob) : fetchAdP(_helpers.makeAdTagUrl(_jxParams));
             let fetchedCreativesProm = respBlob && respBlob.creatives ? Promise.resolve(respBlob) : fetchAdP(adUrl);
@@ -1976,196 +1966,12 @@ function addGAMNoAdNotifyMaybe(str) {
         }
         
         
-        var _startP = function(jx, remainingCreativesArr, next) {
-            //if (['unruly','teads'].indexOf(remainingCreativesArr[0].subtype) > -1) {
-              //  return ampOnePartner(jx, remainingCreativesArr, next);
-            //}
-            //else 
-            {
-                return oneJixieCr(jx, remainingCreativesArr, next);
-            }
-        }
-        /*
-        var ampOnePartner = function(jxContainer, remainingCreativesArr, next) {
-            let partnerAdProm = new Promise(function(resolve) {_resolvePartnerAd = resolve;});
-            let scriptUrl = '';
-            console.log(`ampOnePartner`);
-            console.log(remainingCreativesArr[0]);
         
-            let cr = remainingCreativesArr.shift();
-            if (cr.subtype == 'selectmedia') {
-                //we dun handle
-                cr = remainingCreativesArr.shift();
-            }
-            if (!cr) { return; }
-            if (cr.subtype == 'unruly') {
-                console.log(`__UNRULY`);
-                cr.adparameters.siteId = '1018656'; //'amp-test';
-                //1018656, 218003 3709286
-
-                window.unruly = window.unruly || {};
-                window.unruly.native = {
-                    siteId: cr.adparameters.siteId //'amp-test' //'1018656' //'amp-test'
-                };
-                window.unruly.native.onAdLoaded = function(){ 
-                    console.log("!!!!!!!!!!!!!!");
-                    _resolvePartnerAd('jxhasad');
-                    _resolvePartnerAd = null;
-                    return '';
-                }; 
-                scriptUrl = 'https://video.unrulymedia.com/native/native-loader.js';
-            }    
-            else if (cr.subtype == 'teads') {
-                console.log(`__TEADS`);
-                cr.adparameters.pageId = '128408'; //100514 is the amp.kompas real one '126472'; //hack //128408 for no ad
-                window._teads_amp = {
-                    allowed_data: ['pid', 'tag'],
-                    mandatory_data: ['pid'],
-                    mandatory_tag_data: ['tta', 'ttp'],
-                    data: {pid: cr.adparameters.pageId}
-                };
-                scriptUrl = 'https://a.teads.tv/page/' + cr.adparameters.pageId + '/tag';
-            }
-            const s = document.createElement('script');
-            if (_resolvePartnerAd) {
-                console.log("THE FCN IS OK");
-            }
-            else {
-                console.log("THE FNC IS NOT OK");
-            }
-            setTimeout(function() {
-                console.log("TIME OUT !1");
-                if (_resolvePartnerAd) {
-                    _resolvePartnerAd('jxnoad');
-                    _resolvePartnerAd = null;
-                }
-                return;
-                //to check the stuff iframe size
-                let h = 0;
-                var frames = document.getElementsByTagName('iframe');
-                for (var i = 0; i <  frames.length; i++) {
-                    console.log(`${frames[i].src} ${frames[i].offsetHeight}`);
-                    h += frames[i].offsetHeight;
-                }
-                console.log(`TIME OUT !2 ${h}`);
-
-                if (_resolvePartnerAd) {
-                    console.log("TIME OUT !");
-                    _resolvePartnerAd(jxnoadh < 100? 'jxnoad': 'jxhasad');
-                    _resolvePartnerAd = null;
-                }
-                else {
-                    console.log("TIME OUT ! BO???");
-
-                }
-            }, 10000); 
-            s.src = scriptUrl;
-            document.body.appendChild(s);
-
-            partnerAdProm.then(function(outcome) {
-                //waiting for outcome
-                if (outcome == 'jxnoad') {
-                    throw new Exception();
-                }
-                else if (outcome == 'jxhashad') {
-                    //then we do those tracker stuff.
-                    //but frankly I am not sure about CV?
-                }
-            })
-            .catch(function(err) {
-                //boundCleanupThisCreative();
-                //remove a script node?
-                //but what if the thing cannot die properly?
-                //should remove the s;
-                if (remainingCreativesArr.length > 0) {
-                    next(jxContainer, remainingCreativesArr, next);
-                }
-            })
-            .finally(function() {
-                //current nothing to do yet.
-            });
-        }
-        */
+      
         let ret = new JXAdRendererInt(params);
         return ret;
     }    
-    /*
-    //doAdPartnerTeads(window, 'https://a.teads.tv/page/126472/tag');//42266 126472 always have
-    //128408
-    if (false && window.context && window.context.data && window.context.data.unit) {
-        let params = Object.assign({}); //, window.context.data.options);
-        params.responsive = 1; //for AMP must
-        params.context = 'amp';
-        params.maxwidth = window.context.data.width;
-        params.fixedheight = window.context.data.height; 
-        params.container = 'c';
-        //console.log(window.context.data);
-        if (window.context.data.unit) {
-            params.unit = window.context.data.unit;
-        }
-        if (window.context.data.cid) {
-            params.creativeid = window.context.data.cid;
-        }
-        let ar = makeAdRenderer(params);
-        ar.kickOff();
-    }
-
-    function ampOneOffInit() {
-        //bound right at the start. if we have partners other than jixie
-        let boundRealRenderStart = window.context.renderStart.bind(window.context);
-        let boundRealNoContent = window.context.noContentAvailable.bind(window.context);
-        //this is also done only once.
-        window.context.renderStart = function(arg1, arg2) {
-            //do our own things
-            console.log(`renderStart1 ${arg1} ${arg2}` );
-            console.log(arg1);
-            if (_resolvePartnerAd) {
-                console.log("renderStart2");
-                _resolvePartnerAd('jxhasad');
-                _resolvePartnerAd = null;
-            }
-            boundRealRenderStart();
-        }
-        window.context.noContentAvailable = function() {
-            //do our own things
-            console.log("noContentAvailable1");
-
-            if (_resolvePartnerAd) {
-                console.log("noContentAvailable2");
-                _resolvePartnerAd('jxnoad');
-                _resolvePartnerAd = null;
-            }
-            boundRealNoContent();
-        }
-    }
-    */
-   /*
-    if (true) {
-        console.log("a1");
-        ampOneOffInit();
-        console.log("a2");
-        let params = Object.assign({}); //, window.context.data.options);
-        params.responsive = 1; //for AMP must
-        params.context = 'amp';
-        params.maxwidth = window.context.data.width;
-        params.fixedheight = window.context.data.height; 
-        params.container = 'c';
-        if (window.context.data.unit) {
-            params.unit = window.context.data.unit;
-        }
-        if (window.context.data.cid) {
-            params.creativeid = window.context.data.cid;
-        }
-        console.log("a3");
-        let ar = makeAdRenderer(params);
-        console.log("a4");
-        ar.kickOff();
-        console.log("a5");
-    }
-    */
-
-
-
+   
   /* const checklist_ = [
         'data',
         'canonicalUrl',      
@@ -2178,40 +1984,9 @@ function addGAMNoAdNotifyMaybe(str) {
         'sourceUrl',
         'startTime'
     ];*/
-    /*
-    if (window.context) {
-        console.log("WOOYANYU WU");
-        console.log(window.context.data);
-        console.log(window.context.canonicalUrl);
-        console.log(window.context.location);
-        console.log(window.context.referrer);
-        console.log(window.context.sourceUrl);
-        console.log(window.context.startTime);
-    }
-    else {
-        console.log("WOOYANYU BO");
-    }
-
-    //also is based on the map thing lah.
-    //
-    //if it is inside the namespace then cannot share loh.
-    //this can be built to standalone
-    //but then we will need the closure bah.
-    //oh wait. there is no standalone.
-    //there is always an outer wrapper. haha
-    */
-   /*
-    window[exposedWinPropName_] = function(params) {
-        //TODO: check that if called on "same" container then do nothing.
-        let ar = makeAdRenderer(params);
-        
-        ar.kickOff();
-    };
-    */
     function createInstance_(params) {
         let ar = makeAdRenderer(params);
         ar.kickOff();
     }
-////})();
     module.exports.createInstance = createInstance_;
 

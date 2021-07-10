@@ -1,5 +1,9 @@
 /**
- * Bundle built to make HB rendering script
+ * Bundle built to make a simple rendering script
+ * Main use is to replace the current hbrenderer.min.js
+ * Can also be used for OSM
+ * (though I suspect for OSM we just build the renderer into the OSM script)
+ * 
  * Very simple the whole creative is already in base64 encoded string
  * No need fetch ad.
  * But we support more than 1 creative though
@@ -7,7 +11,7 @@
  * there are multiple chances to do work, we will
  */
 
-if (window.jxhbuniversal && window.jxhbuniversal.hbinit) {
+if (window.jxrenderer && window.jxrenderer.init) {
     return;
 }
 
@@ -34,7 +38,7 @@ function start_(options) {
     //no need lah instMap.set(hashStr, inst);
 }
 
-window.jxhbuniversal = {
-    hbinit: start_
+window.jxrenderer = {
+    init: start_
 };
 

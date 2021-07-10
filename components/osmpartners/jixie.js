@@ -63,23 +63,23 @@
         //well this is one way but the other way would be to include it.
         //then it is surely loaded.
         function runCreative_(config) {
-            if (!window.miowjx) { //TODO 
+            if (window.jxrenderer) {
+                //check the exact prop name. this is just the idea only
+                return window.jxrenderer.init(config);
+            }
+            
+            if (!window.jxrenderer) { 
                 var jxScript = document.createElement('script');
                 jxScript.onload = function () {
-                    window.miowjx = 1;
+                    window.jxrenderer.init(config);
                 };
-                jxScript.src = 'https://scripts.jixie.io/jxoutstreamlite.min.js';
+                //just a simple renderer will do. 
+                //no need even universal lite!!
+                //jxrenderer would be sufficient
+                jxScript.src = 'https://scripts.jixie.io/jxrenderer.min.js';
                 document.body.appendChild(jxScript); 
                 //and this can be made to next time be interlaced in a waterfall even!
             }
-            function jxdefer(p) {
-                if (window.jxuniversallite) {
-                    window.jxuniversallite(p);
-                } else {
-                    setTimeout(function() { jxdefer(p) }, 100);
-                }
-            }
-            jxdefer(config);
         }
         function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, fixedHeightBlob) {
             common_(rtjson);
