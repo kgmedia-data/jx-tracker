@@ -8,11 +8,15 @@ if (window.jxuniversallite) {
 
 
 
-var instMap = new Map();
-const mrenderer     = require('../components/renderer/core');
-const mpginfo       = require('../components/basic/pginfo');
-const mids          = require('../components/basic/ids');
+const modulesmgr                    = require('../components/basic/modulesmgr');
+const univelements                  = require('../components/renderer/univelements');
+modulesmgr.set('renderer/univelements',         univelements);
 
+const mrenderer                     = require('../components/renderer/core');
+const mpginfo                       = require('../components/basic/pginfo');
+const mids                          = require('../components/basic/ids');
+
+var instMap = new Map();
 
 function start_(options) {
     const ids = mids.get();

@@ -32,6 +32,8 @@ After that step by step bring all those
 one day at a time!
  */
 //ugly... Move elsewhere. Dun belong in here.
+const modulesmgr                = require('../basic/modulesmgr');
+const univelements              = modulesmgr.get('renderer/univelements');
 
 function addGAMNoAdNotifyMaybe(str) {
     if (str.includes("<script") && str.includes("googletag.pubads()")) {
@@ -89,15 +91,9 @@ function addGAMNoAdNotifyMaybe(str) {
     };
     const visThreshold_ = 0.4;
    
-    let MakeOneHelperObj = function(isAMP) {
-        var _isAMP = false;
-        var _pageInfo = null;
-        var _queryParams = {};
-        var _hostname = null;
-        var _adServerBase = null;
-
-        function FactoryOneHelper(isAMP = false) {
-            _isAMP = isAMP
+    let MakeOneHelperObj = function() {
+        function FactoryOneHelper() {
+            
         }
         //This stuff is needed only if we need to prepare the adTagUrl
         //But since this is not alot of code, then we do not bother about
@@ -151,11 +147,11 @@ function addGAMNoAdNotifyMaybe(str) {
             }
         }
 
-        let helper = new FactoryOneHelper(isAMP);
+        let helper = new FactoryOneHelper();
         return helper;
     };
     //try to identify whether is from AMP (amp-ad) or not:
-    var _helpers = MakeOneHelperObj(window.context && window.context.noContentAvailable ? true: false);
+    var _helpers = MakeOneHelperObj();
 
     /**
      * Function vector
@@ -725,84 +721,7 @@ function addGAMNoAdNotifyMaybe(str) {
         
         return divObjs;
     }
-
-    //OK this is the exception. It is not called bound. The attachNode (which
-    //note to hang the created univ element) is fed in as parameter.
-    function createUniversalElements(id, universal, attachNode) {
-        const _jxTitleStyle = ".jxTitleContainer{overflow:auto;text-align:left;margin-bottom:5px;display:table;font-family:Arial;font-size:14px;}.jxImgBlock{float:left; max-width:70px;min-width:40px;margin-right:10px;}.jxImg{max-width: 100%;height: auto;width: auto;}.jxBlockTitle {margin-top:5px;display:table-cell;vertical-align:middle;}.jxBlockActions{margin-top:5px;margin-bottom:5px;}.jxInfo{float:left;height:15px;width:15px;border:2px solid #bbb;color:#bbb;border-radius:50%;display:table;font-size:10px;}.jxInfo a{text-decoration:none;color:#bbb;}.jxInfo a:hover{text-decoration:none;color:#bbb;}.jxInfo a:visited{text-decoration:none;color:#bbb;}.jxButtonBlock{float:right;margin-right:5px;}.jxTitle {display: inline;}" + ".jxTitle a:link,.jxTitle a:visited{" + universal.titleCSS + "}.jxTitle a:hover{" + universal.titleCSSHover + "}.jxDescription{" + universal.descriptionCSS + "}.jxButton {font-family: Arial, Helvetica, sans-serif;font-size: 11px;color: #494949 !important;background: #ffffff;padding: 5px;border: 2px solid #494949 !important;border-radius: 6px;display: inline-block;transition: all 0.3s ease 0s;}.jxButton:hover {color: #494949 !important;border-radius: 50px;border-color: #494949 !important;transition: all 0.3s ease 0s;}";
-        _helpers.acss(_jxTitleStyle, 'jxTitleStyle');
-        let jxImgBlock, jxInfo, jxBlockTitle, jxButtonBlock;
-        let jxTitleDiv = document.createElement('div');
-        let jxActionsDiv = document.createElement('div');
-        jxTitleDiv.id = "jxt_" + id;
-        jxTitleDiv.style.overflow = 'auto';
-        jxTitleDiv.style.textAlign = 'left';
-        jxTitleDiv.className = 'jxTitleContainer';
-
-        jxActionsDiv.id = "jxa_" + id;
-        jxActionsDiv.style.cssText = "all:initial;text-align:center;display:block;margin-bottom:10px;"
-        
-        if (universal.nested == 0){
-            if (universal.thumbnail){
-                if (universal.thumbnailurl){
-                    jxImgBlock = _helpers.newDiv(jxTitleDiv, 'div', 
-                        '<a href="' + universal.thumbnailurl + '" target="_blank"><img src="' + universal.thumbnail + '" class="jxImg"/></a>',
-                        'jxImgBlock');
-                }else{
-                    jxImgBlock = _helpers.newDiv(jxTitleDiv, 'div', 
-                        '<a href="' + universal.clickurl + '" target="_blank"><img src="' + universal.thumbnail + '" class="jxImg"/></a>',
-                        'jxImgBlock');
-                    _helpers.addListener(jxImgBlock, 'click', (e) => {universal.click();}); 
-                }
-            }
-            // Configuring the title and description
-            if (universal.title){
-                jxBlockTitle = document.createElement('div');
-                jxBlockTitle.className = 'jxBlockTitle';
-                jxTitleDiv.appendChild(jxBlockTitle);
-      
-                jxTitle = _helpers.newDiv(jxBlockTitle, 'h3', 
-                    '<a href="' + universal.clickurl + '" target="_blank">' + universal.title + '</a>',
-                    'jxTitle');
-                _helpers.addListener(jxTitle, 'click', (e) => {universal.click();});                                         
-            }
-            if (universal.description){
-                jxDescription = _helpers.newDiv(jxBlockTitle, 'p', universal.description,'jxDescription');
-            }            
-      
-            // Configuring the action block
-            jxActionsDiv.style.overflow = 'auto';
-            jxActionsDiv.className = 'jxBlockActions';
-            jxInfo = _helpers.newDiv(jxActionsDiv, 'div', 
-                '<div style="display: table-cell;vertical-align: middle;"><a href="https://www.jixie.io/privacy-policy/" target="_blank">i</a></div>',
-                'jxInfo');
-      
-            if (universal.clickurl && universal.buttonLabel) {                                       
-                jxButtonBlock = _helpers.newDiv(jxActionsDiv, 'div', 
-                    '<a href="' + universal.clickurl + '" class="jxButton" target="_blank">' + universal.buttonLabel + '</a>',
-                    'jxButtonBlock');
-                _helpers.addListener(jxButtonBlock, 'click', (e) => {universal.click();}); 
-            }
-      
-            if (jxTitleDiv.innerHTML) attachNode.insertBefore(jxTitleDiv, attachNode.firstChild);
-            attachNode.appendChild(jxActionsDiv);
-      
-      
-          }else{ // Nested, then we display the information button on top of the creative
-                jxActionsDiv.style.overflow = 'auto';
-                jxActionsDiv.className = 'jxBlockActions';
-                if (universal.nested > 0){ // if nested is negative then we don't display anything
-                    jxInfo = _helpers.newDiv(_jxActionsDiv, 'div', 
-                        '<div style="display: table-cell;vertical-align: middle;"><a href="https://inside.kompas.com/policy" target="_blank">i</a></div>',
-                        'jxInfo');                
-                    jxButtonBlock = _helpers.newDiv(jxActionsDiv, 'div', 
-                        '<div style="padding-top: 10px;color:grey;font-family:Arial;font-size:10px;">Advertisement</div>',
-                        'jxButtonBlock');
-              }
-              attachNode.appendChild(jxActionsDiv);
-        }
-    }
-
+    
     /**
      * called as bound function . See comment above "START OF : POSITION AND SIZE MANIPULATION FUNCTIONS."
      **/
@@ -885,7 +804,12 @@ function addGAMNoAdNotifyMaybe(str) {
         jxCoreElt.style.height = normCrParams.height + 'px';
         //jxCoreElt.style.zIndex = 99999;
 
-        createUniversalElements(id, normCrParams.universal, jxmasterDiv);
+        //TODO: 
+        //Actual it is not to be done here
+        //need to do it only after the hasad ah
+        //then still need to trigger a height change
+        univelements(id, {}, {}, jxmasterDiv);
+        
         insertCreative(jxCoreElt, normCrParams);
         jxbnFixedDiv.appendChild(jxCoreElt);
 
@@ -1086,52 +1010,6 @@ function addGAMNoAdNotifyMaybe(str) {
      * CALLED AS BOUND FUNCTIONS
      *******************************************************************************/ 
     
-
-    /**
-     * Current properties in the normalized creative params object:
-     * To be consumed by functions __createMainContainer (bound) & insertCreative:
-     * 
-     * width, height, maxwidth, maxheight
-     * 
-     * 
-     */
-    function getUniversalBlob(jxParams, c) {
-        let titleCSS = jxParams.titleCSS, titleCSSHover = jxParams.titleCSSHover, descriptionCSS = jxParams.descriptionCSS;
-        let thumbnail = jxParams.thumbnail, thumbnailurl = jxParams.thumbnailurl;
-        let title = jxParams.title, description = jxParams.description;
-        
-        if (titleCSS == "text-decoration:none;" && c.universal && c.universal.titleCSS){
-            titleCSS += c.universal.titleCSS;
-        }
-        if (titleCSSHover == "" && c.universal && c.universal.titleCSSHover) {
-            titleCSSHover = c.universal.titleCSSHover;
-        }
-        if (descriptionCSS == "margin-top:0px;" && c.universal && c.universal.descriptionCSS ) {
-            descriptionCSS += c.universal.descriptionCSS;
-        }
-        // add !important for overriding CSS style with CSS coming from universal object
-        titleCSS = titleCSS.split(';').join(' !important;');
-        titleCSSHover = titleCSSHover.split(';').join(' !important;');
-        descriptionCSS = descriptionCSS.split(';').join(' !important;');
-        if (c.universal) {
-            if (!thumbnail && c.universal.thumbnail) thumbnail = c.universal.thumbnail;
-            if (!title && c.universal.title) title = c.universal.title;
-            if (!description && c.universal.description) description = c.universal.description;
-            if (!thumbnailurl && c.universal.thumbnailurl) thumbnailurl = c.universal.thumbnailurl;
-        }
-        return  {
-            titleCSS:           titleCSS,
-            titleCSSHover:      titleCSSHover,
-            descriptionCSS:     descriptionCSS,
-            thumbnail:          thumbnail,
-            thumbnailurl:       thumbnailurl,
-            title:              title,
-            description:        description,
-            buttonLabel:        jxParams.buttonLabel,
-            clickurl:           c.clickurl
-        };
-    }
-
     /**
      * From every kind of creative supported we just extract a few common values
      * sufficiently to interact with the core element where we are supposed to
@@ -1256,15 +1134,18 @@ function addGAMNoAdNotifyMaybe(str) {
         let doBasicTrackers = c.thirdpartytag;
 
         nested = -1; //HACK HACK FOR VIDEO
-        let universalBlob = getUniversalBlob(jxParams, c);
+
+        //XXXXX let universalBlob = getUniversalBlob(jxParams, c);
+
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
         if (trackers) {
             trackers = JSON.parse(JSON.stringify(trackers));
         }
-        universalBlob.click = function(code = null) {
-            fireTracker(trackers, 'click', code);
-        }
-        universalBlob.nested = nested;
+        //XXXXXXX universalBlob.click = function(code = null) {
+            /////fireTracker(trackers, 'click', code);
+        //////}
+        ///////universalBlob.nested = nested;
+
         let out = { 
             type:               c.type,
             width:              width, 
@@ -1275,7 +1156,7 @@ function addGAMNoAdNotifyMaybe(str) {
             scalable:           scalable,
             fixedHeight:        jxParams.fixedHeight ? jxParams.fixedHeight: 0, //we stuff something in first.
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
-            universal:          universalBlob,
+            /////XXXXX universal:          universalBlob,
             //make it even more generic: exactly which ones need us to manage here. then list down.
             /*
                 baseurl:  "https://traid.jixie.io/sync/ad"
@@ -1448,68 +1329,6 @@ function addGAMNoAdNotifyMaybe(str) {
     }
 
     //===============================================
-
-
-    /*
-    window[exposedWinPropName_] = function(params) {
-        //TODO: check that if called on "same" container then do nothing.
-        let ar = makeAdRenderer(params);
-        
-        ar.kickOff();
-    };
-    */
-
-    /*******
-    function hackThruOther(global) { 
-        //we use the resource override to swap out the unruly script and
-        //call our this script. so that we can test amp-ad coz our stuff is
-        //not yet in the amp runtime.
-        const d = global.document.createElement('div');
-        d.setAttribute('id', 'jxampcontainer');
-        d.style.margin = 'auto';
-
-        global.document.getElementById('c').appendChild(d);
-        // validateData(data, ['unit'], [
-       //'width', 'height', 'maxwidth', 'maxheight', 'scaling', 'fixedheight',
-        //   'creativeid', 'campaignid',
-       let data = {};
-       data.container = 'jxampcontainer';
-       data.context = 'amp';
-       data.maxheight = 400;
-       data.fixedHeight = 400;
-       data.excludedHeight = 102;
-       data.maxwidth = 640;
-       data.creativeid = 690; //1174; //1165; //800;
-       setTimeout(function(){
-         if (window.jxuniversallite) {
-           window.jxuniversallite(data);
-         }
-       }, 2000);
-    }
-    if (window.unruly) {
-        hackThruOther(window);
-    }**************/
-    /*
-    <h2>Unruly</h2>
-  <amp-ad width="620" height="349" type="unruly" layout="responsive" data-site-id="amp-test">
-  </amp-ad>
- //we need to create a 
-
-  global.unruly = global.unruly || {};
-  global.unruly.native = {
-    siteId: data.siteId,
-  };
-
-  scriptLoader(global, 'https://video.unrulymedia.com/native/native-loader.js');
-
-
-
-  <h2>Teads</h2>
-  <amp-ad width="300" height="220" type="teads" data-pid="42266" layout="responsive">
-  </amp-ad>
-*/
-    
-   
 
     var makeAdRenderer = function(params) {
         var _jxParams = null;
@@ -1778,14 +1597,7 @@ function addGAMNoAdNotifyMaybe(str) {
                 _jxParams.width = parseInt(_jxParams.width) || 640;
                 _jxParams.height = parseInt(_jxParams.height) || 360;
                 _jxParams.campaignid = parseInt(_jxParams.campaignid) || null;
-                _jxParams.title = _jxParams.title || null;
-                _jxParams.thumbnail = _jxParams.thumbnail || null;
-                _jxParams.thumbnailurl = _jxParams.thumbnailurl || null;
-                _jxParams.description = _jxParams.description || null;
-                _jxParams.buttonLabel = _jxParams.buttonLabel || "Learn more";
-                if (_jxParams.titleCSS) _jxParams.titleCSS = ("text-decoration:none;" + _jxParams.titleCSS); else _jxParams.titleCSS = "text-decoration:none;";
-                if (_jxParams.titleCSSHover) _jxParams.titleCSSHover = _jxParams.titleCSSHover; else _jxParams.titleCSSHover = "";
-                if (_jxParams.descriptionCSS) _jxParams.descriptionCSS = ("margin-top:0px;" + _jxParams.descriptionCSS); else _jxParams.descriptionCSS = "margin-top:0px;";
+
                 let isFloat = false;
                 let ctr = null;
                 if (params.container) {
