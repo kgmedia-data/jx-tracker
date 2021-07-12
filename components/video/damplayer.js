@@ -39,17 +39,16 @@ const maxVWidth_ = (isMobileDevice_ ? 641: 853);
 const maxVHeight_ = (isMobileDevice_ ? 361: 481);
 const DAMApiBase_ = 'https://jixie-dam-api.azurewebsites.net/api/stream?format=hls&metadata=basic';
 
-const _dbgVersion = 'v38';
-var _dbgCountOOS = 0;
-var _dbgCountLoad = 0;
-var _dbgL1VP = 0;
-        
-//const _helpers                     = require('./helpers');
-//const MakePlayerWrapperObj         = require('./player-factory');
-
 const IRThreshold_ = 0.5;
 
+
 function createObject_(options, ampIntegration) {
+    var _dbgCountOOS = 0;
+    var _dbgCountLoad = 0;
+    var _dbgL1VP = 0;
+    var _dbgVersion = 'v';
+    _dbgVersion = options && options.dbgVersion ? options.dbgVersion: 'v0';
+    
     var _vInfoMap = null;
     var _ampIntegration = ampIntegration; //so could be null
     let _videos = [];
@@ -1716,19 +1715,8 @@ function createObject_(options, ampIntegration) {
     }
     let ret = new JXPlayerInt(options);
     _initEventsHelpers(); 
-    //_helpers.registerPlayerInstance(options.container, ret);
-    //console.log(`__JXTIMING script returning player object` + (Date.now() - basetime_));
     return ret;
 }
-
-//window.JX.player = function(options) {
-  //  return window.JX.innerplayer(options, null);
-//}
-//window.JX.ampplayer = function(options, ampIntegration) {
-  //  _helpers.sendScriptLoadedTrackerAMP(ampIntegration);
-//    return window.JX.innerplayer(options, ampIntegration);
-//}
-
 
 
 //for browsers which do not support promises. We have the following:

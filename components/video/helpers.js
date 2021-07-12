@@ -2,7 +2,6 @@ const modulesmgr            = require('../basic/modulesmgr');
 
 const hlsAvailHeightsArr_ = [240,360,480]; //,720];
 const hlsAvailHeightsMax_ = 480;
-const dbgVersion = 'v40';
 
 function MakeOneHelperObj_() {
     var _unsent = {
@@ -13,7 +12,6 @@ function MakeOneHelperObj_() {
     let _scriptLoadedTime = 0;
 
     function FactoryOneHelper() {}
-    FactoryOneHelper.prototype.getDbgVersion = function() { return _dbgVersion; }
     FactoryOneHelper.prototype.getClosestDamHLSHeight = function(width, height) {
         for (var i = 0; i < hlsAvailHeightsArr_.length; i++) {
             if (height <= hlsAvailHeightsArr_[i]) {
@@ -42,7 +40,7 @@ function MakeOneHelperObj_() {
         _unsent.loaded = 0; //1 --> 0
         _scriptLoadedTime = Date.now();
         let trackerBase = this.getTrackerBase(options);
-        let url = trackerBase + "&action=loaded&debug="+dbgVersion + "_";
+        let url = trackerBase + "&action=loaded&debug="+options.dbgVersion + "_";
         fetch(url, {
             method: 'get',
             credentials: 'include' 
@@ -72,7 +70,7 @@ function MakeOneHelperObj_() {
         _unsent.loaded = 0; //1 -> 0
         _scriptLoadedTime = Date.now();
         let trackerBase = this.getTrackerBase(options);
-        let url = trackerBase + "&action=loaded&debug="+dbgVersion + "_";
+        let url = trackerBase + "&action=loaded&debug="+options.dbgVersion + "_";
         fetch(url, {
             method: 'get',
             credentials: 'include' 

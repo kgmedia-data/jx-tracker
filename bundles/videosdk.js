@@ -57,6 +57,8 @@ const mids                              = require('../components/basic/ids');
 const createObject                      = require('../components/video/damplayer');
 
 const pginfo = mpginfo.get(); //basic pginfo we can get from the page.
+const dbgVersion = 'v41';
+pginfo.dbgVersion = dbgVersion;
 
 var instMap = new Map();   
 function makePlayer(options) {
@@ -81,7 +83,7 @@ window.JX = {
         let metadata = ampIntegration.getMetadata();
         let canonUrl = metadata.canonicalUrl;
         options.pageurl = canonUrl;//augment
-        helpers.sendScriptLoadedTrackerAMP({pageurl: canonUrl});
+        helpers.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
         return (makePlayer(options, ampIntegration));
     }
 };
