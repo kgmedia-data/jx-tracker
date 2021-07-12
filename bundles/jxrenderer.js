@@ -42,4 +42,9 @@ function start_(options) {
 window.jxrenderer = {
     init: start_
 };
-
+/*
+To play video that's a different story for prebid if you answer VIDEO.
+But to us everything is display (CHECK )
+  else if (o.p.hbparams64 && o.p.hburlpath) {
+                o.surl = o.p.hburlpath; 
+            }*/

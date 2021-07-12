@@ -102,106 +102,12 @@ function addGAMNoAdNotifyMaybe(str) {
         //This stuff is needed only if we need to prepare the adTagUrl
         //But since this is not alot of code, then we do not bother about
         //condition compile. Just have this built in for all variants of the universal lite
-        function _getQueryParams(){
-            if (!_pageInfo) {
-                _pageInfo = _getPageInfo();
-            }
-            let params = {};
-            let dirtyVars = url.match(/(\?|\&)([^=]+)\=([^&]+)/gi);
-            if (dirtyVars && dirtyVars.length > 0) {
-                dirtyVars.forEach(function(candidate, index) {
-                    let pair = candidate.replace(/[&\\?]/, '').split('=');
-                    params[pair[ 0]] = pair[ 1];
-                });
-            }
-            return params;
-        }
-        function _getPageInfo() {
-            if (_isAMP) { 
-                //TMP
-                return {
-                    pagekeywords: "",
-                    pagedomain: "",
-                    pageurl: "",
-                    pagetitle: ""
-                };
-            }
-            // Something stupid here... what is in and what is out.
-            // Getting the page information (URL and hostname and title) depending if friendly iFrame or not
-            var page = null, pagedomain = null, ttl = null, keywords = null;
-            if (gIsFifs || !gIframe) {
-                let win = gIsFifs ? window.top: window.self;
-                page = win.location.href;
-                pagedomain = win.location.hostname;
-                ttl = win.document.title;
-                keywords = win.document.querySelector('meta[name="keywords"]');
-                if (keywords) {
-                    keywords = keywords.content;
-                }
-            }
-            else if (gIsUFif && p.pageurl_gam) {
-                try {
-                    page = p.pageurl_gam;
-                    pagedomain = p.pageurl_gam.replace('http://','').replace('https://','').replace('www.','').split(/[/?#]/)[0];
-                }
-                catch (ee) {}
-            }
-            try{
-                let parser = document.createElement('a');
-                // Let the browser do the work
-                parser.href = url;
-                _hostname = parser.hostname;
-            }
-            catch (e) {}
-            //????
-            //if (!outp.domain && (!pagedomain || pagedomain == '') && (page && page !== '')){
-              //  if (up.hostname) outp.domain = _hostname;
-            //}else if (!outp.domain){
-              //  outp.domain = encodeURIComponent(pagedomain ? pagedomain: '');
-            //}
-            return {
-                pagekeywords: keywords,
-                pagedomain: pagedomain,
-                pageurl: page,
-                pagetitle: ttl
-            };
-        }
-
         var _acss = function(stylesArr, id) {
             var head = document.getElementsByTagName('HEAD')[0];
             var s = document.createElement("style");
             if (id) s.id = id;
             s.innerHTML = stylesArr;
             head.appendChild(s);
-        }
-        FactoryOneHelper.prototype.makeAdTagUrl = function(instanceParams) {
-            if (!_adServerBase) {
-                //asServerBase URL depends on the page. So for all instances of the univ
-                //unit, it is the same. Hence we only need to figure it out once.
-                if (!_queryParams) {
-                    _queryParams = _getQueryParams();
-                }
-                let suff = (_queryParams.debug === true || _queryParams.debug ? '-rc': (_queryParams.portal === 'dev' ? '-dev': ''));
-                _adServerBase = `https://ad${suff}.jixie.io/v1/universal?source=outstream`; 
-            }
-            if (!_pageInfo) {
-                _pageInfo = _getPageInfo();
-            }
-            let merged = Object.assign({ source: 'outstream'}, _pageInfo, instanceParams);
-            if (true) { // actually only useful for some super obscure creatives ....
-                if (merged.pagetitle) merged.pagetitle = btoa(_helpers.sanitizeTitle(merged.pagetitle));
-                if (merged.pagekeywords) merged.pagekeywords = btoa(merged.pagekeywords);
-            }
-            let adUrl = _adServerBase;
-            //confused about the domain.
-            //not to forget about client id session id!!
-            ["unit", "pageurl", "domain", "creativeid", "campaignid", "pagetitle","pagekeywords","deltaassets64"].forEach(function(prop) {
-                if (merged[prop]) {
-                    adUrl += '&' + prop + '=' + merged[prop];
-                }
-            })
-            return adUrl;
-            
         }
         FactoryOneHelper.prototype.acss = function(stylesArr, id) {
             _acss(stylesArr, id);
@@ -217,11 +123,6 @@ function addGAMNoAdNotifyMaybe(str) {
             }
             return null;
         }
-
-        FactoryOneHelper.prototype.sanitizeTitle = function(t) {
-            return t.normalize('NFD').replace(/[^a-zA-Z0-9\s]/g, '').replace(/[\u0300-\u036f]/g, '').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"]/g, '');
-        }
-
         FactoryOneHelper.prototype.newDiv = function(p, t, h, c, id) {
             var nd = document.createElement(t);
             if (h && h != "") nd.innerHTML = h;
@@ -264,9 +165,6 @@ function addGAMNoAdNotifyMaybe(str) {
      */
     const fcnVectorsByContext_ = {
     'amp' :  {
-        getPageInfo: function() {
-
-        },
         handleNoAd: function() {
             //This stuff what you do also depends on context ..e.g. So AMP you need to call context API
             // to tell runtime to collapsee your slot
@@ -312,9 +210,6 @@ function addGAMNoAdNotifyMaybe(str) {
     },//end of amp group
     //non AMP:
     'default': {
-        getPageInfo: function() {
-            //do some usual stuff standard (location etc)
-        },
         setupVisChangeNotifiers: function(boundCB, obsContainer) {
             let retObserver = null;
             retObserver = new IntersectionObserver(boundCB, {
