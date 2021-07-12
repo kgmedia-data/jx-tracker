@@ -68,6 +68,7 @@ window.jxPromisePolyfill        = 'none';
         /**
          * "PRIVATE" variables :-) using closure.
          */
+        var _currToken = null;
         var _isConfigSet = false;
         var _genInitP = null; //general init promise (resolved means the general init of the player done)
         var _isDeferPlayPauseCmd = false; //when in a certain state, play pause commands 

@@ -52,7 +52,6 @@ modulesmgr.set('video/spinner-factory', spinner_fact);
 const player_fact                       = require('../components/video/player-factory');
 modulesmgr.set('video/player-factory',  player_fact);
 
-
 // these we only use within this file, so dun bother
 const mids                              = require('../components/basic/ids');
 const createObject                      = require('../components/video/damplayer');

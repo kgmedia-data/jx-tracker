@@ -1,5 +1,4 @@
 const modulesmgr            = require('../basic/modulesmgr');
-const mpginfo               = modulesmgr.get('basic/pginfo');
 
 const hlsAvailHeightsArr_ = [240,360,480]; //,720];
 const hlsAvailHeightsMax_ = 480;
@@ -402,7 +401,7 @@ function MakeOneHelperObj_() {
             if (options[prop])
                 tmp += '&' + prop + '=' + options[prop];
         });
-        ['pageurl', 'domain', 'p_domain', 'creativeid'].forEach(function(prop) {
+        ['pageurl', 'domain', 'p_domain'].forEach(function(prop) {
             if (options[prop])
                 tmp += '&' + prop + '=' + encodeURIComponent(options[prop]);
         });
@@ -411,7 +410,7 @@ function MakeOneHelperObj_() {
     }
     FactoryOneHelper.prototype.getAdTag = function(options) {
         let tmp = 'https://ad.jixie.io/v1/video?maxnumcreatives=13&source=jxplayer';
-        ['unit', 'client_id', 'sid'].forEach(function(prop) {
+        ['unit', 'client_id', 'sid', 'creativeid'].forEach(function(prop) {
             if (options[prop])
                 tmp += '&' + prop + '=' + options[prop];
         });
