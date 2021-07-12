@@ -1,4 +1,6 @@
-const _helpers = require('./helpers');
+const modulesmgr                = require('../basic/modulesmgr');
+const _helpers                  = modulesmgr.get('video/helpers');
+
 
 const defaultSoundIndColor       = "rgba(255, 255, 255, 0.8)";
 const defaultSoundIndBgColor     = "rgba(0, 0, 0, 0.74)";

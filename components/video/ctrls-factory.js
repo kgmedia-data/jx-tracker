@@ -3,11 +3,14 @@
      * So we are really using mostly the HTML5 <video>'s controls
      * THis object only do the big play button
      */
- const _helpers                         = require('./helpers');
- const _cssObj                          = _helpers.getCssObj();
- const thumbnailCls                     = _cssObj.thumbnailCls;
- const hideCls                          = _cssObj.hideCls; //??
- const bigPlayBtnCls                    = _cssObj.bigPlayBtnCls;
+ 
+ const modulesmgr            = require('../basic/modulesmgr');
+ const _helpers              = modulesmgr.get('video/helpers');
+
+ const cssmgr                = modulesmgr.get('video/cssmgr');
+ const thumbnailCls          = cssmgr.getRealCls('thumbnailCls');
+ const hideCls               = cssmgr.getRealCls('hideCls');
+ const bigPlayBtnCls         = cssmgr.getRealCls('bigPlayBtnCls');
  
  function MakeOnePlayerControlsObjD_(container, vectorFcn) {
     function FactoryOnePlayerControlsD() {}

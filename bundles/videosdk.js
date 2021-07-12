@@ -4,15 +4,60 @@
 if (window.JX) {
     return;
 }
+
+
+
+const modulesmgr                       = require('../components/basic/modulesmgr');
+const cssmgr                           = require('../components/video/cssmgr');
+modulesmgr.set('video/cssmgr',         cssmgr);
+
+const stylesSet                        = require('../components/video-styles/default');//we choose this set of style
+cssmgr.init(stylesSet.getCls(), stylesSet.getStyles());
+cssmgr.inject('adControls', { color: '#FF0000'});
+
+
+// these we only use within this file, so dun bother
+
+// these will be used throughout (i.e. they are needed by the files that are 'required' by
+// the top level file (this one).
+// We use this method (so the child files they do not 'require' those files directly)
+// for a reason: here we can load the exact variant of a service
+// e.g. ctrls-factory-specialxyz, then it will be used throughout the browserified
+// script as the child JS will just require mmodulesmgr and get the right instance
+// from mmodulesmgr
+const mpginfo                           = require('../components/basic/pginfo');
+modulesmgr.set('basic/pginfo',          mpginfo);
+
+const helpers                           = require('../components/video/helpers');
+modulesmgr.set('video/helpers',         helpers);
+
+const consts                            = require('../components/video/consts'); 
+modulesmgr.set('video/consts',          consts);
+
+const adctrls_fact                      = require('../components/video/adctrls-factory');
+modulesmgr.set('video/adctrls-factory', adctrls_fact);
+
+const admgr_fact                        = require('../components/video/admgr-factory');
+modulesmgr.set('video/admgr-factory',   admgr_fact);
+
+const ctrls_fact                        = require('../components/video/ctrls-factory');
+modulesmgr.set('video/ctrls-factory',   ctrls_fact);
+
+const soundind_fact                     = require('../components/video/soundind-factory');
+modulesmgr.set('video/soundind-factory',soundind_fact);
+
+const spinner_fact                      = require('../components/video/spinner-factory');
+modulesmgr.set('video/spinner-factory', spinner_fact);
+
+const player_fact                       = require('../components/video/player-factory');
+modulesmgr.set('video/player-factory',  player_fact);
+
+
+// these we only use within this file, so dun bother
 const mids                              = require('../components/basic/ids');
-const cssObj                            = require('../components/video-styles/default');//we choose this set of style
-const _helpers                          = require('../components/video/helpers');
-//one off init needed
-const ids = mids.get();
-_helpers.setIds(ids);
-_helpers.setCssObj(cssObj);
-//need to do the setCssObject before the damplayer inclusion
 const createObject                      = require('../components/video/damplayer');
+
+const pginfo = mpginfo.get(); //basic pginfo we can get from the page.
 
 var instMap = new Map();   
 function makePlayer(options) {
@@ -21,7 +66,9 @@ function makePlayer(options) {
     if (instMaybe) {
         return;
     }
-    let playerInst = createObject(options);
+    const ids = mids.get();
+    let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
+    let playerInst = createObject(merged);
     instMap.set(hashStr, playerInst);
     return playerInst;
 }
@@ -31,9 +78,19 @@ window.JX = {
         return (makePlayer(options, null));
     },
     ampplayer : function(options, ampIntegration) {
-        //Have not tested this after the big refactoring and componentization
-        _helpers.sendScriptLoadedTrackerAMP(ampIntegration);
+        options.amp = true;//augment
+        let metadata = ampIntegration.getMetadata();
+        let canonUrl = metadata.canonicalUrl;
+        options.pageurl = canonUrl;//augment
+        helpers.sendScriptLoadedTrackerAMP({pageurl: canonUrl});
         return (makePlayer(options, ampIntegration));
     }
 };
+
+// The loaded event we need some minimal info about the page
+// Dun have ids etc ready yet, it is ok.
+if (!window.AmpVideoIframe) {
+    //get some basic info first
+    helpers.sendScriptLoadedTracker(pginfo);
+}
 

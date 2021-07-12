@@ -1,10 +1,10 @@
 
-const _helpers              = require('./helpers');
-const _cssObj               = _helpers.getCssObj();
-const hideCls               = _cssObj.hideCls; 
-const spinnerCls            = _cssObj.spinnerCls; 
- 
-     
+const modulesmgr                = require('../basic/modulesmgr');
+const _helpers                  = modulesmgr.get('video/helpers');
+const cssmgr                    = modulesmgr.get('video/cssmgr');
+const spinnerCls                = cssmgr.getRealCls('spinnerCls');
+const hideCls                   = cssmgr.getRealCls('hideCls');
+      
 
 let MakeOneSpinner_ = function(container) {
     let _spinner = null;

@@ -6,13 +6,17 @@
      * @param {*} fcnVector 
      * @returns 
      */
+ const modulesmgr            = require('../basic/modulesmgr');
+ const _helpers              = modulesmgr.get('video/helpers');
+ const cssmgr                = modulesmgr.get('video/cssmgr');
+ const adDivCls              = cssmgr.getRealCls('adDivCls');
+ const hideCls               = cssmgr.getRealCls('hideCls');
+ const adHideCls             = cssmgr.getRealCls('adHideCls');
+ 
  const maxNumVastRedirects_ = 5; //testing only. for ads
- const _helpers                     = require('./helpers');
- const _cssObj                      = _helpers.getCssObj();
- const adDivCls                     = _cssObj.adDivCls;
- const hideCls                      = _cssObj.hideCls; //??
- const adHideCls                    = _cssObj.adHideCls;
- const MakeOneAdControlsObj         = require('./adctrls-factory');
+
+ const MakeOneAdControlsObj  = modulesmgr.get('video/adctrls-factory');
+
  const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
  
@@ -366,7 +370,12 @@
         */
 
         if(_adsManager) {
+            try {
             _createControls();
+            }
+            catch(ee1) {
+                console.log(ee1.stack);
+            }
             _setupResizeListeners();
 
             //this setVolume(0) is needed for iOS at least, may be not all.

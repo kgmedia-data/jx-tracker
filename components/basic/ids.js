@@ -973,9 +973,10 @@ function get_() {
                         //since we are using the default-no-value- representation for client_id and sid, no need do anything else
                     });
                     let idsObj = idsHelper.getIdsIfAvail(); //the idsObj could be null
-    return {
-        client_id: idsObj && idsObj.client_id ? idsObj.client_id: null,
-        sid: idsObj&& idsObj.sid? idsObj.sid: null
-    }
+    let ret = {};
+                    
+    if (idsObj && idsObj.client_id) ret.client_id = idsObj.client_id;
+    if (idsObj && idsObj.sid) ret.sid = idsObj.sid;
+    return ret;
 };
 module.exports.get = get_;

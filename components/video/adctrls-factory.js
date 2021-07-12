@@ -3,16 +3,16 @@
      * 
      * APIs for the ADS Controls object: TO BE FILLED IN (basically are the prototype functions)
      */
-//const consts                          = require('./consts'); 
-const _helpers                          = require('./helpers');
-const _cssObj                           = _helpers.getCssObj();
-const adControlsCls                     = _cssObj.adControlsCls;
-const adPlayBtnCls                      = _cssObj.adPlayBtnCls;
-const adMuteBtnCls                      = _cssObj.adMuteBtnCls;
-const progressBarCls                    = _cssObj.progressBarCls;
-const hideCls                           = _cssObj.hideCls; //???
-
-
+const modulesmgr            = require('../basic/modulesmgr');
+const _helpers              = modulesmgr.get('video/helpers');
+const cssmgr                = modulesmgr.get('video/cssmgr');
+const adControlsCls         = cssmgr.getRealCls('adControlsCls');
+const adPlayBtnCls          = cssmgr.getRealCls('adPlayBtnCls');
+const adMuteBtnCls          = cssmgr.getRealCls('adMuteBtnCls');
+const adProgressBarCls      = cssmgr.getRealCls('adProgressBarCls');
+const hideCls               = cssmgr.getRealCls('hideCls');
+ 
+ 
 
 const btnPlayID = 'btnPlayID';
 const btnMuteID = 'btnMuteID';
@@ -86,7 +86,7 @@ const btnMuteID = 'btnMuteID';
             _container,
             "div",
             innerElm,
-            progressBarCls
+            adProgressBarCls
         );
         _playBtn = document.getElementById(btnPlayID + '-' + r);
         _muteBtn = document.getElementById(btnMuteID + '-' + r);

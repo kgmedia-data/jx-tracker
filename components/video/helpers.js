@@ -1,18 +1,14 @@
-
-const mpginfo                     = require('../basic/pginfo');
+const modulesmgr            = require('../basic/modulesmgr');
+const mpginfo               = modulesmgr.get('basic/pginfo');
 
 const hlsAvailHeightsArr_ = [240,360,480]; //,720];
 const hlsAvailHeightsMax_ = 480;
 const dbgVersion = 'v40';
 
 function MakeOneHelperObj_() {
-    console.log("MADE1________ AND SHOULD NOT APPEAR MORE THAN ONCE !!!");
     var _unsent = {
         loaded: 1
     }
-    var _idsObj = null;
-    var _cssObj = null;
-    var _fixedInfo = null; //pageurl, domain, client_id, sid, adTagUrlBase, trackerBase
     let _loadIMAProm = null; //these are promises
     let _loadShakaProm = null; //these are promises
     let _scriptLoadedTime = 0;
@@ -39,23 +35,15 @@ function MakeOneHelperObj_() {
     FactoryOneHelper.prototype.getScriptLoadedTime = function() {
         return _scriptLoadedTime;
     }
-    FactoryOneHelper.prototype.sendScriptLoadedTrackerAMP = function(ampIntegration) {
+    FactoryOneHelper.prototype.sendScriptLoadedTrackerAMP = function(options) {
         if (!_unsent.loaded) {
             //can only send it once
             return;
         }
-        let canonUrl = '';
-        try {
-            let metadata = ampIntegration.getMetadata();
-            canonUrl = metadata.canonicalUrl;
-        }
-        catch (err) {
-        }
         _unsent.loaded = 0; //1 --> 0
-
         _scriptLoadedTime = Date.now();
-        _setupFixedInfo(canonUrl);
-        let url = _fixedInfo.trackerBase + "&action=loaded&debug="+dbgVersion + "_";
+        let trackerBase = this.getTrackerBase(options);
+        let url = trackerBase + "&action=loaded&debug="+dbgVersion + "_";
         fetch(url, {
             method: 'get',
             credentials: 'include' 
@@ -63,7 +51,7 @@ function MakeOneHelperObj_() {
         .catch((ee) => {
         });
         if (!_isBrowserSupported()) {
-            url = _fixedInfo.trackerBase + "&action=donothing";
+            url = trackerBase + "&action=donothing";
             fetch(url, {
                 method: 'get',
                 credentials: 'include' 
@@ -72,7 +60,7 @@ function MakeOneHelperObj_() {
             });
         }
     }   
-    FactoryOneHelper.prototype.sendScriptLoadedTracker = function() {
+    FactoryOneHelper.prototype.sendScriptLoadedTracker = function(options) {
         if (!_unsent.loaded) {
             //can only send it once
             return;
@@ -84,8 +72,8 @@ function MakeOneHelperObj_() {
         }
         _unsent.loaded = 0; //1 -> 0
         _scriptLoadedTime = Date.now();
-        _setupFixedInfo();//may not be necessary. it may do nothing.
-        let url = _fixedInfo.trackerBase + "&action=loaded&debug="+dbgVersion + "_";
+        let trackerBase = this.getTrackerBase(options);
+        let url = trackerBase + "&action=loaded&debug="+dbgVersion + "_";
         fetch(url, {
             method: 'get',
             credentials: 'include' 
@@ -93,7 +81,7 @@ function MakeOneHelperObj_() {
         .catch((ee) => {
         });
         if (!_isBrowserSupported()) {
-            url = _fixedInfo.trackerBase + "&action=donothing";
+            url = trackerBase + "&action=donothing";
             fetch(url, {
                 method: 'get',
                 credentials: 'include' 
@@ -408,47 +396,23 @@ function MakeOneHelperObj_() {
         if (corrupted) tmp = [];
         return tmp;
     };
-    
-    FactoryOneHelper.prototype.getTrackerBase = function() {
-        _setupFixedInfo();//may not be necessary. it may do nothing.
-        return _fixedInfo.trackerBase;
+    FactoryOneHelper.prototype.getTrackerBase = function(options) {
+        let tmp = 'https://traid.jixie.io/sync/video?x=1';
+        ['client_id', 'sid', 'pageurl', 'domain', 'p_domain'].forEach(function(prop) {
+            if (options[prop])
+                tmp += '&' + prop + '=' + options[prop];
+        });
+        if (options.amp) tmp += '&device=amp';
+        return tmp;
     }
-    FactoryOneHelper.prototype.getAdTag = function(unit) {
-        _setupFixedInfo();//may not be necessary. it may do nothing.
-        return _fixedInfo.adTagBase + '&unit=' + unit;
-    }
-    FactoryOneHelper.prototype.setIds = function(idsObj) {
-        _idsObj = idsObj;
-    }
-    
-    function _setupFixedInfo(ampCanonicalUrl = '') {
-        if (!_fixedInfo) { //|| _fixedInfo.adTagBase || _fixedInfo.trackerBase) {
-            if (!_fixedInfo)  {
-                _fixedInfo = {};
-            }
-            var pageurl = ampCanonicalUrl;
-            var domain = '';
-            var p_domain = '';
-            if (!pageurl) {
-                let pginfo = mpginfo.get(); 
-                pageurl = pginfo.pageurl ? pginfo.pageurl:null;
-                domain = pginfo.pagedomain ? pginfo.pagedomain:null;
-                p_domain = pginfo.p_domain ? pginfo.p_domain:null;
-            }
-            _fixedInfo.pageurl = pageurl;
-            _fixedInfo.domain = domain;
-            _fixedInfo.p_domain = p_domain;
-            if (_idsObj && _idsObj.client_id) _fixedInfo.client_id = _idsObj.client_id;
-            if (_idsObj && _idsObj.sid) _fixedInfo.sid = _idsObj.sid;
-            let tmp = '';
-            if (_fixedInfo.client_id) tmp += '&client_id=' + _fixedInfo.client_id;
-            if (_fixedInfo.sid) tmp += '&sid=' + _fixedInfo.sid;
-            if (_fixedInfo.pageurl) tmp += '&pageurl=' + encodeURIComponent(_fixedInfo.pageurl);
-            if (_fixedInfo.domain) tmp += '&domain=' + encodeURIComponent(_fixedInfo.domain);
-            _fixedInfo.adTagBase = 'https://ad.jixie.io/v1/video?maxnumcreatives=13&source=jxplayer' + tmp + (ampCanonicalUrl? '&device=amp':'');
-            _fixedInfo.trackerBase = 'https://traid.jixie.io/sync/video?x=1' + tmp + 
-                (_fixedInfo.p_domain? '&p_domain=' + _fixedInfo.p_domain: '') + (ampCanonicalUrl? '&device=amp':'');
-        }
+    FactoryOneHelper.prototype.getAdTag = function(options) {
+        let tmp = 'https://ad.jixie.io/v1/video?maxnumcreatives=13&source=jxplayer';
+        ['unit', 'client_id', 'sid', 'pageurl', 'domain'].forEach(function(prop) {
+            if (options[prop])
+                tmp += '&' + prop + '=' + options[prop];
+        });
+        if (options.amp) tmp += '&device=amp';
+        return tmp;
     }
     let ret = new FactoryOneHelper();
     return ret;

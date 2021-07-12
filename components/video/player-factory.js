@@ -1,9 +1,11 @@
-const consts                            = require('./consts'); 
-const _helpers                          = require('./helpers');
-const MakeOneAdObj                      = require('./admgr-factory');
-const MakeOnePlayerControlsObjD         = require('./ctrls-factory');
-const MakeOneSoundIndicator             = require('./soundind-factory');
-const MakeOneSpinner                    = require('./spinner-factory');
+
+const modulesmgr                = require('../basic/modulesmgr');
+const _helpers                  = modulesmgr.get('video/helpers');
+const consts                    = modulesmgr.get('video/consts');
+const MakeOneAdObj              = modulesmgr.get('video/admgr-factory');
+const MakeOnePlayerControlsObjD = modulesmgr.get('video/ctrls-factory');
+const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
+const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 
      
 const msPlayAttributeThreshold_     = 1000;
@@ -33,11 +35,14 @@ const adCountdownSec_           = 3;
 const defaultCountDownToAdMsg   = "Ad starts in %%SECONDS%% s";
 const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
-const _cssObj                   = _helpers.getCssObj();
-const hideCls                   = _cssObj.hideCls;
-const iconCls                   = _cssObj.iconCls;
-const contentDivCls             = _cssObj.contentDivCls;
-const playerCls                 = _cssObj.playerCls;
+
+const cssmgr                 = modulesmgr.get('video/cssmgr');
+const hideCls                = cssmgr.getRealCls('hideCls');
+const iconCls                = cssmgr.getRealCls('iconCls');
+const contentDivCls          = cssmgr.getRealCls('contentDivCls');
+const playerCls              = cssmgr.getRealCls('playerCls');
+
+
 
 const JXPlayerID                = "JXPlayer"; //Is purely internal stuff no need 
 
@@ -433,7 +438,7 @@ window.jxPromisePolyfill        = 'none';
             adUrl, logoCfg, soundIndCfg = null) {
             _isConfigSet = true;
             _cfg.ad_delay = adDelay;
-            //adUrl = 'https://ad.jixie.io/v1/video?creativeid=946&unit=faf437f364ec702c250b01fb15232832&pageurl=https%3A%2F%2Fwww.kompas.com%2Ftren%2Fread%2F2021%2F05%2F10%2F080243065%2Fberharap-situasi-pandemi-di-indonesia-tak-seburuk-india&domain=www.kompas.com&source=IVS3000451&playerwidth=400&playerheight=225&ivsadpod=0&ivsadcnt=2&ivsadnum=1&ivsadrequestid=1620611271918-f07b9d18b3ba89abec9dd38255fb633f';
+            adUrl = 'https://ad.jixie.io/v1/video?creativeid=946&unit=faf437f364ec702c250b01fb15232832&pageurl=https%3A%2F%2Fwww.kompas.com%2Ftren%2Fread%2F2021%2F05%2F10%2F080243065%2Fberharap-situasi-pandemi-di-indonesia-tak-seburuk-india&domain=www.kompas.com&source=IVS3000451&playerwidth=400&playerheight=225&ivsadpod=0&ivsadcnt=2&ivsadnum=1&ivsadrequestid=1620611271918-f07b9d18b3ba89abec9dd38255fb633f';
             
             _cfg.ad_tag = adUrl;
             _cfg.ad_prerolltimeout = prerollTimeout;

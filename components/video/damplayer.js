@@ -13,7 +13,11 @@
 //if (!window.JX) {
   //  window.JX = {};
 //}
-const consts                       = require('./consts'); 
+const modulesmgr            = require('../basic/modulesmgr');
+const _helpers              = modulesmgr.get('video/helpers');
+const consts                = modulesmgr.get('video/consts');
+const MakePlayerWrapperObj  = modulesmgr.get('video/player-factory');
+
 function slackItMaybe() {}
 const errCodeDAMApiError_   = 1997;
 const defaultAdDelay_       = consts.defaultAdDelay;
@@ -40,8 +44,8 @@ var _dbgCountOOS = 0;
 var _dbgCountLoad = 0;
 var _dbgL1VP = 0;
         
-const _helpers                     = require('./helpers');
-const MakePlayerWrapperObj         = require('./player-factory');
+//const _helpers                     = require('./helpers');
+//const MakePlayerWrapperObj         = require('./player-factory');
 
 const IRThreshold_ = 0.5;
 
@@ -388,7 +392,7 @@ function createObject_(options, ampIntegration) {
             options.ads = { delay: -1};
         }
         if (options.ads.delay>=0 && !options.ads.adtagurl) {
-            let adUrl = (options.ads.unit ? _helpers.getAdTag(options.ads.unit): null);
+            let adUrl = (options.ads.unit ? _helpers.getAdTag(options): null);
             if (options.ads.dev_adtagurl) {
                 adUrl = options.ads.dev_adtagurl;
             }
@@ -549,9 +553,18 @@ function createObject_(options, ampIntegration) {
      * @returns 
      */
      function _initEventsHelpers(videoData = null, downgrade = false) {
+        /* 
         if (!_evtsHelperBlock) {
             _evtsHelperBlock = JSON.parse(JSON.stringify(unfiredOneTimeEvtsSeed_));
             _evtsHelperBlock.trackerBase = _helpers.getTrackerBase() + '&accountid=' + _options.accountid + 
+                     (_options.customid ? '&customid='+ _options.customid: '') +
+                     '&autoplay=' + _options.autoplay,
+            _evtsHelperBlock.vposition = -1;
+        }
+        */
+        if (!_evtsHelperBlock) {
+            _evtsHelperBlock = JSON.parse(JSON.stringify(unfiredOneTimeEvtsSeed_));
+            _evtsHelperBlock.trackerBase = _helpers.getTrackerBase(_options) + '&accountid=' + _options.accountid + 
                      (_options.customid ? '&customid='+ _options.customid: '') +
                      '&autoplay=' + _options.autoplay,
             _evtsHelperBlock.vposition = -1;
@@ -1740,9 +1753,10 @@ if (!window.Promise ||
 else {
     //for amp we wait until the ampIntegration object is given to us
     //else we cannot even get any pageurl info properly.
-    if (!window.AmpVideoIframe) {
-        _helpers.sendScriptLoadedTracker();
-    }
+    //MOVE IT OUT?
+    //if (!window.AmpVideoIframe) {
+      //  _helpers.sendScriptLoadedTracker();
+    //}
 }
 
 module.exports = createObject_;

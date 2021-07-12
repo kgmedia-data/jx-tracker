@@ -18,7 +18,7 @@ while (top != currW)  {
 }//while
 if (gIframe && !gIsUFif) gIsFifs = true;
 
-function get_(config) {
+function get_() {
     if (false) { //TODO
         //TMP
         return {
@@ -64,13 +64,11 @@ function get_(config) {
     //}else if (!outp.domain){
       //  outp.domain = encodeURIComponent(pagedomain ? pagedomain: '');
     //}
-    return {
-        p_domain: p_domain,
-        pagekeywords: keywords,
-        pagedomain: pagedomain,
-        pageurl: page,
-        pagetitle: ttl
-    };
+    let ret = {};
+    if (p_domain) ret.p_domain = p_domain;
+    if (pagedomain) ret.domain = pagedomain;
+    if (page) ret.pageurl = page;
+    return ret;
 }
 
 module.exports.get = get_;
