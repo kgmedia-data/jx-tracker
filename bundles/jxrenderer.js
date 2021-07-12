@@ -34,6 +34,7 @@ style="width: 100%;">
 //no need lah var instMap = new Map();
 
 function start_(options) {
+    //here we make no effort to get ids pageinfo coz they are not needed.
     var inst = mrenderer.createInstance(options);
     //no need lah instMap.set(hashStr, inst);
 }

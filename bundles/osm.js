@@ -25,7 +25,7 @@ if (!window.jxrenderer) {
     //then this will be accessible by any other things inside
     //the same window!
     window.jxrenderer = {
-        start: function(options) {
+        init: function(options) {
             //Perhaps this should also maintain a map
             mrenderer.createInstance(options);
         }
@@ -37,6 +37,8 @@ if (!window.jxrenderer) {
 
 
 const mosmcore      = require('../components/osmengine/core');
+const mpginfo       = require('../components/basic/pginfo');
+const mids          = require('../components/basic/ids');
 
 var instMap = new Map();
 
@@ -46,7 +48,11 @@ function start(options) {
     if (instMaybe) {
         return;
     }
-    var osmInst = mosmcore.createInstance(options, {
+    const ids = mids.get();
+    const pginfo = mpginfo.get();
+    let merged = Object.assign({}, ids, pginfo, options);
+
+    var osmInst = mosmcore.createInstance(merged, {
             jixie: mpjixie,
             selectmedia: mpsm,
             teads: mpteads,

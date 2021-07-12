@@ -1936,10 +1936,25 @@ function addGAMNoAdNotifyMaybe(str) {
                 }
                 catch(err) {  }
             }
-           
-            let adUrl = 'https://ad.jixie.io/v1/universal?source=sdk&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=800'; //1007|1005|800';
-            //let fetchedCreativesProm = respBlob && respBlob.creatives ? Promise.resolve(respBlob) : fetchAdP(_helpers.makeAdTagUrl(_jxParams));
-            let fetchedCreativesProm = respBlob && respBlob.creatives ? Promise.resolve(respBlob) : fetchAdP(adUrl);
+            let fetchedCreativesProm = null;
+            if (respBlob && respBlob.creatives) {
+                fetchedCreativesProm = Promise.resolve(respBlob);
+            }
+            else {
+                let subdomain = _jxParams.portal == 'dev' ? 'ad-dev':(_jxParams.debug?'ad-rc': 'ad');
+                let tmp = `https://${subdomain}.jixie.io/v1/universal?source=outstream`;
+                ['unit', 'client_id', 'sid', 'deltaassets64', 'creativeid'].forEach(function(prop) {
+                    if (_jxParams[prop])
+                        tmp += '&' + prop + '=' + _jxParams[prop];
+                });
+                ['pageurl', 'domain'].forEach(function(prop) {
+                    if (_jxParams[prop])
+                        tmp += '&' + prop + '=' + _jxParams[prop];
+                });
+                if (_jxParams.amp) tmp += '&device=amp';
+                fetchedCreativesProm = fetchAdP(tmp);
+            }
+            //let adUrl = 'https://ad.jixie.io/v1/universal?source=sdk&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=800'; //1007|1005|800';
             fetchedCreativesProm
             .then(function(responseBlob) {
                 let creativesArr;

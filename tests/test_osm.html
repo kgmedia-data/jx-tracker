@@ -6,19 +6,19 @@
       #jxOutstreamContainer {
         position: relative;
         width: 640px;
-        height: 360px;
+        height: 400px;
         background-color: #FF0000;
       }
       #jxOutstreamContainer1 {
         position: relative;
         width: 640px;
-        height: 360px;
+        height: 400px;
         background-color: green;
       }
       #jxOutstreamContainer2 {
         position: relative;
         width: 640px;
-        height: 360px;
+        height: 400px;
         background-color:blue;
       }
       video::-webkit-media-controls-fullscreen-button
@@ -63,7 +63,7 @@
 
         <hr>
         <hr>
-        <div style="width: 640px; height: 360px;" class="bn_outter_container preloader fallback" style="position:relative;">
+        <div style="width: 640px; height: 400px;" class="bn_outter_container preloader fallback" style="position:relative;">
 			<div id="bn_main_canvas" class="bn_main" style='position:relative;'>
 				<div id="container" data-parent-id="component-0">
 					<div id="jxOutstreamContainer" class="trans-text-item" style="position:absolute; display: block;">
@@ -72,7 +72,7 @@
 			</div>
 		</div>
         <hr>
-        <div style="width: 640; height: 360px;" class="bn_outter_container preloader fallback" style="position:relative;">
+        <div style="width: 640; height: 400px;" class="bn_outter_container preloader fallback" style="position:relative;">
 			<div id="bn_main_canvas2" class="bn_main" style='position:relative;'>
 				<div id="container2" data-parent-id="component-0">
 					<div id="jxOutstreamContainer1" class="trans-text-item" style="position:absolute; display: block;">
@@ -80,7 +80,7 @@
 				</div>
 			</div>
 		</div>
-        <div style="width: 640; height: 360px;" class="bn_outter_container preloader fallback" style="position:relative;">
+        <div style="width: 640; height: 400px;" class="bn_outter_container preloader fallback" style="position:relative;">
 			<div id="bn_main_canvas2" class="bn_main" style='position:relative;'>
 				<div id="container2" data-parent-id="component-0">
 					<div id="jxOutstreamContainer2" class="trans-text-item" style="position:absolute; display: block;">
@@ -95,7 +95,7 @@
           selectors: ["#jxOutstreamContainer"],
           managerdiv: "osmdiv",
           fixedheight: 410,  //new parameter (note to Ridho 1 of 2)
-          excludedheight: 152 //152 //2 of 2
+          excludedheight: 0 //152 //2 of 2
           //Find description on the 2 new params: https://jixie.atlassian.net/wiki/spaces/ESD/pages/1007910915/Publishers+-+How+to+integrate+Jixie+Outstream+Manager+OSM+on+pages
       };
       function jxOSMDefer(p) {
@@ -116,7 +116,7 @@
           selectors: ["#jxOutstreamContainer1"],
           managerdiv: "osmdiv",
           fixedheight: 400,  //new parameter (note to Ridho 1 of 2)
-          excludedheight: 152 //152 //2 of 2
+          excludedheight: 0 //152 //2 of 2
           //Find description on the 2 new params: https://jixie.atlassian.net/wiki/spaces/ESD/pages/1007910915/Publishers+-+How+to+integrate+Jixie+Outstream+Manager+OSM+on+pages
       };
       function jxOSMDefer1(p) {
@@ -134,7 +134,7 @@
           selectors: ["#jxOutstreamContainer2"],
           managerdiv: "osmdiv",
           fixedheight: 400,  //new parameter (note to Ridho 1 of 2)
-          excludedheight: 152 //152 //2 of 2
+          excludedheight: 0 //152 //2 of 2
           //Find description on the 2 new params: https://jixie.atlassian.net/wiki/spaces/ESD/pages/1007910915/Publishers+-+How+to+integrate+Jixie+Outstream+Manager+OSM+on+pages
       };
     function jxOSMDefer2(p) {

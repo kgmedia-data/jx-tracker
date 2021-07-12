@@ -398,18 +398,26 @@ function MakeOneHelperObj_() {
     };
     FactoryOneHelper.prototype.getTrackerBase = function(options) {
         let tmp = 'https://traid.jixie.io/sync/video?x=1';
-        ['client_id', 'sid', 'pageurl', 'domain', 'p_domain'].forEach(function(prop) {
+        ['client_id', 'sid'].forEach(function(prop) {
             if (options[prop])
                 tmp += '&' + prop + '=' + options[prop];
+        });
+        ['pageurl', 'domain', 'p_domain', 'creativeid'].forEach(function(prop) {
+            if (options[prop])
+                tmp += '&' + prop + '=' + encodeURIComponent(options[prop]);
         });
         if (options.amp) tmp += '&device=amp';
         return tmp;
     }
     FactoryOneHelper.prototype.getAdTag = function(options) {
         let tmp = 'https://ad.jixie.io/v1/video?maxnumcreatives=13&source=jxplayer';
-        ['unit', 'client_id', 'sid', 'pageurl', 'domain'].forEach(function(prop) {
+        ['unit', 'client_id', 'sid'].forEach(function(prop) {
             if (options[prop])
                 tmp += '&' + prop + '=' + options[prop];
+        });
+        ['pageurl', 'domain'].forEach(function(prop) {
+            if (options[prop])
+                tmp += '&' + prop + '=' + encodeURIComponent(options[prop]);
         });
         if (options.amp) tmp += '&device=amp';
         return tmp;

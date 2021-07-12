@@ -5,6 +5,7 @@ var gIsUFif = false;
 var gIframe = false;
 var gIsFifs  = false;
 
+
 let currW = window;
 while (top != currW)  {
     gIframe = true;
@@ -68,6 +69,23 @@ function get_() {
     if (p_domain) ret.p_domain = p_domain;
     if (pagedomain) ret.domain = pagedomain;
     if (page) ret.pageurl = page;
+
+    let qparams = (new URL(document.location)).searchParams;
+    if (qparams.creativeid) {
+        ret.creativeid = qparams.creativeid;
+    }
+    if (qparams.creativeids) {
+        ret.creativeids = qparams.creativeids;
+    }
+    if (qparams.debug) {
+        ret.debug = qparams.debug;
+    }
+    if (qparams.deltaassets64) {
+        ret.deltaassets64 = qparams.deltaassets64;
+    }
+    if (qparams.portal) {
+        ret.portal = qparams.portal;
+    }
     return ret;
 }
 
