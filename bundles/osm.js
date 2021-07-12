@@ -4,12 +4,6 @@
 if (window.jxoutstreammgr && window.jxoutstreammgr.init) {
     return;
 }
-/** TODO TODO TODO 
- * need to form adtag:
- * client_id, pageurl, unit, source=osm
- * -->adtagurl
- * then internally they want to augment with hack it is up to them
- */
 const mpjixie       = require('../components/osmpartners/jixie');
 const mpsm          = require('../components/osmpartners/selectmedia');
 const mpteads       = require('../components/osmpartners/teads');
@@ -32,9 +26,6 @@ if (!window.jxrenderer) {
     };
 }
 //-->
-
-
-
 
 const mosmcore      = require('../components/osmengine/core');
 const mpginfo       = require('../components/basic/pginfo');
