@@ -1394,8 +1394,10 @@ function createObject_(options, ampIntegration) {
                     vData.conf && typeof vData.conf === 'object' ? vData.conf:{} , nestedProp_, nestedProp2_);
             }
             repairMissingOptions(_options);
-            _pInst.setConfig(_options.ads.delay, _options.ads.prerolltimeout, _options.ads.adtagurl, _options.logo, 
-                _options.soundindicator);
+            _pInst.setConfig(//_options.ads.delay, _options.ads.prerolltimeout, 
+                _options.ads,
+                _options.ads.adtagurl, 
+                _options.logo, _options.soundindicator);
         }
             
         _dbgL1VP++;
