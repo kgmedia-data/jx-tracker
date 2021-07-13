@@ -40,17 +40,17 @@
     - e.g. Bundle 1 we build the typical video SDK, bundle 2 we need to build a special one with a very different sound indicator (peculiar to Publisher "Super" but a lot of code and styles)
     - If we look at the dependency tree it is like this (some details e.g. helpers object omitted):
     - bundle:
-        video/damplayer
-            video/player-factory
-                video/admgr-factory
-                    video/cssmgr
-                    video/adctrls-factory
-                        video/cssmgr
-                video/ctrls-factory
-                    video/cssmgr
-                video/soundind-factory
-                video/spinner-factory
-                    video/cssmgr
+        - video/damplayer
+            - video/player-factory
+                - video/admgr-factory
+                    - video/cssmgr
+                    - video/adctrls-factory
+                        - video/cssmgr
+                - video/ctrls-factory
+                    - video/cssmgr
+                - video/soundind-factory
+                - video/spinner-factory
+                    - video/cssmgr
 
     - so in this example, video/soundind-factory is required by video/player-factory and NOT DIRECTLY by the bundle.
     - if the code WERE such that the code for video/player-factory DIRECTLY REQUIRES video/soundind-factory, then there is NO good way to easily mix and match stuff.
