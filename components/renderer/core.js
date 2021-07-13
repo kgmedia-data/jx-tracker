@@ -564,10 +564,7 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
                 jxCoreElt.src = normCrParams.iframe.url;
             }
             else if (blob.scripturl && !blob.jxuni_p) {
-                //actually this might be enoguh loh!!
-                //TRY THIS FIRST
-                //pure simple script. no need inject other helpers to get the parameters
-                let html = `<body><script type="text/javascript" src="${blob.scripturl}"></script></body>`;
+                let html = `<body style="margin: 0;"><script type="text/javascript" src="${blob.scripturl}"></script></body>`;
                 jxCoreElt.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
             }
             else if (blob.scripturl && blob.jxuni_p) {

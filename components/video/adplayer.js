@@ -1,4 +1,9 @@
 
+/**
+ * a component used to build the JS that will play a video ad (universal unit)
+ * and standalone 
+ * i.e. plays the role of jxvideo1.3.min.js and jxvideo1.4.mins.js
+ */
 const modulesmgr            = require('../basic/modulesmgr');
 const _helpers              = modulesmgr.get('video/helpers');
 const MakeOneAdObj          = modulesmgr.get('video/admgr-factory');
@@ -18,48 +23,170 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     var _eventsVector       = {};
     var _containerId        = null;
 
-    var _banners = {};//not sure if we really need to expose these here.
+   
+    /*
 
-    function _createBanner(adDiv, masterObj, position) {
-        let obj = masterObj.companion ? masterObj.companion[position]: null;
-        if (!obj) {
-            return;
+    if (e.data == "jxnobannerad") { // listen to jxnobannerad message from the 3rd party tag iframe that indicates an empty slot of the ad
+        var topIframe = document.getElementById("topbanner"); // top banner iframe
+        var botIframe = document.getElementById("bottombanner"); // bottom banner iframe
+        var botIframeHeight = null, topIframeHeight = null;
+
+        if (botIframe) botIframeHeight = botIframe.contentWindow.document.body.offsetHeight;
+        if (topIframe) topIframeHeight = topIframe.contentWindow.document.body.offsetHeight;
+
+        if (topIframe && topIframeHeight == 0) { // if the iframe is exists and the body has 0 height
+            JX.noTopBannerAd = true;
+            topIframe.style.display = "none"; // set the display of iframe to none
         }
-        let url = obj.url;
-        let height = obj.height;
-        let gap = obj.gap;
-        if (position === 'top' && gap > 0) {
-            adDiv.style.marginTop = gap + "px";
+        if (botIframe && botIframeHeight == 0) { // if the iframe is exists and the body has 0 height
+            JX.noBottomBannerAd = true;
+            botIframe.style.display = "none"; // set the display of iframe to none
         }
-        if (position === 'bottom' && gap > 0) {
-            adDiv.style.marginBottom = gap + "px";
+        jxutil.changeHeight(JX);
+    }
+    }
+    */
+   function _doImgBanner(masterObj, pos) {
+        let obj = masterObj.companion[pos];
+        let pElmt = document.createElement('div'); // create a div 
+        pElmt.style.cursor = "pointer";
+        pElmt.style.margin = "auto";
+        // create an img tag
+        //what class?
+        pElmt.innerHTML = '<img src="' + obj.url + '" width="100%" height="' + obj.height + '" class="jxImg"/>';
+        // set the width and height of the div
+        if (obj.width && obj.height) {
+            pElmt.style.width = obj.width + "px";
+            pElmt.style.height = obj.height + "px";
+        } else {
+            pElmt.style.width = "100%";
+            pElmt.style.maxWidth = "100%";
         }
-        //if (obj.type == "image") { // if it is an image
-        {
-            let pElmt = document.createElement('div'); // create a div 
-            pElmt.style.cursor = "pointer";
-            pElmt.style.margin = "auto";
-            // create an img tag
-            pElmt.innerHTML = '<img src="' + url + '" width="100%" height="' + height + '" class="jxImg"/>';
-            // set the width and height of the div
-            if (obj.width && obj.height) {
-                pElmt.style.width = obj.width + "px";
-                pElmt.style.height = obj.height + "px";
-            } else {
-                pElmt.style.width = "100%";
-                pElmt.style.maxWidth = "100%";
+        /*
+        let tracker = obj.clicktracker;
+        jxutil.addListener(pElmt, 'click', function() {
+            //fire tracker 
+            //tracker;
+        }); // listen to the click event
+        */
+        return pElmt;
+   }
+
+    function __noGoogleAdListener(e) {
+        let pos = (e.data == 'jxnobanneradtop' ? 'top' : (e.data == 'jxnobanneradbottom'? 'bottom': null));
+        if (!pos) return;
+        let sizeObj = this.sizeObj;           
+        let iFr = document.getElementById(pos+'banner'); 
+        iFr.style.display = "none"; // set the display of iframe to none
+        if (sizeObj.companion && sizeObj.companion[pos]) {
+            delete sizeObj.companion[pos];
+        }
+        let h = sizeObj.height;
+        if (pos == 'top' && sizeObj.companion['bottom']) 
+            h += sizeObj.companion['bottom'].height + sizeObj.companion['bottom'].gap;
+        else if (pos == 'bottom' && sizeObj.companion['top']) 
+            h += sizeObj.companion['top'].height + sizeObj.companion['top'].gap;
+        //change size
+        parent.postMessage('jxmsg::' + JSON.stringify({'type': 'size',params: {'height': h}}), '*');
+    }
+    var _boundNoGAdListener = null;
+
+    function _doScriptBanner(masterObj, pos) {
+        let obj = masterObj.companion[pos];
+        let script = null;
+        let ifr = null;
+        try {
+            script = atob(obj.script); // decode the script
+        }
+        catch (e) {
+        }
+        var s = '';
+        if (script && script.includes("<script") && script.includes("googletag.pubads()")) {
+            s = `googletag.pubads().addEventListener('slotRenderEnded', function(event) {
+                if (event.isEmpty) {
+                    var id = event.slot.getSlotElementId();
+                    var x = document.getElementById(id);
+                        x.parentElement.style.display = "none";
+                            parent.postMessage("jxnobannerad${pos}", "*");
+                        }
+                    });`;
+                if (_boundNoGAdListener) {
+                    _boundNoGAdListener = __noGoogleAdListener.bind({ masterObj: masterObj });                    
+                    window.addEventListener('message', _boundNoGAdListener, false);
+                    setTimeout(function() {
+                        if (_boundNoGAdListener) {
+                            window.removeEventListener('message', _boundNoGAdListener);
+                            _boundNoGAdListener = null;
+                        }
+                    }, 8000);
+                }
+        }
+        else {
+            s = script;
+        }
+        ifr = document.createElement('iframe');
+        ifr.id = pos + "banner";
+        ifr.style.border = 'none';
+        ifr.setAttribute('frameborder', '0');
+        ifr.setAttribute('scrolling', 'no');
+        if (obj.width && obj.height) {
+            ifr.style.width = obj.width + "px";
+            ifr.style.height = obj.height + "px";
+        } else { //??
+            ifr.onload = function(e) {
+                ifr.style.width = e.target.contentWindow.document.body.scrollWidth;
+                ifr.style.height = e.target.contentWindow.document.body.scrollHeight;
             }
-            _banners[position] = pElmt;
-            if (position == 'top') { // if it is a top banner
+        }
+        let interval = setInterval(function() {
+            if (ifr.contentWindow.document || ifr.contentDocument) {
+                clearInterval(interval);
+                    var doc = ifr.contentWindow.document || ifr.contentDocument;
+                    var jxjs = doc.createElement('script');
+                    if (s != "") {
+                        var script_body = document.createTextNode(s);
+                        jxjs.appendChild(script_body);
+                    }
+                    doc.open();
+                    doc.write('<!DOCTYPE html>'+
+                        '<html>'+
+                            '<head>'+
+                                '<meta name="viewport" content="width=device-width, initial-scale=1">'+
+                            '</head>'+
+                            '<body style="margin: 0;">'+
+                                script
+                                +jxjs.outerHTML+
+                            '</body>'+
+                        '</html>');
+                    doc.close();
+                    focus();
+                    //TODO 
+                    /* jxutil.addListener(window, 'blur', function(e) {
+                    if (document.activeElement == ifr) {
+                        JX.fireEvt(position == 'top' ? 'click2' : 'click3');
+                    }
+                });*/
+            }
+        }, 500);
+        return ifr;
+    }
+    function _createBanner(adDiv, masterObj, pos) {
+        let obj = masterObj.companion ? masterObj.companion[pos]: null;
+        if (obj.gap > 0) {
+            adDiv.style[pos==='top'? 'marginTop':'marginBottom'] = obj.gap + "px";
+        }
+        let pElmt = obj.type === 'image' ? _doImgBanner(masterObj, pos) : _doScriptBanner(masterObj, pos);
+        if (pElmt) {
+            if (pos == 'top') { // if it is a top banner
                 adDiv.parentNode.insertBefore(pElmt, adDiv); // insert above the ad div container
                 //jxutil.addListener(pElmt, 'click', this.onTopBannerClick); // listen to the click event
-            } else if (position == 'bottom') { // if it is a bottom banner
+            } else if (pos == 'bottom') { // if it is a bottom banner
                 adDiv.parentNode.appendChild(pElmt); // insert below the ad div container
                 //jxutil.addListener(pElmt, 'click', this.onBottomBannerClick); // listen to the click event
             }
         }
     }
-    //var _innerCreated = false;
+
     function _createInner(containerId) {
         let tmp = document.getElementById(containerId);
         if (!tmp) {
@@ -75,10 +202,6 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     }
 
     OneAdInstance.prototype.changeCfg = function(data) {
-        //if (!_innerCreated) {
-          //  _innerCreated = true;
-            //_createInner(_containerId);
-        //}
         //this is the type where only got config json
         //i.e. has creativeID unit, that kind of thing.
         //can also get from them lah.
@@ -95,14 +218,14 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _adDiv.style.height = blob.height + 'px';
         if (_adObj) 
             _adObj.reset();
-        var v = {
-                switch2Cnt: function() {
-                    _playerElt.play();
-                },
-                switch2Ad: function() {
-                    _playerElt.pause();
-                }
-            };                
+        let v = {
+            switch2Cnt: function() {
+                _playerElt.play();
+            },
+            switch2Ad: function() {
+                _playerElt.pause();
+            }
+        };                
         _adObj = MakeOneAdObj(_adDiv, "#FFFFFF", _playerElt, v,
             startAdWhenAvail, eventsVector);
         _adObj.forceDimensions(blob.width, blob.height);
@@ -122,6 +245,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     }
 
     //Here this JSON can be either a JSON with creative info or not.
+    //
     OneAdInstance.prototype.changeJson = function(data) {
         if (_adObj) {
             _adObj.reset();
@@ -132,7 +256,6 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 height: 360
             };
         }
-
         if (data.video.height == 520)
             data.video.height= 320; //error somewhere
         //_playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/954006/3001004-954006_480.mp4';
@@ -155,6 +278,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 obj.width = 320;//no need bah
                 obj.gap = 0;
                 */
+                comp[banner].trackerBase = '';
                 comp[banner].url = 'https://creatives.jixie.io/59a1361c5e23f2dcae1229fedbb4d8d5/700/pasanglklan320x100.jpeg';
                 comp[banner].gap = 0; //hack
                 comp[banner].ar = data[label].width/data[label].height;
@@ -167,15 +291,11 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             width: data.video.width, 
             height: data.video.height
         }
-        if (comp.height) {
-            blob.companion = comp;
-        }
+        
         _adDiv.style.width = blob.width +'px';
         _adDiv.style.height = blob.height + 'px';
         
         blob.token = _containerId;
-        //we make a functions vector for them to listen??
-        //to play the video.
         var v = {
             switch2Cnt: function() {
                 _playerElt.play();
@@ -184,9 +304,13 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 _playerElt.pause();
             }
         };
-        ['top','bottom'].forEach(function(banner) {
-            _createBanner(_adDiv, blob, banner);
-        });
+        if (comp.height) {
+            blob.companion = comp;
+            ['top','bottom'].forEach(function(pos) {
+                if (blob.companion[pos])
+                    _createBanner(_adDiv, blob, pos);
+            });
+        }
         //in the end our addescriptor object also only have very little
         _adObj = MakeOneAdObj(_adDiv, "#FFFFFF", _playerElt, v,
             startAdWhenAvail, eventsVector);
@@ -202,7 +326,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         let vast = buildVastXml([xyz]);
         _adObj.makeAdRequestFromXMLP(vast, true, true);
         //still need a noitification mechanism leh!!!
-        parent.postMessage("jxhasad", '*'); //HACK 
+        parent.postMessage("jxhasad", '*'); //HACK . Not here!
 
     }//
 
