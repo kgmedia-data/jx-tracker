@@ -14,6 +14,18 @@ const adDivCls              = cssmgr.getRealCls('adDivCls');
 const contentDivCls         = cssmgr.getRealCls('contentDivCls');
 const playerCls             = cssmgr.getRealCls('playerCls');
  
+// Add a listener of the event to the element e which calls the function handler h
+function addListener(e, event, h) {
+    if (e.addEventListener) {
+        //console.log('adding event listener');
+        e.addEventListener(event, h, false);
+    } else if (e.attachEvent) {
+        e.attachEvent('on' + event, h);
+    } else {
+        e[ 'on' + event] = h;
+    }
+}
+
 function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector = {}) {
     var _pDiv               = null;
     var _playerElt          = null;
@@ -23,36 +35,13 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     var _eventsVector       = {};
     var _containerId        = null;
 
-   
-    /*
-
-    if (e.data == "jxnobannerad") { // listen to jxnobannerad message from the 3rd party tag iframe that indicates an empty slot of the ad
-        var topIframe = document.getElementById("topbanner"); // top banner iframe
-        var botIframe = document.getElementById("bottombanner"); // bottom banner iframe
-        var botIframeHeight = null, topIframeHeight = null;
-
-        if (botIframe) botIframeHeight = botIframe.contentWindow.document.body.offsetHeight;
-        if (topIframe) topIframeHeight = topIframe.contentWindow.document.body.offsetHeight;
-
-        if (topIframe && topIframeHeight == 0) { // if the iframe is exists and the body has 0 height
-            JX.noTopBannerAd = true;
-            topIframe.style.display = "none"; // set the display of iframe to none
-        }
-        if (botIframe && botIframeHeight == 0) { // if the iframe is exists and the body has 0 height
-            JX.noBottomBannerAd = true;
-            botIframe.style.display = "none"; // set the display of iframe to none
-        }
-        jxutil.changeHeight(JX);
-    }
-    }
-    */
    function _doImgBanner(masterObj, pos) {
         let obj = masterObj.companion[pos];
         let pElmt = document.createElement('div'); // create a div 
         pElmt.style.cursor = "pointer";
         pElmt.style.margin = "auto";
         // create an img tag
-        //what class?
+        //what class? We dun have it yet?
         pElmt.innerHTML = '<img src="' + obj.url + '" width="100%" height="' + obj.height + '" class="jxImg"/>';
         // set the width and height of the div
         if (obj.width && obj.height) {
@@ -62,20 +51,18 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             pElmt.style.width = "100%";
             pElmt.style.maxWidth = "100%";
         }
-        /*
-        let tracker = obj.clicktracker;
-        jxutil.addListener(pElmt, 'click', function() {
-            //fire tracker 
-            //tracker;
-        }); // listen to the click event
-        */
+        if (obj.clicktracker) {
+            addListener(pElmt, 'click', function() {
+                fireTracker(obj.tracker4click)
+            });
+        }
         return pElmt;
    }
 
     function __noGoogleAdListener(e) {
         let pos = (e.data == 'jxnobanneradtop' ? 'top' : (e.data == 'jxnobanneradbottom'? 'bottom': null));
         if (!pos) return;
-        let sizeObj = this.sizeObj;           
+        let sizeObj = this.masterObj;           
         let iFr = document.getElementById(pos+'banner'); 
         iFr.style.display = "none"; // set the display of iframe to none
         if (sizeObj.companion && sizeObj.companion[pos]) {
@@ -100,17 +87,17 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         }
         catch (e) {
         }
-        var s = '';
+        let s = '';
         if (script && script.includes("<script") && script.includes("googletag.pubads()")) {
             s = `googletag.pubads().addEventListener('slotRenderEnded', function(event) {
-                if (event.isEmpty) {
-                    var id = event.slot.getSlotElementId();
-                    var x = document.getElementById(id);
+                    if (event.isEmpty) {
+                        var id = event.slot.getSlotElementId();
+                        var x = document.getElementById(id);
                         x.parentElement.style.display = "none";
-                            parent.postMessage("jxnobannerad${pos}", "*");
-                        }
-                    });`;
-                if (_boundNoGAdListener) {
+                        parent.postMessage("jxnobannerad${pos}", "*");
+                    }
+                });`;
+                if (!_boundNoGAdListener) {
                     _boundNoGAdListener = __noGoogleAdListener.bind({ masterObj: masterObj });                    
                     window.addEventListener('message', _boundNoGAdListener, false);
                     setTimeout(function() {
@@ -118,7 +105,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                             window.removeEventListener('message', _boundNoGAdListener);
                             _boundNoGAdListener = null;
                         }
-                    }, 8000);
+                    }, 5000);
                 }
         }
         else {
@@ -160,12 +147,12 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                         '</html>');
                     doc.close();
                     focus();
-                    //TODO 
-                    /* jxutil.addListener(window, 'blur', function(e) {
-                    if (document.activeElement == ifr) {
-                        JX.fireEvt(position == 'top' ? 'click2' : 'click3');
-                    }
-                });*/
+                    addListener(window, 'blur', function(e) {
+                        if (document.activeElement == ifr) {
+                            fireTracker(obj.tracker4click, position == 'top' ? 'click2' : 'click3');
+                        }
+                    });
+
             }
         }, 500);
         return ifr;
@@ -177,12 +164,10 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         }
         let pElmt = obj.type === 'image' ? _doImgBanner(masterObj, pos) : _doScriptBanner(masterObj, pos);
         if (pElmt) {
-            if (pos == 'top') { // if it is a top banner
+            if (pos == 'top') { 
                 adDiv.parentNode.insertBefore(pElmt, adDiv); // insert above the ad div container
-                //jxutil.addListener(pElmt, 'click', this.onTopBannerClick); // listen to the click event
-            } else if (pos == 'bottom') { // if it is a bottom banner
+            } else if (pos == 'bottom') { 
                 adDiv.parentNode.appendChild(pElmt); // insert below the ad div container
-                //jxutil.addListener(pElmt, 'click', this.onBottomBannerClick); // listen to the click event
             }
         }
     }
@@ -270,7 +255,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             if (data[label]) {
                 comp[banner] = {};
                 comp[banner] = JSON.parse(JSON.stringify(data[label]));
-                //cheat:
+                //cheat to fake some data.
                 /*
                 let obj  = comp[banner];
                 obj.url = 'https://creatives.jixie.io/59a1361c5e23f2dcae1229fedbb4d8d5/700/pasanglklan320x100.jpeg';
@@ -278,12 +263,12 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 obj.width = 320;//no need bah
                 obj.gap = 0;
                 */
-                comp[banner].trackerBase = '';
                 comp[banner].url = 'https://creatives.jixie.io/59a1361c5e23f2dcae1229fedbb4d8d5/700/pasanglklan320x100.jpeg';
                 comp[banner].gap = 0; //hack
                 comp[banner].ar = data[label].width/data[label].height;
                 comp[banner].width = containerW;
                 comp[banner].height = comp[banner].width/comp[banner].ar;
+                comp[banner].tracker4click = data.trackers.baseurl + '?' + data.trackers.parameters + '&action=click';
                 comp.height += comp[banner].height;
             }
         });
@@ -307,8 +292,9 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         if (comp.height) {
             blob.companion = comp;
             ['top','bottom'].forEach(function(pos) {
-                if (blob.companion[pos])
+                if (blob.companion[pos]) {
                     _createBanner(_adDiv, blob, pos);
+                }
             });
         }
         //in the end our addescriptor object also only have very little
