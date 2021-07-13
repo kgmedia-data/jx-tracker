@@ -6,7 +6,7 @@
  - as https://scripts.jixie.io/jxvideo2.1.min.js
  - kompas' content video player (in trial phase)
 
- ### Dependencies: 
+### Dependencies: 
  - bundles/jxvideosdk.js:
     - video-styles/default
     - video/damplayer
