@@ -39,7 +39,7 @@
     - To achieve a true mix and match, we introduce another concept of modules manager
     - e.g. Bundle 1 we build the typical video SDK, bundle 2 we need to build a special one with a very different sound indicator (peculiar to Publisher "Super" but a lot of code and styles)
     - If we look at the dependency tree it is like this (some details e.g. helpers object omitted):
-    - bundle:
+    - the bundle (videosdk.js):
         - video/damplayer
             - video/player-factory
                 - video/admgr-factory
