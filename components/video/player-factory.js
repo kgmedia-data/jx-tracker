@@ -439,7 +439,7 @@ window.jxPromisePolyfill        = 'none';
             adUrl, logoCfg, soundIndCfg = null) {
             _isConfigSet = true;
             _cfg.ad_delay = adDelay;
-            adUrl = 'https://ad.jixie.io/v1/video?creativeid=946&unit=faf437f364ec702c250b01fb15232832&pageurl=https%3A%2F%2Fwww.kompas.com%2Ftren%2Fread%2F2021%2F05%2F10%2F080243065%2Fberharap-situasi-pandemi-di-indonesia-tak-seburuk-india&domain=www.kompas.com&source=IVS3000451&playerwidth=400&playerheight=225&ivsadpod=0&ivsadcnt=2&ivsadnum=1&ivsadrequestid=1620611271918-f07b9d18b3ba89abec9dd38255fb633f';
+            //adUrl = 'https://ad.jixie.io/v1/video?creativeid=946&unit=faf437f364ec702c250b01fb15232832&pageurl=https%3A%2F%2Fwww.kompas.com%2Ftren%2Fread%2F2021%2F05%2F10%2F080243065%2Fberharap-situasi-pandemi-di-indonesia-tak-seburuk-india&domain=www.kompas.com&source=IVS3000451&playerwidth=400&playerheight=225&ivsadpod=0&ivsadcnt=2&ivsadnum=1&ivsadrequestid=1620611271918-f07b9d18b3ba89abec9dd38255fb633f';
             
             _cfg.ad_tag = adUrl;
             _cfg.ad_prerolltimeout = prerollTimeout;
