@@ -8,18 +8,17 @@
 
  ### Dependencies: 
  - bundles/jxvideosdk.js:
-        - video-styles/default
-        - video/damplayer
-            - video/player-factory
-                - video/admgr-factory
-                    - video/cssmgr
-                    - video/adctrls-factory
-                        - video/cssmgr
-                - video/ctrls-factory
-                    - video/cssmgr
-                - video/soundind-factory
-                - video/spinner-factory
-                    - video/cssmgr
+    - video-styles/default
+    - video/damplayer
+        - video/player-factory
+            - video/admgr-factory
+                - video/adctrls-factory
+                - video/cssmgr
+            - video/ctrls-factory
+                - video/cssmgr
+            - video/soundind-factory
+            - video/spinner-factory
+                - video/cssmgr
  - Coz we want 'mix-n-match' possibility (re HowDoesItWork.md), only the bundles/videosdk.js will 'require' specific modules.
     - the modules below do not do 'require' explicitly. They get the objects from the modules manager instead
         
