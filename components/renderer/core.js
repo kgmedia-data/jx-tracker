@@ -86,7 +86,7 @@ function addGAMNoAdNotifyMaybe(str) {
         video: {
             //default visibility threshold
             signature: 'jx_video_ad',
-            url: 'https://jx-scripts.s3-ap-southeast-1.amazonaws.com/tests/jxvideoad.min.js'
+            url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
         }
     };
     const visThreshold_ = 0.4;
@@ -488,7 +488,7 @@ function addGAMNoAdNotifyMaybe(str) {
                 msgStr = "jxmsg::" + JSON.stringify(obj);
             }
         }
-
+console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
         if (creativeNode && creativeNode.contentWindow) {
             creativeNode.contentWindow.postMessage(msgStr, '*');
         }
@@ -564,6 +564,8 @@ function addGAMNoAdNotifyMaybe(str) {
                 jxCoreElt.src = normCrParams.iframe.url;
             }
             else if (blob.scripturl && !blob.jxuni_p) {
+                //actually this might be enoguh loh!!
+                //TRY THIS FIRST
                 //pure simple script. no need inject other helpers to get the parameters
                 let html = `<body><script type="text/javascript" src="${blob.scripturl}"></script></body>`;
                 jxCoreElt.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
@@ -849,7 +851,10 @@ function addGAMNoAdNotifyMaybe(str) {
             400 is the real maxheight --> 200x400 --> this is the real possible.
         */
         let ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
+
         let newH = ((c.height*ratio) + 5) + "px";
+        console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
+
         //console.log(`__handleResizeContainer ratio=${ratio} (=${jxbnDiv.offsetWidth}/${c.width}) newH=${newH} (=${c.height}*${ratio})`);
         //Not sure how to combine the fixedHeight stuff with this squashing though!!
         //if (c.fixedHeight > 0) newH = "100%";
@@ -1244,8 +1249,9 @@ function addGAMNoAdNotifyMaybe(str) {
                 //let surl = playerUrls_['video'] + 'creativeid=' + c.id;
                 //out['iframe'] = { scripturl: surl, jxuni_p: JSON.parse(JSON.stringify(c)) };
                 //delete out.adparameters;
+                trusted = false;
                 out.crSig = jxScriptUrls_.video.signature;
-                out.div = {
+                out[trusted? 'div':'iframe'] = { 
                     scripturl: jxScriptUrls_.video.url
                 };
                 break;
@@ -1476,6 +1482,7 @@ function addGAMNoAdNotifyMaybe(str) {
 
             
             crReady2HearAdParamsProm.then(function() {
+                console.log(`WOOYANYU 1`);
 
                 /**
                  * the creative (script, html ..or nothing) is loaded and ready to listen to our orders.
@@ -1509,14 +1516,18 @@ function addGAMNoAdNotifyMaybe(str) {
                     cxtFcnsVector.setupScrollEventHandler(boundScrollEvent);
                     unhook.listeners.scroll = boundScrollEvent;
                 }
-
+                console.log(`WOOYANYU 2`);
                 return crHasAdProm;
             })
             .then(function() {
+                console.log(`WOOYANYU 3`);
+                console.log(`check scalability ${normCrParams.scalable}:`);
+
                 /**
                  * Set up resize handlers
                  */
                 if (normCrParams.scalable) {
+                    console.log(`WOOYANYU 4`);
                     cxtFcnsVector.setupResizeHandler(boundHandleResize, normCrParams.scalable);
                     //save the bound function "pointers" so we can unlisten later
                     unhook.listeners.resize = boundHandleResize;

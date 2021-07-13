@@ -980,3 +980,15 @@ function get_() {
     return ret;
 };
 module.exports.get = get_;
+
+/* 
+ ************** module: basic/ids **************************************************
+
+* module.exports:
+  - get (function)
+    - returns an object and this object could contain 'client_id' and/or 'sid' properties 
+    - ... if available dependencies:
+
+* requires/dependencies:
+  - none
+*/

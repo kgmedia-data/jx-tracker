@@ -71,6 +71,7 @@ function get_() {
     if (page) ret.pageurl = page;
 
     let qparams = (new URL(document.location)).searchParams;
+    //use a loop lah!!
     if (qparams.creativeid) {
         ret.creativeid = qparams.creativeid;
     }
@@ -90,3 +91,25 @@ function get_() {
 }
 
 module.exports.get = get_;
+
+/* 
+ ************** module: basic/pginfo **************************************************
+
+* module.exports:
+    - get (function)
+        - returns an object and this object could contain the following, if available:
+            - creativeid (from current url)
+            - creativeids (from current url)
+            - debug (from current url)
+            - deltaassets64 (from current url)
+            - portal (from curent url)
+    
+            - domain
+            - pageurl
+            - p_domain
+            - (Renee TODO: write down the way we determine the answer)
+
+  
+* requires/dependencies:
+    - none
+*/

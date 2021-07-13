@@ -94,5 +94,20 @@ function createInstance_(p, partners) {
 //pass you all the partners functions.
 //something to get AMP context info (better be shared coz got amp-adonly)
 //
-module.exports.ampOneOffInit = ampOneOffInit_;
+//TODO just call this internally once then!!
+//module.exports.ampOneOffInit = ampOneOffInit_;
 module.exports.createInstance = createInstance_;
+
+/* 
+ ************** module: osmengine/amp-core***********************************************
+
+* module.exports:
+    - createInstance (function(options, arrayOfPartnerObjects)
+        - creates an OSM object from the params
+        - As this is not meant to be controlled, this object has no APIs to be called
+        - It is just "unleashed" and will take care of itself.
+
+* requires/dependencies:
+  - none (nothing direct - the arrayOfPartner objects is passed to us from the bundles
+    layer)
+*/

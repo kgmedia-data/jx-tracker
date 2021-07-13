@@ -24,3 +24,16 @@ function set_(name, obj) {
 
 module.exports.set = set_;
 module.exports.get = get_;
+
+/* 
+ ************** module: basic/modulesmgr*************************************************
+
+* module.exports:
+  - set (function (componentName, object) 
+    - "registers" the object under componentName with this manager (for later 'get')
+  - get (function (componentName) 
+    - returns the object under componentName with this manager (can be null)
+    
+* requires/dependencies:
+  - none
+*/

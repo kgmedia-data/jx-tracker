@@ -21,6 +21,8 @@
 
  
  function MakeOneAdObj_(container, controlsColor, vid, fcnVector) {
+    var _forceWidth = 0;
+    var _forceHeight = 0;
     var _adEnduredVec = [0,0,0,0,0];//help us just add up in this ad slot how long the fella watched ads
     var _vid = null;
     var _pFcnVector = null; //this is how to work with the CONTENT VIDEO player
@@ -341,8 +343,10 @@
         this.resolveFcn("jxnoad");
     };
     var _startAd = function(resolveFcn) {
-         _adsManager.init(_width, _height, google.ima.ViewMode.NORMAL);
-       
+        _adsManager.init(
+            _forceWidth ? _forceWidth : _width, 
+            _forceHeight ? _forceHeight : _height, 
+            google.ima.ViewMode.NORMAL);
         [
             "LINEAR_CHANGED",
             "AD_PROGRESS",
@@ -451,6 +455,9 @@
     };
     
     var _sizeCheck = function() {
+        if (_forceWidth || _forceHeight) {
+            return;
+        }
         if (_width != _container.offsetWidth || _height != _container.offsetHeight) { 
             
             _width = _container.offsetWidth;
@@ -482,7 +489,18 @@
         _controlsColor = controlsColor;
     }
 
+    FactoryOneAd.prototype.forceDimensions = function(width, height) {
+        _forceWidth = width;
+        _forceHeight = height;
+    }
+
+    FactoryOneAd.prototype.makeAdRequestFromXMLP = function(vastXML, autoplayFlag, mutedFlag) {
+        return _makeAdRequestP(null, vastXML, autoplayFlag, mutedFlag);
+    }
     FactoryOneAd.prototype.makeAdRequestP = function(adURL, autoplayFlag, mutedFlag) {
+        return _makeAdRequestP(adURL, null, autoplayFlag, mutedFlag);
+    }
+    function _makeAdRequestP(adURL, adXML, autoplayFlag, mutedFlag) {
         _width = _container.offsetWidth;
         _height = _container.offsetHeight;
         
@@ -518,12 +536,15 @@
                 
                 let adsRequest = new google.ima.AdsRequest();
                 adsRequest.forceNonLinearFullSlot = true;
-                /////adsRequest.adsResponse = nonLinearXML_; //nopodXML_;
-                adsRequest.adTagUrl = adURL;
-                adsRequest.linearAdSlotWidth = _width;
-                adsRequest.linearAdSlotHeight = _height;
-                adsRequest.nonLinearAdSlotWidth = _width ;
-                adsRequest.nonLinearAdSlotHeight = _height / 3;
+                if (adURL) 
+                    adsRequest.adTagUrl = adURL;
+                else if (adXML) {
+                    adsRequest.adsResponse = adXML;
+                }    
+                adsRequest.linearAdSlotWidth = _forceWidth ? _forceWidth: _width;
+                adsRequest.linearAdSlotHeight = _forceHeight ? _forceHeight: _height;
+                adsRequest.nonLinearAdSlotWidth = _forceWidth ? _forceWidth: _width;
+                adsRequest.nonLinearAdSlotHeight = (_forceHeight ? _forceHeight: _height) / 3;
               
                 adsRequest.setAdWillAutoPlay(autoplayFlag); 
                 adsRequest.setAdWillPlayMuted(mutedFlag);
