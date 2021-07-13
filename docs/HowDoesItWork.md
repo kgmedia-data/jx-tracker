@@ -10,6 +10,18 @@
                 - no need to support those universal "elements" (Learn More)
                 - ==> would be good there is a specialization of that which is SMALLER!
 
+* Main concepts
+    - bundles : small files that basically assemble components together and be the glue.
+        - each one gets built into a deployable script
+        - e.g. under bundles we have the files to derive: 
+            - video-sdk (https://scripts.jixie.io/jxvideo2.1.min.js), 
+            - OSM (non-amp) (https://scripts.jixie.io/jxosm.1.0.min.js)
+            - OSM (amp)
+            - universal lite
+            - Headerbidding winning creative renderer
+            ....(TODO fill in the above )
+    - components: components/ please refer to the catalog of them (current dir: Contracts-*.md)
+
 * How it works
     - using browserify ('require' <-- which is by right a node.js concept and not for browser JS)
     - During build time (thru gulp), browserify will walk the top file
