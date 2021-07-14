@@ -256,7 +256,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         let domain = data.domain? data.domain:'jixie.io';
         let adURL = `https://ad.jixie.io/v1/video?source=sdk&domain=${domain}&creativeid=` + data.creativeid;
         _adObj.setAutoAdsManagerStart(true);
-        _adObj.makeAdRequestCB(adURL, null, true, true, updateUniversal);
+        _adObj.makeAdRequestCB(adURL, true, true, updateUniversal);
     }
     
     /**
