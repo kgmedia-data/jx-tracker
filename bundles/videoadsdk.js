@@ -176,10 +176,11 @@ if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
                 this.player = inst;
                 oldPlayerSDKMap.set(json.container, inst);
             }
-            inst.changeCfg(json);
+            //inst.changeCfg(json);
         },
         play: function() {
-            this.player.play();
+            //already playing by itself
+            //this.player.play();
         }
     }
     window.onJXPlayerReady(playerObj);

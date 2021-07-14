@@ -205,6 +205,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _pDiv.style.height = '100%';
         _pDiv.style.position = 'relative';
         _adDiv = _helpers.newDiv(_pDiv, "div", "", adDivCls); 
+        
         _contentDiv = _helpers.newDiv(_adDiv, 'div', `<video id="idJxPlayer" class=${playerCls} controls muted playsinline></video>`, contentDivCls); 
         _playerElt = document.getElementById('idJxPlayer');
     }

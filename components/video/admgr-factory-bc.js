@@ -128,7 +128,9 @@
     var _pauseAd = function() {
         //this is only legit if really started ah
         if (_adsManager) {
-            _adsManager.pause();
+            if (_isAdStarted) {
+                _adsManager.pause();
+            }
         }
     };
     var _handleContentPauseReq = function(hideContent) {
@@ -414,6 +416,10 @@
     var _onAdsManagerLoaded = function(adsManagerLoadedEvent) {
         //use this to help us only fire each of this max once:
         //will be removing from here after firing.
+        //TODO PROPERLY ...
+        var e = new Event('jxhasad');
+        window.dispatchEvent(e);
+
         _leftoverEvents = { 
             'started': 1,
             'ended': 1,
@@ -463,6 +469,7 @@
         if (_forceWidth || _forceHeight) {
             return;
         }
+        
         if (_width != _container.offsetWidth || _height != _container.offsetHeight) { 
             
             _width = _container.offsetWidth;
