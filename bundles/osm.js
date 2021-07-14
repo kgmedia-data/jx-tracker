@@ -4,10 +4,16 @@
 if (window.jxoutstreammgr && window.jxoutstreammgr.init) {
     return;
 }
+const modulesmgr    = require('../components/basic/modulesmgr');
+const univelements  = require('../components/renderer/univelements-stub');
+modulesmgr.set('renderer/univelements',         univelements);
+
 const mpjixie       = require('../components/osmpartners/jixie');
 const mpsm          = require('../components/osmpartners/selectmedia');
 const mpteads       = require('../components/osmpartners/teads');
 const mpunruly      = require('../components/osmpartners/unruly');
+
+
 
 //<-- If we want, we can build the renderer code right in
 //    of course our script will be much bigger than.

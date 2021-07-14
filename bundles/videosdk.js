@@ -49,6 +49,9 @@ modulesmgr.set('video/soundind-factory',soundind_fact);
 const spinner_fact                      = require('../components/video/spinner-factory');
 modulesmgr.set('video/spinner-factory', spinner_fact);
 
+const adscheduler_fact                  = require('../components/video/adscheduler-factory');
+modulesmgr.set('video/adscheduler-factory',  adscheduler_fact);
+
 const player_fact                       = require('../components/video/player-factory');
 modulesmgr.set('video/player-factory',  player_fact);
 

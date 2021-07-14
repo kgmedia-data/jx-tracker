@@ -6,7 +6,7 @@ const MakeOneAdObj              = modulesmgr.get('video/admgr-factory');
 const MakeOnePlayerControlsObjD = modulesmgr.get('video/ctrls-factory');
 const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
-
+const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
      
 const msPlayAttributeThreshold_     = 1000;
 const msPauseAttributeThreshold_    = 1000;
@@ -68,6 +68,7 @@ window.jxPromisePolyfill        = 'none';
         /**
          * "PRIVATE" variables :-) using closure.
          */
+        var _nextAdSlotTime = 999999;
         var _currToken = null;
         var _isConfigSet = false;
         var _genInitP = null; //general init promise (resolved means the general init of the player done)
@@ -96,7 +97,7 @@ window.jxPromisePolyfill        = 'none';
         var _defaultReportInfoBlob = null;
         var _accumulatedTime = 0;
         var _playheadCB = null; //for doing the save playhead in cookie
-        var _delayedAdMgrFcn = null;
+        var _adCountdownMgrFcn = null;
 
         //to manage the emission of the quartile, midpoint events efficiently
         //So ugly...
@@ -167,8 +168,8 @@ window.jxPromisePolyfill        = 'none';
         var _cfg = {
             
             //see definition place for the constant at top of file.
-            startModePW: startModePWClick_,
-            ad_delay: -1
+            startModePW: startModePWClick_
+            //ad_delay: -1
             //no default adtag
         };
 
@@ -359,6 +360,10 @@ window.jxPromisePolyfill        = 'none';
             _state = initialState_; //'init'; //overall : content or ads
             _cntVState = 'init'; //state of the content video 
             _remainSecEvents = JSON.parse(JSON.stringify(remainSecEventsSeed_));
+            if (_adScheduler) {
+                _adScheduler.reset();
+                _nextAdSlotTime = _adScheduler.getFirstNonPreroll();
+            }
             if (_ctrls)
                 _ctrls.reset();
             if (_stripMessageDiv)
@@ -396,8 +401,6 @@ window.jxPromisePolyfill        = 'none';
             _contentDiv.classList.remove(hideCls); //this is important. Coz if video is switched while ad is playing, 
             //then the content div at that time would be hidden!
             
-            _delayedAdMgrFcn = null;
-            _doDelayedAdP = null;
             _accumulatedTime = 0;
             _thumbnailURL = null;
 
@@ -435,14 +438,15 @@ window.jxPromisePolyfill        = 'none';
             //just use default.
             return _isConfigSet;
         }
-        FactoryPlayerWrapper.prototype.setConfig = function(adDelay, prerollTimeout, 
-            adUrl, logoCfg, soundIndCfg = null) {
+        FactoryPlayerWrapper.prototype.setConfig = function(
+            adsCfg,
+            adUrl,
+            logoCfg, soundIndCfg = null) {
             _isConfigSet = true;
-            _cfg.ad_delay = adDelay;
-            //adUrl = 'https://ad.jixie.io/v1/video?creativeid=946&unit=faf437f364ec702c250b01fb15232832&pageurl=https%3A%2F%2Fwww.kompas.com%2Ftren%2Fread%2F2021%2F05%2F10%2F080243065%2Fberharap-situasi-pandemi-di-indonesia-tak-seburuk-india&domain=www.kompas.com&source=IVS3000451&playerwidth=400&playerheight=225&ivsadpod=0&ivsadcnt=2&ivsadnum=1&ivsadrequestid=1620611271918-f07b9d18b3ba89abec9dd38255fb633f';
-            
-            _cfg.ad_tag = adUrl;
-            _cfg.ad_prerolltimeout = prerollTimeout;
+            _cfg.ads = adsCfg;
+            _cfg.adUrl = adUrl;
+            _adScheduler = MakeOneAdScheduler(_cfg.ads.delay, _cfg.ads.interval, _cfg.ads.maxslots, _cfg.ads.podsize);
+            _nextAdSlotTime = _adScheduler.getFirstNonPreroll();
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
@@ -921,16 +925,17 @@ window.jxPromisePolyfill        = 'none';
        
         /**
          * Function to manage the countdown strip
+         * Meant to be used as a bound function.
          */
       
-        var  __countdownStripMgrFcn = function(accuTime) {
+        var  __adCountdownMgrFcn = function(accuTime) {
             //Note I changed to this coz even the countdown phase it should use
             //play time and not absolute time.
             //let's also not have too many timers flying around
             //oh coz fetch ad also taken time lah.
-            let remaining = Math.floor(adCountdownSec_ + this.addTime + _cfg.ad_delay - accuTime);
+            let remaining = Math.floor(adCountdownSec_ + this.addTime  + this.adReqTime - accuTime );
             if(remaining <= 0) {
-                _delayedAdMgrFcn = null; //self-removal so that the playhead update will not be calling it.
+                _adCountdownMgrFcn = null; //self-removal so that the playhead update will not be calling it.
                 _stripMessageDiv.classList.add(hideCls);
                 this.resolveFcn('');
             }
@@ -1061,12 +1066,21 @@ window.jxPromisePolyfill        = 'none';
                     _accumulatedTime += diff;
                 }
 
+                /*
                 if(_doDelayedAdP && _accumulatedTime >= _cfg.ad_delay) {
                     //TODO: for ultra short videos ....dun even have this.
                     let tmp = _doDelayedAdP;
                     _doDelayedAdP = null;
                     tmp(_accumulatedTime); //this will kick off a promise chain.
                 }
+                */
+                //if we allow for midrolls, then everybody has delayed ads then.
+                if(_nextAdSlotTime != -1 && _accumulatedTime >= _nextAdSlotTime) {
+                    _adScheduler.useSlot(_accumulatedTime);
+                    _nextAdSlotTime = _adScheduler.getNext(_accumulatedTime);
+                    _fetchMidrollWithCountdownP(_accumulatedTime); //this will kick off a promise chain.
+                }
+
                 if (_changeShakaBuffering && _accumulatedTime > 15) {
                     let tmp = _changeShakaBuffering;
                     _changeShakaBuffering = null;
@@ -1079,9 +1093,12 @@ window.jxPromisePolyfill        = 'none';
                  * if the diff is longer than 500ms for example, so we can assume that users has seeked the video to certain playhead
                  * and we didn't set the diff as an accumulated time, coz users didn't really watch the video
                  */
-                if(_delayedAdMgrFcn) {
+                if(_adCountdownMgrFcn) {
+                    console.log('##### CD CD CD CD CD ###');
+                    //this is the one that shows the countdown stuff.
+                    //_doDelayedAdP, if can secure an ad will set this up _delayedAdMgrFcn is a bound function
                     //the countdown thing:
-                    _delayedAdMgrFcn(_accumulatedTime);
+                    _adCountdownMgrFcn(_accumulatedTime);
                 }
                 //2 seconds.
                 if (_remainSecEvents.length) {
@@ -1402,7 +1419,7 @@ window.jxPromisePolyfill        = 'none';
            */
         function _initChainDoAdsP(getAdMode, adProm) {
             if (getAdMode == 'noprefetch') {
-                adProm = _adObject.makeAdRequestP(_cfg.ad_tag, 
+                adProm = _adObject.makeAdRequestP(_cfg.adUrl, 
                     _startModePW == startModePWClick_ ? false: true,
                     _savedMuted);
             }
@@ -1447,7 +1464,7 @@ window.jxPromisePolyfill        = 'none';
             ps.push(new Promise(function(resolve) {
                 setTimeout(function() {
                     resolve("timeout");
-                }, _cfg.ad_prerolltimeout); 
+                }, _cfg.ads.prerolltimeout); 
             }));
             return Promise.race(ps);
         }
@@ -1588,7 +1605,7 @@ window.jxPromisePolyfill        = 'none';
             } 
             _videoID = videoID;
             _thumbnailURL = thumbnailURL;
-            if(_cfg.ad_delay == 0) {
+            if(_cfg.ads.delay == 0) {
                 //pure preroll.
                 _createAdObjMaybe();
                 getAdMode = 'noprefetch'; //if boss or whoever want then we no prefetch.
@@ -1596,9 +1613,6 @@ window.jxPromisePolyfill        = 'none';
             }
             else {
                 getAdMode = 'none';
-                if (_cfg.ad_delay > 0)
-                    _doDelayedAdP = __doDelayedAdP;
-                //if < 0 then means dun want ah.                    
             }
             //basically we need to know the state ah.
             let pauseForAd = getAdMode != 'none';
@@ -1652,7 +1666,7 @@ window.jxPromisePolyfill        = 'none';
                     _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
                     _ctrls.videoVisualsRemoveSpinner();
                     if(getAdMode == 'prefetch') {
-                        adPromise = _adObject.makeAdRequestP(_cfg.ad_tag, 
+                        adPromise = _adObject.makeAdRequestP(_cfg.adUrl, 
                             _startModePW == startModePWClick_? false: true, //autoplay Flag (best effort lah)
                             _savedMuted); //muted flag (best effort lah)
                     }
@@ -1709,8 +1723,7 @@ window.jxPromisePolyfill        = 'none';
             //-------HERE ENDS OUR INIT PHASE PROMISE CHAIN --------------------
         }
         //These are things we want to do in the life-time of a video, if it plays long enough
-        var _doDelayedAdP = null;
-
+        
         var _changeShakaBuffering = null;
 
         function __changeShakaBuffering(shakaPlayer) {
@@ -1728,7 +1741,7 @@ window.jxPromisePolyfill        = 'none';
          * This is called by the playhead update callback function when the time is ripe
          * @param {*} startAccuTime. When this function is called what is the accumulated play time.
          */
-        function __doDelayedAdP(startAccuTime) {
+        function _fetchMidrollWithCountdownP(startAccuTime) {
             if (isIOS_ && !_vid.muted) {
                 console.log(`is IOS and the thing is not muted. so we dun want to play an ad.`);
                 //on iOS we are not able to start the ad with sound (will hang)
@@ -1737,16 +1750,17 @@ window.jxPromisePolyfill        = 'none';
             }
             _createAdObjMaybe();
             //autoplay how you decide leh.
-            _adObject.makeAdRequestP(_cfg.ad_tag, 
+            _adObject.makeAdRequestP(_cfg.adUrl, 
                 _startModePW == startModePWClick_ ? false: true,
                 _vid.muted)
             .then(function(outcome) {
                 if(outcome == 'jxhasad') {
+                    console.log("jxhasad!");
                     //we use accumulated time to also manage the countdown but since time is taken up
                     //between adRequest and hasad (adsMgrloaded), I need to factor that in also.
                     let wastedTime = _accumulatedTime - startAccuTime;
                     return new Promise(function(resolve) {
-                        _delayedAdMgrFcn = __countdownStripMgrFcn.bind({addTime: wastedTime, resolveFcn: resolve});
+                        _adCountdownMgrFcn = __adCountdownMgrFcn.bind({adReqTime: _accumulatedTime, addTime: wastedTime, resolveFcn: resolve});
                         _createStripMessage(adCountdownSec_);
                     });
                 }

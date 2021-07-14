@@ -1,3 +1,13 @@
+/**
+ * Well currently I have admgr-factory-bc
+ * This is the one serving the jxvideo.1.3.min.js and jxvideo.1.4.min.js
+ * 
+ * Eventually - this module may still be removed
+ * maybe absorb the extra needed functionality to admgr-factory (the one used for videosdk)
+ * 
+ * so that it can serve both the videosdk and the video ads stuff
+ * But currently we have it separate just to try out stuff
+ */
 const modulesmgr            = require('../basic/modulesmgr');
 const _helpers              = modulesmgr.get('video/helpers');
 const cssmgr                = modulesmgr.get('video/cssmgr');
@@ -42,17 +52,20 @@ const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent);
     var _sizeCheckTimer = null;
     var _autoAdsMgrStart = true; //i.e. when adsmanagerloaded comes , then just start the ad.
     
+    //event subscription.
     var _doEventMaybe = function(action) {
+        //TODO 
+        return;
         var e = new Event(action);
         window.dispatchEvent(e);
-        if (action == 'jxadended' || action == 'jxnoad') {
+        /* if (action == 'jxadended' || action == 'jxnoad') {
             let obj = {
                 type: action,
                 token: "abc" //_adDescriptor.token
             }
             let msgStr = "jxmsg::" + JSON.stringify(obj);
             window.parent.postMessage(msgStr, '*'); 
-        }
+        }*/
     };
     
     FactoryOneAd.prototype.reset = function() {
@@ -172,9 +185,11 @@ const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent);
                 //emit an ended event? to universal lite
                 break;
             case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
+                //console.log(`________google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED`);
                 _handleContentPauseReq();            
                 break;
             case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
+                //console.log(`________google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED`);
                 _handleContentResumeReq();
                 break;
             case google.ima.AdEvent.Type.PAUSED:
@@ -184,8 +199,6 @@ const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent);
                 _ctrls.updatePlayState(true);
                 break;
             case google.ima.AdEvent.Type.FIRST_QUARTILE:
-                _pauseAd();
-                //HACK
                 _doEventMaybe('jxadfirstQuartile');
                 break;
             case google.ima.AdEvent.Type.MIDPOINT:
@@ -206,10 +219,12 @@ const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent);
         }
     }
     function _onAdError(adErrorEvent) {
+        _pFcnVector.notifyNoAd();
         _doEventMaybe('jxnoad');
         return;
     }
     var _onNoAd = function(e) {
+        _pFcnVector.notifyNoAd();
         _doEventMaybe('jxnoad');
     };
     var _startAd = function(resolveFcn) {

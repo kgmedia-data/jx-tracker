@@ -58,7 +58,8 @@
     //and when you are back, the whole thing was reset already.
 
     FactoryOneAd.prototype.reset = function() {
-        //_currToken = token;
+        _autoAdsManagerStart = false;
+        
         _adEnduredVec = [0,0,0,0,0];
         //for use of the next ad request
         //I am thinking of destroying the ads loader also?
@@ -252,7 +253,8 @@
                 else {
                     console.log(`#$ no need show the ads controls then coz non linear`);
                 }
-                _adDiv.classList.remove(adHideCls);
+                _adDiv.classList.remove(adHideCls); //
+                _adDiv.classList.remove(hideCls); //
 
                 // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
                 //pls fix this. the jxhide class does not work
@@ -468,8 +470,9 @@
         }
     };
     var _createControls = function() {
-        if (!_ctrls)
+        if (!_ctrls) {
             _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI());
+        }
         _ctrls.hide();
     };
     var _createUIElt = function() {
@@ -495,9 +498,11 @@
     }
 
     FactoryOneAd.prototype.makeAdRequestFromXMLP = function(vastXML, autoplayFlag, mutedFlag) {
+        this.reset();
         return _makeAdRequestP(null, vastXML, autoplayFlag, mutedFlag);
     }
     FactoryOneAd.prototype.makeAdRequestP = function(adURL, autoplayFlag, mutedFlag) {
+        this.reset();
         return _makeAdRequestP(adURL, null, autoplayFlag, mutedFlag);
     }
     function _makeAdRequestP(adURL, adXML, autoplayFlag, mutedFlag) {

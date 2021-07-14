@@ -1,6 +1,3 @@
-//This was done (half-baked) prior to this componentization days
-//Now still need to convert this to use our /video components
-
 /**
  * THE UNIFIED AD VIDEO SDK
  * Can run as many video ads on the page as you like.
@@ -12,7 +9,6 @@
  */
 /*
 Renee TODO:
-
 formation of adtag
 JX image not done yet
 not properly doing the content video of course (not sure if we care ...)
@@ -25,9 +21,6 @@ the ad will emit COMPLETE event at the end of the first showing of the ad (befor
     It just so happen that the start() the second time does not do anything. so the ad
     just plays on...
 the PUSH idea...    
-
-
-
 */    
 
 (function() {
