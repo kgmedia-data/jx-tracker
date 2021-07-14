@@ -406,7 +406,7 @@ function addGAMNoAdNotifyMaybe(str) {
         }
         //if (!json) return; //unrelated to us, we dun bother.
         if (!json) {
-            if (e.data == 'jxhasad' || e.data == 'jxnoad' || e.data == 'jxloaded')
+            if (e.data == 'jxadended' || e.data == 'jxhasad' || e.data == 'jxnoad' || e.data == 'jxloaded')
                 type = e.data;
         }
         if (!type && !json) return; //unrelated to us, we dun bother.
@@ -488,7 +488,6 @@ function addGAMNoAdNotifyMaybe(str) {
                 msgStr = "jxmsg::" + JSON.stringify(obj);
             }
         }
-console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
         if (creativeNode && creativeNode.contentWindow) {
             creativeNode.contentWindow.postMessage(msgStr, '*');
         }
@@ -1494,8 +1493,6 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
 
             
             crReady2HearAdParamsProm.then(function() {
-                console.log(`WOOYANYU 1`);
-
                 /**
                  * the creative (script, html ..or nothing) is loaded and ready to listen to our orders.
                  */
@@ -1528,18 +1525,14 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
                     cxtFcnsVector.setupScrollEventHandler(boundScrollEvent);
                     unhook.listeners.scroll = boundScrollEvent;
                 }
-                console.log(`WOOYANYU 2`);
                 return crHasAdProm;
             })
             .then(function() {
-                console.log(`WOOYANYU 3`);
-                console.log(`check scalability ${normCrParams.scalable}:`);
 
                 /**
                  * Set up resize handlers
                  */
                 if (normCrParams.scalable) {
-                    console.log(`WOOYANYU 4`);
                     cxtFcnsVector.setupResizeHandler(boundHandleResize, normCrParams.scalable);
                     //save the bound function "pointers" so we can unlisten later
                     unhook.listeners.resize = boundHandleResize;
