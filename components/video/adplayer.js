@@ -15,6 +15,7 @@ const contentDivCls         = cssmgr.getRealCls('contentDivCls');
 const playerCls             = cssmgr.getRealCls('playerCls');
  
 // Add a listener of the event to the element e which calls the function handler h
+// General helper funciton
 function addListener(e, event, h) {
     if (e.addEventListener) {
         //console.log('adding event listener');
@@ -35,7 +36,13 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     var _eventsVector       = {};
     var _containerId        = null;
 
-   function _doImgBanner(masterObj, pos) {
+    /**
+     * 
+     * @param {*} masterObj 
+     * @param {*} pos 
+     * @returns 
+     */
+    function _doImgBanner(masterObj, pos) {
         let obj = masterObj.companion[pos];
         let pElmt = document.createElement('div'); // create a div 
         pElmt.style.cursor = "pointer";
@@ -59,6 +66,11 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         return pElmt;
    }
 
+    /**
+     * 
+     * @param {*} e 
+     * @returns 
+     */
     function __noGoogleAdListener(e) {
         let pos = (e.data == 'jxnobanneradtop' ? 'top' : (e.data == 'jxnobanneradbottom'? 'bottom': null));
         if (!pos) return;
@@ -157,6 +169,13 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         }, 500);
         return ifr;
     }
+
+    /**
+     * 
+     * @param {*} adDiv 
+     * @param {*} masterObj 
+     * @param {*} pos 
+     */
     function _createBanner(adDiv, masterObj, pos) {
         let obj = masterObj.companion ? masterObj.companion[pos]: null;
         if (obj.gap > 0) {
@@ -172,6 +191,10 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         }
     }
 
+    /**
+     * 
+     * @param {*} containerId 
+     */
     function _createInner(containerId) {
         let tmp = document.getElementById(containerId);
         if (!tmp) {
@@ -186,6 +209,25 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _playerElt = document.getElementById('idJxPlayer');
     }
 
+    var _vectorForAdMgr = {
+        notifyNoAd: function() {
+            parent.postMessage("jxnoad", '*'); 
+        },
+        switch2Cnt: function() {
+            console.log(`______ ENDED;`);
+            parent.postMessage("jxadended", '*'); 
+            _playerElt.play();
+        },
+        switch2Ad: function() {
+            console.log(`______ STARTED;`);
+            parent.postMessage("jxhasad", '*'); 
+            _playerElt.pause();
+        }
+    };                
+    /**
+     * 
+     * @param {*} data 
+     */
     OneAdInstance.prototype.changeCfg = function(data) {
         //this is the type where only got config json
         //i.e. has creativeID unit, that kind of thing.
@@ -196,6 +238,8 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         }
         if (data.video) {
             //the KG usage can specify odd shaped video now.
+            //So they can specify odd shaped video if they like
+            //else we have the 640 360 default from the above.
             blob.width = data.video.width;
             blob.height = data.video.height;
         }
@@ -203,22 +247,21 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _adDiv.style.height = blob.height + 'px';
         if (_adObj) 
             _adObj.reset();
-        let v = {
-            switch2Cnt: function() {
-                _playerElt.play();
-            },
-            switch2Ad: function() {
-                _playerElt.pause();
-            }
-        };                
-        _adObj = MakeOneAdObj(_adDiv, "#FFFFFF", _playerElt, v,
+        
+        _adObj = MakeOneAdObj(_adDiv, "#FFFFFF", _playerElt, _vectorForAdMgr,
             startAdWhenAvail, eventsVector);
         _adObj.forceDimensions(blob.width, blob.height);
-        let adURL = `https://ad.jixie.io/v1/video?source=sdk&domain=jixie.io&creativeid=` + data.creativeid;
+        let domain = data.domain? data.domain:'jixie.io';
+        let adURL = `https://ad.jixie.io/v1/video?source=sdk&domain=${domain}&creativeid=` + data.creativeid;
         _adObj.makeAdRequestP(adURL, null, true, true);
     }
     
+    /**
+     * 
+     * @param {*} isVisible 
+     */
     OneAdInstance.prototype.visibilityChange = function(isVisible) {
+        console.log(`OneAdInstance.prototype.visibilityChange = function(${isVisible}) `);
         if (_adObj) {
             if (isVisible) {
                 _adObj.playAd();
@@ -229,8 +272,10 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         }
     }
 
-    //Here this JSON can be either a JSON with creative info or not.
-    //
+    /**
+     * 
+     * @param {*} data 
+     */
     OneAdInstance.prototype.changeJson = function(data) {
         if (_adObj) {
             _adObj.reset();
@@ -266,8 +311,11 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 comp[banner].url = 'https://creatives.jixie.io/59a1361c5e23f2dcae1229fedbb4d8d5/700/pasanglklan320x100.jpeg';
                 comp[banner].gap = 0; //hack
                 comp[banner].ar = data[label].width/data[label].height;
-                comp[banner].width = containerW;
-                comp[banner].height = comp[banner].width/comp[banner].ar;
+                //comp[banner].width = containerW;
+                //comp[banner].height = comp[banner].width/comp[banner].ar;
+                comp[banner].width = 320;
+                comp[banner].height = 100;
+                
                 comp[banner].tracker4click = data.trackers.baseurl + '?' + data.trackers.parameters + '&action=click';
                 comp.height += comp[banner].height;
             }
@@ -298,7 +346,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             });
         }
         //in the end our addescriptor object also only have very little
-        _adObj = MakeOneAdObj(_adDiv, "#FFFFFF", _playerElt, v,
+        _adObj = MakeOneAdObj(_adDiv, "#FFFFFF", _playerElt, _vectorForAdMgr,
             startAdWhenAvail, eventsVector);
         _adObj.forceDimensions(blob.width, blob.height);
         //we should not use any attribute of the container.
@@ -312,10 +360,13 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         let vast = buildVastXml([xyz]);
         _adObj.makeAdRequestFromXMLP(vast, true, true);
         //still need a noitification mechanism leh!!!
-        parent.postMessage("jxhasad", '*'); //HACK . Not here!
+        //parent.postMessage("jxhasad", '*'); //HACK . Not here!
 
     }//
 
+    /**
+     * 
+     */
     OneAdInstance.prototype.play = function() {
         if (_adObj)
             _adObj.startAd();
@@ -326,8 +377,18 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _startAdWhenAvail   = true; //would be from adparameters if there is ever one.
         _eventsVector       = eventsVector;
         _createInner(containerId);
-        this.changeJson(adparameters);
+        if (adparameters.universal) {
+            this.changeJson(adparameters);
+        }
+        else {
+            this.changeCfg(adparameters);
+        }
     }
+
+    /**
+     * 
+     * @param {*} action 
+     */
     OneAdInstance.prototype.notifyMe = function(action) {
         if (action == 'jxvisible')
             this.visibilityChange(true);

@@ -1,13 +1,34 @@
-//THIS ONE IS WIP ..... NOT READY YET
-//the one used for playing our own ads
-//jxvideo.1.4.min.js
-
-//But now I want to make it built from our building blocks under /video instead
-//Add the stuff to handle the video+banner
-
 /**
- * Bundle built for the jixie "player SDK"
+ * This is meant to take the place of jxvideo.1.3.min.js and jxvideo.1.4.min.js 
+ * (removing also need for playerbridgeJS)
+ * 
+ * NOTE: 
+ * The 1.3 is used by partners (standalone) in typically masterhead ads
+ * The 1.4 is used with "playerbridge js" in the context of jxoutstream1.3.4.min.js
+ * 
+ *  Current design is, when used with universal (new) we will still be in an IFRAME
+ *  but using adparameters
+ * 
+ 
+ * Dependencies (not showing modulesmgr, cssmgr)
+   - the bundle (videoadsdk.js):
+        - video/adplayer
+            - video-styles/videoad
+            - video/admgr-factory (We will use video/admgr-factory-bc) <-- need to give it better name
+                - video/adctrls-factory
+                - video-styles/videoad
+            - video/vast
+ 
+ So to note that for now we are not using the same admgr-factory as for videosdk
+ Due to the need to support other stuff e.g. emit events
+
+ fire has ad
+ fire ad ended
+ visible and not visible
+ change height
+ *    
  */
+
 if (window.jxvideoadsdk) { //<--- NEW LEH
     return;
 }
@@ -16,7 +37,8 @@ const modulesmgr                       = require('../components/basic/modulesmgr
 const cssmgr                           = require('../components/video/cssmgr');
 modulesmgr.set('video/cssmgr',         cssmgr);
 
-const stylesSet                        = require('../components/video-styles/videoad');//we choose this set of style
+// For style this is a bit different from the default one (for video SDK)
+const stylesSet                        = require('../components/video-styles/videoad');
 cssmgr.init(stylesSet.getCls(), stylesSet.getStyles());
 cssmgr.inject('adControls', { color: '#FF0000'});
 
@@ -45,12 +67,11 @@ modulesmgr.set('video/adctrls-factory', adctrls_fact);
 const admgr_fact                        = require('../components/video/admgr-factory-bc');
 modulesmgr.set('video/admgr-factory',   admgr_fact);
 
-//actually no need lah.
 const createObject                       = require('../components/video/adplayer');
-//modulesmgr.set('video/adplayer',   adplayer);
 
 
-var instMap = new Map();   
+var instMap = new Map(); //if we just always impose that if used from universal, then it's in
+                         //iframe, then this Map is a bit stupid (only 1 item)  
 function makePlayer(containerId, adparameters) {
     let instMaybe = instMap.get(containerId);
     if (instMaybe) {
@@ -65,18 +86,11 @@ window.jxvideoadsdk = 1;
 
 
 //<----- Only needed when univeral unit is outside our iframe
-// it works just like the 
-//this new type is via postmessage yes.
-//if there is a p it will also use lah.
-//just put it in iframe lah.
-//then jxvisible is one type.
-//adparameters is another type.
-//message fly everywhere problem.
-//let's try first the no iframe one lah.
-//else next time you this problem no solved ah.
-
+//I am still considering..
 function listen(e) {
     let json = null;
+    //if (e.data.startsWith('jx')) 
+      //  console.log(` VIDEOSDK GET THIS MSG ${e.data}`);
     if (e.data == 'jxvisible' || e.data == 'jxnotvisible') {
         json = {type : e.data};
     }
@@ -87,6 +101,7 @@ function listen(e) {
         catch(err) {}
     }
     if (!json) return; //unrelated to us, we dun bother.
+    json.token = 'hardcode';
     switch (json.type) {
         case "jxvisible":
         case "jxnotvisible":     
@@ -96,18 +111,15 @@ function listen(e) {
             }
             break;
         case "adparameters":
+            json.data.universal = 1;
             makePlayer(json.token, json.data);
             break;                    
     }
 }//listen
 
-//const mySig = 'jx_video_ad';
-
-//but this is s
-//this is one-off per script.
-//but the subsequent instances have problem.
 window.addEventListener('message', listen, false);
 notifyMaster('jxloaded', 'jx_video_ad');
+
 //height change
 function notifyMaster(type, token, data = null) { //todo DATA HOW
     let msgStr = '';
@@ -122,28 +134,56 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
         obj.data = data;
     }
     msgStr = "jxmsg::" + JSON.stringify(obj);
-    const exposedWinPropName_ = 'jxuniversallite';
+    /* const exposedWinPropName_ = 'jxuniversallite';
     if (window[exposedWinPropName_])
-        window.postMessage(msgStr, '*'); //HACK 
-    else
-        parent.postMessage(msgStr, '*'); //HACK 
+        window.postMessage(msgStr, '*'); 
+    else */
+        parent.postMessage(msgStr, '*'); 
 }
 
-/*
-window.JX = {
-    player :  function(options) {
-        return (makePlayer(options, null));
-    },
-    ampplayer : function(options, ampIntegration) {
-        options.amp = true;//augment
-        let metadata = ampIntegration.getMetadata();
-        let canonUrl = metadata.canonicalUrl;
-        options.pageurl = canonUrl;//augment
-        helpers.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
-        return (makePlayer(options, ampIntegration));
+/**
+ * Backward compatiability: Coz this current script is supposed to replace 
+ * jxvideo.1.4.min.js AS WELL AS jxvideo.1.3.min.js (<-- only used by Kompas
+ * to play masterhead ads)
+ * 
+ * Support the use case of typically the masterhead ads of our publishers
+ * (jxvideo.1.3.min.js)
+ * 
+ * Basically the code using the sdk provides a 
+ * function "onJXPlayerReady". This is supposedly called by jxvideo.1.3.min.js
+ * when the jxvideo.1.3.min.js is loaded and initialized. 
+ */
+var oldPlayerSDKMap = null;
+if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
+    window.onJXPlayerReadyProcessed = 1;
+    oldPlayerSDKMap = new Map();
+    //well, since these events are published in our documentation, we need to support them
+    const eventsVector_  = ['jxhasad','jxadended','jxnoad','jxplayvideo','jxvideoend',
+        'jxadfirstQuartile','jxadmidpoint','jxadthirdQuartile','jxadalladscompleted',
+        'jxadclick', 'jxadimpression'];
+    var playerObj = {
+        player: null,
+        started: false,
+        start: function(json) {
+            if (this.started) return; //to beat a problem with the ad looping
+            this.started = true;
+            //get the player instance 
+            let inst = oldPlayerSDKMap.get(json.container);
+            if (!inst) {
+                //note here (TODO) this is not the JSON creative
+                //but only a config object.
+                inst = makePlayer(json.container, json);
+                this.player = inst;
+                oldPlayerSDKMap.set(json.container, inst);
+            }
+            inst.changeCfg(json);
+        },
+        play: function() {
+            this.player.play();
+        }
     }
-};
-*/
-//wait for incoming loh.
+    window.onJXPlayerReady(playerObj);
+}
+
 
 

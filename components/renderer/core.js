@@ -756,6 +756,12 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
         //    jxmasterDiv.style.width = normCrParams.width + 'px';
         //if (normCrParams.maxwidth)
             jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
+
+        if (normCrParams.maxheight) {
+            jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
+            jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
+        }
+        
         jxbnDiv.style.height = normCrParams.height + 'px';
         jxbnDiv.style.width = '100%';
         jxbnFixedDiv.style.width = normCrParams.width + 'px';
@@ -800,6 +806,7 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
         jxCoreElt.style.backgroundColor = 'white';
         jxCoreElt.style.border = 'none';
         jxCoreElt.style.width = normCrParams.width + 'px';
+        
         jxCoreElt.style.height = normCrParams.height + 'px';
         //jxCoreElt.style.zIndex = 99999;
 
@@ -1034,10 +1041,10 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
         
         let forcecid = c.id;
         
-        if (forcecid == 20) {
+        /* if (forcecid == 20) {
             forcecid = 886;//test recommended ad thru universal
             scalable = false;
-        }
+        }*/
         
         if (!width) {
             //e.g. the video+banner does not have width directly 
@@ -1055,7 +1062,7 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
             }
             if (!width) {
                 width = 640;
-                height = 480;
+                height = 360;
             }
         }
         
@@ -1110,13 +1117,17 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
         // My other thinking is the following:
         // The max height should just be used as another thing to tune the maxwidth
         // instead of imposing stuff 
+        /* HACK 
         if ((!(fixedHeight > 0)) && maxheight > 0) { //if a maxheight is given:
             //e.g. for the 9-16 video
             let maxwidth1 = maxheight*(width/height);
             if (maxwidth1 < maxwidth) {
                 maxwidth = maxwidth1;
             }
+            maxheight = 0;
         }
+        */
+        
         //now for the rubber stuff which is video
         //let's see what we can do.
         //
@@ -1132,6 +1143,7 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
                 c.adparameters.video.height = height;
             }
         }
+        
 
         let doBasicTrackers = c.thirdpartytag;
 
@@ -1147,6 +1159,9 @@ console.log(`ULITE posting this ${msgtype}; ${msgStr}`);
             /////fireTracker(trackers, 'click', code);
         //////}
         ///////universalBlob.nested = nested;
+
+        //ok I know what is the problem.
+        //width and height supposed to be the perceived height of the creative.
 
         let out = { 
             type:               c.type,
