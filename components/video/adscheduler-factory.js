@@ -13,6 +13,18 @@ let MakeOneAdScheduler_ = function(delay,
     var _sNext = 5; //some default delay...
     var _dirty = true;
     function FactoryOneAdScheduler(delay, interval, maxSlots, podSize) {
+        if (delay === undefined) {
+            delay = 5;
+        }
+        if (interval === undefined) {
+            interval = 90;
+        }
+        if (maxSlots === undefined) {
+            maxSlots = 3;
+        }
+        if (podSize === undefined) {
+            podSize = 1;
+        }
         _podSize = podSize;
         _maxSlots = maxSlots;
         _sInterval = interval;
