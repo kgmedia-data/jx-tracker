@@ -210,16 +210,17 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     }
 
     var _vectorForAdMgr = {
-        notifyNoAd: function() {
-            parent.postMessage("jxnoad", '*'); 
-        },
+        report : function() {},
+        setContentMuteState: function() {},
+        isPaused: function() { return false; },
+        hideSpinner: function() {},
+        onAdPause: function() {},
+        onAdPlaying: function() {},
         switch2Cnt: function() {
-            console.log(`______ ENDED;`);
             parent.postMessage("jxadended", '*'); 
             _playerElt.play();
         },
         switch2Ad: function() {
-            console.log(`______ STARTED;`);
             parent.postMessage("jxhasad", '*'); 
             _playerElt.pause();
         }
@@ -253,7 +254,8 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _adObj.forceDimensions(blob.width, blob.height);
         let domain = data.domain? data.domain:'jixie.io';
         let adURL = `https://ad.jixie.io/v1/video?source=sdk&domain=${domain}&creativeid=` + data.creativeid;
-        _adObj.makeAdRequestP(adURL, null, true, true);
+        _adObj.setAutoAdsManagerStart(true);
+        _adObj.makeAdRequestCB(adURL, null, true, true, updateUniversal);
     }
     
     /**
@@ -272,6 +274,19 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         }
     }
 
+    function updateUniversal(v) {
+        let msg = null;
+        if (v == 'jxadstarted' || v == 'jxhasad') {
+            msg = 'jxhasad'
+        }
+        else if (v == 'jxaderrored' || v == 'jxnoad') {
+            msg = 'jxnoad';
+        }
+        if (msg) {
+            parent.postMessage("jxhasad", '*'); 
+        }
+    }
+
     /**
      * 
      * @param {*} data 
@@ -286,6 +301,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 height: 360
             };
         }
+        //testing and faking some data
         if (data.video.height == 520)
             data.video.height= 320; //error somewhere
         //_playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/954006/3001004-954006_480.mp4';
@@ -300,19 +316,10 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             if (data[label]) {
                 comp[banner] = {};
                 comp[banner] = JSON.parse(JSON.stringify(data[label]));
-                //cheat to fake some data.
-                /*
-                let obj  = comp[banner];
-                obj.url = 'https://creatives.jixie.io/59a1361c5e23f2dcae1229fedbb4d8d5/700/pasanglklan320x100.jpeg';
-                obj.height = 100;
-                obj.width = 320;//no need bah
-                obj.gap = 0;
-                */
+                //Testing and cheating and faking data
                 comp[banner].url = 'https://creatives.jixie.io/59a1361c5e23f2dcae1229fedbb4d8d5/700/pasanglklan320x100.jpeg';
                 comp[banner].gap = 0; //hack
                 comp[banner].ar = data[label].width/data[label].height;
-                //comp[banner].width = containerW;
-                //comp[banner].height = comp[banner].width/comp[banner].ar;
                 comp[banner].width = 320;
                 comp[banner].height = 100;
                 
@@ -329,14 +336,6 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _adDiv.style.height = blob.height + 'px';
         
         blob.token = _containerId;
-        var v = {
-            switch2Cnt: function() {
-                _playerElt.play();
-            },
-            switch2Ad: function() {
-                _playerElt.pause();
-            }
-        };
         if (comp.height) {
             blob.companion = comp;
             ['top','bottom'].forEach(function(pos) {
@@ -354,14 +353,12 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         //686: 9-16 singers
         //690: pure video
         //now we try to do the vast tag oh my goodness...
-        let xyz = data.vast;
+        let vastSrcBlob = data.vast;
         delete data.vast;
-        xyz.adparameters = data;           
-        let vast = buildVastXml([xyz]);
-        _adObj.makeAdRequestFromXMLP(vast, true, true);
-        //still need a noitification mechanism leh!!!
-        //parent.postMessage("jxhasad", '*'); //HACK . Not here!
-
+        vastSrcBlob.adparameters = data;           
+        let vast = buildVastXml([vastSrcBlob]);
+        _adObj.setAutoAdsManagerStart(true);
+        _adObj.makeAdRequestFromXMLCB(vast, true, true, updateUniversal);
     }//
 
     /**

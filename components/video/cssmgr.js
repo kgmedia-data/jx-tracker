@@ -27,15 +27,15 @@ function init_(namesObj, stylesObj) {
     let s = stylesObj.default;
     //inject the css right away.
     if (s) {
-        console.log("first we inject this lah. " + 'default');
-        console.log(s);
+        //console.log("first we inject this lah. " + 'default');
+        //console.log(s);
         acss_(s);
     }
     //for delayed injection
     for (var prop in stylesObj) {
         if (prop != 'default') {
-            console.log('adding to map not yet injected' + prop);
-            console.log(stylesObj[prop]);
+            //console.log('adding to map not yet injected' + prop);
+            //console.log(stylesObj[prop]);
             theMap_.set(prop, stylesObj[prop]);
         }
     }
@@ -64,8 +64,8 @@ function inject_(name, styleObj) {
         }
     }
     //inject the style
-    console.log(stylesStr);
-    console.log(`###### ${name} ######`);
+    //console.log(stylesStr);
+    //console.log(`###### ${name} ######`);
     acss_(stylesStr);
 
 }
