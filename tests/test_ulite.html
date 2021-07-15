@@ -89,15 +89,26 @@
 			</div>
 		</div>
    <script>
+     function getParameterByName(name, url = window.location.href) {
+    name = name.replace(/[\[\]]/g, '\\$&');
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if(!results) return null;
+    if(!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
     var p ={
 							              responsive: 1, // 1 to be responsive (highly recommended)
 							              maxwidth: 640, // set a maximum width
-                            maxheight: 500,
+                            maxheight: 500,//<-- can manipulate this to force scaling.
 							              unit: "62dfd0d28588b4a2ed791b90dda06fce",
 							              container: "jxOutstreamContainer", // indicates where to create the iFrame, otherwise will be created as a child of the parent node
-							              creativeid: 23 //686 //724 //23 //686
+							              creativeid: getParameterByName('creativeid') //686 //724 //23 //686
 							          };
-							         // We have a function waiting for the script to be loaded before initialsing it
+                        ////686  vert video
+                        //724 banner + video + banner
+                        //23 
+                        / We have a function waiting for the script to be loaded before initialsing it
 							          function jxdefer(p) {
 							               if (window.jxuniversallite) {
 							                     window.jxuniversallite(p);
