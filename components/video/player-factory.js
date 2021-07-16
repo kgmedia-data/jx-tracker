@@ -445,7 +445,7 @@ window.jxPromisePolyfill        = 'none';
             _isConfigSet = true;
             _cfg.ads = adsCfg;
             _cfg.adUrl = adUrl;
-            _adScheduler = MakeOneAdScheduler(_cfg.ads.delay, _cfg.ads.interval, _cfg.ads.maxslots, _cfg.ads.podsize);
+            _adScheduler = MakeOneAdScheduler(_cfg.ads.delay, _cfg.ads.interval, _cfg.ads.mintimeleft, _cfg.ads.maxslots, _cfg.ads.podsize);
             _nextAdSlotTime = _adScheduler.getFirstNonPreroll();
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
@@ -1076,9 +1076,15 @@ window.jxPromisePolyfill        = 'none';
                 */
                 //if we allow for midrolls, then everybody has delayed ads then.
                 if(_nextAdSlotTime != -1 && _accumulatedTime >= _nextAdSlotTime) {
-                    _adScheduler.useSlot(_accumulatedTime);
-                    _nextAdSlotTime = _adScheduler.getNext(_accumulatedTime);
-                    _fetchMidrollWithCountdownP(_accumulatedTime); //this will kick off a promise chain.
+                    if (_adScheduler.canPlayAd(currentTime, _vid.duration)) {
+                        _adScheduler.useSlot(_accumulatedTime);
+                        _nextAdSlotTime = _adScheduler.getNext(_accumulatedTime);
+                        _fetchMidrollWithCountdownP(_accumulatedTime); //this will kick off a promise chain.
+                    }
+                    else {
+                        //not enough remaining time to justify an ad. So we are done
+                        _nextAdSlotTime = -1; //we are done with ad playing (midrolls also)
+                    }
                 }
 
                 if (_changeShakaBuffering && _accumulatedTime > 15) {

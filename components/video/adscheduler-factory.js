@@ -12,7 +12,7 @@ let MakeOneAdScheduler_ = function(delay,
     var _sInterval = 90;
     var _sNext = 5; //some default delay...
     var _dirty = true;
-    function FactoryOneAdScheduler(delay, interval, maxSlots, podSize) {
+    function FactoryOneAdScheduler(delay, interval, minTimeleft, maxSlots, podSize) {
         if (delay === undefined) {
             delay = 5;
         }
@@ -27,6 +27,7 @@ let MakeOneAdScheduler_ = function(delay,
         }
         _podSize = podSize;
         _maxSlots = maxSlots;
+        _minTimeleft = minTimeleft;
         _sInterval = interval;
         _sDelay = delay;
         _sNext = delay;
@@ -66,6 +67,9 @@ let MakeOneAdScheduler_ = function(delay,
     }
     //So when the time comes, we still do a last minute check:
     FactoryOneAdScheduler.prototype.canPlayAd = function(accuTime, playhead, duration) {
+        if (duration - playhead < mintimeleft) {
+            return false;
+        }
         //check playhead, duration stuff
         //about the max slots stuff
         return true;
