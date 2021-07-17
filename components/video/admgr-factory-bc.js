@@ -350,6 +350,7 @@
             this.resolveFcn("jxnoad");
     };
     var _startAd = function(resolveFcn) {
+        // console.log(`___ adsManager init ${_forceWidth ? _forceWidth : _width} ${_forceHeight ? _forceHeight : _height}`);
         _adsManager.init(
             _forceWidth ? _forceWidth : _width, 
             _forceHeight ? _forceHeight : _height, 
@@ -475,6 +476,7 @@
             _width = _container.offsetWidth;
             _height = _container.offsetHeight;
             if (_adsManager) {
+                // console.log(`___ adsManager resize ${_width} ${_height}`);
                 _adsManager.resize(_width, _height);
             }
         }

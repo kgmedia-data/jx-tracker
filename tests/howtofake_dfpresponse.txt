@@ -1,0 +1,63 @@
+To test the masterhead ad
+
+e.g. visit travel.kompas.com
+
+-----------------------------------------------------------------------------------
+
+before that your resource override can do this:
+FROM: 
+https://securepubads.g.doubleclick.net/gampad/ads?gdfp_req=1&pv*
+
+TO: the content of either:
+
+dfpresponse_masterad_mobile_newscript_oldway.txt in this directory
+
+dfpresponse_masterad_mobile_newscript_newway.txt in this directory
+
+-----------------------------------------------------------------------------------
+What are the differences?
+
+newscript_oldway: (MOBILE)
+=================
+<div class="inslider__video">\\\n	<--- this thing already is the correct width, making space for the IMAGE	
+	<div id="containerJX" data-parent-id="component-0">\\\n			
+    	<div id="playerContainerJX" class="trans-text-item" style="position:absolute; display: block;width: 640px;height: 360px">
+        </div>\\\n  	
+    </div>\\\n  
+</div>\\\n	
+<div class="inslider__img inslider__img__video" style="height: auto">\\\n	
+
+
+newscript_newway: (MOBILE)
+=================
+
+<div class="inslider__video">\\\n	<--- this thing already is the correct width, making space for the IMAGE					
+  <div id="playerContainerJX" class="trans-text-item" 
+      style="position:relative;display:block;width:100%;padding-top:56%;">  <--- THIS IS NEW!!!!
+    <div id="playerContainerJX1" class="trans-text-item" 
+      style="position:absolute; top:0px; bottom:0px; left:0px; right:0px">  
+    </div>\\\n 
+  </div>\\\n  	
+</div>\\\n		
+<div class="inslider__img inslider__img__vide
+
+
+Pleases see the styles put on the playerContainerJX
+and playerContainerJX1
+They give the right size and shape to playerContainerJX1
+which is passed to the SDK
+If they dun specify a video FORCE dimension,
+then our code just use the container given then
+(like our videosdk)
+It will also listen to resize and call the IMA adsmanager.resize()
+as needed.
+
+Then no need to do any resize and scaling transform
+
+
+
+-----------------------
+
+
+
+

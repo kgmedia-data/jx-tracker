@@ -408,7 +408,7 @@ function MakeOneHelperObj_() {
     }
     FactoryOneHelper.prototype.getAdTag = function(options) {
         let tmp = 'https://ad.jixie.io/v1/video?maxnumcreatives=13&source=jxplayer';
-        ['unit', 'client_id', 'sid', 'creativeid'].forEach(function(prop) {
+        ['client_id', 'sid', 'creativeid'].forEach(function(prop) {
             if (options[prop])
                 tmp += '&' + prop + '=' + options[prop];
         });

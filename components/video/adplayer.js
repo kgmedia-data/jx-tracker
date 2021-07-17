@@ -11,6 +11,7 @@ const buildVastXml          = modulesmgr.get('video/vast').buildVastXml;
 
 const cssmgr                = modulesmgr.get('video/cssmgr');
 const adDivCls              = cssmgr.getRealCls('adDivCls');
+const comboDivCls           = cssmgr.getRealCls('comboDivCls');
 const contentDivCls         = cssmgr.getRealCls('contentDivCls');
 const playerCls             = cssmgr.getRealCls('playerCls');
  
@@ -30,7 +31,7 @@ function addListener(e, event, h) {
 function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector = {}) {
     var _pDiv               = null;
     var _playerElt          = null;
-    var _adDiv              = null;
+    var _comboDiv              = null;
     var _adObj              = null;
     var _startAdWhenAvail   = true;
     var _eventsVector       = {};
@@ -200,14 +201,26 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         if (!tmp) {
             tmp = document.body;
         }
+        /* console.log(`_X X_X_X_X_X`);
+        console.log(tmp.offsetWidth);
+        console.log(tmp.offsetHeight);
+        console.log(tmp.width);
+        console.log(tmp.height);
+        console.log(`_X X_X_X_X_X-->`); */
+        
         _pDiv = _helpers.newDiv(tmp,'div','',''); 
         _pDiv.style.width = '100%';
         _pDiv.style.height = '100%';
         _pDiv.style.position = 'relative';
-        _adDiv = _helpers.newDiv(_pDiv, "div", "", adDivCls); 
         
-        _contentDiv = _helpers.newDiv(_adDiv, 'div', `<video id="idJxPlayer" class=${playerCls} controls muted playsinline></video>`, contentDivCls); 
+        //combo div is ad or content.
+        _comboDiv = _helpers.newDiv(_pDiv, "div", "", comboDivCls); //this is not the real ad div
+        _contentDiv = _helpers.newDiv(_comboDiv, 'div', `<video id="idJxPlayer" class=${playerCls} controls muted playsinline></video>`, contentDivCls); 
         _playerElt = document.getElementById('idJxPlayer');
+        //pretend there is a content:
+        //just to test the content stuff can work and show properly if we need to
+        _playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/1181736/3001004-1181736_360.mp4';
+
     }
 
     var _vectorForAdMgr = {
@@ -218,6 +231,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         onAdPause: function() {},
         onAdPlaying: function() {},
         switch2Cnt: function() {
+            //if it is unversal then it gets this msg and will kill this whole thing.
             parent.postMessage("jxadended", '*'); 
             _playerElt.play();
         },
@@ -227,32 +241,53 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         }
     };                
     /**
-     * 
+     * This is from the ads SDK usage jxvideo.1.3.min.js
      * @param {*} data 
      */
     OneAdInstance.prototype.changeCfg = function(data) {
         //this is the type where only got config json
         //i.e. has creativeID unit, that kind of thing.
         //can also get from them lah.
+        //current node is really Hard code and pretend to be 640 360
+        //no matter what.
+
+        //Another way is that your div is already styled like this
+        //of course your div should already obey the aspect ratio.
+        //then we just say we always follow your div.
+
         let blob = {
-            width: 640, 
-            height: 360 
         }
+        //let us detect and follow your size.
+
         if (data.video) {
+            console.log(`_________SO FORCE width ${data.video.width} heigth ${data.video.height} `);
+
+            //If they want to specify and we just stick to this.
+            //Let them do the scaling, fine.
             //the KG usage can specify odd shaped video now.
             //So they can specify odd shaped video if they like
             //else we have the 640 360 default from the above.
             blob.width = data.video.width;
             blob.height = data.video.height;
+            //not sure if still need. may be not.
+            _comboDiv.style.width = blob.width +'px';
+            _comboDiv.style.height = blob.height + 'px';
         }
-        _adDiv.style.width = blob.width +'px';
-        _adDiv.style.height = blob.height + 'px';
+        else {
+            //we are trying this for KG masterad case:
+            //already say 100%
+            //you dun give I assume all good.
+            console.log(`_________SO WE DUN PUT ANYTHING AND let the size natural `);
+        }
         if (_adObj) 
             _adObj.reset();
         
-        _adObj = MakeOneAdObj(_adDiv, "#FFFFFF", _playerElt, _vectorForAdMgr,
+        _adObj = MakeOneAdObj(_comboDiv, "#FFFFFF", _playerElt, _vectorForAdMgr,
             startAdWhenAvail, eventsVector);
-        _adObj.forceDimensions(blob.width, blob.height);
+        if (blob.width || blob.height) {            
+            // console.log("WE ARE FORCING LET THEM DO WHATEVER. They can force us 640 360 then we scale");
+            _adObj.forceDimensions(blob.width, blob.height);
+        }
         let domain = data.domain? data.domain:'jixie.io';
         let adURL = `https://ad.jixie.io/v1/video?source=sdk&domain=${domain}&creativeid=` + data.creativeid;
         _adObj.setAutoAdsManagerStart(true);
@@ -333,22 +368,22 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             height: data.video.height
         }
         
-        _adDiv.style.width = blob.width +'px';
-        _adDiv.style.height = blob.height + 'px';
+        _comboDiv.style.width = blob.width +'px';
+        _comboDiv.style.height = blob.height + 'px';
         
         blob.token = _containerId;
         if (comp.height) {
             blob.companion = comp;
             ['top','bottom'].forEach(function(pos) {
                 if (blob.companion[pos]) {
-                    _createBanner(_adDiv, blob, pos);
+                    _createBanner(_comboDiv, blob, pos);
                 }
             });
         }
         //in the end our addescriptor object also only have very little
-        _adObj = MakeOneAdObj(_adDiv, "#FFFFFF", _playerElt, _vectorForAdMgr,
+        _adObj = MakeOneAdObj(_comboDiv, "#FFFFFF", _playerElt, _vectorForAdMgr,
             startAdWhenAvail, eventsVector);
-        _adObj.forceDimensions(blob.width, blob.height);
+        //_adObj.forceDimensions(blob.width, blob.height);
         //we should not use any attribute of the container.
         //724 banner+sqvideo+banner
         //686: 9-16 singers
@@ -379,6 +414,12 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             this.changeJson(adparameters);
         }
         else {
+            /* if (containerId == 'playerContainerJX') {
+                adparameters.video = {
+                    width: 640,
+                    height: 360
+                };
+            }*/
             this.changeCfg(adparameters);
         }
     }

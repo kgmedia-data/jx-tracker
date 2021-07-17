@@ -13,6 +13,7 @@ const adProgressBarCls      = 'adProgressBarCls' + ran;
 const hideCls               = 'hideCls' + ran;
 const adHideCls             = 'adHideCls' + ran;
 const spinnerCls            = 'spinnerCls' + ran; 
+const comboDivCls           = 'comboDivCls' + ran;
 
 let spinnerColor = '#000000';
 var controlsColor = '%%color%%';
@@ -77,13 +78,16 @@ var stylesStrObj_ = {};
        /////// '.' + contentDivCls + ',.' + adDivCls + ',.' + playerCls + ',.' + thumbnailCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: 1;}',
        '.' + playerCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: -1;}',
        '.' + contentDivCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: -1;}',
-       '.' + adDivCls + '{position:relative; width: 100%;height: 100%; }',
+       '.' + adDivCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;}',
+       //'.' + adDivCls + '{position:relative; width: 100%;height: 100%; }',
+       '.' + comboDivCls + '{position:relative; width: 100%;height: 100%; }',
        '.' + adControlsCls + ',.' + playerControlsCls + '{height: 32px;width: 66px;margin-left: 3px;position: absolute;bottom: 20px;left: 5px;z-index: 999;}',
        '.' + hideCls + '{display: none;}'
     ].join("\n");
 
 function getCls_() {
     return {
+    comboDivCls:        comboDivCls,
     contentDivCls:      contentDivCls,
     adDivCls:           adDivCls,
     playerCls:          playerCls,
