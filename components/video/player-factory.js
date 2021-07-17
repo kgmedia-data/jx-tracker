@@ -439,13 +439,11 @@ window.jxPromisePolyfill        = 'none';
             return _isConfigSet;
         }
         FactoryPlayerWrapper.prototype.setConfig = function(
-            adsCfg,
-            adUrl,
+            adsCfg, //the tags are also inside this obj: adtagurl and adtagurl2
             logoCfg, soundIndCfg = null) {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
-            _cfg.adUrl = adUrl;
-            _adScheduler = MakeOneAdScheduler(_cfg.ads.delay, _cfg.ads.interval, _cfg.ads.mintimeleft, _cfg.ads.maxslots, _cfg.ads.podsize);
+            _adScheduler = MakeOneAdScheduler(_cfg.ads);
             _nextAdSlotTime = _adScheduler.getFirstNonPreroll();
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
@@ -1066,20 +1064,13 @@ window.jxPromisePolyfill        = 'none';
                     _accumulatedTime += diff;
                 }
 
-                /*
-                if(_doDelayedAdP && _accumulatedTime >= _cfg.ad_delay) {
-                    //TODO: for ultra short videos ....dun even have this.
-                    let tmp = _doDelayedAdP;
-                    _doDelayedAdP = null;
-                    tmp(_accumulatedTime); //this will kick off a promise chain.
-                }
-                */
                 //if we allow for midrolls, then everybody has delayed ads then.
                 if(_nextAdSlotTime != -1 && _accumulatedTime >= _nextAdSlotTime) {
                     if (_adScheduler.canPlayAd(currentTime, _vid.duration)) {
                         _adScheduler.useSlot(_accumulatedTime);
                         _nextAdSlotTime = _adScheduler.getNext(_accumulatedTime);
-                        _fetchMidrollWithCountdownP(_accumulatedTime); //this will kick off a promise chain.
+                        _fetchMidrollWithCountdownP(_accumulatedTime, 
+                            _adScheduler.getAdIdx()== 0? _cfg.ads.adtagurl : _cfg.ads.adtagurl2); //this will kick off a promise chain.
                     }
                     else {
                         //not enough remaining time to justify an ad. So we are done
@@ -1425,7 +1416,7 @@ window.jxPromisePolyfill        = 'none';
            */
         function _initChainDoAdsP(getAdMode, adProm) {
             if (getAdMode == 'noprefetch') {
-                adProm = _adObject.makeAdRequestP(_cfg.adUrl, 
+                adProm = _adObject.makeAdRequestP(_cfg.ads.adtagurl, 
                     _startModePW == startModePWClick_ ? false: true,
                     _savedMuted);
             }
@@ -1672,7 +1663,7 @@ window.jxPromisePolyfill        = 'none';
                     _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
                     _ctrls.videoVisualsRemoveSpinner();
                     if(getAdMode == 'prefetch') {
-                        adPromise = _adObject.makeAdRequestP(_cfg.adUrl, 
+                        adPromise = _adObject.makeAdRequestP(_cfg.ads.adtagurl, 
                             _startModePW == startModePWClick_? false: true, //autoplay Flag (best effort lah)
                             _savedMuted); //muted flag (best effort lah)
                     }
@@ -1747,7 +1738,7 @@ window.jxPromisePolyfill        = 'none';
          * This is called by the playhead update callback function when the time is ripe
          * @param {*} startAccuTime. When this function is called what is the accumulated play time.
          */
-        function _fetchMidrollWithCountdownP(startAccuTime) {
+        function _fetchMidrollWithCountdownP(startAccuTime, adUrl) {
             if (isIOS_ && !_vid.muted) {
                 console.log(`is IOS and the thing is not muted. so we dun want to play an ad.`);
                 //on iOS we are not able to start the ad with sound (will hang)
@@ -1756,12 +1747,11 @@ window.jxPromisePolyfill        = 'none';
             }
             _createAdObjMaybe();
             //autoplay how you decide leh.
-            _adObject.makeAdRequestP(_cfg.adUrl, 
+            _adObject.makeAdRequestP(adUrl,
                 _startModePW == startModePWClick_ ? false: true,
                 _vid.muted)
             .then(function(outcome) {
                 if(outcome == 'jxhasad') {
-                    console.log("jxhasad!");
                     //we use accumulated time to also manage the countdown but since time is taken up
                     //between adRequest and hasad (adsMgrloaded), I need to factor that in also.
                     let wastedTime = _accumulatedTime - startAccuTime;

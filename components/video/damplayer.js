@@ -368,6 +368,43 @@ function createObject_(options, ampIntegration) {
         //Currently I do that (hence the "true"). If need to expose this to options, then we have to add another options loh:
         _cfg.startModePW2 = (true ? startModePWAuto_: _cfg.startModePW);
     }
+    /**
+     * 
+     * @param {*} options 
+     * @returns array of adtags , null if  dun want to play ads
+     */
+    function prepareAdsObj(options) {
+        if (!options.ads) {
+            //this is the case they dun want ads loh.
+            //delay -1 no ads will be done then.
+            options.ads = { delay: -1};
+        }
+        
+        if (options.ads.delay>=0) {
+            let adUrl = (options.ads.unit ? _helpers.getAdTag(options): null);
+            let adUrl1 = null, adUrl2 = null;
+            if (adUrl) {
+                adUrl1 = adUrl + '&unit=' +options.ads.unit;
+                adUrl2 = adUrl + '&unit=' +(options.ads.mrunit? options.ads.mrunit: options.ads.unit);
+            }
+            if (window.location.href && window.location.href.includes('jxadtag') ) {
+                let tmp1 = getParameterByName('jxadtagurl');
+                if (tmp1) {
+                    adUrl1 = tmp1;
+                    adUrl2 = tmp1;
+                }
+            }
+            if (adUrl1) {
+                if (!options.ads.adtagurl)
+                    options.ads.adtagurl = adUrl1;
+                if (!options.ads.adtagurl2)
+                    options.ads.adtagurl2 = adUrl2;
+            }
+            else {
+                options.ads.delay = -1; //cannot do ads then.                    
+            }
+        }
+    }
     function repairMissingOptions(options) {
         //This is only for crucial properties that cannot be missing
         //a final options object. 
@@ -385,27 +422,7 @@ function createObject_(options, ampIntegration) {
             options.autoplay = 'wifi';
         }
         
-        if (!options.ads) {
-            //this is the case they dun want ads loh.
-            //delay -1 no ads will be done then.
-            options.ads = { delay: -1};
-        }
-        if (options.ads.delay>=0 && !options.ads.adtagurl) {
-            let adUrl = (options.ads.unit ? _helpers.getAdTag(options): null);
-            if (options.ads.dev_adtagurl) {
-                adUrl = options.ads.dev_adtagurl;
-            }
-            if (window.location.href && window.location.href.includes('jxadtag') ) {
-                let tmp1 = getParameterByName('jxadtagurl');
-                if (tmp1) {
-                    adUrl = tmp1;
-                }
-            }
-            if (adUrl)
-                options.ads.adtagurl = adUrl;
-            else
-                options.ads.delay = -1; //cannot do ads then.                    
-        }
+       
         if (window.IntersectionObserver) {
             _cfg.tryPlayPause = _options.autopause;
          }
@@ -1394,9 +1411,9 @@ function createObject_(options, ampIntegration) {
                     vData.conf && typeof vData.conf === 'object' ? vData.conf:{} , nestedProp_, nestedProp2_);
             }
             repairMissingOptions(_options);
-            _pInst.setConfig(//_options.ads.delay, _options.ads.prerolltimeout, 
+            prepareAdsObj(_options);
+            _pInst.setConfig(
                 _options.ads,
-                _options.ads.adtagurl, 
                 _options.logo, _options.soundindicator);
         }
             
