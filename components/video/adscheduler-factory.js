@@ -19,15 +19,20 @@ let MakeOneAdScheduler_ = function(adscfg) {
     //Here the usedSlots and maxSlots include the preroll that we assume
     //will be played somehow at the start (not managed by us)
     var _usedSlots = 0;
-    var _maxSlots = 3; //in here the maxslots also includes PURE PREROLL.
-                       //delay == 0 means publisher wants first ad to be
-                       //pure preroll
-    var _sInterval = 90;
-    var _sDelay = 5;
-    var _minTimeLeft = 20;
-    var _sNext = 5; //some default delay...
+    var _maxSlots = 999; //in here the maxslots also includes PURE PREROLL.
+                         //delay == 0 means publisher wants first ad to be
+                         //pure preroll
+    var _sInterval = 9999999;
+    var _sDelay = 8;
+    var _minTimeLeft = 0;
+    var _sNext = 8; //some default delay...
     var _dirty = true;
     function FactoryOneAdScheduler(adscfg) {
+        //adscfg = {
+          //  delay : 0,
+            //interval: 70,
+            //mintimeleft: 8
+        //};
         if (adscfg.hasOwnProperty('delay') && !isNaN(adscfg.delay)) {
             _sDelay = parseInt(adscfg.delay);
         }
@@ -50,8 +55,12 @@ let MakeOneAdScheduler_ = function(adscfg) {
         if (_sDelay == -1) {//dun want ads
             _maxSlots = 0;
         }
-        if (_sInterval === 0) {
+        if (_sInterval === 0 || _sInterval === 9999999) {
             _sInterval = 9999999;
+            _maxSlots = 1; //Like that? <--- test this. TODO MON
+        }
+        if (_minTimeLeft == 0) {//not set, then we still give something
+            _minTimeLeft = Math.ceil(_sInterval/2);
         }
         _dirty = true;
     }
@@ -89,8 +98,8 @@ let MakeOneAdScheduler_ = function(adscfg) {
         if (_dirty) {
             _updateNext(0);
         }
-        console.log(`__DEBUG podSize=${_podSize} maxSlots=${_maxSlots} minTimeLeft=${_minTimeLeft} interval=${_sInterval} delay=${_sDelay}`);
-        console.log(`__DEBUG(So far ${_usedSlots}) first non preroll ${_sNext}`);
+        //console.log(`__DEBUG podSize=${_podSize} maxSlots=${_maxSlots} minTimeLeft=${_minTimeLeft} interval=${_sInterval} delay=${_sDelay}`);
+        //console.log(`__DEBUG(So far ${_usedSlots}) first non preroll ${_sNext}`);
         return _sNext;
     }
     //So when the time comes, we still do a last minute check:
@@ -98,12 +107,12 @@ let MakeOneAdScheduler_ = function(adscfg) {
         if (duration - playhead < _minTimeLeft) {
             //if haven't played the first ad, then ok can go ahead even though we 
             //start play near the end of the video
-            console.log(`__DEBUG(So far decision= ${_sDelay && _usedSlots == 0 ? true: false}   (playhead=${playhead} vs duration=${duration})`);
+            //console.log(`__DEBUG(So far decision= ${_sDelay && _usedSlots == 0 ? true: false}   (playhead=${playhead} vs duration=${duration})`);
             return (_sDelay && _usedSlots == 0 ? true: false);
         }
         //check playhead, duration stuff
         //about the max slots stuff
-        console.log(`__DEBUG(So far ${_usedSlots}) CAN play ad (playhead=${playhead} vs duration=${duration})`);
+        //console.log(`__DEBUG(So far ${_usedSlots}) CAN play ad (playhead=${playhead} vs duration=${duration})`);
         return true;
     }
     //if yes, then we "take Ad Slot"
@@ -111,7 +120,7 @@ let MakeOneAdScheduler_ = function(adscfg) {
         _usedSlots++;
         _sLastSlot = accuTime;
         _updateNext(accuTime);
-        console.log(`__DEBUG(So far ${_usedSlots}) use slot at ${accuTime} ; next slot is ${_sNext}`);
+        //console.log(`__DEBUG(So far ${_usedSlots}) use slot at ${accuTime} ; next slot is ${_sNext}`);
         return _sNext;
     }
     FactoryOneAdScheduler.prototype.getAdIdx = function(adTagBase) {
@@ -159,7 +168,7 @@ module.exports = MakeOneAdScheduler_;
 /**** OUR LITTLE TEST CODE
  * THIS IS ACTUALLY A VERY CUSTOM SCHEDULER. IT IS NOT GENERIC. THE MAIN GOAL IS TO
  * MIN COMPUTATION AT EVERY PLAYHEAD UPDATE.
- * 
+ 
 let adS =  MakeOneAdScheduler_(
     {
         delay: 0,
@@ -181,7 +190,7 @@ function cb(currentTime) {
         _accumulatedTime += diff;
     }
 
-    if (Math.floor(Math.random() * 10) > 8)
+    if (Math.floor(Math.random() * 20) > 18)
         console.log(`playhead=${currentTime} acc=${_accumulatedTime}`);
     if (_nextAdSlot != -1 && _accumulatedTime > _nextAdSlot) {
         console.log(`!!!!!! ${_accumulatedTime} > ${_nextAdSlot}`);
@@ -214,7 +223,7 @@ function V1() {
 
 function V2() {
     val = 0; //v2 start playing at beginning.
-    duration = 120;
+    duration = 220;
 
     console.log(`starting video 2`);
     _accumulatedTime = 0;
@@ -254,6 +263,5 @@ function V3() {
 
 setTimeout(V1, 0);
 setTimeout(V2, 20000);
-setTimeout(V3, 40000);
-*******/
-    
+setTimeout(V3, 50000);
+    */
