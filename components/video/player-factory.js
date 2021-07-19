@@ -912,12 +912,16 @@ window.jxPromisePolyfill        = 'none';
             }
             else {
                 //console.log(`Debug___ Hmmm, it starts to PAUSE ${_accumulatedTime}`);
+                /* disable for now
+                coz this apparently can be triggered via buffering!!
+                buffering is not manual pause!!
+
                 if (Date.now() - _msLastInternalCallPause > msPauseAttributeThreshold_) { // get the difference between last saved timestamp and current timestamp
                     //the last internal trigger to pause was too long ago. cannot explain this pause
                     //This pause likely is due to user action:
                     //console.log(`Debug___ Hmmm, it starts to pause MUST BE USER INTENTIONAL (${Date.now() - _msLastInternalCallPause})`);
                     _manualPaused = true;
-                }
+                }*/
             }
         }
        
