@@ -400,6 +400,7 @@ function makeTable(cases, flag) {
         if (oneRow.adUnitCodeM) {
             hbMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbmobile&jxhbadunitcode=${oneRow.adUnitCodeM}&jxhbcreativeid=${oneRow.id}`;
         }
+        let ampUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=ampad1&creativeid=${oneRow.id}`;
 
         buf += trOpen_;
         let extra = (oneRow.extra ? "( " + oneRow.extra + " )" : "");
@@ -414,6 +415,9 @@ function makeTable(cases, flag) {
         buf += tdOpen_ + realLink + tdClose_;
 
         realLink = osmUrl ? `<a href="${osmUrl}" xtarget="_blank">OSM</a>` : '';
+        buf += tdOpen_ + realLink + tdClose_;
+
+        realLink = ampUrl ? `<a href="${ampUrl}" xtarget="_blank">amp_ad</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
         realLink = hbDUrl ? `<a href="${hbDUrl}" xtarget="_blank">HB-desktop</a>` : '';

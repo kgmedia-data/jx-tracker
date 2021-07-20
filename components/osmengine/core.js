@@ -1103,24 +1103,6 @@
             url += p.amp ? '&device=amp': '';
             let pNode = _getPgSelector();
             url += (pNode && pNode.node.clientWidth ? '&width='+pNode.node.clientWidth:'');
-            let valcids = qparams.get('creativeids');    
-            if (valcids) {
-                url += '&creativeids=' + valcids;
-            }
-            else {
-            if (p.unit == '1000008-iT3q5Ci4Ry') {
-                url += '&creativeids=' + 683;
-            }
-            if (p.unit == 'x1000008-iT3q5Ci4Ry') {
-                url += '&creativeids=1005|1165';
-            }
-            if (p.unit == 'xx1000008-iT3q5Ci4Ry') {
-                url += '&creativeids=' + 800;
-            }     
-            }       
-            console.log(url);
-            console.log("!!!!");
-
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_fire ad request');
             }

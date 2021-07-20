@@ -108,7 +108,7 @@ function createInstance_(p, partners) {
     url += '&device=amp';
 
     let respBlob = {};
-    let _jxContainer = document.getElementById('c');
+    let _jxContainer = document.getElementById(p.container);
     let fetchedCreativesProm = respBlob && respBlob.creatives ? Promise.resolve(respBlob) : fetchAdP(url);
     fetchedCreativesProm
     .then(function(responseBlob) {

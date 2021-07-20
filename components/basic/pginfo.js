@@ -71,22 +71,11 @@ function get_() {
     if (page) ret.pageurl = page;
 
     let qparams = (new URL(document.location)).searchParams;
-    //use a loop lah!!
-    if (qparams.creativeid) {
-        ret.creativeid = qparams.creativeid;
-    }
-    if (qparams.creativeids) {
-        ret.creativeids = qparams.creativeids;
-    }
-    if (qparams.debug) {
-        ret.debug = qparams.debug;
-    }
-    if (qparams.deltaassets64) {
-        ret.deltaassets64 = qparams.deltaassets64;
-    }
-    if (qparams.portal) {
-        ret.portal = qparams.portal;
-    }
+    ['creativeid','creativeids','debug', 'deltaassets64', 'logwhythrow','portal'].forEach(function(item) {
+        if (qparams.has(item)) {
+            ret[item] = qparams.get(item);
+        }
+    });
     return ret;
 }
 
