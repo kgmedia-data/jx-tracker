@@ -9,8 +9,22 @@ const video = 'video';
 const display = 'display';
 const dpa = 'dpa';
 const script = 'script';
+const outstream = 'outstream';
 
-const demoCases_ = [{
+const demoCases_ = [
+    {
+        name: 'Teads Demo',
+        types: [outstream],
+        id: 897,
+        tests: []
+    },
+    {
+        name: 'Unruly Demo',
+        types: [outstream],
+        id: 893,
+        tests: []
+    },
+    {
         name: 'Video ad (pure) 16:9',
         types: [video],
         id: 1286,
@@ -408,6 +422,12 @@ function makeTable(cases, flag) {
         buf += tdOpen_ + `${oneRow.name}${extra}` + tdClose_;
         buf += tdOpen_ + `${oneRow.width?oneRow.width:"?"}x${oneRow.height?oneRow.height:"?"}` + tdClose_;
 
+        if (oneRow.types[0] == outstream) {
+            uUrl = null; 
+            uliteUrl = null;
+            hbDUrl = null;
+            hbMUrl = null;
+        }
         realLink = uUrl ? `<a href="${uUrl}" xtarget="_blank">univ</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
