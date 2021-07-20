@@ -7,8 +7,10 @@ if (window.jxuniversallite) {
 }
 
 
-
 const modulesmgr                    = require('../components/basic/modulesmgr');
+const helpers                       = require('../components/renderer/helpers');
+modulesmgr.set('renderer/helpers',     helpers);
+
 const univelements                  = require('../components/renderer/univelements');
 modulesmgr.set('renderer/univelements',         univelements);
 
