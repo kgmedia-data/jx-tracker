@@ -8,19 +8,44 @@
  */
 
 var gParams = {};//later will be set.
-    
+  
+/*
+window.context
+  .requestResize(requestedWidth, requestedHeight)
+  .then(function () {
+    // Hide any overflow elements that were shown.
+    // The requestedHeight and requestedWidth arguments may be used to
+    // check which size change the request corresponds to.
+  })
+  .catch(function () {
+    // Show the overflow element and send a window.context.requestResize(width, height)
+    // when the overflow element is clicked.
+    // You may use the requestedHeight and requestedWidth to check which
+    // size change the request corresponds to.
+  });
+*/
 
 var p_imp = null; //global ...set to corr to whatever current partner 
 var p_noad = null; //global ...
 function ampOneOffInit_() {
     let boundRealRenderStart = window.context.renderStart.bind(window.context);
+    let boundRealRequestResize = window.context.requestResize.bind(window.context);
     //let boundRealNoContent = window.context.noContentAvailable.bind(window.context);
    
+    window.context.requestResize = function(requestedWidth, requestedHeight) {
+        //console.log(`$$$$ ${requestedWidth} ${requestedHeight}`);
+        if (requestedWidth == 0 || requestedHeight == 0) {
+            return Promise.resolve();
+        }
+        //THINK ...
+        return boundRealRequestResize(requestedWidth, requestedHeight).catch(function (err) {
+        });
+    }
     window.context.renderStart = function(arg1, arg2) {
         if (p_imp)
             window.postMessage(p_imp, "*");    
         //not accurate. depends on the vendor.
-        boundRealRenderStart();
+        return boundRealRenderStart();
     }
     window.context.noContentAvailable = function() {
         if (p_noad)
@@ -29,7 +54,7 @@ function ampOneOffInit_() {
 }
 
 function fireTrackers(trackers, action, code = null) {
-    fetch(trackers + '&action=' + action + (code ? '&errorcode='+code:''), {
+    fetch(trackers.baseurl + '?' + trackers.parameters + '&action=' + action + (code ? '&errorcode='+code:''), {
         //no typo?
         method: 'GET',
         credentials: 'include'
@@ -39,10 +64,14 @@ function fireTrackers(trackers, action, code = null) {
 
 function msgListener(e) {
     if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
+        console.log(e.data);
         let msgs = this.msgs;
         if (e.data == msgs.imp) { 
-            fireTrackers(this.trackers, 'impression');
-            p_imp = null;
+            if (this.unfired['impression']) {
+                this.unfired['impression'] = 0;
+                fireTrackers(this.trackers, 'impression');
+            }
+            p_imp = null;//?
             p_noad = null;
         }
         if (e.data == msgs.noad || e.data == msgs.timeout) { 
@@ -50,19 +79,18 @@ function msgListener(e) {
             p_imp = null;
             p_noad = null;
             //we should tear down the stuff.
-            fireTrackers(this.trackers, 'error', '303');
+            if (this.unfired['error']) {
+                this.unfired['error'] = 0;
+                fireTrackers(this.trackers, 'error', '303');
+            }
             this.next();
         }
         
     }
 }
 
-var ppp = {
-    maxwidth: 400,
-    fixedheight: 300,
-    excludedheight: 0
-};
-
+//TODO: unclear about the CV how to handle it. It is very diff from the non amp
+//fireTrackers(this.trackers, 'impression');
 var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
     let cr = remainingCreativesArr.shift();
     if (!cr) { return; }
@@ -80,8 +108,12 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
     p_noad = rtjson.msgs.noad;
     //imp
     //timeout should start to do a timeout also TODO
-    
     let boundMsgListener = msgListener.bind({
+        unfired: {
+            error: 1,
+            impression: 1,
+            creativeView: 1
+        },
         msgs: rtjson.msgs,
         trackers: rtjson.trackers,
         next: oneLayer.bind(null, jxContainer, remainingCreativesArr, partners, next)
@@ -120,7 +152,7 @@ function createInstance_(p, partners) {
             oneLayer(_jxContainer, creativesArr, partners, oneLayer);
     })
     .catch(function(err) {
-        boundRealNoContent();
+        //boundRealNoContent();
     });
 }
 

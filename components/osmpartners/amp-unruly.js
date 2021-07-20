@@ -1,8 +1,8 @@
 const defaultPTimeout_ = -1;
 
-function makeNormalizedObj_({
+function makeNormalizedObj_(
     dbjson
-}) {
+) {
     //rtjson prepared.
     let rtjson = {
         timeout: dbjson.timeout ? dbjson.timeout : defaultPTimeout_,
@@ -31,7 +31,8 @@ function common_(rtjson) {
 }
 //to be bound;
 function inject_(siteId, imp) {
-    //cr.adparameters.siteId = '1018656'; //'amp-test';
+    siteId = '1018656'; //'amp-test';
+    console.log(`HACK REMEMBER THIS IS TESTING PLACEMENT`);
     //1018656, 218003 3709286
     window.unruly = window.unruly || {};
     window.unruly.native = {
@@ -48,14 +49,13 @@ function inject_(siteId, imp) {
     document.body.appendChild(s);
 }
 
-function makeNormalizedObj_(dbjson) {
-    let rtjson = {};
+function makeNormalizedObj__(dbjson, rtjson) {
     common_(rtjson);
     rtjson.msgs = {
         imp: `jxosm_imp_unruly`,
         timeout: `jxosm_timeout_unruly`
     };
-    rtjson.inject = inject_.bound(null,
+    rtjson.inject = inject_.bind(null,
         dbjson.adparameters.siteId, rtjson.msgs.imp
     );
     return rtjson;
