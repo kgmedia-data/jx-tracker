@@ -201,12 +201,6 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         if (!tmp) {
             tmp = document.body;
         }
-        /* console.log(`_X X_X_X_X_X`);
-        console.log(tmp.offsetWidth);
-        console.log(tmp.offsetHeight);
-        console.log(tmp.width);
-        console.log(tmp.height);
-        console.log(`_X X_X_X_X_X-->`); */
         
         _pDiv = _helpers.newDiv(tmp,'div','',''); 
         _pDiv.style.width = '100%';
@@ -236,7 +230,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             _playerElt.play();
         },
         switch2Ad: function() {
-            parent.postMessage("jxhasad", '*'); 
+            //parent.postMessage("jxhasad", '*'); 
             _playerElt.pause();
         }
     };                
@@ -299,10 +293,10 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
      * @param {*} isVisible 
      */
     OneAdInstance.prototype.visibilityChange = function(isVisible) {
-        console.log(`OneAdInstance.prototype.visibilityChange = function(${isVisible}) `);
+        //console.log(`OneAdInstance.prototype.visibilityChange = function(${isVisible}) `);
         if (_adObj) {
             if (isVisible) {
-                _adObj.playAd();
+                _adObj.playOrStartAd();
             }
             else {
                 _adObj.pauseAd();
@@ -311,15 +305,21 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     }
 
     function updateUniversal(v) {
+        let e;
         let msg = null;
         if (v == 'jxadstarted' || v == 'jxhasad') {
             msg = 'jxhasad'
+            e = new Event('jxhasad');
         }
         else if (v == 'jxaderrored' || v == 'jxnoad') {
             msg = 'jxnoad';
+            e = new Event('jxnoad');
         }
         if (msg) {
             parent.postMessage("jxhasad", '*'); 
+        }
+        if (e) {
+            window.dispatchEvent(e);
         }
     }
 
@@ -393,7 +393,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         delete data.vast;
         vastSrcBlob.adparameters = data;           
         let vast = buildVastXml([vastSrcBlob]);
-        _adObj.setAutoAdsManagerStart(true);
+        _adObj.setAutoAdsManagerStart(false);
         _adObj.makeAdRequestFromXMLCB(vast, true, true, updateUniversal);
     }//
 

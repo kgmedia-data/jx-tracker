@@ -57,14 +57,14 @@
 
     FactoryOneAd.prototype.reset = function() {
         //_autoAdsManagerStart = false;
-        
+        _isAdStarted = false;
+
         _adEnduredVec = [0,0,0,0,0];
         //for use of the next ad request
         //I am thinking of destroying the ads loader also?
 
         /** reset the state back to initial */
         _isProgressBarUpdated = false;
-        _isAdStarted = false;
 
         if (_adsManager) {
             _adsManager.destroy();
@@ -188,6 +188,7 @@
                 break;
             //or you can fire the thing 
             case google.ima.AdEvent.Type.AD_PROGRESS:
+                //_isAdStarted = true;
                 if (evt.type == google.ima.AdEvent.Type.AD_PROGRESS) {
                     let adData = evt.getAdData();
                     //possible for the ad to be non linear leh...
@@ -589,14 +590,23 @@
         })
     };
     FactoryOneAd.prototype.startAd = function(resolveFcn) {
+        _isAdStarted = true;
         _startAd(resolveFcn);
     };
+    FactoryOneAd.prototype.playOrStartAd = function() {
+        if (!_isAdStarted) {
+            _startAd();
+            return;
+        }
+        _playAd();
+    };
+    
     FactoryOneAd.prototype.playAd = function() {
         //this is called by the player.
-
         _playAd();
     };
     FactoryOneAd.prototype.pauseAd = function() {
+        console.log(`!!!! -bc pauseAd`);
         _pauseAd();
     };
     //added this thing (repeat of code... aarh) This is for playerWrapper to call

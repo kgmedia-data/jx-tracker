@@ -237,7 +237,6 @@ function addGAMNoAdNotifyMaybe(str) {
         }
         else { //is IR ratio change
             //for AMP we actually get an array of stuff every now and then. not sure what it is doing.
-            //console.log("paramlength=" + param.length);
             param.forEach(function(entry) {
                 if (thisObj.amp) {
                     thisObj.amp.boundScrollEvent(
@@ -330,7 +329,16 @@ function addGAMNoAdNotifyMaybe(str) {
         }
     }
 
+    //iframe, totally controlled by us. 
     function __handleCreativeMsgs(e) {
+        if (this.divObjs.jxCoreElt && this.divObjs.jxCoreElt.contentWindow) {
+            //creative is in iframe iframe situation:
+            //not meant for us, the parent then.
+            if (!(this.divObjs.jxCoreElt.contentWindow === e.source)) {
+                return;
+            }
+        }
+        
         let type = null;                    
         let json = null;
         if (!e.data || typeof e.data === 'string' && e.data.indexOf('jx') != 0 ) {
@@ -371,12 +379,18 @@ function addGAMNoAdNotifyMaybe(str) {
         if (type) {
             switch (type) {
                 case "jxloaded":
-                    if (this.handlers.jxloaded)
-                        this.handlers.jxloaded();
+                    
+                    //if (!json || json.token == this.token) 
+                    {
+                        if (this.handlers.jxloaded) {
+                            this.handlers.jxloaded();
+                        }
+                    }
                     break;
                 case "jxhasad":     
-                    if (this.handlers.jxhasad)
+                    if (this.handlers.jxhasad) {
                         this.handlers.jxhasad();
+                    }
                     break;
                 case "jxnoad":     
                 case "jxadended":
@@ -622,6 +636,7 @@ function addGAMNoAdNotifyMaybe(str) {
      * called as bound function . See comment above "START OF : POSITION AND SIZE MANIPULATION FUNCTIONS."
      **/
     function createOuterContainer(containerId, jxContainer, normCrParams) {
+        
         let oDiv = null;
         let iDiv = null;
         let id = containerId; //"jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
@@ -1221,14 +1236,17 @@ function addGAMNoAdNotifyMaybe(str) {
                             delete out.adparameters;
                         }
                         else {
-                            out.crSig = c.url.indexOf('index.lt.min.html')>-1 ? 'displaydpalite': 'displaydpa';
-                            c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
-                            c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
-                            //console.log(c.url);
-                            if (c.url.indexOf('.lt')> -1)
-                                out.crSig = 'jx_dpa_lite';
-                            else
-                                out.crSig = 'jx_dpa_classic';                                
+                            if (c.url.indexOf('amazonaws.com') == -1) {
+                                c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
+                                c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
+                            }
+                            //out.crSig = c.url.indexOf('index.lt.min.html')>-1 ? 'displaydpalite': 'displaydpa';
+                            //c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
+                            //c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
+                            //if (c.url.indexOf('.lt')> -1)
+                              //  out.crSig = 'jx_dpa_lite';
+                            //else
+                              //  out.crSig = 'jx_dpa_classic';                                
                             out.iframe = { url: c.url };
                         }
                         break;
@@ -1332,7 +1350,8 @@ function addGAMNoAdNotifyMaybe(str) {
             let msghandlers = {};
             let token = destContainerPrefix_ + instId; 
             msghandlers['jxloaded'] = crReady2HearAdParamsResolve;
-            boundHandleCreativeMsgs = __handleCreativeMsgs.bind({ token: token, handlers: msghandlers });
+            boundHandleCreativeMsgs = __handleCreativeMsgs.bind({ 
+                divObjs: divObjs, token: token, handlers: msghandlers });
             _helpers.addListener(window, "message", boundHandleCreativeMsgs);
             unhook.listeners.message = boundHandleCreativeMsgs; 
             //-->
@@ -1359,27 +1378,7 @@ function addGAMNoAdNotifyMaybe(str) {
                         __pm2Creative.bind({divObjs:divObjs, c: normCrParams}) :
                         __direct2Creative.bind({divObjs:divObjs, c: normCrParams}))
                 );
-            /*
-            if it is the GAM type, then we can listen to size being 0 and then fire a no ad
-            */
-
-            // To be used in the following various bound functions
-            // so that they always using this same object.
-            // This obj may get modified in response to events
-            // e.g. creative indicates a height change.
-            //actually no need to make another one
-            /*
-            sharedCreativeRTObj = {
-                token:          '''
-                width:          normCrParams.width,
-                height:         normCrParams.height,
-                type:           normCrParams.type,
-                fixedHeight:    normCrParams.fixedHeight,
-                creativeH:      normCrParams.height, //<---
-                containerH:     normCrParams.fixedHeight, //<---
-                trackers:       normCrParams.trackers
-            };
-            */
+           
             normCrParams.creativeH  = normCrParams.height;
             normCrParams.containerH = normCrParams.fixedHeight;
             boundHandleResize               = __handleResize.bind({divObjs:divObjs, c: normCrParams});

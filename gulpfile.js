@@ -204,7 +204,7 @@ const supported_ = [
         .pipe(gutil.noop())
   });
 
-  const hbrendererjsfile_ = 'bundles/jxrenderer.js';
+  const hbrendererjsfile_ = 'bundles/hbrenderer.js';
   gulp.task('BUILD_HBRENDERER_BUNDLE', function() {
     return browserify('' + hbrendererjsfile_, {
             debug: false

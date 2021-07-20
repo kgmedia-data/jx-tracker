@@ -5,6 +5,10 @@ if (window.jxoutstreammgr && window.jxoutstreammgr.init) {
     return;
 }
 const modulesmgr    = require('../components/basic/modulesmgr');
+
+const helpers                       = require('../components/renderer/helpers');
+modulesmgr.set('renderer/helpers',     helpers);
+
 const univelements  = require('../components/renderer/univelements-stub');
 modulesmgr.set('renderer/univelements',         univelements);
 
