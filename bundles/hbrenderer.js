@@ -11,11 +11,12 @@
  * there are multiple chances to do work, we will
  */
 
-if (window.jxrenderer && window.jxrenderer.init) {
+ if (window.jxhbuniversal && window.jxhbuniversal.hbinit) {
     return;
 }
 
 const modulesmgr                    = require('../components/basic/modulesmgr');
+
 const helpers                       = require('../components/renderer/helpers');
 modulesmgr.set('renderer/helpers',     helpers);
 
@@ -24,13 +25,14 @@ modulesmgr.set('renderer/univelements',         univelements);
 const mrenderer                     = require('../components/renderer/core');
 
 function start_(options) {
+    delete options.maxwidth;
     //here we make no effort to get ids pageinfo coz they are not needed.
     var inst = mrenderer.createInstance(options);
     //no need lah instMap.set(hashStr, inst);
 }
 
-window.jxrenderer = {
-    init: start_
+window.jxhbuniversal = {
+    hbinit: start_
 };
 //Notes to self:
 /*

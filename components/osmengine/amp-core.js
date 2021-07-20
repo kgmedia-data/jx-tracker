@@ -1,9 +1,15 @@
 /**
  * Instrumentation of the AMP context functions
  * One-off only !
- * Not tested after the rewrite
+ * This whole thing will be in its own iframe lah.
+ * So no need worry about many instances and all that.
+ * Can also use global variables ...
  * Need a lot more heuristic and junk
  */
+
+var gParams = {};//later will be set.
+    
+
 var p_imp = null; //global ...set to corr to whatever current partner 
 var p_noad = null; //global ...
 function ampOneOffInit_() {
@@ -23,7 +29,12 @@ function ampOneOffInit_() {
 }
 
 function fireTrackers(trackers, action, code = null) {
-    //TODO
+    fetch(trackers + '&action=' + action + (code ? '&errorcode='+code:''), {
+        //no typo?
+        method: 'GET',
+        credentials: 'include'
+    }).catch((err) => {
+    });
 }
 
 function msgListener(e) {
@@ -46,9 +57,13 @@ function msgListener(e) {
     }
 }
 
+var ppp = {
+    maxwidth: 400,
+    fixedheight: 300,
+    excludedheight: 0
+};
+
 var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
-    //console.log(`ampOnePartner`);
-    //console.log(remainingCreativesArr[0]);
     let cr = remainingCreativesArr.shift();
     if (!cr) { return; }
     let subtype = cr.subtype;
@@ -59,7 +74,8 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
     if (!cr) { return; }
     let partner = partners[subtype];
     if (!partner) { return; }
-    let rtjson = partner.makeNormalizedObj();
+
+    let rtjson = partner.makeNormalizedObj(cr, gParams);
     p_imp = rtjson.msgs.imp;
     p_noad = rtjson.msgs.noad;
     //imp
@@ -73,13 +89,27 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
     window.addEventListener('message', boundMsgListener, false);
     rtjson.inject();
 }
+function fetchAdP(adTagUrl) {
+    return fetch(adTagUrl).then((response) => response.json());
+}
 
 function createInstance_(p, partners) {
-    //container:
-    //TODO: still have to work out the adUrl ah
-    let adUrl = 'https://ad.jixie.io/v1/universal?source=sdk&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=800'; //1007|1005|800';
-    //let fetchedCreativesProm = respBlob && respBlob.creatives ? Promise.resolve(respBlob) : fetchAdP(_helpers.makeAdTagUrl(_jxParams));
-    let fetchedCreativesProm = respBlob && respBlob.creatives ? Promise.resolve(respBlob) : fetchAdP(adUrl);
+    gParams = p;
+    ampOneOffInit_();
+    let url = `https://${p.debug?'ad-rc':'ad'}.jixie.io/v2/osm?source=osm`;
+    ['unit', 'client_id', 'sid', 'creativeid'].forEach(function(prop) {
+        if (p[prop])
+            url += '&' + prop + '=' + p[prop];
+    });
+    ['pageurl', 'domain'].forEach(function(prop) {
+        if (p[prop])
+            url += '&' + prop + '=' + encodeURIComponent(p[prop]);
+    });
+    url += '&device=amp';
+
+    let respBlob = {};
+    let _jxContainer = document.getElementById('c');
+    let fetchedCreativesProm = respBlob && respBlob.creatives ? Promise.resolve(respBlob) : fetchAdP(url);
     fetchedCreativesProm
     .then(function(responseBlob) {
         let creativesArr;
@@ -88,14 +118,12 @@ function createInstance_(p, partners) {
         }
         if (creativesArr && creativesArr.length > 0)
             oneLayer(_jxContainer, creativesArr, partners, oneLayer);
+    })
+    .catch(function(err) {
+        boundRealNoContent();
     });
 }
 
-//pass you all the partners functions.
-//something to get AMP context info (better be shared coz got amp-adonly)
-//
-//TODO just call this internally once then!!
-//module.exports.ampOneOffInit = ampOneOffInit_;
 module.exports.createInstance = createInstance_;
 
 /* 

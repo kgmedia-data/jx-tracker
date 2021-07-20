@@ -97,6 +97,7 @@ const demoCases_ = [{
         width: 300,
         height: 600,
         types: [display],
+        adUnitCodeD: "div-gpt-ad-Giant",
         adUnitCodeM: "div-gpt-ad-flying_carpet_mobile",
         tests: []
     },
@@ -129,10 +130,20 @@ const demoCases_ = [{
         ]
     },
     {
+        name: 'LITE!!! (cid=1132) 970x250',
+        types: [display, dpa],
+        demoorg: 'Rumah',
+        adUnitCodeD: "div-gpt-ad-Top_1-1",
+        width: 970,
+        height: 250,
+        id: 1132
+    },
+    {
         name: 'LITE!!! (cid=1027) 300x250 2 Rotating Products with Brand Background (img slanted at 45 deg)',
         file: '300x250/2pdt_rot_brandbg_45deg',
         types: [display, dpa],
         demoorg: 'Tokopedia',
+        adUnitCodeD: "div-gpt-ad-Right_4",
         adUnitCodeM: "div-gpt-ad-Zone_2",
         width: 300,
         height: 250,
@@ -156,6 +167,7 @@ const demoCases_ = [{
         types: [display, dpa],
         width: 300,
         height: 600,
+        adUnitCodeD: "div-gpt-ad-Giant",
         adUnitCodeM: "div-gpt-ad-flying_carpet_mobile",
 
         id: 1165
@@ -167,6 +179,7 @@ const demoCases_ = [{
         types: [dpa, video],
         width: 300,
         height: 600,
+        adUnitCodeD: "div-gpt-ad-Giant",
         adUnitCodeM: "div-gpt-ad-flying_carpet_mobile",
 
         id: 1166
@@ -178,6 +191,7 @@ const demoCases_ = [{
         types: [display, dpa],
         width: 300,
         height: 600,
+        adUnitCodeD: "div-gpt-ad-Giant",
         adUnitCodeM: "div-gpt-ad-flying_carpet_mobile",
 
         id: 613
@@ -189,6 +203,7 @@ const demoCases_ = [{
         types: [display, dpa],
         width: 300,
         height: 600,
+        adUnitCodeD: "div-gpt-ad-Giant",
         adUnitCodeM: "div-gpt-ad-flying_carpet_mobile",
 
         id: 576
@@ -201,6 +216,7 @@ const demoCases_ = [{
         types: [display, dpa],
         width: 300,
         height: 600,
+        adUnitCodeD: "div-gpt-ad-Giant",
         adUnitCodeM: "div-gpt-ad-flying_carpet_mobile",
 
         id: 536
@@ -213,6 +229,7 @@ const demoCases_ = [{
         demoorg: 'Shopee (hybrid instream)',
         width: 300,
         height: 600,
+        adUnitCodeD: "div-gpt-ad-Giant",
         adUnitCodeM: "div-gpt-ad-flying_carpet_mobile",
 
         id: 542
@@ -225,6 +242,7 @@ const demoCases_ = [{
         demoorg: 'Shopee (existing converted)',
         width: 300,
         height: 600,
+        adUnitCodeD: "div-gpt-ad-Giant",
         adUnitCodeM: "div-gpt-ad-flying_carpet_mobile",
 
         id: 531
@@ -308,6 +326,7 @@ const demoCases_ = [{
         types: [display, dpa],
         width: 300,
         height: 250,
+        adUnitCodeD: "div-gpt-ad-Right_4",
         adUnitCodeM: "div-gpt-ad-Zone_2",
 
         id: 534
@@ -319,6 +338,7 @@ const demoCases_ = [{
         types: [display, dpa],
         width: 300,
         height: 250,
+        adUnitCodeD: "div-gpt-ad-Right_4",
         adUnitCodeM: "div-gpt-ad-Zone_2",
 
         id: 784
@@ -330,6 +350,7 @@ const demoCases_ = [{
         types: [display, dpa],
         width: 300,
         height: 250,
+        adUnitCodeD: "div-gpt-ad-Right_4",
         adUnitCodeM: "div-gpt-ad-Zone_2",
 
         id: 535
@@ -341,6 +362,7 @@ const demoCases_ = [{
         types: [display, dpa],
         width: 300,
         height: 250,
+        adUnitCodeD: "div-gpt-ad-Right_4",
         adUnitCodeM: "div-gpt-ad-Zone_2",
 
         id: 882
@@ -352,6 +374,7 @@ const demoCases_ = [{
         types: [display, dpa],
         width: 300,
         height: 250,
+        adUnitCodeD: "div-gpt-ad-Right_4",
         adUnitCodeM: "div-gpt-ad-Zone_2",
 
         id: 883
@@ -366,9 +389,13 @@ function makeTable(cases, flag) {
     let buf = '';
     cases.forEach(function(oneRow) {
         let uUrl = `https://universal.jixie.io/demos/portal/hybrid.html?creativeid=${oneRow.id}`;
-        let uliteUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_osm.html?creativeids=${oneRow.id}`;
+        let uliteUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_ulite.html?creativeid=${oneRow.id}`;
         let osmUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_osm.html?creativeids=${oneRow.id}`;
         let hbDUrl = null;
+        if (oneRow.adUnitCodeD) {
+            hbDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbdesktop&jxhbadunitcode=${oneRow.adUnitCodeD}&jxhbcreativeid=${oneRow.id}`;
+        }
+
         let hbMUrl = null;
         if (oneRow.adUnitCodeM) {
             hbMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbmobile&jxhbadunitcode=${oneRow.adUnitCodeM}&jxhbcreativeid=${oneRow.id}`;
@@ -380,17 +407,22 @@ function makeTable(cases, flag) {
         buf += tdOpen_ + `${oneRow.name}${extra}` + tdClose_;
         buf += tdOpen_ + `${oneRow.width?oneRow.width:"?"}x${oneRow.height?oneRow.height:"?"}` + tdClose_;
 
-        realLink = uUrl ? `<a href="${uUrl}" target="_blank">univ</a>` : '';
+        realLink = uUrl ? `<a href="${uUrl}" xtarget="_blank">univ</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
-        realLink = uliteUrl ? `<a href="${uliteUrl}" target="_blank">new-univ</a>` : '';
+        realLink = uliteUrl ? `<a href="${uliteUrl}" xtarget="_blank">new-univ</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
-        realLink = osmUrl ? `<a href="${osmUrl}" target="_blank">OSM</a>` : '';
+        realLink = osmUrl ? `<a href="${osmUrl}" xtarget="_blank">OSM</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
-        realLink = hbMUrl ? `<a href="${hbMUrl}" target="_blank">HB-mobile</a>` : '';
+        realLink = hbDUrl ? `<a href="${hbDUrl}" xtarget="_blank">HB-desktop</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
+
+        realLink = hbMUrl ? `<a href="${hbMUrl}" xtarget="_blank">HB-mobile</a>` : '';
+        buf += tdOpen_ + realLink + tdClose_;
+
+
         buf += trClose_;
     });
     return buf;
@@ -417,6 +449,7 @@ function finalOutput() {
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
+  
     </head>
     <body>
 		<div class="container">
@@ -426,9 +459,17 @@ function finalOutput() {
 			</div>
 		-->
          <h2>Jixie Ad Rendering TestPage</h2>
-         <h6>To Test HB: Resource override is needed! (with mobile-emulation if needed)</h6>
-         <h8>replace url https://securepubads.g.doubleclick.net/gampad/ads?gdfp_req=1&pvsid=*hb_adid_jixie* by https://jixieamptest.kompas.com/api/jsongen?gdfp_req=1&pvsid=*hb_adid_jixie*</h8>
-         <br>
+         
+            <div class="row">
+                <div style="width:100%" class="textwrapper">
+                    <textarea style="width:100%" rows="5" id="hbinfo">
+                To view in HB context: RESOURCE OVERRIDE is needed! 
+                (So for mobile, pls do on desktop browser with mobile-emulation)
+                FROM and TO URL-patterns as follows:
+                https://securepubads.g.doubleclick.net/gampad/ads?gdfp_req=1&pvsid=*hb_adid_jixie* 
+                https://jixieamptest.kompas.com/api/jsongen?gdfp_req=1&pvsid=*hb_adid_jixie*
+                    </textarea></div>
+            </div>
             <div class="row">
                 <table style="width:100%">
                     ${demoCasesStr_}

@@ -42,13 +42,15 @@ function inject_(params) {
         //just a simple renderer will do. 
         //no need even universal lite!!
         //jxrenderer would be sufficient
-        jxScript.src = 'https://scripts.jixie.io/jxrenderer.min.js';
+        jxScript.src = 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-jxrenderer.min.js';
+        //'https://scripts.jixie.io/jxrenderer.min.js';
         document.body.appendChild(jxScript);
         //and this can be made to next time be interlaced in a waterfall even!
     }
 }
 
-function makeNormalizedObj_(dbjson, rtjson, p) {
+function makeNormalizedObj_(dbjson, p) {
+    let rtjson = {};
     common_(rtjson);
     rtjson.msgs = {
         //or we fire the has ad immediately lor.
@@ -63,7 +65,8 @@ function makeNormalizedObj_(dbjson, rtjson, p) {
         excludedheight: 0,
         jsoncreativeobj64: dbjson.adparameters.jsonbase64
     };
-    rtjson.inject = inject_.bound(null, pp);
+    rtjson.inject = inject_.bind(null, pp);
+    return rtjson;
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;
 module.exports.name = 'jixie';

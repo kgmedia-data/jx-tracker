@@ -246,6 +246,7 @@ function addGAMNoAdNotifyMaybe(str) {
                     );
                 }
                 newVisVal = entry.intersectionRatio > visThreshold_ ? 1: 0;
+                console.log(`MIOW new visiblity value ${newVisVal}`);
             });
         }
         
@@ -1295,6 +1296,7 @@ function addGAMNoAdNotifyMaybe(str) {
         
             let divObjs = {}; //this will get filled in (all the outer div, inner div, master div,...
             //several functions have AMP and non-amp versions. Make sure we use the correct one
+            console.log(`CHECKING CONTEXT MIOW ${_jxParams.context}`);
             let cxtFcnsVector = fcnVectorsByContext_[_jxParams.context];
             if (!cxtFcnsVector) {
                 cxtFcnsVector = fcnVectorsByContext_.default;

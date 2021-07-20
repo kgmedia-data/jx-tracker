@@ -48,7 +48,8 @@ function inject_(siteId, imp) {
     document.body.appendChild(s);
 }
 
-function makeNormalizedObj_(dbjson, rtjson) {
+function makeNormalizedObj_(dbjson) {
+    let rtjson = {};
     common_(rtjson);
     rtjson.msgs = {
         imp: `jxosm_imp_unruly`,
@@ -57,6 +58,7 @@ function makeNormalizedObj_(dbjson, rtjson) {
     rtjson.inject = inject_.bound(null,
         dbjson.adparameters.siteId, rtjson.msgs.imp
     );
+    return rtjson;
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;
 module.exports.name = 'unruly';
