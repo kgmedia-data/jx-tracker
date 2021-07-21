@@ -804,8 +804,23 @@ function addGAMNoAdNotifyMaybe(str) {
         */
         let ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
 
+        //FES-137 thinking aloud only:
+        //some flag about some special type of responsiveness (part of the creative)
+        //max1dim = 1 (stands for maximize 1 dimension)
+        //
+        //When will you have the info?
+        //the container somehow you need to "feel" its size available first.
+        //Then you compute also c.widthR and c.heightR.
+        //At some point in time, compute a 
+        //c.widthR, c.heightR 
+        //So here, in this logic if there is a widthR heightR, then use that instead of the c.width and c.height
+        //
+
+
+
+
         let newH = ((c.height*ratio) + 5) + "px";
-        console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
+        //console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
 
         //console.log(`__handleResizeContainer ratio=${ratio} (=${jxbnDiv.offsetWidth}/${c.width}) newH=${newH} (=${c.height}*${ratio})`);
         //Not sure how to combine the fixedHeight stuff with this squashing though!!
