@@ -29,8 +29,9 @@
     * @param {*} stackidx 
     */
    function genPingBlob(creative, stackidx, stackdepth) {
-       let tbase = creative.trackers.baseurl;
-       let tparams = creative.trackers.parameters;
+       //able to get the trackers from either the creative level or in the adparameters level.
+       let tbase = creative.trackers? creative.trackers.baseurl: creative.adparameters.trackers.baseurl;
+       let tparams = creative.trackers ? creative.trackers.parameters: creative.adparameters.trackers.parameters;
 
        let miscEvts = {};
        ['impression', 'click', 'error'].forEach(function(action) {

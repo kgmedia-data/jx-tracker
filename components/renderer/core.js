@@ -1087,8 +1087,9 @@ function addGAMNoAdNotifyMaybe(str) {
             }
         }
         
-
-        let doBasicTrackers = c.thirdpartytag;
+        //this is the case whereby the creative itself will not manage the tracker firing
+        //so WE HERE need to do it.
+        let doBasicTrackers = c.type != 'video' && c.thirdpartytag;
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
         let clicktrackerurl = null;
         if (trackers) {
@@ -1117,17 +1118,6 @@ function addGAMNoAdNotifyMaybe(str) {
             delete out.adparameters;
         }
         let trusted = (c.adparameters && c.adparameters.trusted ? true: false);
-        //only for video. HACK
-        let vast = Object.assign({}, c);
-        try {
-            if (vast.adparameters){
-                delete vast.adparameters;
-                out.adparameters.vast = vast;
-            }
-        }
-        catch(ex) {
-        }
-
             //Their common characteristics: all to be in iframe.
             //then need a jxOutstream injected into the iframe as well.    
             const playerUrls_ = {
@@ -1180,13 +1170,15 @@ function addGAMNoAdNotifyMaybe(str) {
                 }
                 break;    
             case 'video': 
-                //no need put in iframe.
-                //let surl = playerUrls_['video'] + 'creativeid=' + c.id;
-                //out['iframe'] = { scripturl: surl, jxuni_p: JSON.parse(JSON.stringify(c)) };
-                //delete out.adparameters;
-                trusted = false;
-                out.crSig = jxScriptUrls_.video.signature;
-                out[trusted? 'div':'iframe'] = { 
+                trusted = false; //our video sdk will operate in friendly iframe
+                out.adparameters = c; //<--- this is a special behaviour for video sdk stuff.
+                if (!c.adparameters) { 
+                    //case of third party tag; for vast generation
+                    c.adparameters = { trackers: JSON.parse(JSON.stringify(c.trackers)) };
+                }
+                //only those that are managed by us have this property
+                delete out.adparameters.trackers;
+                out['iframe'] = { 
                     scripturl: jxScriptUrls_.video.url
                 };
                 break;
@@ -1217,20 +1209,6 @@ function addGAMNoAdNotifyMaybe(str) {
                         let psr = document.createElement('a');
                         psr.href = c.url;
                         if (psr.pathname.indexOf('.htm') === -1 && psr.pathname.indexOf('.html') === -1) {
-                            //simple image
-                            // It is a NOT HTML content, then we consider it is an image
-                            /*
-                            out.crSig = jxScriptUrls_.image.signature;
-                            trusted = true; //of course. just running our own script.
-                            out[trusted? 'div':'iframe'] = { scripturl: jxScriptUrls_.image.url };
-                            if (!out.adparameters) {
-                                out.adparameters = {
-                                    url: c.url,
-                                    clickurl: c.clickurl,
-                                    trackers: c.trackers
-                                };
-                            }
-                            */
                             doBasicTrackers = true; //totally managed by us in fact.
                             c.noclickevents = true; //so below we force it to not do click events
                             out['div'] = { image: { url: c.url, clickurl: c.clickurl, trackers: c.trackers }};
@@ -1241,13 +1219,6 @@ function addGAMNoAdNotifyMaybe(str) {
                                 c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
                                 c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
                             }
-                            //out.crSig = c.url.indexOf('index.lt.min.html')>-1 ? 'displaydpalite': 'displaydpa';
-                            //c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
-                            //c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
-                            //if (c.url.indexOf('.lt')> -1)
-                              //  out.crSig = 'jx_dpa_lite';
-                            //else
-                              //  out.crSig = 'jx_dpa_classic';                                
                             out.iframe = { url: c.url };
                         }
                         break;
@@ -1296,7 +1267,7 @@ function addGAMNoAdNotifyMaybe(str) {
         
             let divObjs = {}; //this will get filled in (all the outer div, inner div, master div,...
             //several functions have AMP and non-amp versions. Make sure we use the correct one
-            console.log(`CHECKING CONTEXT MIOW ${_jxParams.context}`);
+            
             let cxtFcnsVector = fcnVectorsByContext_[_jxParams.context];
             if (!cxtFcnsVector) {
                 cxtFcnsVector = fcnVectorsByContext_.default;
@@ -1373,6 +1344,11 @@ function addGAMNoAdNotifyMaybe(str) {
 
             //we use the token to help us. (commObj stands for "communications object")
             normCrParams.token = token;
+
+            //This is very important
+            //if there are trackers means are managing everything, there is no creative to talk to
+            //iframe is iframe (postmessage),
+            //direct2Creative (we dun have it yet.... not working yet need to fix for some of those player scripts)
             boundPM2Creative = (
                 normCrParams.trackers ? 
                     __pm2Self.bind({divObjs:divObjs, c: normCrParams}): 

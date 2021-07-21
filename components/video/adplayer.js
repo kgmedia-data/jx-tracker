@@ -455,19 +455,20 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
      * 
      * @param {*} data 
      */
-    OneAdInstance.prototype.changeJson = function(data) {
+    OneAdInstance.prototype.changeJson = function(crData) {
+        let adparameters = crData.adparameters;
         if (_adObj) {
             _adObj.reset();
         }
-        if (!data.video) {
-            data.video = {
+        if (!adparameters.video) {
+            adparameters.video = {
                 width: 640,
                 height: 360
             };
         }
         //testing and faking some data
-        if (data.video.height == 520)
-            data.video.height= 320; //error somewhere
+        if (adparameters.video.height == 520)
+        adparameters.video.height= 320; //error somewhere
         //_playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/954006/3001004-954006_480.mp4';
         let tmp = document.getElementById(_containerId);
         if (!tmp) {
@@ -477,23 +478,23 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         let comp = { height: 0 }; //for companion
         ['top', 'bottom'].forEach(function(banner){
             let label = banner+'banner';
-            if (data[label]) {
+            if (adparameters[label]) {
                 comp[banner] = {};
-                comp[banner] = JSON.parse(JSON.stringify(data[label]));
+                comp[banner] = JSON.parse(JSON.stringify(adparameters[label]));
                 //Testing and cheating and faking data
                 comp[banner].url = 'https://creatives.jixie.io/59a1361c5e23f2dcae1229fedbb4d8d5/700/pasanglklan320x100.jpeg';
                 comp[banner].gap = 0; //hack
-                comp[banner].ar = data[label].width/data[label].height;
+                comp[banner].ar = adparameters[label].width/adparameters[label].height;
                 comp[banner].width = 320;
                 comp[banner].height = 100;
                 
-                comp[banner].tracker4click = data.trackers.baseurl + '?' + data.trackers.parameters + '&action=click';
+                comp[banner].tracker4click = adparameters.trackers.baseurl + '?' + adparameters.trackers.parameters + '&action=click';
                 comp.height += comp[banner].height;
             }
         });
         let blob = {
-            width: data.video.width, 
-            height: data.video.height
+            width: adparameters.video.width, 
+            height: adparameters.video.height
         }
         
         _comboDiv.style.width = blob.width +'px';
@@ -508,22 +509,22 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 }
             });
         }
-        if (data.loop) {  //actually apart from auto there is also the manual one aaargh
+        //this is the big question:
+        if (adparameters.loop) {  //actually apart from auto there is also the manual one aaargh
             trigger1Replay(_comboDiv);
-            delete data.loop;
+            delete adparameters.loop;
         }
         _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls);
         //_adObj.forceDimensions(blob.width, blob.height);
         //we should not use any attribute of the container.
-        _vastSrcBlob = data.vast;
-        delete data.vast;
-        _vastSrcBlob.adparameters = data;           
+        _vastSrcBlob = crData;
+        console.log(`VAST FODDER: ${crData.id}, ${crData.name} ,${crData.duration}, ${crData.clickurl}`);
         let vast = buildVastXml([_vastSrcBlob]);
-        _adObj.setAutoAdsManagerStart(false); //MIOW
+        _adObj.setAutoAdsManagerStart(false); 
         _adObj.makeAdRequestFromXMLCB(vast, true, true, updateUniversal);
     }//
 
-    function extractEnv(adparameters, u) {
+    function extractEnv(cr, u) {
         let out = {
             autoplay : true,
             controls: {
@@ -531,27 +532,28 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 position: 'left'
             }
         };
-        if (!u) return;
-        if (adparameters.clickurl)  {
-            out.clickurl = adparameters.clickurl;
+        if (cr.clickurl)  {
+            out.clickurl = cr.clickurl;
         }
-        if (u.defaultImage) {
-            out.defaultImage = u.defaultImage;
+        if (u) {
+            if (u.defaultImage) {
+                out.defaultImage = u.defaultImage;
+            }
+            if (Array.isArray(u.videos) && u.length > 0) {
+                out.video = u.videos[0];
+            }
+            if (u.controlsColor) {
+                out.controls.color = u.controlsColor
+            }
+            if (u.controlsPosition) {
+                out.controls.position = u.controlsPos;
+            }
         }
-        if (Array.isArray(u.videos) && u.length > 0) {
-            out.video = u.videos[0];
-        }
-        if (u.controlsColor) {
-            out.controls.color = u.controlsColor
-        }
-        if (u.controlsPosition) {
-            out.controls.position = u.controlsPos;
-        }
-        if (adparameters && adparameters.hasOwnProperty('autoplay')) {
-            if (Boolean(adparameters.autoplay) == false) {
+        if (cr.adparameters && cr.adparameters.hasOwnProperty('autoplay')) {
+            if (Boolean(cr.adparameters.autoplay) == false) {
                 u.autoplay = false;
             }
-        } else if (u.hasOwnProperty('autoplay')) {
+        } else if (u && u.hasOwnProperty('autoplay')) {
             if (Boolean(u.autoplay) == false) {
                 u.autoplay = false;
             }
@@ -565,7 +567,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         if (_adObj)
             _adObj.startAd();
     }
-    function OneAdInstance(containerId, adparameters, eventsVector = {}) {
+    function OneAdInstance(containerId, crData, eventsVector = {}) {
         _token = containerId;
         _containerId        = containerId;
         _startAdWhenAvail   = true; //would be from adparameters if there is ever one.
@@ -576,20 +578,23 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
 
         let u = {}; //fake for now. still not ok yet.
         
-        _env = extractEnv(adparameters, u);
+
+        _env = extractEnv(crData, crData.universal);
 
         _createInner(containerId);
-        if (adparameters.universal) {
-            this.changeJson(adparameters);
+        if (crData.adparameters) {
+            //from our own renderer
+            this.changeJson(crData);
         }
         else {
+            //from standalone "SDK" usage:
             /* if (containerId == 'playerContainerJX') {
                 adparameters.video = {
                     width: 640,
                     height: 360
                 };
             }*/
-            this.changeCfg(adparameters);
+            this.changeCfg(crData);
         }
     }
 
