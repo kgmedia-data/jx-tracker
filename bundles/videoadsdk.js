@@ -118,7 +118,6 @@ function listen(e) {
             }
             break;
         case "adparameters":
-            json.data.universal = 1;
             makePlayer(json.token, json.data);
             break;                    
     }

@@ -482,7 +482,8 @@
     };
     var _createControls = function() {
         if (!_ctrls) {
-            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), _controlsObj);
+            //false: dun want progress bar.
+            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), false, _controlsObj);
         }
         _ctrls.hide();
     };
