@@ -792,6 +792,10 @@ function addGAMNoAdNotifyMaybe(str) {
         let c = this.c;
         let jxbnDiv = this.divObjs.jxbnDiv;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
+        let jxmasterDiv = this.divObjs.jxmasterDiv;
+
+        // WIP FES-137 --> HACK
+        let max1dim = true;
 
         /*
             Renee new idea:
@@ -816,8 +820,14 @@ function addGAMNoAdNotifyMaybe(str) {
         //So here, in this logic if there is a widthR heightR, then use that instead of the c.width and c.height
         //
 
-
-
+        // WIP FES-137 -->
+        if (max1dim) {
+            ratio = Math.min(c.widthR/c.width, c.heightR/c.height);
+            
+            let newMaxWidth = c.width*ratio;
+            jxmasterDiv.style.maxWidth = newMaxWidth + 'px';
+            jxbnDiv.style.maxWidth = newMaxWidth + 'px';
+        }
 
         let newH = ((c.height*ratio) + 5) + "px";
         //console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
@@ -841,10 +851,15 @@ function addGAMNoAdNotifyMaybe(str) {
         switch(c.type) {
             case 'player':
             case 'display': // we resize applying a transformation ratio
+                // WIP FES-137 -->
+                jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
+                jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
+                jxbnDiv.style.height = newH;
+                break;
             case 'video':
                 jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
                 jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
-                jxbnDiv.style.height = newH + 'px';
+                jxbnDiv.style.height = newH;
                 break;
             /*  REMOVE FOR NOW WE MIGHT NOT SUPPORT
             case 'iframe': // we just resize the width of the different elements
@@ -1001,6 +1016,10 @@ function addGAMNoAdNotifyMaybe(str) {
         let nested = jxParams.nested;
         let width = c.width;
         let height = c.height;
+
+        // WIP FES-137 --> HACK
+        let widthR = 545;
+        let heightR = 400;
         
         let forcecid = c.id;
         
@@ -1125,6 +1144,9 @@ function addGAMNoAdNotifyMaybe(str) {
             scalable:           scalable,
             fixedHeight:        jxParams.fixedHeight ? jxParams.fixedHeight: 0, //we stuff something in first.
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
+            // WIP FES-137
+            widthR:             widthR,
+            heightR:            heightR
         };
         
         if (c.adparameters)
