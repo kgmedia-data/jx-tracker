@@ -33,7 +33,8 @@ one day at a time!
  */
 //ugly... Move elsewhere. Dun belong in here.
 const modulesmgr                = require('../basic/modulesmgr');
-const univelements              = modulesmgr.get('renderer/univelements');
+const _helpers                  = modulesmgr.get('renderer/helpers');
+const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 
 function addGAMNoAdNotifyMaybe(str) {
     if (str.includes("<script") && str.includes("googletag.pubads()")) {
@@ -91,68 +92,6 @@ function addGAMNoAdNotifyMaybe(str) {
     };
     const visThreshold_ = 0.4;
    
-    let MakeOneHelperObj = function() {
-        function FactoryOneHelper() {
-            
-        }
-        //This stuff is needed only if we need to prepare the adTagUrl
-        //But since this is not alot of code, then we do not bother about
-        //condition compile. Just have this built in for all variants of the universal lite
-        var _acss = function(stylesArr, id) {
-            var head = document.getElementsByTagName('HEAD')[0];
-            var s = document.createElement("style");
-            if (id) s.id = id;
-            s.innerHTML = stylesArr;
-            head.appendChild(s);
-        }
-        FactoryOneHelper.prototype.acss = function(stylesArr, id) {
-            _acss(stylesArr, id);
-        }
-
-        FactoryOneHelper.prototype.ancestor = function(el, tagName) {
-            tagName = tagName.toLowerCase();
-            while (el && el.parentNode) {
-                el = el.parentNode;
-                if (el.tagName && el.tagName.toLowerCase() == tagName) {
-                    return el;
-                }
-            }
-            return null;
-        }
-        FactoryOneHelper.prototype.newDiv = function(p, t, h, c, id) {
-            var nd = document.createElement(t);
-            if (h && h != "") nd.innerHTML = h;
-            if (c && c != "") nd.className = c;
-            if (id) nd.id = id;
-            p.appendChild(nd);
-            return nd;
-        }
-
-        FactoryOneHelper.prototype.addListener = function(e, event, h) {
-            if (e.addEventListener) {
-                e.addEventListener(event, h, false);
-            } else if (e.attachEvent) {
-                e.attachEvent('on' + event, h);
-            } else {
-                e['on' + event] = h;
-            }
-        };
-        FactoryOneHelper.prototype.removeListener = function(e, event, h) {
-            if (e.removeEventListener) {
-                e.removeEventListener(event, h, false);
-            } else {
-                if (e.detachEvent) {
-                    e.detachEvent(event, h);
-                }
-            }
-        }
-
-        let helper = new FactoryOneHelper();
-        return helper;
-    };
-    //try to identify whether is from AMP (amp-ad) or not:
-    var _helpers = MakeOneHelperObj();
-
     /**
      * Function vector
      * Current 2 sets. one set for amp one set for others
@@ -298,7 +237,6 @@ function addGAMNoAdNotifyMaybe(str) {
         }
         else { //is IR ratio change
             //for AMP we actually get an array of stuff every now and then. not sure what it is doing.
-            //console.log("paramlength=" + param.length);
             param.forEach(function(entry) {
                 if (thisObj.amp) {
                     thisObj.amp.boundScrollEvent(
@@ -308,6 +246,7 @@ function addGAMNoAdNotifyMaybe(str) {
                     );
                 }
                 newVisVal = entry.intersectionRatio > visThreshold_ ? 1: 0;
+                //console.log(`DEBUG new visiblity value ${newVisVal}`);
             });
         }
         
@@ -391,7 +330,16 @@ function addGAMNoAdNotifyMaybe(str) {
         }
     }
 
+    //iframe, totally controlled by us. 
     function __handleCreativeMsgs(e) {
+        if (this.divObjs.jxCoreElt && this.divObjs.jxCoreElt.contentWindow) {
+            //creative is in iframe iframe situation:
+            //not meant for us, the parent then.
+            if (!(this.divObjs.jxCoreElt.contentWindow === e.source)) {
+                return;
+            }
+        }
+        
         let type = null;                    
         let json = null;
         if (!e.data || typeof e.data === 'string' && e.data.indexOf('jx') != 0 ) {
@@ -432,12 +380,18 @@ function addGAMNoAdNotifyMaybe(str) {
         if (type) {
             switch (type) {
                 case "jxloaded":
-                    if (this.handlers.jxloaded)
-                        this.handlers.jxloaded();
+                    
+                    //if (!json || json.token == this.token) 
+                    {
+                        if (this.handlers.jxloaded) {
+                            this.handlers.jxloaded();
+                        }
+                    }
                     break;
                 case "jxhasad":     
-                    if (this.handlers.jxhasad)
+                    if (this.handlers.jxhasad) {
                         this.handlers.jxhasad();
+                    }
                     break;
                 case "jxnoad":     
                 case "jxadended":
@@ -683,6 +637,7 @@ function addGAMNoAdNotifyMaybe(str) {
      * called as bound function . See comment above "START OF : POSITION AND SIZE MANIPULATION FUNCTIONS."
      **/
     function createOuterContainer(containerId, jxContainer, normCrParams) {
+        
         let oDiv = null;
         let iDiv = null;
         let id = containerId; //"jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
@@ -736,6 +691,7 @@ function addGAMNoAdNotifyMaybe(str) {
         let id = divObjs.jxID;
         let jxmasterDiv = _helpers.newDiv(divObjs.innerDiv, 'div', null, null, 'jxm_' + id);
         let jxbnDiv = _helpers.newDiv(jxmasterDiv, 'div', null, null, 'jxb_' + id);
+        
         let jxbnScaleDiv = _helpers.newDiv(jxbnDiv, 'div', null, null, 'jxbs_' + id);
         let jxbnFixedDiv = _helpers.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
         let jxCoreElt = null;
@@ -757,8 +713,8 @@ function addGAMNoAdNotifyMaybe(str) {
             jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
 
         if (normCrParams.maxheight) {
-            jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
-            jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
+            //jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
+            //jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
         
         jxbnDiv.style.height = normCrParams.height + 'px';
@@ -808,13 +764,7 @@ function addGAMNoAdNotifyMaybe(str) {
         
         jxCoreElt.style.height = normCrParams.height + 'px';
         //jxCoreElt.style.zIndex = 99999;
-
-        //TODO: 
-        //Actual it is not to be done here
-        //need to do it only after the hasad ah
-        //then still need to trigger a height change
-        univelements(id, {}, {}, jxmasterDiv);
-        
+      
         insertCreative(jxCoreElt, normCrParams);
         jxbnFixedDiv.appendChild(jxCoreElt);
 
@@ -824,7 +774,6 @@ function addGAMNoAdNotifyMaybe(str) {
         divObjs.jxbnFixedDiv = jxbnFixedDiv;
         divObjs.jxbnScaleDiv = jxbnScaleDiv;
         divObjs.jxCoreElt = jxCoreElt;
-        
         return jxCoreElt;
     }
    
@@ -1040,11 +989,6 @@ function addGAMNoAdNotifyMaybe(str) {
         
         let forcecid = c.id;
         
-        /* if (forcecid == 20) {
-            forcecid = 886;//test recommended ad thru universal
-            scalable = false;
-        }*/
-        
         if (!width) {
             //e.g. the video+banner does not have width directly 
             //under creative level ...
@@ -1145,20 +1089,12 @@ function addGAMNoAdNotifyMaybe(str) {
         
 
         let doBasicTrackers = c.thirdpartytag;
-
-        nested = -1; //HACK HACK FOR VIDEO
-
-        //XXXXX let universalBlob = getUniversalBlob(jxParams, c);
-
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
+        let clicktrackerurl = null;
         if (trackers) {
             trackers = JSON.parse(JSON.stringify(trackers));
+            clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
         }
-        //XXXXXXX universalBlob.click = function(code = null) {
-            /////fireTracker(trackers, 'click', code);
-        //////}
-        ///////universalBlob.nested = nested;
-
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
 
@@ -1166,31 +1102,19 @@ function addGAMNoAdNotifyMaybe(str) {
             type:               c.type,
             width:              width, 
             clickurl:           c.clickurl, 
+            clicktrackerurl:    clicktrackerurl,
             height:             height,
             maxwidth:           maxwidth,
             maxheight:          maxheight,
             scalable:           scalable,
             fixedHeight:        jxParams.fixedHeight ? jxParams.fixedHeight: 0, //we stuff something in first.
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
-            /////XXXXX universal:          universalBlob,
-            //make it even more generic: exactly which ones need us to manage here. then list down.
-            /*
-                baseurl:  "https://traid.jixie.io/sync/ad"
-                parameters: "jxlb=1&cid=765&cpid=212&source=outstream&adtype=universal&engine=std.2.625&client_id=241f88e0-d67b-11eb-b4e6-e5111ac4b9c3&offerid=na&unit=393492c3e49657be319d95efb5dab0a6&pageurl=https%3A%2F%2Fjx-scripts.s3-ap-southeast-1.amazonaws.com%2F&domain=jx-scripts.s3-ap-southeast-1.amazonaws.com&sid=1624710994-241f88e0-d67b-11eb-b4e6-e5111ac4b9c3&sessionts=1624710994030&jxub=2&jxtok=3040021e1d8d23428a54aae2f70989c36f651a56b1cc2ce52a8529d450353ef68af7021e15fcf79956b0da433ba3acbace8a25997326d31f9e3d31e705a9e7331596"
-            */                
-            // For these guys since the third party item cannot fire our trackers
-            // so we have to fire them.
-           
         };
         
         if (c.adparameters)
             out.adparameters = c.adparameters;
         if (c.thirdpartytag) {
             delete out.adparameters;
-        }
-        //Just for testing lah:
-        if (forcecid && out.adparameters) {
-            out.adparameters.forcecid = forcecid;
         }
         let trusted = (c.adparameters && c.adparameters.trusted ? true: false);
         //only for video. HACK
@@ -1313,14 +1237,17 @@ function addGAMNoAdNotifyMaybe(str) {
                             delete out.adparameters;
                         }
                         else {
-                            out.crSig = c.url.indexOf('index.lt.min.html')>-1 ? 'displaydpalite': 'displaydpa';
-                            c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
-                            c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
-                            //console.log(c.url);
-                            if (c.url.indexOf('.lt')> -1)
-                                out.crSig = 'jx_dpa_lite';
-                            else
-                                out.crSig = 'jx_dpa_classic';                                
+                            if (c.url.indexOf('amazonaws.com') == -1) {
+                                c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
+                                c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
+                            }
+                            //out.crSig = c.url.indexOf('index.lt.min.html')>-1 ? 'displaydpalite': 'displaydpa';
+                            //c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
+                            //c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
+                            //if (c.url.indexOf('.lt')> -1)
+                              //  out.crSig = 'jx_dpa_lite';
+                            //else
+                              //  out.crSig = 'jx_dpa_classic';                                
                             out.iframe = { url: c.url };
                         }
                         break;
@@ -1342,6 +1269,9 @@ function addGAMNoAdNotifyMaybe(str) {
             //this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
             out.nested = -1;
         }
+        if (c.universal) {
+            out.universal = c.universal;
+        }
         return out;
     }
 
@@ -1361,10 +1291,12 @@ function addGAMNoAdNotifyMaybe(str) {
          *  handles 1 level of the waterfall                     
          */
         var _startP = function(jxContainer, remainingCreativesArr, next) {
+            let univmgr = MakeOneUniversalMgr();
             let instId = "jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
         
             let divObjs = {}; //this will get filled in (all the outer div, inner div, master div,...
             //several functions have AMP and non-amp versions. Make sure we use the correct one
+            console.log(`CHECKING CONTEXT MIOW ${_jxParams.context}`);
             let cxtFcnsVector = fcnVectorsByContext_[_jxParams.context];
             if (!cxtFcnsVector) {
                 cxtFcnsVector = fcnVectorsByContext_.default;
@@ -1420,7 +1352,8 @@ function addGAMNoAdNotifyMaybe(str) {
             let msghandlers = {};
             let token = destContainerPrefix_ + instId; 
             msghandlers['jxloaded'] = crReady2HearAdParamsResolve;
-            boundHandleCreativeMsgs = __handleCreativeMsgs.bind({ token: token, handlers: msghandlers });
+            boundHandleCreativeMsgs = __handleCreativeMsgs.bind({ 
+                divObjs: divObjs, token: token, handlers: msghandlers });
             _helpers.addListener(window, "message", boundHandleCreativeMsgs);
             unhook.listeners.message = boundHandleCreativeMsgs; 
             //-->
@@ -1447,27 +1380,7 @@ function addGAMNoAdNotifyMaybe(str) {
                         __pm2Creative.bind({divObjs:divObjs, c: normCrParams}) :
                         __direct2Creative.bind({divObjs:divObjs, c: normCrParams}))
                 );
-            /*
-            if it is the GAM type, then we can listen to size being 0 and then fire a no ad
-            */
-
-            // To be used in the following various bound functions
-            // so that they always using this same object.
-            // This obj may get modified in response to events
-            // e.g. creative indicates a height change.
-            //actually no need to make another one
-            /*
-            sharedCreativeRTObj = {
-                token:          '''
-                width:          normCrParams.width,
-                height:         normCrParams.height,
-                type:           normCrParams.type,
-                fixedHeight:    normCrParams.fixedHeight,
-                creativeH:      normCrParams.height, //<---
-                containerH:     normCrParams.fixedHeight, //<---
-                trackers:       normCrParams.trackers
-            };
-            */
+           
             normCrParams.creativeH  = normCrParams.height;
             normCrParams.containerH = normCrParams.fixedHeight;
             boundHandleResize               = __handleResize.bind({divObjs:divObjs, c: normCrParams});
@@ -1537,6 +1450,9 @@ function addGAMNoAdNotifyMaybe(str) {
                     //save the bound function "pointers" so we can unlisten later
                     unhook.listeners.resize = boundHandleResize;
                 }
+                
+                univmgr.init(divObjs.jxmasterDiv, _jxParams, normCrParams.universal, normCrParams.clickurl, normCrParams.clicktrackerurl);
+
                 cxtFcnsVector.handleHasAd(normCrParams.width, normCrParams.height, normCrParams.fixedHeight);
                 boundHandleResize();
 
@@ -1601,11 +1517,11 @@ function addGAMNoAdNotifyMaybe(str) {
                 // Checking if there is a specific creativeid in the parameters of the URL
                 // if (up.query.creativeid) _jxParams.creativeid = parseInt(up.query.creativeid) || null;
                 // if (up.query.campaignid) _jxParams.campaignid = parseInt(up.query.campaignid) || null;
-                _jxParams.unit = _jxParams.unit || 'none';
-                if (_jxParams.unit && _jxParams.unit != 'none') _jxParams.id = _jxParams.unit; //???
-                else _jxParams.id = Math.floor(Math.random() * 100000) + 1;
+                //_jxParams.unit = _jxParams.unit || 'none';
+                //if (_jxParams.unit && _jxParams.unit != 'none') _jxParams.id = _jxParams.unit; //???
+                //else _jxParams.id = Math.floor(Math.random() * 100000) + 1;
 
-                _jxParams.nested = parseInt(_jxParams.nested) || 0;
+                //_jxParams.nested = parseInt(_jxParams.nested) || 0;
 
                 _jxParams.creativeid = parseInt(_jxParams.creativeid) || null;
                 

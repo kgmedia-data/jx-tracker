@@ -204,7 +204,30 @@ const supported_ = [
         .pipe(gutil.noop())
   });
 
-  const hbrendererjsfile_ = 'bundles/jxrenderer.js';
+  const amposmjsfile_ = 'bundles/amp-osm.js';
+  gulp.task('BUILD_AMPOSM_BUNDLE', function() {
+    return browserify('' + amposmjsfile_, {
+            debug: false
+        })
+        .bundle()
+        .pipe(source(amposmjsfile_))
+        .pipe(buffer())
+        .pipe(gulpif(config.minify, minify()))
+        .on('error', function(err) {
+            gutil.log(gutil.colors.red('[Error]'), err.toString());
+        })
+        .pipe(gulpif(true, rename({
+            basename: 'jx-app-amposm'
+        })))
+        .pipe(gulpif(true, rename({
+            extname: '.min.js'
+        })))
+        .pipe(gulp.dest('dist'))
+        //.s3(config_aws, s3_options.dev)
+        .pipe(gutil.noop())
+  });
+
+  const hbrendererjsfile_ = 'bundles/hbrenderer.js';
   gulp.task('BUILD_HBRENDERER_BUNDLE', function() {
     return browserify('' + hbrendererjsfile_, {
             debug: false
@@ -218,6 +241,29 @@ const supported_ = [
         })
         .pipe(gulpif(true, rename({
             basename: 'jx-app-hbrenderer'
+        })))
+        .pipe(gulpif(true, rename({
+            extname: '.min.js'
+        })))
+        .pipe(gulp.dest('dist'))
+        //.s3(config_aws, s3_options.dev)
+        .pipe(gutil.noop())
+  });
+
+  const jxrendererjsfile_ = 'bundles/jxrenderer.js';
+  gulp.task('BUILD_JXRENDERER_BUNDLE', function() {
+    return browserify('' + jxrendererjsfile_, {
+            debug: false
+        })
+        .bundle()
+        .pipe(source(jxrendererjsfile_))
+        .pipe(buffer())
+        .pipe(gulpif(config.minify, minify()))
+        .on('error', function(err) {
+            gutil.log(gutil.colors.red('[Error]'), err.toString());
+        })
+        .pipe(gulpif(true, rename({
+            basename: 'jx-app-jxrenderer'
         })))
         .pipe(gulpif(true, rename({
             extname: '.min.js'
@@ -313,7 +359,7 @@ const supported_ = [
   //add this to the list later 'BUILD_OUTSTREAMJS'
   //we are continually modifying the ids common ah.
   
-  gulp.task('developer1', gulp.series('clean', 'BUILD_HBRENDERER_BUNDLE', 'BUILD_OSM_BUNDLE','BUILD_VIDEOSDK_BUNDLE','BUILD_VIDEOADSDK_BUNDLE', 'BUILD_ULITE_BUNDLE', 'UPLOAD_TEST_HTML'));
+  gulp.task('developer1', gulp.series('clean', 'BUILD_AMPOSM_BUNDLE', 'BUILD_JXRENDERER_BUNDLE', 'BUILD_HBRENDERER_BUNDLE', 'BUILD_OSM_BUNDLE','BUILD_VIDEOSDK_BUNDLE','BUILD_VIDEOADSDK_BUNDLE', 'BUILD_ULITE_BUNDLE', 'UPLOAD_TEST_HTML'));
   
   config = (function() {
     var

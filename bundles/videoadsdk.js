@@ -28,10 +28,10 @@
  change height
  *    
  */
-
 if (window.jxvideoadsdk) { //<--- NEW LEH
     return;
 }
+
  
 const modulesmgr                       = require('../components/basic/modulesmgr');
 const cssmgr                           = require('../components/video/cssmgr');
@@ -67,6 +67,10 @@ modulesmgr.set('video/adctrls-factory', adctrls_fact);
 const admgr_fact                        = require('../components/video/admgr-factory-bc');
 modulesmgr.set('video/admgr-factory',   admgr_fact);
 
+const spinner_fact                      = require('../components/video/spinner-factory');
+modulesmgr.set('video/spinner-factory',   spinner_fact);
+
+
 const createObject                       = require('../components/video/adplayer');
 
 
@@ -89,8 +93,11 @@ window.jxvideoadsdk = 1;
 //I am still considering..
 function listen(e) {
     let json = null;
-    //if (e.data.startsWith('jx')) 
-      //  console.log(` VIDEOSDK GET THIS MSG ${e.data}`);
+    if (e.data.startsWith('jx')) 
+        ;
+    else {
+        return;
+    }        
     if (e.data == 'jxvisible' || e.data == 'jxnotvisible') {
         json = {type : e.data};
     }
@@ -118,6 +125,7 @@ function listen(e) {
 }//listen
 
 window.addEventListener('message', listen, false);
+
 notifyMaster('jxloaded', 'jx_video_ad');
 
 //height change
@@ -138,7 +146,7 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
     if (window[exposedWinPropName_])
         window.postMessage(msgStr, '*'); 
     else */
-        parent.postMessage(msgStr, '*'); 
+    parent.postMessage(msgStr, '*'); 
 }
 
 /**

@@ -1,8 +1,8 @@
 const defaultPTimeout_ = -1;
 
-function makeNormalizedObj_({
+function makeNormalizedObj_(
     dbjson
-}) {
+) {
     //rtjson prepared.
     let rtjson = {
         timeout: dbjson.timeout ? dbjson.timeout : defaultPTimeout_,
@@ -32,7 +32,9 @@ function common_(rtjson) {
 
 function inject_(pageId) {
     //to be bound 
-    //cr.adparameters.pageId = '128408'; //100514 is the amp.kompas real one '126472'; //hack //128408 for no ad
+
+    pageId = '126472'; //100514 is the amp.kompas real one '126472'; //hack //128408 for no ad
+    console.log(`HACK REMEMBER THIS IS TESTING PLACEMENT`);
     window._teads_amp = {
         allowed_data: ['pid', 'tag'],
         mandatory_data: ['pid'],
@@ -56,7 +58,8 @@ function makeNormalizedObj__(dbjson, rtjson) {
         imp: `jxosm_imp_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
         timeout: `jxosm_timeout_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}` //`jxosm_noad_teads`,
     };
-    rtjson.inject = inject_.bound(null, dbjson.adparameters.pageId);
+    rtjson.inject = inject_.bind(null, dbjson.adparameters.pageId);
+    return true;
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;
 module.exports.name = 'teads';
