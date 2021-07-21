@@ -292,6 +292,14 @@
                 break;
             case google.ima.AdEvent.Type.COMPLETE:
             case google.ima.AdEvent.Type.SKIPPED:
+                //this stuff need to do properly not like this.
+                //it must be a generic kind of events subscription 
+                //TODO
+                var e = new Event('jxadended');
+                window.dispatchEvent(e);
+                e = new Event('jxadended');
+                _container.dispatchEvent(e);
+
                 //_pFcnVector.report('slotended'); 
                 //_pFcnVector.report('ended'); 
                 break;

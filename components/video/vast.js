@@ -63,7 +63,7 @@
     * @param {*} creative 
     * @param {*} stackidx 
     */
-   function genVast(creative, stackidx, stackdepth) {
+   function genVast(creative, stackidx, stackdepth, suppressTrackers = false) {
        //console.log(creative);
        //console.log(`${creative.id}___${creative.subtype}`);
        let pings = genPingBlob(creative, stackidx, stackdepth);
@@ -101,15 +101,15 @@
                    "AdSystem": "JXADSERVER",
                    "AdTitle": `${encodeURIComponent(creative.name)}`,
                    "Description": `Hybrid in-stream`,
-                   "Error": pings.error,
-                   "@none": pings.impression,
+                   //"Error": pings.error,
+                   //"@none": pings.impression,
                    "Creatives": {
                        "Creative": {
                            "@attr": `id="JXAD${creative.id}" sequence="1"`,
                            "Linear": {
                                "@attr": '', //placeholder
                                "Duration": `${formatDuration_(creative.duration)}`,
-                               "TrackingEvents": pings.tracking,
+                               //"TrackingEvents": pings.tracking,
                                "VideoClicks": pings.click,
                                "AdParameters": `<![CDATA[${JSON.stringify(adP)}]]>`,
                                "MediaFiles": mediaStr
@@ -119,6 +119,11 @@
                } //linline
            } //ad
        };
+       if (!suppressTrackers) {
+            json.Ad.InLine["Error"] = pings.error;
+            json.Ad.InLine["@none"] = pings.impression;
+            json.Ad.InLine.Creatives.Creative.Linear["TrackingEvents"] = pings.tracking;
+       }
        if (creative.subtype == 'vinstream') {
            //actually we dun use this subtype at all...
            delete json.Ad.InLine.Creatives.Creative.Linear.AdParameters;
@@ -134,7 +139,7 @@
     * @param {*} creative 
     * @param {*} stackidx 
     */
-   function genWrapperVast(creative, stackidx, stackdepth) {
+   function genWrapperVast(creative, stackidx, stackdepth, suppressTrackers = false) {
        let pings = genPingBlob(creative, stackidx, stackdepth);
        let json = {
            "Ad": {
@@ -157,6 +162,11 @@
                } //Wrapper
            } //ad
        };
+       if (!suppressTrackers) {
+            json.Ad.Wrapper["Error"] = pings.error;
+            json.Ad.Wrapper["@none"] = pings.impression;
+            json.Ad.Wrapper.Creatives.Creative.Linear["TrackingEvents"] = pings.tracking;
+        }
        return genVastFromJson(json);
    }
 
@@ -203,7 +213,7 @@
        return buffer;
    }
 
-   function buildVastXml_(arrayOfCreatives) {
+   function buildVastXml_(arrayOfCreatives, suppressTrackers = false) {
        let finalXML = vastOpener_;
        let idx = 0;
        let stackdepth = arrayOfCreatives.length;
@@ -228,9 +238,9 @@
                delete normCreative.assets;
            }
            if (['vinstream', 'vvpaid', 'vhybrid', 'vsimid'].indexOf(creative.subtype) > -1) {
-               finalXML += genVast((normCreative), idx, stackdepth);
+               finalXML += genVast((normCreative), idx, stackdepth, suppressTrackers);
            } else {
-               finalXML += genWrapperVast((normCreative), idx, stackdepth);
+               finalXML += genWrapperVast((normCreative), idx, stackdepth, suppressTrackers);
            }
            idx++;
        });

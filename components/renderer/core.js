@@ -246,7 +246,7 @@ function addGAMNoAdNotifyMaybe(str) {
                     );
                 }
                 newVisVal = entry.intersectionRatio > visThreshold_ ? 1: 0;
-                console.log(`MIOW new visiblity value ${newVisVal}`);
+                //console.log(`DEBUG new visiblity value ${newVisVal}`);
             });
         }
         

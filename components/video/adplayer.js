@@ -213,7 +213,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _playerElt = document.getElementById('idJxPlayer');
         //pretend there is a content:
         //just to test the content stuff can work and show properly if we need to
-        _playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/1181736/3001004-1181736_360.mp4';
+        //_playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/1181736/3001004-1181736_360.mp4';
 
     }
 
@@ -254,8 +254,6 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         //let us detect and follow your size.
 
         if (data.video) {
-            console.log(`_________SO FORCE width ${data.video.width} heigth ${data.video.height} `);
-
             //If they want to specify and we just stick to this.
             //Let them do the scaling, fine.
             //the KG usage can specify odd shaped video now.
@@ -271,7 +269,6 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             //we are trying this for KG masterad case:
             //already say 100%
             //you dun give I assume all good.
-            console.log(`_________SO WE DUN PUT ANYTHING AND let the size natural `);
         }
         if (_adObj) 
             _adObj.reset();
@@ -279,7 +276,6 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _adObj = MakeOneAdObj(_comboDiv, "#FFFFFF", _playerElt, _vectorForAdMgr,
             startAdWhenAvail, eventsVector);
         if (blob.width || blob.height) {            
-            // console.log("WE ARE FORCING LET THEM DO WHATEVER. They can force us 640 360 then we scale");
             _adObj.forceDimensions(blob.width, blob.height);
         }
         let domain = data.domain? data.domain:'jixie.io';
@@ -322,7 +318,17 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             window.dispatchEvent(e);
         }
     }
+    function doNothing() {}
 
+    function trigger1Replay(container) {
+        container.addEventListener('jxadended', function() {
+            //we do a replay ourselves....
+            let vast = buildVastXml([_vastSrcBlob], true);//second param is SUPPRESS trackers
+            _adObj.setAutoAdsManagerStart(true); //since this is the second round, just play
+            _adObj.makeAdRequestFromXMLCB(vast, true, true, doNothing);
+        });
+    }
+    var _vastSrcBlob = {};
     /**
      * 
      * @param {*} data 
@@ -380,19 +386,18 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 }
             });
         }
-        //in the end our addescriptor object also only have very little
+        if (data.loop) {  //actually apart from auto there is also the manual one aaargh
+            trigger1Replay(_comboDiv);
+            delete data.loop;
+        }
         _adObj = MakeOneAdObj(_comboDiv, "#FFFFFF", _playerElt, _vectorForAdMgr,
             startAdWhenAvail, eventsVector);
         //_adObj.forceDimensions(blob.width, blob.height);
         //we should not use any attribute of the container.
-        //724 banner+sqvideo+banner
-        //686: 9-16 singers
-        //690: pure video
-        //now we try to do the vast tag oh my goodness...
-        let vastSrcBlob = data.vast;
+        _vastSrcBlob = data.vast;
         delete data.vast;
-        vastSrcBlob.adparameters = data;           
-        let vast = buildVastXml([vastSrcBlob]);
+        _vastSrcBlob.adparameters = data;           
+        let vast = buildVastXml([_vastSrcBlob]);
         _adObj.setAutoAdsManagerStart(false);
         _adObj.makeAdRequestFromXMLCB(vast, true, true, updateUniversal);
     }//
@@ -425,7 +430,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     }
 
     /**
-     * 
+     * triggered from universal
      * @param {*} action 
      */
     OneAdInstance.prototype.notifyMe = function(action) {
