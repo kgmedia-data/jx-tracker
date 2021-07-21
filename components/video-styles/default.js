@@ -7,6 +7,7 @@ const adControlsCls         = 'adControlsCls' + ran;
 const playerControlsCls     = 'playerControlsCls' + ran;
 const iconCls               = 'iconCls'  + ran;
 const bigPlayBtnCls         = 'bigPlayBtnCls' + ran;
+const commonBigPlayBtnCls   = 'commonBigPlayBtnCls' + ran;
 const adPlayBtnCls          = 'adPlayBtnCls' + ran;
 const adMuteBtnCls          = 'adMuteBtnCls' + ran;
 const adProgressBarCls      = 'adProgressBarCls' + ran;
@@ -70,10 +71,13 @@ var stylesStrObj_ = {};
     
             '.' + bigPlayBtnCls + '{opacity:0.5;width: 0;height: 0;border-top: 50px solid transparent;border-bottom: 50px solid transparent;border-left: 60px solid white;z-index: 1;transition: all 0.3s;-webkit-transition: all 0.3s;-moz-transition: all 0.3s;left: 10px;margin: 0;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);}',
             '.' + bigPlayBtnCls + ':before {background: black; opacity: 0.3; content: "";position: absolute;top: -75px;left: -115px;bottom: -75px;right: -35px;border-radius: 50%;border: 10px solid white;z-index: 2;transition: all 0.3s;-webkit-transition: all 0.3s;-moz-transition: all 0.3s;}',
-            '.' + bigPlayBtnCls + ':after {content: "";opacity: 0;transition: opacity 0.6s;-webkit-transition: opacity 0.6s;-moz-transition: opacity 0.6s;}',
-            '.' + bigPlayBtnCls + ':hover:before, .'+bigPlayBtnCls+':focus:before {transform: scale(1.1);-webkit-transform: scale(1.1);-moz-transform: scale(1.1);}',
-            '.' + bigPlayBtnCls + '.active {border-color: transparent;}',
-            '.' + bigPlayBtnCls + '.active:after {content: "";opacity: 1;width: 10px;height: 70px;position: absolute;left: -67px;top: -35px;border-color: white; border-style: double; border-width: 0px 0 0px 60px;}',
+            '.' + bigPlayBtnCls + ':after, .' + commonBigPlayBtnCls + ':after {content: "";opacity: 0;transition: opacity 0.6s;-webkit-transition: opacity 0.6s;-moz-transition: opacity 0.6s;}',
+            '.' + bigPlayBtnCls + ':hover:before, .'+bigPlayBtnCls+':focus:before, .'+ commonBigPlayBtnCls +':hover:before, .'+ commonBigPlayBtnCls +':focus:before {transform: scale(1.1);-webkit-transform: scale(1.1);-moz-transform: scale(1.1);}',
+            '.' + bigPlayBtnCls + '.active, .' + commonBigPlayBtnCls + '.active {border-color: transparent;}',
+            '.' + bigPlayBtnCls + '.active:after, .' + commonBigPlayBtnCls + '.active {content: "";opacity: 1;width: 10px;height: 70px;position: absolute;left: -67px;top: -35px;border-color: white; border-style: double; border-width: 0px 0 0px 60px;}',
+
+            '.' + commonBigPlayBtnCls + '{width: 0;height: 0;border-top: 50px solid transparent;border-bottom: 50px solid transparent;border-left: 60px solid black;z-index: 1;transition: all 0.3s;-webkit-transition: all 0.3s;-moz-transition: all 0.3s;left: 10px;margin: 0;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);}',
+            '.' + commonBigPlayBtnCls + ':before {content: "";position: absolute;top: -75px;left: -115px;bottom: -75px;right: -35px;border-radius: 50%;border: 10px solid black;z-index: 2;transition: all 0.3s;-webkit-transition: all 0.3s;-moz-transition: all 0.3s;}',
     
         '.' + contentDivCls + ',.' + adDivCls + ',.' + playerCls + ',.' + thumbnailCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: 1;}',
         '.' + adControlsCls + ',.' + playerControlsCls + '{height: 32px;width: 66px;margin-left: 3px;position: absolute;bottom: 20px;left: 5px;z-index: 999;}',
@@ -99,6 +103,7 @@ function getCls_() {
     iconCls:            iconCls,
     spinnerCls:         spinnerCls,
     bigPlayBtnCls:      bigPlayBtnCls,
+    commonBigPlayBtnCls:commonBigPlayBtnCls,
     adPlayBtnCls:       adPlayBtnCls,
     adMuteBtnCls:       adMuteBtnCls,
     adProgressBarCls:   adProgressBarCls,

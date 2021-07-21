@@ -20,7 +20,7 @@
  const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
  
- function MakeOneAdObj_(container, controlsColor, vid, fcnVector) {
+ function MakeOneAdObj_(container, vid, fcnVector, controlsObj) {
     var _forceWidth = 0;
     var _forceHeight = 0;
     var _adEnduredVec = [0,0,0,0,0];//help us just add up in this ad slot how long the fella watched ads
@@ -53,6 +53,8 @@
         so we just animate the progress bar when the ad has really started
      */
     var _isAdStarted = false;
+
+    var _controlsObj = null;
 
     //if you are making a long long adrequest
     //and when you are back, the whole thing was reset already.
@@ -196,13 +198,9 @@
 
                         if (!_isProgressBarUpdated && _isAdStarted) { // we check the progress bar has not been updated yet and the ad has really started
                             _isProgressBarUpdated = true; // change to be true so we only mainpulate the DOM just once
-                            let transitionTime = adData.duration; // give the ad duration as initial transition time for progress bar to animate
 
-                            /** if the progress bar has been paused when pause the ad, then we give remaining time of the ad as value for transition time */
-                            if (_ctrls.isProgressBarHasPaused) transitionTime = adData.duration - adData.currentTime;
-                            
                             /** given container offsetWidth as the progress bar will take 100% width of its container */
-                            _ctrls.updateProgressBar(_container.offsetWidth, transitionTime);
+                            _ctrls.updateProgressBar(_container.offsetWidth, adData);
                         }
                     }
                     //console.log(`adBreakDuration=${adData.adBreakDuration} adPosition=${adData.adPosition} currentTime=${adData.currentTime} totalAds=${adData.totalAds} duration=${adData.duration}`);
@@ -301,15 +299,7 @@
 
                 /** check if the progress bar has been updated, then we set to false as now the ad has been paused */
                 if (_isProgressBarUpdated) _isProgressBarUpdated = false;
-
-                /** given the child element's width of progress bar */
-                let width = _ctrls.getProgressBarChildElm().offsetWidth;
-                /** we check if the child element's width of progress bar is less than its parent's width
-                 * then we pass the child element's width of progress bar when pausing the animation of progress bar
-                */
-                if (width < _ctrls.getProgressBarElm().offsetWidth) {
-                    _ctrls.pauseProgressBar(width);
-                }
+                _ctrls.pauseProgressBar();
                 break;
             case google.ima.AdEvent.Type.RESUMED:
                 _pFcnVector.report('playing'); 
@@ -471,7 +461,8 @@
     };
     var _createControls = function() {
         if (!_ctrls) {
-            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI());
+            //the true says we want progress bar.
+            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), true, _controlsObj);
         }
         _ctrls.hide();
     };
@@ -483,13 +474,13 @@
     };
     
     //constructor
-    function FactoryOneAd(container, controlsColor, vid, fcnVector) {
+    function FactoryOneAd(container, vid, fcnVector, controlsObj) {
         _vid = vid;
         _container = container;
         _pFcnVector = fcnVector;
         _width = container.offsetWidth;
         _height = container.offsetHeight;
-        _controlsColor = controlsColor;
+        _controlsObj = controlsObj ? JSON.parse(JSON.stringify(controlsObj)): null;
     }
 
     FactoryOneAd.prototype.forceDimensions = function(width, height) {
@@ -583,7 +574,7 @@
         _pFcnVector.setContentMuteState(false);
     }
 
-    let ret = new FactoryOneAd(container, controlsColor, vid, fcnVector);
+    let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj);
     return ret;
 };
 

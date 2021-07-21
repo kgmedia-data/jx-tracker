@@ -67,6 +67,10 @@ modulesmgr.set('video/adctrls-factory', adctrls_fact);
 const admgr_fact                        = require('../components/video/admgr-factory-bc');
 modulesmgr.set('video/admgr-factory',   admgr_fact);
 
+const spinner_fact                      = require('../components/video/spinner-factory');
+modulesmgr.set('video/spinner-factory',   spinner_fact);
+
+
 const createObject                       = require('../components/video/adplayer');
 
 

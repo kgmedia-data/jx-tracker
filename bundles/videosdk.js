@@ -13,7 +13,7 @@ modulesmgr.set('video/cssmgr',         cssmgr);
 
 const stylesSet                        = require('../components/video-styles/default');//we choose this set of style
 cssmgr.init(stylesSet.getCls(), stylesSet.getStyles());
-cssmgr.inject('adControls', { color: '#FF0000'});
+//cssmgr.inject('adControls', { color: '#FF0000'});
 
 
 // these we only use within this file, so dun bother

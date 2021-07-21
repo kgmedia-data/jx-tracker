@@ -18,7 +18,7 @@
  const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
  
- function MakeOneAdObj_(container, controlsColor, vid, fcnVector) {
+ function MakeOneAdObj_(container, vid, fcnVector, controlsObj) {
     var _forceWidth = 0;
     var _forceHeight = 0;
     var _adEnduredVec = [0,0,0,0,0];//help us just add up in this ad slot how long the fella watched ads
@@ -38,6 +38,7 @@
 
     var _autoAdsManagerStart = false;
     var _adLoaderOutcome = 'jxnone';
+    var _controlsObj = null;
 
     /**
         this is the flag for us to not manipulating the DOM multiple times
@@ -191,21 +192,18 @@
                 //_isAdStarted = true;
                 if (evt.type == google.ima.AdEvent.Type.AD_PROGRESS) {
                     let adData = evt.getAdData();
-                    //possible for the ad to be non linear leh...
+
                     if (adData.adPosition <= _adEnduredVec.length) {
                         _adEnduredVec[adData.adPosition] = adData.currentTime;
 
                         if (!_isProgressBarUpdated && _isAdStarted) { // we check the progress bar has not been updated yet and the ad has really started
                             _isProgressBarUpdated = true; // change to be true so we only mainpulate the DOM just once
-                            let transitionTime = adData.duration; // give the ad duration as initial transition time for progress bar to animate
 
-                            /** if the progress bar has been paused when pause the ad, then we give remaining time of the ad as value for transition time */
-                            if (_ctrls.isProgressBarHasPaused) transitionTime = adData.duration - adData.currentTime;
-                            
                             /** given container offsetWidth as the progress bar will take 100% width of its container */
-                            _ctrls.updateProgressBar(_container.offsetWidth, transitionTime);
+                            _ctrls.updateProgressBar(_container.offsetWidth, adData);
                         }
                     }
+
                     //console.log(`adBreakDuration=${adData.adBreakDuration} adPosition=${adData.adPosition} currentTime=${adData.currentTime} totalAds=${adData.totalAds} duration=${adData.duration}`);
                   }
                 break;
@@ -310,15 +308,7 @@
 
                 /** check if the progress bar has been updated, then we set to false as now the ad has been paused */
                 if (_isProgressBarUpdated) _isProgressBarUpdated = false;
-
-                /** given the child element's width of progress bar */
-                let width = _ctrls.getProgressBarChildElm().offsetWidth;
-                /** we check if the child element's width of progress bar is less than its parent's width
-                 * then we pass the child element's width of progress bar when pausing the animation of progress bar
-                */
-                if (width < _ctrls.getProgressBarElm().offsetWidth) {
-                    _ctrls.pauseProgressBar(width);
-                }
+                _ctrls.pauseProgressBar();
                 break;
             case google.ima.AdEvent.Type.RESUMED:
                 //_pFcnVector.report('playing'); 
@@ -492,7 +482,7 @@
     };
     var _createControls = function() {
         if (!_ctrls) {
-            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI());
+            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), _controlsObj);
         }
         _ctrls.hide();
     };
@@ -504,13 +494,13 @@
     };
     
     //constructor
-    function FactoryOneAd(container, controlsColor, vid, fcnVector) {
+    function FactoryOneAd(container, vid, fcnVector, controlsObj) {
         _vid = vid;
         _container = container;
         _pFcnVector = fcnVector;
         _width = container.offsetWidth;
         _height = container.offsetHeight;
-        _controlsColor = controlsColor;
+        _controlsObj = controlsObj ? JSON.parse(JSON.stringify(controlsObj)): null;
     }
 
     FactoryOneAd.prototype.forceDimensions = function(width, height) {
@@ -614,7 +604,6 @@
         _playAd();
     };
     FactoryOneAd.prototype.pauseAd = function() {
-        console.log(`!!!! -bc pauseAd`);
         _pauseAd();
     };
     //added this thing (repeat of code... aarh) This is for playerWrapper to call
@@ -629,7 +618,7 @@
         _pFcnVector.setContentMuteState(false);
     }
 
-    let ret = new FactoryOneAd(container, controlsColor, vid, fcnVector);
+    let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj);
     return ret;
 };
 
