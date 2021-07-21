@@ -405,6 +405,8 @@ function makeTable(cases, flag) {
         let uUrl = `https://universal.jixie.io/demos/portal/hybrid.html?creativeid=${oneRow.id}`;
         let uliteUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_ulite.html?creativeid=${oneRow.id}`;
         let osmUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_osm.html?creativeids=${oneRow.id}`;
+        let osmDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxdesktop&creativeids=${oneRow.id}`;
+        let osmMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxmobile&creativeids=${oneRow.id}`;
         let hbDUrl = null;
         if (oneRow.adUnitCodeD) {
             hbDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbdesktop&jxhbadunitcode=${oneRow.adUnitCodeD}&jxhbcreativeid=${oneRow.id}`;
@@ -434,16 +436,22 @@ function makeTable(cases, flag) {
         realLink = uliteUrl ? `<a href="${uliteUrl}" xtarget="_blank">new-univ</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
-        realLink = osmUrl ? `<a href="${osmUrl}" xtarget="_blank">OSM</a>` : '';
+        realLink = osmUrl ? `<a href="${osmUrl}" xtarget="_blank">-</a>` : '';
+        buf += tdOpen_ + realLink + tdClose_;
+
+        realLink = osmDUrl ? `<a href="${osmDUrl}" xtarget="_blank">OSM-D</a>` : '';
+        buf += tdOpen_ + realLink + tdClose_;
+
+        realLink = osmMUrl ? `<a href="${osmMUrl}" xtarget="_blank">OSM-M</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
         realLink = ampUrl ? `<a href="${ampUrl}" xtarget="_blank">amp_ad</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
-        realLink = hbDUrl ? `<a href="${hbDUrl}" xtarget="_blank">HB-desktop</a>` : '';
+        realLink = hbDUrl ? `<a href="${hbDUrl}" xtarget="_blank">HB-D</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
-        realLink = hbMUrl ? `<a href="${hbMUrl}" xtarget="_blank">HB-mobile</a>` : '';
+        realLink = hbMUrl ? `<a href="${hbMUrl}" xtarget="_blank">HB-M</a>` : '';
         buf += tdOpen_ + realLink + tdClose_;
 
 
