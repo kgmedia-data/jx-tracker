@@ -26,7 +26,7 @@ const startModeSDKAuto_         = consts.startModeSDKAuto;
 
 
 const _jxPreloadOverride        = null;
-const _jxPlaybackOverride       = null;
+const _jxPlaybackOverride       = "shaka";
 
 const initialState_             = 'content';
 const remainSecEventsSeed_      = [15, 5, 2];
