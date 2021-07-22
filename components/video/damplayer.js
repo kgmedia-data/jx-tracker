@@ -218,6 +218,10 @@ function createObject_(options, ampIntegration) {
             }
         }
     }
+
+    //special things for the hlserror event
+    //hlserror is internal.
+
     /**
      * Send the tracking events to our endpoint
      * For each event the accompanying query parameters are from different sources
@@ -286,7 +290,7 @@ function createObject_(options, ampIntegration) {
             '&origtech=' + v.origtech + 
             '&realtech=' + v.realtech + 
             '&volume=' + v.volume +
-            '&debug=' + dbgProp;
+            (action != 'hlserror' ? '&debug=' + dbgProp: '');
             if (v.adslotduration) {
                 url += '&adduration=' + v.adslotduration;
             }       
@@ -296,6 +300,9 @@ function createObject_(options, ampIntegration) {
             '&viewability=' + vab2 +
             '&debug=' + dbgProp;
         }        
+        if (action == 'hlserror' && errBlob){
+            url += '&debug=' + encodeURIComponent(errBlob.details); //errBlob: details 
+        }
         //if (action.startsWith('play') || action == 'start') {
           //  console.log(`S_S_S_S_S_S_sendTracker: action=${action} diffTime = ${diffTime}`);
         //}
@@ -964,6 +971,12 @@ function createObject_(options, ampIntegration) {
             clicked2start:
      */
     function _isDowngradable(v) {
+        /* console.log(` parts to downgrade logic: 
+            isOrigTech=${v.origtech && (v.origtech == v.realtech)} && 
+            origTechisNotFB=${(v.origtech != fallbackTech_)} &&
+            notPlayedTooLong=${v.accutime >=0 && v.accutime < 3} &&
+            haveStuffToFB=${_vInfoMap[v.videoid] && _vInfoMap[v.videoid].fallback ? true: false} ; 
+            accutime=${v.accutime}`); */
         if (v && 
             v.origtech && (v.origtech == v.realtech) && (v.origtech != fallbackTech_) &&
             v.accutime >=0 && v.accutime < 3) {
@@ -1248,13 +1261,20 @@ function createObject_(options, ampIntegration) {
                 break;
             case 'error':
                 //native -> fallbackTech_
-                //shakar -> fallbackTech_
+                //shaka -> fallbackTech_
+
+                if (videoInfoObj.realtech == 'shaka') {
+                    //We (at least for a season...) want more detailed logs
+                    //on HLS streams.
+                    jxTracker.push('hlserror');
+                }
                 if (_isDowngradable(videoInfoObj)) {
                     //let's downgrade it to the plain fallbackTech_ in HTML5 and then try again:
                     //we do not give out the error event since we can still hopefully salvage it!
                     let vid = videoInfoObj.videoid;
                     setTimeout(_handle1VErrorByDowngrade.bind(null, vid), 0);
-                    return; //do not fire any event to the widget. we try to tackle it.
+                    //return; //do not fire any event to the widget. we try to tackle it.
+                    //We cannot return. we may need to fire that temporary hlserror event
                 }
                 else {
                     //in the case e.g. the video API endpoint returns some junk then how?
@@ -1646,6 +1666,7 @@ function createObject_(options, ampIntegration) {
                 { code: errCodeDAMApiError_ } //error object
             );
         };
+       
         xhr.addEventListener("readystatechange", function() {
             //is this safe enough? (to get the whole response?)
             if(this.readyState === XMLHttpRequest.DONE) {

@@ -291,7 +291,6 @@ const animationDelays = [
                 barWrapper.classList.add('no-text');
             }
             animationDelays1.forEach(function() {
-                console.log("BAR MADE");
                 let div = document.createElement('div');
                 div.style.background = color;
                 div.className = 'sound-bar';

@@ -35,6 +35,7 @@ const adCountdownSec_           = 3;
 const defaultCountDownToAdMsg   = "Ad starts in %%SECONDS%% s";
 const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
+const delayedSetOffsetPBMethods_ = [ fallbackTech_, "native"];
 
 const cssmgr                 = modulesmgr.get('video/cssmgr');
 const hideCls                = cssmgr.getRealCls('hideCls');
@@ -297,7 +298,8 @@ window.jxPromisePolyfill        = 'none';
                 ret.code = errObj.code;
                 ret.codeType = 'shaka';
                 ret.codeStr = 'shaka code=' + errObj.code + ' category=' + errObj.category + ' severity=' + errObj.severity;
-                ret.details = (errObj.data? JSON.stringify(errObj.data): "");
+                ret.details = JSON.stringify(errObj);
+                //(errObj.data? JSON.stringify(errObj.data): "");
             }
             else if (errObj && errObj.source == 'ima') {
                 ret.code = errObj.code;
@@ -1095,7 +1097,6 @@ window.jxPromisePolyfill        = 'none';
                  * and we didn't set the diff as an accumulated time, coz users didn't really watch the video
                  */
                 if(_adCountdownMgrFcn) {
-                    console.log('##### CD CD CD CD CD ###');
                     //this is the one that shows the countdown stuff.
                     //_doDelayedAdP, if can secure an ad will set this up _delayedAdMgrFcn is a bound function
                     //the countdown thing:
@@ -1287,7 +1288,7 @@ window.jxPromisePolyfill        = 'none';
                         _boundMetadataLoadedCB();
                     }, 1000);
                 }
-                if (offset > 0) { //HACK
+                if (offset > 0) { 
                     //we are only bothered if offset > 0
                     _boundCanPlayThroughCB = _canPlayThroughCB.bind({
                         offset: offset
