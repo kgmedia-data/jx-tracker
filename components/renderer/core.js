@@ -793,6 +793,8 @@ function addGAMNoAdNotifyMaybe(str) {
         let jxbnDiv = this.divObjs.jxbnDiv;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
         let jxmasterDiv = this.divObjs.jxmasterDiv;
+        let jxbnFixedDiv = this.divObjs.jxbnFixedDiv;
+        let jxCoreElt = this.divObjs.jxCoreElt;
 
         // WIP FES-137 --> HACK
         let max1dim = true;
@@ -823,10 +825,24 @@ function addGAMNoAdNotifyMaybe(str) {
         // WIP FES-137 -->
         if (max1dim) {
             ratio = Math.min(c.widthR/c.width, c.heightR/c.height);
+            console.log(ratio);
             
-            let newMaxWidth = c.width*ratio;
-            jxmasterDiv.style.maxWidth = newMaxWidth + 'px';
-            jxbnDiv.style.maxWidth = newMaxWidth + 'px';
+            let newWidth = c.width*ratio;
+            let newHeight = c.height*ratio;
+
+            jxmasterDiv.style.maxWidth = newWidth + 'px';
+
+            jxbnDiv.style.maxWidth = newWidth + 'px';
+            jxbnDiv.style.height = newHeight + 'px';
+
+            jxbnScaleDiv.style.width = newWidth + 'px';
+            jxbnScaleDiv.style.height = newHeight + 'px';
+
+            jxbnFixedDiv.style.width = newWidth + 'px';
+            jxbnFixedDiv.style.height = newHeight + 'px';
+
+            jxCoreElt.style.width = newWidth + 'px';
+            jxCoreElt.style.height = newHeight + 'px';
         }
 
         let newH = ((c.height*ratio) + 5) + "px";
@@ -851,10 +867,10 @@ function addGAMNoAdNotifyMaybe(str) {
         switch(c.type) {
             case 'player':
             case 'display': // we resize applying a transformation ratio
-                // WIP FES-137 -->
-                jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
-                jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
-                jxbnDiv.style.height = newH;
+                // WIP FES-137 --> we still need this for the usual scaling, right?
+                // jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
+                // jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
+                // jxbnDiv.style.height = newH;
                 break;
             case 'video':
                 jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
