@@ -696,6 +696,7 @@ function addGAMNoAdNotifyMaybe(str) {
         let jxbnFixedDiv = _helpers.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
         let jxCoreElt = null;
 
+
         jxmasterDiv.style.position = 'relative';
         jxmasterDiv.style.margin = 'auto';
         jxbnDiv.style.position = 'relative';
@@ -703,10 +704,13 @@ function addGAMNoAdNotifyMaybe(str) {
         jxbnDiv.style.background = "transparent";
         jxbnDiv.style.overflow = 'hidden';
 
+
+        //20210723: still need to think about this a bit more
+        //sorry for the mess here:
         //this following stuff uses the creative's sizing info:
         //this is what is new!!!
         //if (normCrParams.maxwidth)
-            jxmasterDiv.style.maxWidth = normCrParams.maxwidth + 'px';
+        jxmasterDiv.style.maxWidth = normCrParams.maxwidth + 'px';
         //else            
         //    jxmasterDiv.style.width = normCrParams.width + 'px';
         //if (normCrParams.maxwidth)
@@ -763,6 +767,9 @@ function addGAMNoAdNotifyMaybe(str) {
         jxCoreElt.style.width = normCrParams.width + 'px';
         
         jxCoreElt.style.height = normCrParams.height + 'px';
+
+        
+
         //jxCoreElt.style.zIndex = 99999;
       
         insertCreative(jxCoreElt, normCrParams);
@@ -788,17 +795,12 @@ function addGAMNoAdNotifyMaybe(str) {
      * scaling)
      */    
     function __handleResize() {
+
         //console.log(new Error().stack);
         let c = this.c;
         let jxbnDiv = this.divObjs.jxbnDiv;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
-        let jxmasterDiv = this.divObjs.jxmasterDiv;
-        let jxbnFixedDiv = this.divObjs.jxbnFixedDiv;
-        let jxCoreElt = this.divObjs.jxCoreElt;
-
-        // WIP FES-137 --> HACK
-        let max1dim = true;
-
+    
         /*
             Renee new idea:
             suppose the maxwidth and maxheight given is not useful.
@@ -808,42 +810,8 @@ function addGAMNoAdNotifyMaybe(str) {
             250 is the real maxwidth --> 250x500
             400 is the real maxheight --> 200x400 --> this is the real possible.
         */
+        
         let ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
-
-        //FES-137 thinking aloud only:
-        //some flag about some special type of responsiveness (part of the creative)
-        //max1dim = 1 (stands for maximize 1 dimension)
-        //
-        //When will you have the info?
-        //the container somehow you need to "feel" its size available first.
-        //Then you compute also c.widthR and c.heightR.
-        //At some point in time, compute a 
-        //c.widthR, c.heightR 
-        //So here, in this logic if there is a widthR heightR, then use that instead of the c.width and c.height
-        //
-
-        // WIP FES-137 -->
-        if (max1dim) {
-            ratio = Math.min(c.widthR/c.width, c.heightR/c.height);
-            console.log(ratio);
-            
-            let newWidth = c.width*ratio;
-            let newHeight = c.height*ratio;
-
-            jxmasterDiv.style.maxWidth = newWidth + 'px';
-
-            jxbnDiv.style.maxWidth = newWidth + 'px';
-            jxbnDiv.style.height = newHeight + 'px';
-
-            jxbnScaleDiv.style.width = newWidth + 'px';
-            jxbnScaleDiv.style.height = newHeight + 'px';
-
-            jxbnFixedDiv.style.width = newWidth + 'px';
-            jxbnFixedDiv.style.height = newHeight + 'px';
-
-            jxCoreElt.style.width = newWidth + 'px';
-            jxCoreElt.style.height = newHeight + 'px';
-        }
 
         let newH = ((c.height*ratio) + 5) + "px";
         //console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
@@ -859,7 +827,7 @@ function addGAMNoAdNotifyMaybe(str) {
         //the thing should be scaled to 250x500px
         //i.e. the challenge is to show 500px height of stuff within a 400px box.
         //this seems to work fine.
-        if (c.fixedHeight) {
+        if (c.fixedHeight && c.doDiffScroll) {
             ratio = jxbnDiv.offsetWidth/c.width;
             c.creativeH = c.height*ratio;
             //console.log(`_WOO_ H=${c.creativeH} h=${c.height} r=${ratio}`);
@@ -867,15 +835,10 @@ function addGAMNoAdNotifyMaybe(str) {
         switch(c.type) {
             case 'player':
             case 'display': // we resize applying a transformation ratio
-                // WIP FES-137 --> we still need this for the usual scaling, right?
-                // jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
-                // jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
-                // jxbnDiv.style.height = newH;
-                break;
             case 'video':
                 jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
                 jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
-                jxbnDiv.style.height = newH;
+                jxbnDiv.style.height = newH + 'px';
                 break;
             /*  REMOVE FOR NOW WE MIGHT NOT SUPPORT
             case 'iframe': // we just resize the width of the different elements
@@ -1013,6 +976,88 @@ function addGAMNoAdNotifyMaybe(str) {
      * CALLED AS BOUND FUNCTIONS
      *******************************************************************************/ 
     
+     function doSizeMgmt(normCrParams, params) {
+         //we are still building the normCrParams this is the final step.
+         let cr = normCrParams; //shorter name :-)
+        //normal case is scaling (vert horiz)
+        //if fixed height: //this is only an issue if there is a fixed height
+        //or we can think that it will not look too good in paragraphs
+    
+        //the thing will not look too good if so little in a big env
+        //this is about 
+        var doDiffScroll = false;
+        var doScaling = true; //standard behaviour
+        var inflateRatio = 1;
+
+        let maxinflate = (cr.adparameters && cr.adparameters.maxinflate ?
+            cr.adparameters.maxinflate: 1); //put here to avoid code dupli
+        //A page width guideline
+        var pgWidthGuide = (params.pgWidthGuide ? params.pgWidthGuide: 0);
+        
+        //use this chance to change the fixedHeight to all lowercase!
+        if (cr.fixedHeight) {
+            //die die must have that vertical height
+            if (false) {
+                //nothing to worry
+            }
+            else if (cr.height > params.fixedHeight) {
+                if (cr.type != 'video') 
+                    doDiffScroll = true;
+                else {
+                    doScaling = true;
+                }                
+            }
+            else {
+                //see how much we need to inflat the creative
+                //to look more suitable. Multiple restrictions apply
+    
+                //first arg: how much to inflat to fill the vert space
+                //second arg: how much max can inflat without horiz going 
+                //            out of desired region
+                //third arg: the creative : what is the max inflat ratio
+                //           Cannot infinitely inflat...
+                if (maxinflate > 1) {                    
+                    let ratio = Math.min(
+                        maxinflate,
+                        cr.fixedHeight/cr.height, 
+                        (pgWidthGuide > 0 ? pgWidthGuide/cr.width: 2));
+                    if (ratio > 1) {
+                        inflateRatio = ratio;
+                    }
+                }       
+                if (inflateRatio == 1) {
+                    doDiffScroll = true;
+                }
+            }
+        }
+        else if (pgWidthGuide) {
+            if (cr.width < pgWidthGuide) {
+                if (maxinflate > 1) {                    
+                    let ratio = Math.min(
+                        maxinflate,
+                        (pgWidthGuide > 0 ? pgWidthGuide/cr.width: 2));
+                    if (ratio > 1) {
+                        inflateRatio = ratio;
+                    }
+                }       
+            }
+        }
+        if (doDiffScroll || inflateRatio > 1) {
+            doScaling = false;
+        }
+        if (inflateRatio > 1) {
+            cr.width = Math.round(cr.width*inflateRatio);
+            cr.height = Math.round(cr.height*inflateRatio);
+            if (cr.maxwidth < cr.width)
+                cr.maxwidth = cr.width;
+            //currently only DPA can do this and thru this mechanism
+            //However, in future, need to generalize.                
+            cr.adparameters.display_htmlsize = cr.width+"x"+cr.height;
+        }
+        cr.doDiffScroll = doDiffScroll;
+        cr.doScaling = doScaling;
+        return;
+    }
     /**
      * From every kind of creative supported we just extract a few common values
      * sufficiently to interact with the core element where we are supposed to
@@ -1033,9 +1078,6 @@ function addGAMNoAdNotifyMaybe(str) {
         let width = c.width;
         let height = c.height;
 
-        // WIP FES-137 --> HACK
-        let widthR = 545;
-        let heightR = 400;
         
         let forcecid = c.id;
         
@@ -1159,10 +1201,7 @@ function addGAMNoAdNotifyMaybe(str) {
             maxheight:          maxheight,
             scalable:           scalable,
             fixedHeight:        jxParams.fixedHeight ? jxParams.fixedHeight: 0, //we stuff something in first.
-            excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
-            // WIP FES-137
-            widthR:             widthR,
-            heightR:            heightR
+            excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0
         };
         
         if (c.adparameters)
@@ -1240,6 +1279,9 @@ function addGAMNoAdNotifyMaybe(str) {
                     case 'video+banner':
                         //that's one way
                         out.fixedHeight = 0;
+                        c.type = 'video'; //YO
+                        //for the purpose of scaling and scrolling (fixedheight handling)
+                        //it is like a video
                         break;
                     case 'script':
                         let sbody = null;
@@ -1296,6 +1338,8 @@ function addGAMNoAdNotifyMaybe(str) {
         if (c.universal) {
             out.universal = c.universal;
         }
+        
+        doSizeMgmt(out, jxParams);
         return out;
     }
 
@@ -1454,9 +1498,9 @@ function addGAMNoAdNotifyMaybe(str) {
 
                 
                 /**
-                 *  if fixedheight env, then set up to do differential scrolling 
+                 *  if we do differential scrolling, then set up the listener
                  */
-                if (normCrParams.fixedHeight) {
+                if (normCrParams.doDiffScroll) {
                     boundScrollEvent = __handleScrollEvent.bind({
                         savedoffset:    0,
                         containerElt:   jxContainer,
@@ -1567,6 +1611,14 @@ function addGAMNoAdNotifyMaybe(str) {
                         if (!ctr) ctr = window.top.document.getElementById(params.container);
                     } else {
                         ctr = document.getElementById(params.container);
+                    }
+                    if (ctr) {
+                        //offsetWidth , scrollWidth
+                        let pgWidthGuide = ctr.clientWidth;
+                        //too off we dun use.
+                        if (!isNaN(pgWidthGuide) && pgWidthGuide > 300 && pgWidthGuide < 700) {
+                            _jxParams.pgWidthGuide = pgWidthGuide;
+                        }
                     }
                 } 
                 if (_jxParams.context != 'amp' && gIsUFif) {
