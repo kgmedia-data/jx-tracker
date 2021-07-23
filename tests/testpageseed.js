@@ -403,7 +403,7 @@ function makeTable(cases, flag) {
     let buf = '';
     cases.forEach(function(oneRow) {
         let uUrl = `https://universal.jixie.io/demos/portal/hybrid.html?creativeid=${oneRow.id}`;
-        let uliteUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_ulite.html?creativeid=${oneRow.id}`;
+        let uliteUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_ulite_renee.html?creativeid=${oneRow.id}`;
         let osmUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_osm.html?creativeids=${oneRow.id}`;
         let osmDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxdesktop&creativeids=${oneRow.id}`;
         let osmMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxmobile&creativeids=${oneRow.id}`;
