@@ -460,15 +460,17 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         if (_adObj) {
             _adObj.reset();
         }
+        /* WOO
         if (!adparameters.video) {
             adparameters.video = {
                 width: 640,
                 height: 360
             };
         }
+        */
         //testing and faking some data
-        if (adparameters.video.height == 520)
-        adparameters.video.height= 320; //error somewhere
+        //WOO if (adparameters.video.height == 520)
+        //WOO adparameters.video.height= 320; //error somewhere
         //_playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/954006/3001004-954006_480.mp4';
         let tmp = document.getElementById(_containerId);
         if (!tmp) {
@@ -493,15 +495,15 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             }
         });
         let blob = {
-            width: adparameters.video.width, 
-            height: adparameters.video.height
+            token : _containerId
         }
         
-        _comboDiv.style.width = blob.width +'px';
-        _comboDiv.style.height = blob.height + 'px';
-        
-        blob.token = _containerId;
         if (comp.height) {
+            //for video banner video case it is not responsive
+            //we will do the size "as is"
+            blob.width = adparameters.video.width;
+            blob.height = adparameters.video.height;
+            
             blob.companion = comp;
             ['top','bottom'].forEach(function(pos) {
                 if (blob.companion[pos]) {
@@ -509,6 +511,13 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 }
             });
         }
+        else {
+            blob.width = tmp.offsetWidth; 
+            blob.height = tmp.offsetHeight;
+        }
+        _comboDiv.style.width = blob.width +'px';
+        _comboDiv.style.height = blob.height + 'px';
+            
         //this is the big question:
         if (adparameters.loop) {  //actually apart from auto there is also the manual one aaargh
             trigger1Replay(_comboDiv);

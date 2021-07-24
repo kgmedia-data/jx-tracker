@@ -1100,6 +1100,11 @@
                 if (p[prop])
                     url += '&' + prop + '=' + encodeURIComponent(p[prop]);
             });
+            ['maxwidth', 'minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
+                if (p[prop])
+                    url += '&' + prop + '=' + p[prop];
+            });
+            
             url += p.amp ? '&device=amp': '';
             let pNode = _getPgSelector();
             url += (pNode && pNode.node.clientWidth ? '&width='+pNode.node.clientWidth:'');
