@@ -69,7 +69,7 @@ function get_() {
     if (p_domain) ret.p_domain = p_domain;
     if (pagedomain) ret.domain = pagedomain;
     if (page) ret.pageurl = page;
-    if (keywords) ret.pagekeywords = keyword;
+    if (keywords) ret.pagekeywords = keywords;
     if (ttl) ret.pagetitle = ttl;
 
     let qparams = (new URL(document.location)).searchParams;

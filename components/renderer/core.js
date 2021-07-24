@@ -1124,7 +1124,7 @@ function addGAMNoAdNotifyMaybe(str) {
         };
     }
      function doSizeMgmt(params, cr) {
-         //hack
+         //hack -- for now coz our DB not cleaned up properly yet:
          if (cr.id == 1027 || cr.type == 'video') {
              cr.scalable = true;
              cr.responsive = true;
@@ -1157,8 +1157,10 @@ function addGAMNoAdNotifyMaybe(str) {
         if (!AR) { 
             AR = 1.66
         };
+        let doDiffScroll = (params.fixedheight ? true: false);
         if (cr.scalable) {
             if (params.fixedheight && noDiffScroll(cr)) {
+                doDiffScroll = false;
                 //try to fill this limited height:
                 h_ = params.fixedheight;
                 w_ = params.fixedheight*AR;
@@ -1199,22 +1201,11 @@ function addGAMNoAdNotifyMaybe(str) {
         
         cr.width = w_;
         cr.height = h_;
-        //if (cr.adparameters) {
-          //  cr.adparameters.width = cr.width;
-            //cr.adparameters.height = cr.height;
-        //}
-
         cr.maxwidth = mw_;
         cr.maxheight = mh_;
+        cr.doDiffScroll = doDiffScroll;
         console.log(`${w_} ${h_} ${mw_} ${mh_}`);
         console.log("^^ w h mw mh ^^");
-
-        //<-- HACK
-        if (cr.scalable && cr.type == 'display') {
-            cr.adparameters.display_htmlsize = cr.width+"x"+cr.height;
-        }
-        //HACK->
-        
     }
 
     function sanitizeTitle(t){
@@ -1265,7 +1256,8 @@ function addGAMNoAdNotifyMaybe(str) {
             maxwidth:           c.maxwidth,
             maxheight:          c.maxheight,
             fixedHeight:        jxParams.fixedHeight ? jxParams.fixedHeight: 0, //we stuff something in first.
-            excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0
+            excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
+            doDiffScroll:       c.doDiffScroll
         };
 
         if (c.adparameters)
