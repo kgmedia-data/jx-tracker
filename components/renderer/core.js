@@ -813,7 +813,7 @@ function addGAMNoAdNotifyMaybe(str) {
         
         let ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
 
-        let newH = ((c.height*ratio) + 5) + "px";
+        let newH = ((c.height*ratio) + 5);
         //console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
 
         //console.log(`__handleResizeContainer ratio=${ratio} (=${jxbnDiv.offsetWidth}/${c.width}) newH=${newH} (=${c.height}*${ratio})`);
@@ -975,88 +975,241 @@ function addGAMNoAdNotifyMaybe(str) {
      *  END OF : POSITION AND SIZE MANIPULATION FUNCTIONS. 
      * CALLED AS BOUND FUNCTIONS
      *******************************************************************************/ 
-    
-     function doSizeMgmt(normCrParams, params) {
-         //we are still building the normCrParams this is the final step.
-         let cr = normCrParams; //shorter name :-)
-        //normal case is scaling (vert horiz)
-        //if fixed height: //this is only an issue if there is a fixed height
-        //or we can think that it will not look too good in paragraphs
-    
-        //the thing will not look too good if so little in a big env
-        //this is about 
-        var doDiffScroll = false;
-        var doScaling = true; //standard behaviour
-        var inflateRatio = 1;
+     const noDiffScrollTypes_ = ['video'];
+     const sureResponsiveTypes_ = ['video'];
+     const onlyARMatterTypes_ = ['video'];
+     const bigWidth_ = 999;
+     const bigHeight_ = 999;
 
-        let maxinflate = (cr.adparameters && cr.adparameters.maxinflate ?
-            cr.adparameters.maxinflate: 1); //put here to avoid code dupli
-        //A page width guideline
-        var pgWidthGuide = (params.pgWidthGuide ? params.pgWidthGuide: 0);
-        
-        //use this chance to change the fixedHeight to all lowercase!
-        if (cr.fixedHeight) {
-            //die die must have that vertical height
-            if (false) {
-                //nothing to worry
-            }
-            else if (cr.height > params.fixedHeight) {
-                if (cr.type != 'video') 
-                    doDiffScroll = true;
-                else {
-                    doScaling = true;
-                }                
-            }
-            else {
-                //see how much we need to inflat the creative
-                //to look more suitable. Multiple restrictions apply
+     function noDiffScroll(cr) {
+        return cr.type == 'video' || cr.subtype == 'video+banner';
+    }
+   
+     
+     function creativeSizeRangeRepair(cr) {
+        // (2) Get ready the Creative size (resize) info (some of these 
+        // can be done before caching )
+        //<--- This whole thing should be set in the precache preparation :
     
-                //first arg: how much to inflat to fill the vert space
-                //second arg: how much max can inflat without horiz going 
-                //            out of desired region
-                //third arg: the creative : what is the max inflat ratio
-                //           Cannot infinitely inflat...
-                if (maxinflate > 1) {                    
-                    let ratio = Math.min(
-                        maxinflate,
-                        cr.fixedHeight/cr.height, 
-                        (pgWidthGuide > 0 ? pgWidthGuide/cr.width: 2));
-                    if (ratio > 1) {
-                        inflateRatio = ratio;
-                    }
-                }       
-                if (inflateRatio == 1) {
-                    doDiffScroll = true;
+        // (2a) width, height columns
+        let w = cr.width ? cr.width: 0;
+        let h = cr.height ? cr.height: 0;
+        // (2b) assets
+        if ((!w || !h) && cr.assets) { //server-side
+            w = cr.assets.width ? cr.assets.width: 0;
+            h = cr.assets.height ? cr.assets.height: 0;
+        }
+        // (2c) subtype
+        //still can get from the subtype
+        if ((!w || !h) && cr.type == 'display') {
+            let subtype = cr.subtype.replace("d", "").replace("r", "");
+            let arr = subtype.split("x");
+            if (arr.length == 2) {
+                w = parseInt(arr[0]);
+                h = parseInt(arr[1]);
+            }
+        }
+        // (2d) some are in adparameters ?
+        if (!w || !h) {
+            let p = cr.assets && cr.assets.adparameters ? cr.assets.adparameters: cr.adparameters;
+            if (p) {
+                w = p.width ? p.width: 0;
+                h = p.height ? p.height: 0;
+            }
+        }
+        // ok exhausted all 
+        if (!w || !h) {
+            //cannot serve this corrupted creative
+            return null;
+        }
+        let crAR = w/h;
+        if (cr.scalable && onlyARMatterTypes_.indexOf(cr.type)> -1) {
+            w = 0;// to facilate the below calculations
+            h = 0;
+        }
+        // Reminder that so for video : w and h are both set to 0 at this stage:
+        let crMaxW = w;
+        let crMinW = w;
+        let crMaxH = h;
+        let crMinH = h;
+        
+        if (cr.responsive) {
+            // if it is not responsive, then crMaxW and crMinW = width of creative
+            // ditto for height, nothing much to further calculate then:
+            let u = cr.assets && cr.assets.universal ? cr.assets.universal : cr.universal;
+            //make the max W and H specified in the creative be consistent
+            //with aspect ratio
+            let maxW = u && u.maxwidth ? u.maxwidth: 0;
+            let maxH = u && u.maxheight ? u.maxheight: 0;
+            if (maxW && maxH) { //if both are given, then make sure they are
+                //consistent with AR.
+                let AR1 = maxW/maxH;
+                if (AR1 > crAR) {
+                    maxW = maxH*crAR;
+                }
+                else {
+                    maxH = maxW/crAR;
+                }
+            }
+            else if (maxW) {
+                //if one is given, make sure the other is set per AR.
+                maxH = maxW/crAR;
+            }
+            else if (maxH) {
+                //if one is given, make sure the other is set per AR.
+                maxW = maxH*crAR;
+            }
+    
+            // Same drill but for the MIN w and h:
+            let minW = u && u.minwidth ? u.minwidth: 0;
+            let minH = u && u.minheight ? u.minheight: 0;
+            if (minW && minH) {
+                let AR1 = minW/minH;
+                if (AR1 > crAR) {
+                    minW = minH*crAR;
+                }
+                else {
+                    minH = minW/crAR;
+                }
+            }
+            else if (minW) {
+                minH = minW/crAR;
+            }
+            else if (minH) {
+                minW = minH*crAR;
+            }
+            //
+            if (!maxW) {
+                maxW = bigWidth_;
+                maxH = bigHeight_;//dun care AR for such.
+            }
+            //now maxW, maxH, minW, minH are all set to intentional values//
+    
+            //Now revisit how to set crMaxW, ... etc:
+            //responsive=true, and go smaller is always technically possible 
+            //so whateverso we can lower the crMinH crMinW ...
+            if (minH  < crMinH) {
+                crMinH = minH;
+            }
+            if (minW  < crMinW) {
+                crMinW = minW;
+            }
+            //whether we can go higher ... that one is a technical thing which only
+            //the creative can do, if they choose to:
+            if (cr.scalable) {
+                if (maxW > crMaxW) {
+                    crMaxW = maxW;
+                }
+                if (maxH > crMaxH) {
+                    crMaxH = maxH;
                 }
             }
         }
-        else if (pgWidthGuide) {
-            if (cr.width < pgWidthGuide) {
-                if (maxinflate > 1) {                    
-                    let ratio = Math.min(
-                        maxinflate,
-                        (pgWidthGuide > 0 ? pgWidthGuide/cr.width: 2));
-                    if (ratio > 1) {
-                        inflateRatio = ratio;
-                    }
-                }       
+          
+        // the precache should add the properties
+        //{
+            //crMaxW, crMinW, crMaxH, crMinH, crAR, ? width, height
+        //}
+        //--->
+        if (!crMaxW) crMaxW = bigWidth_;
+        if (!crMaxH) crMaxH = bigHeight_;
+        return {
+            aspectratio:    crAR,
+            width:          w, //for video will be 0
+            height:         h, //for video will be 0
+            maxwidth:       crMaxW,
+            minwidth:       crMinW, 
+            maxheight:      crMaxH,
+            minheight:      crMinH 
+        };
+    }
+     function doSizeMgmt(params, cr) {
+         //hack -- for now coz our DB not cleaned up properly yet:
+         if (cr.id == 1027 || cr.type == 'video') {
+             cr.scalable = true;
+             cr.responsive = true;
+         }
+         else {
+            cr.scalable = false;
+         }
+         if (cr.id == 724) {
+             //Video + banner
+             cr.responsive = false;
+             cr.scalable = false;
+         }
+         delete params.pgWidthGuide;
+         params.pgWidthGuide = 600;
+         //hack -->
+
+        let crSizeRange = creativeSizeRangeRepair(cr);
+        console.log(crSizeRange);
+        console.log("^^ repaired sizes of adserver response above^^");
+        console.log(".........................................");
+        console.log(params);
+        console.log("^^ jxParams above^^");
+
+        let w_ = params.width ? params.width: 640; 
+        let h_ = params.height ? params.height: 360;
+        let mw_ = params.maxwidth ? params.maxwidth: 0;
+        let mh_ = params.maxheigth ? params.maxheight : 0;
+    
+        let AR = crSizeRange.aspectratio;
+        if (!AR) { 
+            AR = 1.66
+        };
+        let doDiffScroll = (params.fixedheight ? true: false);
+        if (cr.scalable) {
+            if (params.fixedheight && noDiffScroll(cr)) {
+                doDiffScroll = false;
+                //try to fill this limited height:
+                h_ = params.fixedheight;
+                w_ = params.fixedheight*AR;
+                let l = Math.min(params.maxwidth ? params.maxwidth: bigWidth_, crSizeRange.maxwidth);
+                if (w_ > l) {
+                    w_ = l;
+                    h_ = w_/AR;
+                }
+                l = Math.min(params.maxheight ? params.maxheight: bigHeight_, crSizeRange.maxheight);
+                if (h_ > l) {
+                    h_ = l;
+                    w_ = l*AR;
+                }
             }
+            else {
+                //for video remember now we are 0 hor.
+                //we have a width guideline
+                if (cr.width)
+                    w_ = cr.width;
+                if (params.pgWidthGuide && params.pgWidthGuide > w_) {
+                    w_ = params.pgWidthGuide;
+                }
+                let l = Math.min(params.maxwidth? params.maxwidth: bigWidth_, crSizeRange.maxwidth);
+                if (w_ > l) {
+                    w_ = l;
+                }
+                h_ = w_/AR;
+            }
+            mh_ = h_;//so we won't have funny thing to trigger scaling at our level
+            mw_ = w_;
         }
-        if (doDiffScroll || inflateRatio > 1) {
-            doScaling = false;
+        else {
+            w_ = crSizeRange.width;
+            h_ = crSizeRange.height;
+            mw_ = Math.min(params.maxwidth?params.maxwidth:bigWidth_, crSizeRange.maxwidth);
+            mh_ = Math.min(params.maxheight?params.maxheight:bigHeight_, crSizeRange.maxheight);
         }
-        if (inflateRatio > 1) {
-            cr.width = Math.round(cr.width*inflateRatio);
-            cr.height = Math.round(cr.height*inflateRatio);
-            if (cr.maxwidth < cr.width)
-                cr.maxwidth = cr.width;
-            //currently only DPA can do this and thru this mechanism
-            //However, in future, need to generalize.                
-            cr.adparameters.display_htmlsize = cr.width+"x"+cr.height;
-        }
+        
+        cr.width = w_;
+        cr.height = h_;
+        cr.maxwidth = mw_;
+        cr.maxheight = mh_;
         cr.doDiffScroll = doDiffScroll;
-        cr.doScaling = doScaling;
-        return;
+        console.log(`${w_} ${h_} ${mw_} ${mh_}`);
+        console.log("^^ w h mw mh ^^");
+    }
+
+    function sanitizeTitle(t){
+        return  t.normalize('NFD').replace(/[^a-zA-Z0-9\s]/g, '').replace(/[\u0300-\u036f]/g, '').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"]/g,'');
     }
     /**
      * From every kind of creative supported we just extract a few common values
@@ -1069,114 +1222,16 @@ function addGAMNoAdNotifyMaybe(str) {
      * @returns a normalized creative params object
      */
     function getNormalizedCreativeParams(jxParams, c) {
-        let scalable = true; 
-        if (!jxParams.responsive || (c && c.adparameters && c.iab)) {
-            scalable = false;
-        }
-        let fixedHeight = 0;
-        let nested = jxParams.nested;
-        let width = c.width;
-        let height = c.height;
-
-        
-        let forcecid = c.id;
-        
-        if (!width) {
-            //e.g. the video+banner does not have width directly 
-            //under creative level ...
-            if (c.adparameters) {
-                width = c.adparameters.width;
-                height = c.adparameters.height;
-            }
-        }
-        if (!width && c.type == 'video') {
-            //a bit hard to find 
-            if (c.adparameters && c.adparameters.video) {
-                width = c.adparameters.video.width;
-                height = c.adparameters.video.height;
-            }
-            if (!width) {
-                width = 640;
-                height = 360;
-            }
-        }
-        
         /** FANCYSCROLL:
          * if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
          * this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
          */
+        let nested = jxParams.nested;
+
         if (!isNaN(jxParams.fixedHeight)) {
             fixedHeight = parseInt(jxParams.fixedHeight);
             if (fixedHeight > 0)
                 nested = -1;
-        }
-    
-        let maxwidth = jxParams.maxwidth; //maxwidth refers to the available container
-        //we try to max out of course but not sure if succeed.
-        //at this point we also dunno what it is
-        //only until later we know.
-
-        if (c.universal && c.universal.maxwidth) {
-            if (maxwidth > c.universal.maxwidth || !maxwidth)
-                maxwidth = c.universal.maxwidth;
-        }
-        //if (c.width) {
-          //  width = parseInt(c.width);
-        //}
-        if (maxwidth > width || !maxwidth)
-            maxwidth = width; ///means we assume a creative always has a width ...?! at this point
-
-        // NOTE : RENEE NEW THING:
-        // In the universal there is also some logic like this:
-        //    else if (o.p.maxwidth > 0) here maxwidth is smaller than width
-        //    o.p.width = o.p.maxwidth;    
-        // What I think is: if we do this: basically we LOST the width info of this
-        // creative - which could very well be a 'nonscalable' thing. i.e. totally
-        // rely on our scale-transform to "fit in" the small real-estate
-        // So if e.g. width =400, maxwidth = 210
-        // then if width get also set to 210. then in the resize transform code, there is
-        // nothing to do coz ratio = 1. then the thing is not scaled/displayed properly
-        // then.
-        let maxheight = jxParams.maxheight;
-        if (c.universal && c.universal.maxHeight) {
-            if (maxheight > c.universal.maxHeight || !maxheight)
-                maxheight = c.universal.maxHeight;
-        }
-        if (maxheight > height || !maxheight)
-            maxheight = height;
-        //how to translate the maxheight ALSO to maxwidth so that later the transform just go by 
-        //the width!!
-        //if scalable then just do this would be enough!!!
-        //for video the problem would be when we cannot scale it!
-     
-        // My other thinking is the following:
-        // The max height should just be used as another thing to tune the maxwidth
-        // instead of imposing stuff 
-        /* HACK 
-        if ((!(fixedHeight > 0)) && maxheight > 0) { //if a maxheight is given:
-            //e.g. for the 9-16 video
-            let maxwidth1 = maxheight*(width/height);
-            if (maxwidth1 < maxwidth) {
-                maxwidth = maxwidth1;
-            }
-            maxheight = 0;
-        }
-        */
-        
-        //now for the rubber stuff which is video
-        //let's see what we can do.
-        //
-        if (c.type == 'video') {
-            let ar = width / height; //check this always legit?
-            // now we know that for video this width and height are not 'real'
-            // and unnegotiable. 
-            // meaning we can change it now.
-            width = Math.min(maxwidth, width);
-            height = width/ar;
-            if (c.adparameters && c.adparameters.video) {
-                c.adparameters.video.width = width;
-                c.adparameters.video.height = height;
-            }
         }
         
         //this is the case whereby the creative itself will not manage the tracker firing
@@ -1190,20 +1245,21 @@ function addGAMNoAdNotifyMaybe(str) {
         }
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
+        doSizeMgmt(jxParams, c);
 
         let out = { 
             type:               c.type,
-            width:              width, 
             clickurl:           c.clickurl, 
             clicktrackerurl:    clicktrackerurl,
-            height:             height,
-            maxwidth:           maxwidth,
-            maxheight:          maxheight,
-            scalable:           scalable,
+            width:              c.width, 
+            height:             c.height,
+            maxwidth:           c.maxwidth,
+            maxheight:          c.maxheight,
             fixedHeight:        jxParams.fixedHeight ? jxParams.fixedHeight: 0, //we stuff something in first.
-            excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0
+            excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
+            doDiffScroll:       c.doDiffScroll
         };
-        
+
         if (c.adparameters)
             out.adparameters = c.adparameters;
         if (c.thirdpartytag) {
@@ -1227,6 +1283,7 @@ function addGAMNoAdNotifyMaybe(str) {
                     case 'pyoutube':
                     case 'pdailymotion':
                     case 'pivs':
+                        // the naked scripts all work in iframe only:
                         surl = playerUrls_[c.subtype];
                         out['iframe'] = { scripturl: surl, jxuni_p: JSON.parse(JSON.stringify(c)) };
                         delete out.adparameters;
@@ -1235,6 +1292,11 @@ function addGAMNoAdNotifyMaybe(str) {
                         surl = (!c.script ? c.url: c.script);
                         surl += (surl.indexOf('?') != -1 ? '&': '?') + 'trackers=' + btoa(JSON.stringify(c.trackers));
                         if (c.adparameters) surl += '&adparameters=' + btoa(JSON.stringify(c.adparameters));
+                        // add missing pagetitle property
+                        surl += '&pagetitle=' + btoa(sanitizeTitle(jxParams.pagetitle));
+                        // add missing pagekeywords property
+                        if (jxParams.pagekeywords) surl += '&pagekeywords=' + btoa((jxParams.pagekeywords));
+                        //should we also add those stuff from jxParams to the blob
                         out[trusted? 'div':'iframe'] = { scripturl: surl, jxuni_p: JSON.parse(JSON.stringify(c)) };
                         // add missing pagetitle property and pagekeywords
                 }//inner switch
@@ -1264,6 +1326,8 @@ function addGAMNoAdNotifyMaybe(str) {
             case 'video': 
                 trusted = false; //our video sdk will operate in friendly iframe
                 out.adparameters = c; //<--- this is a special behaviour for video sdk stuff.
+                //the videoadsdk needs more than the adparameters but 1 level up (still need generate vast)
+                //this c blob contains a property adparameters                 
                 if (!c.adparameters) { 
                     //case of third party tag; for vast generation
                     c.adparameters = { trackers: JSON.parse(JSON.stringify(c.trackers)) };
@@ -1277,11 +1341,7 @@ function addGAMNoAdNotifyMaybe(str) {
             case 'display':
                 switch (c.subtype) {
                     case 'video+banner':
-                        //that's one way
-                        out.fixedHeight = 0;
-                        c.type = 'video'; //YO
-                        //for the purpose of scaling and scrolling (fixedheight handling)
-                        //it is like a video
+                        //now from adserver it is already morphed into video vvpaid
                         break;
                     case 'script':
                         let sbody = null;
@@ -1314,6 +1374,12 @@ function addGAMNoAdNotifyMaybe(str) {
                                 c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
                                 c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
                             }
+                            if (c.scalable) {
+                                //in the doSizeMgmt... it is possible
+                                //that the widht and height has changed:
+                                //instruct the DPA to do so:
+                                out.adparameters.display_htmlsize = out.width+"x"+out.height;
+                            }
                             out.iframe = { url: c.url };
                         }
                         break;
@@ -1336,10 +1402,8 @@ function addGAMNoAdNotifyMaybe(str) {
             out.nested = -1;
         }
         if (c.universal) {
-            out.universal = c.universal;
+            out.universal = c.universal;//??
         }
-        
-        doSizeMgmt(out, jxParams);
         return out;
     }
 
@@ -1670,6 +1734,10 @@ function addGAMNoAdNotifyMaybe(str) {
                 ['pageurl', 'domain'].forEach(function(prop) {
                     if (_jxParams[prop])
                         tmp += '&' + prop + '=' + _jxParams[prop];
+                });
+                ['maxwidth', 'minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
+                    if (p[prop])
+                        url += '&' + prop + '=' + p[prop];
                 });
                 if (_jxParams.amp) tmp += '&device=amp';
                 fetchedCreativesProm = fetchAdP(tmp);
