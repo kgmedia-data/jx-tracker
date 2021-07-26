@@ -40,6 +40,7 @@
 
     var _autoAdsManagerStart = false;
     var _adLoaderOutcome = 'jxnone';
+    var _controlsObj = null;
 
     /**
         this is the flag for us to not manipulating the DOM multiple times
@@ -54,21 +55,20 @@
      */
     var _isAdStarted = false;
 
-    var _controlsObj = null;
 
     //if you are making a long long adrequest
     //and when you are back, the whole thing was reset already.
 
     FactoryOneAd.prototype.reset = function() {
         _autoAdsManagerStart = false;
-        
+        _isAdStarted = false;
+
         _adEnduredVec = [0,0,0,0,0];
         //for use of the next ad request
         //I am thinking of destroying the ads loader also?
 
         /** reset the state back to initial */
         _isProgressBarUpdated = false;
-        _isAdStarted = false;
 
         if (_adsManager) {
             _adsManager.destroy();

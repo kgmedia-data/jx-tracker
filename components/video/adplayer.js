@@ -271,7 +271,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     var _onContentEnded = function() {
         _context = null;
         if (_thumbnailDiv) _thumbnailDiv.classList.remove(hideCls);
-        else parent.postMessage("jxadended", '*');
+        //else parent.postMessage("jxadended", '*');
     }
 
     var _showSpinner = function() {
@@ -341,6 +341,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             this.cb();
         }
     }    
+    
     /**
      * This is from the ads SDK usage jxvideo.1.3.min.js
      * @param {*} data 
@@ -442,13 +443,19 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     }
     function doNothing() {}
 
-    function trigger1Replay(container) {
-        container.addEventListener('jxadended', function() {
-            //we do a replay ourselves....
-            let vast = buildVastXml([_vastSrcBlob], true);//second param is SUPPRESS trackers
-            _adObj.setAutoAdsManagerStart(true); //since this is the second round, just play
-            _adObj.makeAdRequestFromXMLCB(vast, true, true, doNothing);
-        });
+    var _handleAdEnded = _realFireAdEnded;
+
+    function _realFireAdEnded() {
+        parent.postMessage("jxadended", '*');
+    }
+    function _realDoReplay() {
+        let vast = buildVastXml([_vastSrcBlob], true);//second param is SUPPRESS trackers
+        _adObj.setAutoAdsManagerStart(true); //since this is the second round, just play
+        _adObj.makeAdRequestFromXMLCB(vast, true, true, doNothing);
+    }
+
+    function trigger1Replay() {
+        _handleAdEnded = _realDoReplay;
     }
     var _vastSrcBlob = {};
     /**
@@ -519,11 +526,32 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _comboDiv.style.height = blob.height + 'px';
             
         //this is the big question:
+        adparameters.loop = "auto"; //HACK
         if (adparameters.loop) {  //actually apart from auto there is also the manual one aaargh
             trigger1Replay(_comboDiv);
             delete adparameters.loop;
         }
         _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls);
+        const mylist =[
+        "jxadended", 
+        "jxadfirstQuartile",
+        "jxadthirdQuartile",
+        "jxadmidpoint",
+        "jxadskipped", 
+        "jxadalladscompleted",
+        "jadclick", 
+        "jxadimpression",
+        "jxadstart"];
+        _adObj.subscribeToEvents(
+            mylist, function(jxname) {
+                if (jxname == 'jxadended') {
+                    console.log("A1");
+                    _handleAdEnded();
+                    console.log("A2");
+                }
+                console.log(`-WOOYANYU-CB--- adplayer.js ${jxname} ---- `);
+            });
+
         //_adObj.forceDimensions(blob.width, blob.height);
         //we should not use any attribute of the container.
         _vastSrcBlob = crData;

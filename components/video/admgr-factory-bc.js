@@ -17,7 +17,34 @@
 
  const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
+ //These we need to listen to for basic functioning:
+ const imaEventsSeed_ = [
+    "LINEAR_CHANGED",
+    "AD_PROGRESS",
+    "LOADED",
+    "SKIPPED",
+    "COMPLETE",
+    "PAUSED",
+    "RESUMED",
+    "CONTENT_PAUSE_REQUESTED",
+    "CONTENT_RESUME_REQUESTED",
+    "STARTED",
+    "ALL_ADS_COMPLETED"
+];
  
+ //In addition, We can call a callback when these things happen
+ const  subscribableEvents_ =  [
+    ["jxadended", "COMPLETE"],
+    ["jxadfirstQuartile", "FIRST_QUARTILE"],
+    ["jxadmidpoint", "MIDPOINT"],
+    ["jxadthirdQuartile", "THIRD_QUARTILE"],
+    ["jxadskipped", "SKIPPED"],
+    ["jxadalladscompleted","ALL_ADS_COMPLETED"],
+    ["jadclick", "CLICK"],
+    ["jxadimpression", "IMPRESSION"],
+    ["jxadstart", "STARTED"]
+ ];
+
  function MakeOneAdObj_(container, vid, fcnVector, controlsObj) {
     var _forceWidth = 0;
     var _forceHeight = 0;
@@ -40,6 +67,7 @@
     var _adLoaderOutcome = 'jxnone';
     var _controlsObj = null;
 
+
     /**
         this is the flag for us to not manipulating the DOM multiple times
         coz the way we animate the progress bar by manipulating the DOM
@@ -53,11 +81,25 @@
      */
     var _isAdStarted = false;
 
+    /**
+     * To support event firing (the old player sdk has this)
+     */
+    var _subscribedEvents = null;
+    var _preSubscribedEvents = {};
+    var _eventsCallback = null;
+    var _imaEvents = JSON.parse(JSON.stringify(imaEventsSeed_));
+    var _aStartApiCalled = false;
+
     //if you are making a long long adrequest
     //and when you are back, the whole thing was reset already.
 
     FactoryOneAd.prototype.reset = function() {
-        //_autoAdsManagerStart = false;
+        //reset will not erase the events subscription 
+
+        //for video ad really.
+        _aStartApiCalled = false;
+
+        _autoAdsManagerStart = false;
         _isAdStarted = false;
 
         _adEnduredVec = [0,0,0,0,0];
@@ -176,6 +218,16 @@
         //console.log(`#$ #$ #$ #$ #$ #$ #$ #$ #$ ${evt.type}`);
         let ad = evt.getAd();
 
+        if (_eventsCallback) {
+            let jxEvtName = _subscribedEvents[evt.type];
+            if (jxEvtName) {
+                //console.log(`--WOOYANYU TO CB FOR - ${jxEvtName}----`);
+                setTimeout(function() {
+                    _eventsCallback(jxEvtName);
+                }, 0);
+            }
+        }
+
         switch(evt.type) {
             case google.ima.AdEvent.Type.LINEAR_CHANGED:
                 if (ad && ad.isLinear()) {
@@ -210,8 +262,8 @@
             case google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED:
                 //length of all the ads in the adslot.
                 let l = Math.round(_adEnduredVec.reduce((a, b) => a + b, 0));
-                //_fireReportMaybe('slotended', { slotduration: l});
-                //_fireReportMaybe('ended'); 
+                _fireReportMaybe('slotended', { slotduration: l});
+                _fireReportMaybe('ended'); 
                 _handleContentResumeReq();
                 break;
             case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
@@ -264,7 +316,7 @@
                 }
                 
                 //---->
-                //_fireReportMaybe('started'); 
+                _fireReportMaybe('started'); 
                 _ctrls.updatePlayState(true);
 
                 if(_adsManager.getVolume() > 0) {
@@ -293,10 +345,10 @@
                 //this stuff need to do properly not like this.
                 //it must be a generic kind of events subscription 
                 //TODO
-                var e = new Event('jxadended');
-                window.dispatchEvent(e);
-                e = new Event('jxadended');
-                _container.dispatchEvent(e);
+                //var e = new Event('jxadended');
+                //window.dispatchEvent(e);
+                //e = new Event('jxadended');
+                //_container.dispatchEvent(e);
 
                 //_pFcnVector.report('slotended'); 
                 //_pFcnVector.report('ended'); 
@@ -311,7 +363,7 @@
                 _ctrls.pauseProgressBar();
                 break;
             case google.ima.AdEvent.Type.RESUMED:
-                //_pFcnVector.report('playing'); 
+                _pFcnVector.report('playing'); 
                 _pFcnVector.onAdPlaying(); 
                 _ctrls.updatePlayState(true);
                 break;
@@ -354,19 +406,19 @@
             _forceWidth ? _forceWidth : _width, 
             _forceHeight ? _forceHeight : _height, 
             google.ima.ViewMode.NORMAL);
-        [
-            "LINEAR_CHANGED",
-            "AD_PROGRESS",
-            "LOADED",
-            "SKIPPED",
-            "COMPLETE",
-            "PAUSED",
-            "RESUMED",
-            "CONTENT_PAUSE_REQUESTED",
-            "CONTENT_RESUME_REQUESTED",
-            "STARTED",
-            "ALL_ADS_COMPLETED"
-        ].forEach(function(evtName) {
+        if (!_subscribedEvents) {            
+            //earlier the IMA SDK might not be loaded so the string like
+            //google.ima.AdEvent.Type.IMPRESSION might not be defined
+            //So do this now:
+            _subscribedEvents = {};
+            for (var p in _preSubscribedEvents) {
+                _subscribedEvents[google.ima.AdEvent.Type[p]] = _preSubscribedEvents[p]
+            }
+            console.log(_subscribedEvents);
+            console.log("sss");
+        }
+        _imaEvents.forEach(function(evtName) {
+            console.log(` WOOYANYU register admgr listen ${google.ima.AdEvent.Type[evtName]}`);
             _adsManager.addEventListener(
                 google.ima.AdEvent.Type[evtName],
                 _onAdEvent.bind({resolveFcn: resolveFcn})
@@ -417,8 +469,8 @@
         //use this to help us only fire each of this max once:
         //will be removing from here after firing.
         //TODO PROPERLY ...
-        var e = new Event('jxhasad');
-        window.dispatchEvent(e);
+        //var e = new Event('jxhasad');
+        //window.dispatchEvent(e);
 
         _leftoverEvents = { 
             'started': 1,
@@ -589,11 +641,11 @@
         })
     };
     FactoryOneAd.prototype.startAd = function(resolveFcn) {
-        _isAdStarted = true;
+        _aStartApiCalled = true;
         _startAd(resolveFcn);
     };
     FactoryOneAd.prototype.playOrStartAd = function() {
-        if (!_isAdStarted) {
+        if (!_aStartApiCalled) {
             _startAd();
             return;
         }
@@ -607,6 +659,24 @@
     FactoryOneAd.prototype.pauseAd = function() {
         _pauseAd();
     };
+    FactoryOneAd.prototype.subscribeToEvents = function(eventsArr, callback) {
+        //it will reset everything
+        _imaEvents = JSON.parse(JSON.stringify(imaEventsSeed_));
+        _preSubscribedEvents = {};
+
+        eventsArr.forEach(function(jxEvtName) {
+            let found = subscribableEvents_.find((e) => e[0] == jxEvtName);
+            if (found) {
+                if (_imaEvents.indexOf(found[1]) == -1) {
+                    _imaEvents.push(found[1]);
+                }
+                _preSubscribedEvents[found[1]] = jxEvtName;
+            }
+        });
+        console.log(`WOOYANYU updated _imaEvents ${_imaEvents.join(" | ")}`);
+        _eventsCallback = callback;
+    }
+
     //added this thing (repeat of code... aarh) This is for playerWrapper to call
     //coz when user press to continue with an ad , we turn the sound on for him:
     FactoryOneAd.prototype.unmuteAd = function() {
