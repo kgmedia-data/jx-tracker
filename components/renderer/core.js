@@ -1736,8 +1736,8 @@ function addGAMNoAdNotifyMaybe(str) {
                         tmp += '&' + prop + '=' + _jxParams[prop];
                 });
                 ['maxwidth', 'minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
-                    if (p[prop])
-                        url += '&' + prop + '=' + p[prop];
+                    if (_jxParams[prop])
+                        tmp += '&' + prop + '=' + _jxParams[prop];
                 });
                 if (_jxParams.amp) tmp += '&device=amp';
                 fetchedCreativesProm = fetchAdP(tmp);

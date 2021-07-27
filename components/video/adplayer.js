@@ -7,7 +7,12 @@
 const modulesmgr            = require('../basic/modulesmgr');
 const _helpers              = modulesmgr.get('video/helpers');
 const MakeOneAdObj          = modulesmgr.get('video/admgr-factory');
-const MakeOneSpinner          = modulesmgr.get('video/spinner-factory');
+const MakeOneSpinner        = modulesmgr.get('video/spinner-factory');
+//for the KG video ad SDK we can get rid of
+//replaybutton, horiz banner, and vast stuff.
+//so we should have stub for all of them.
+const MakeOneReplayBtn      = modulesmgr.get('video/replaybtn-factory');
+const MakeOneHorizBanner    = modulesmgr.get('video/horizbanner-factory');
 const buildVastXml          = modulesmgr.get('video/vast').buildVastXml;
 
 const cssmgr                = modulesmgr.get('video/cssmgr');
@@ -18,7 +23,6 @@ const playerCls             = cssmgr.getRealCls('playerCls');
 const thumbnailCls          = cssmgr.getRealCls('thumbnailCls');
 const hideCls               = cssmgr.getRealCls('hideCls');
 const commonBigPlayBtnCls   = cssmgr.getRealCls('commonBigPlayBtnCls');
-
  
 // Add a listener of the event to the element e which calls the function handler h
 // General helper funciton
@@ -37,22 +41,23 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     var _pDiv               = null;
     var _playerElt          = null;
     var _comboDiv           = null;
-    var _thumbnailDiv       = null;//?
-    var _bigPlayBtn         = null;//?
-    var _context            = null;//?
+    var _thumbnailDiv       = null;
+    var _bigPlayBtn         = null;
+    var _context            = null;
 
-    var _spinner            = null;//?
+    var _spinner            = null;
+    var _replayBtn          = null;
     
     var _adObj              = null;
     var _env = null;
 
     var _startAdWhenAvail   = true;
-    var _eventsVector       = {};
+    var _eventsVector       = [];
     var _containerId        = null;
 
-    var _videoSrc           = null; //? source of the content video which will get from universal
+    var _videoSrc           = null; 
 
-    var _boundImgLoadedFcn  = null;//?
+    var _boundImgLoadedFcn  = null;
 
     /**
      * 
@@ -268,10 +273,38 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
        if (_videoSrc) _playerElt.src = _videoSrc;
     }
 
+    var _manualReplayCB = function() {
+        if (_replayBtn) _replayBtn.hide();
+        _doReplay();
+    }
+
+    var _onAdEnded = function() {
+        if (_env.loop === 'manual') {
+            if (!_replayBtn) {
+                _replayBtn = MakeOneReplayBtn(_comboDiv, _env.stripPosition, _manualReplayCB)
+            } else {
+                _replayBtn.show();
+            }
+        } else if (_env.loop === 'auto') {
+            _doReplay();
+        }
+        else if (_context != 'content' && _videoSrc) {
+            _context = 'content';
+            _contentDiv.classList.remove(hideCls);
+            _playerElt.play();
+        } else if (_thumbnailDiv) {
+            _thumbnailDiv.classList.remove(hideCls);
+        } else {
+            parent.postMessage("jxadended", '*');
+        }
+    }
+
     var _onContentEnded = function() {
         _context = null;
         if (_thumbnailDiv) _thumbnailDiv.classList.remove(hideCls);
-        else parent.postMessage("jxadended", '*');
+        else { //nothing to do to show. bye close shop
+            parent.postMessage("jxadended", '*');
+        }
     }
 
     var _showSpinner = function() {
@@ -293,6 +326,9 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         onAdPause: function() {},
         onAdPlaying: function() {},
         switch2Cnt: function() {
+            console.log(`switch2cnt is called??!`);
+            _onAdEnded();
+            /*
             //if it is unversal then it gets this msg and will kill this whole thing.
             //was parent.postMessage("jxadended", '*'); 
             //was _playerElt.play();
@@ -304,9 +340,10 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 _thumbnailDiv.classList.remove(hideCls);
             } else {
                 parent.postMessage("jxadended", '*');
-            }
+            }*/
         },
         switch2Ad: function() {
+            console.log("switch2Ad was called!");
             //WAS _playerElt.pause();
             _context = 'ad';
             _showSpinner();
@@ -341,6 +378,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             this.cb();
         }
     }    
+    
     /**
      * This is from the ads SDK usage jxvideo.1.3.min.js
      * @param {*} data 
@@ -442,14 +480,14 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
     }
     function doNothing() {}
 
-    function trigger1Replay(container) {
-        container.addEventListener('jxadended', function() {
-            //we do a replay ourselves....
+    function _doReplay() {
+        setTimeout(function() {
             let vast = buildVastXml([_vastSrcBlob], true);//second param is SUPPRESS trackers
             _adObj.setAutoAdsManagerStart(true); //since this is the second round, just play
             _adObj.makeAdRequestFromXMLCB(vast, true, true, doNothing);
-        });
+        }, 0);
     }
+
     var _vastSrcBlob = {};
     /**
      * 
@@ -460,17 +498,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         if (_adObj) {
             _adObj.reset();
         }
-        /* WOO
-        if (!adparameters.video) {
-            adparameters.video = {
-                width: 640,
-                height: 360
-            };
-        }
-        */
-        //testing and faking some data
-        //WOO if (adparameters.video.height == 520)
-        //WOO adparameters.video.height= 320; //error somewhere
+        
         //_playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/954006/3001004-954006_480.mp4';
         let tmp = document.getElementById(_containerId);
         if (!tmp) {
@@ -507,7 +535,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             blob.companion = comp;
             ['top','bottom'].forEach(function(pos) {
                 if (blob.companion[pos]) {
-                    _createBanner(_comboDiv, blob, pos);
+                    MakeOneHorizBanner(_comboDiv, blob, pos);
                 }
             });
         }
@@ -518,16 +546,27 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _comboDiv.style.width = blob.width +'px';
         _comboDiv.style.height = blob.height + 'px';
             
-        //this is the big question:
-        if (adparameters.loop) {  //actually apart from auto there is also the manual one aaargh
-            trigger1Replay(_comboDiv);
-            delete adparameters.loop;
-        }
         _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls);
+        if (_eventsVector) {
+            _adObj.subscribeToEvents(
+                _eventsVector, function(jxname) {
+                    let e = new Event(jxname);
+                    window.dispatchEvent(e);
+                    console.log(`-CB--- adplayer.js ${jxname} ---- `);
+                }); 
+        }
+
         //_adObj.forceDimensions(blob.width, blob.height);
         //we should not use any attribute of the container.
         _vastSrcBlob = crData;
-        console.log(`VAST FODDER: ${crData.id}, ${crData.name} ,${crData.duration}, ${crData.clickurl}`);
+
+        //send the jxsimidurl to the vast
+        if (crData.jxsimidurl) {
+            _vastSrcBlob.subtype = 'vsimid';
+            _vastSrcBlob.url = crData.jxsimidurl;
+        }
+        
+        /////console.log(`VAST FODDER: ${crData.id}, ${crData.name} ,${crData.duration}, ${crData.clickurl}`);
         let vast = buildVastXml([_vastSrcBlob]);
         _adObj.setAutoAdsManagerStart(false); 
         _adObj.makeAdRequestFromXMLCB(vast, true, true, updateUniversal);
@@ -539,7 +578,9 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             controls: {
                 color: '#000000',
                 position: 'left'
-            }
+            },
+            stripPosition: 'right',
+            loop: 'none'
         };
         if (cr.clickurl)  {
             out.clickurl = cr.clickurl;
@@ -554,18 +595,26 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             if (u.controlsColor) {
                 out.controls.color = u.controlsColor
             }
-            if (u.controlsPosition) {
+            if (u.controlsPos) {
                 out.controls.position = u.controlsPos;
             }
         }
         if (cr.adparameters && cr.adparameters.hasOwnProperty('autoplay')) {
             if (Boolean(cr.adparameters.autoplay) == false) {
-                u.autoplay = false;
+                out.autoplay = false;
             }
         } else if (u && u.hasOwnProperty('autoplay')) {
             if (Boolean(u.autoplay) == false) {
-                u.autoplay = false;
+                out.autoplay = false;
             }
+        }
+        if (cr.adparameters && cr.adparameters.loop) {
+                out.loop = cr.adparameters.loop;
+        } else if (u && u.loop) {
+                out.loop = false;
+        }
+        if (cr.adparameters && cr.adparameters.countpos) {
+            out.stripPosition = cr.adparameters.countpos;
         }
         return out;
      }
@@ -576,17 +625,16 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         if (_adObj)
             _adObj.startAd();
     }
-    function OneAdInstance(containerId, crData, eventsVector = {}) {
+    function OneAdInstance(containerId, crData, eventsVector = null) {
         _token = containerId;
         _containerId        = containerId;
         _startAdWhenAvail   = true; //would be from adparameters if there is ever one.
-        _eventsVector       = eventsVector;
+        if (eventsVector) {
+            _eventsVector       = JSON.parse(JSON.stringify(eventsVector));
+        }
 
         _spinner = MakeOneSpinner(document.getElementById(_containerId) ? document.getElementById(_containerId) : document.body);
         _showSpinner();
-
-        let u = {}; //fake for now. still not ok yet.
-        
 
         _env = extractEnv(crData, crData.universal);
 
