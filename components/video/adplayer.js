@@ -8,9 +8,13 @@ const modulesmgr            = require('../basic/modulesmgr');
 const _helpers              = modulesmgr.get('video/helpers');
 const MakeOneAdObj          = modulesmgr.get('video/admgr-factory');
 const MakeOneSpinner        = modulesmgr.get('video/spinner-factory');
-//for the KG video ad SDK we can get rid of
-//replaybutton, horiz banner, and vast stuff.
+
+//TOD
 //so we should have stub for all of them.
+//We can build the new counterpart for jxvideo1.3.min.js
+//to use vast-dummy.js and horizbanner-factory-dummy.js
+//then we can build a linear JS file
+//different from the one used by our universal-lite/osm
 const MakeOneReplayBtn      = modulesmgr.get('video/replaybtn-factory');
 const MakeOneHorizBanner    = modulesmgr.get('video/horizbanner-factory');
 const buildVastXml          = modulesmgr.get('video/vast').buildVastXml;
