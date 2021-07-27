@@ -64,11 +64,17 @@ modulesmgr.set('video/consts',          consts);
 const adctrls_fact                      = require('../components/video/adctrls-factory');
 modulesmgr.set('video/adctrls-factory', adctrls_fact);
 
-const admgr_fact                        = require('../components/video/admgr-factory-bc');
+const admgr_fact                        = require('../components/video/admgr-factory');
 modulesmgr.set('video/admgr-factory',   admgr_fact);
 
 const spinner_fact                      = require('../components/video/spinner-factory');
 modulesmgr.set('video/spinner-factory',   spinner_fact);
+
+const replaybtn_fact                    = require('../components/video/replaybtn-factory');
+modulesmgr.set('video/replaybtn-factory',  replaybtn_fact);
+
+const horizbanner_fact                  = require('../components/video/horizbanner-factory');
+modulesmgr.set('video/horizbanner-factory',   horizbanner_fact);
 
 
 const createObject                       = require('../components/video/adplayer');
@@ -76,12 +82,12 @@ const createObject                       = require('../components/video/adplayer
 
 var instMap = new Map(); //if we just always impose that if used from universal, then it's in
                          //iframe, then this Map is a bit stupid (only 1 item)  
-function makePlayer(containerId, adparameters) {
+function makePlayer(containerId, adparameters, eventsVector = null) {
     let instMaybe = instMap.get(containerId);
     if (instMaybe) {
         return;
     }
-    let playerInst = createObject(containerId, adparameters);
+    let playerInst = createObject(containerId, adparameters, eventsVector);
     instMap.set(containerId, playerInst);
     return playerInst;
 }
@@ -165,9 +171,17 @@ if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
     window.onJXPlayerReadyProcessed = 1;
     oldPlayerSDKMap = new Map();
     //well, since these events are published in our documentation, we need to support them
-    const eventsVector_  = ['jxhasad','jxadended','jxnoad','jxplayvideo','jxvideoend',
-        'jxadfirstQuartile','jxadmidpoint','jxadthirdQuartile','jxadalladscompleted',
-        'jxadclick', 'jxadimpression'];
+    const eventsVector_ =[
+            "jxadended", 
+            "jxadfirstQuartile",
+            "jxadthirdQuartile",
+            "jxadmidpoint",
+            "jxadskipped", 
+            "jxadalladscompleted",
+            "jadclick", 
+            "jxadimpression",
+            "jxadstart"
+        ];
     var playerObj = {
         player: null,
         started: false,
@@ -179,7 +193,7 @@ if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
             if (!inst) {
                 //note here (TODO) this is not the JSON creative
                 //but only a config object.
-                inst = makePlayer(json.container, json);
+                inst = makePlayer(json.container, json, eventsVector);
                 this.player = inst;
                 oldPlayerSDKMap.set(json.container, inst);
             }

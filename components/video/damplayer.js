@@ -380,6 +380,14 @@ function createObject_(options, ampIntegration) {
      * @param {*} options 
      * @returns array of adtags , null if  dun want to play ads
      */
+     function getParameterByName(name, url) {
+        name = name.replace(/[\[\]]/g, '\\$&');
+        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+            results = regex.exec(url);
+        if(!results) return null;
+        if(!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
     function prepareAdsObj(options) {
         if (!options.ads) {
             //this is the case they dun want ads loh.
@@ -395,7 +403,7 @@ function createObject_(options, ampIntegration) {
                 adUrl2 = adUrl + '&unit=' +(options.ads.mrunit? options.ads.mrunit: options.ads.unit);
             }
             if (window.location.href && window.location.href.includes('jxadtag') ) {
-                let tmp1 = getParameterByName('jxadtagurl');
+                let tmp1 = getParameterByName('jxadtagurl', window.location.href);
                 if (tmp1) {
                     adUrl1 = tmp1;
                     adUrl2 = tmp1;
@@ -411,6 +419,7 @@ function createObject_(options, ampIntegration) {
                 options.ads.delay = -1; //cannot do ads then.                    
             }
         }
+        
     }
     function repairMissingOptions(options) {
         //This is only for crucial properties that cannot be missing

@@ -73,7 +73,7 @@ function get_() {
     if (ttl) ret.pagetitle = ttl;
 
     let qparams = (new URL(document.location)).searchParams;
-    ['creativeid','creativeids','debug', 'deltaassets64', 'logwhythrow','portal'].forEach(function(item) {
+    ['creativeid','creativeids','debug', 'deltaassets64', 'logwhythrow','portal', 'jxsimidurl'].forEach(function(item) {
         if (qparams.has(item)) {
             ret[item] = qparams.get(item);
         }

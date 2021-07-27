@@ -99,7 +99,7 @@
         //for video ad really.
         _aStartApiCalled = false;
 
-        _autoAdsManagerStart = false;
+        /////_autoAdsManagerStart = false;
         _isAdStarted = false;
 
         _adEnduredVec = [0,0,0,0,0];
@@ -342,16 +342,6 @@
                 break;
             case google.ima.AdEvent.Type.COMPLETE:
             case google.ima.AdEvent.Type.SKIPPED:
-                //this stuff need to do properly not like this.
-                //it must be a generic kind of events subscription 
-                //TODO
-                //var e = new Event('jxadended');
-                //window.dispatchEvent(e);
-                //e = new Event('jxadended');
-                //_container.dispatchEvent(e);
-
-                //_pFcnVector.report('slotended'); 
-                //_pFcnVector.report('ended'); 
                 break;
             case google.ima.AdEvent.Type.PAUSED:
                 _pFcnVector.report('pause'); 
@@ -414,11 +404,8 @@
             for (var p in _preSubscribedEvents) {
                 _subscribedEvents[google.ima.AdEvent.Type[p]] = _preSubscribedEvents[p]
             }
-            console.log(_subscribedEvents);
-            console.log("sss");
         }
         _imaEvents.forEach(function(evtName) {
-            console.log(` WOOYANYU register admgr listen ${google.ima.AdEvent.Type[evtName]}`);
             _adsManager.addEventListener(
                 google.ima.AdEvent.Type[evtName],
                 _onAdEvent.bind({resolveFcn: resolveFcn})
@@ -673,7 +660,6 @@
                 _preSubscribedEvents[found[1]] = jxEvtName;
             }
         });
-        console.log(`WOOYANYU updated _imaEvents ${_imaEvents.join(" | ")}`);
         _eventsCallback = callback;
     }
 
