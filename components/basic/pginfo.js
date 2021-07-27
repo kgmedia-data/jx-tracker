@@ -33,13 +33,17 @@ function get_() {
     // Getting the page information (URL and hostname and title) depending if friendly iFrame or not
     var page = null, pagedomain = null, ttl = null, keywords = null, p_domain = null;
     if (gIsFifs || !gIframe) {
-        let win = gIsFifs ? window.top: window.self;
-        page = win.location.href;
-        pagedomain = win.location.hostname;
-        ttl = win.document.title;
-        keywords = win.document.querySelector('meta[name="keywords"]');
-        if (keywords) {
-            keywords = keywords.content;
+        try {
+            let win = gIsFifs ? window.top: window.self;
+            page = win.location.href;
+            pagedomain = win.location.hostname;
+            ttl = win.document.title;
+            keywords = win.document.querySelector('meta[name="keywords"]');
+            if (keywords) {
+                keywords = keywords.content;
+            }
+        }
+        catch(ee1) {
         }
     }
     else if (gIsUFif && config.pageurl_gam) {
@@ -73,7 +77,7 @@ function get_() {
     if (ttl) ret.pagetitle = ttl;
 
     let qparams = (new URL(document.location)).searchParams;
-    ['creativeid','creativeids','debug', 'deltaassets64', 'logwhythrow','portal'].forEach(function(item) {
+    ['creativeid','creativeids','debug', 'deltaassets64', 'logwhythrow','portal', 'jxsimidurl'].forEach(function(item) {
         if (qparams.has(item)) {
             ret[item] = qparams.get(item);
         }
