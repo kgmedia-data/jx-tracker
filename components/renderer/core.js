@@ -977,8 +977,6 @@ console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH:
      *  END OF : POSITION AND SIZE MANIPULATION FUNCTIONS. 
      * CALLED AS BOUND FUNCTIONS
      *******************************************************************************/ 
-     const noDiffScrollTypes_ = ['video'];
-     const sureResponsiveTypes_ = ['video'];
      const onlyARMatterTypes_ = ['video'];
      const bigWidth_ = 999;
      const bigHeight_ = 999;
@@ -986,8 +984,13 @@ console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH:
      function noDiffScroll(cr) {
         return cr.type == 'video' || cr.subtype == 'video+banner';
     }
-   
-     
+
+    /**
+     * Note: This will be put at adserver side soon. Then client side no need
+     * do this. The adserver will add that out blob into the response JSON.
+     * @param {*} cr 
+     * @returns 
+     */
      function creativeSizeRangeRepair(cr) {
          let scaling = 'none';
          if (cr.assets && cr.assets.universal) {
@@ -1145,11 +1148,11 @@ console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH:
     }
      function doSizeMgmt(params, cr) {
         let crSizeRange = creativeSizeRangeRepair(cr);
-        console.log(crSizeRange);
-        console.log("^^ repaired sizes of adserver response above^^");
-        console.log(".........................................");
-        console.log(params);
-        console.log("^^ jxParams above^^");
+        //console.log(crSizeRange);
+        //console.log("^^ repaired sizes of adserver response above^^");
+        //console.log(".........................................");
+        //console.log(params);
+        //console.log("^^ jxParams above^^");
 
         let w_ = params.width ? params.width: 640; 
         let h_ = params.height ? params.height: 360;
@@ -1211,8 +1214,8 @@ console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH:
         cr.maxwidth = mw_;
         cr.maxheight = mh_;
         cr.doDiffScroll = doDiffScroll;
-        console.log(`${w_} ${h_} ${mw_} ${mh_}`);
-        console.log("^^ w h mw mh ^^");
+        //console.log(`${w_} ${h_} ${mw_} ${mh_}`);
+        //console.log("^^ w h mw mh ^^");
     }
 
     function sanitizeTitle(t){
@@ -1255,6 +1258,7 @@ console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH:
         doSizeMgmt(jxParams, c);
 
         let out = { 
+            nested:             nested,
             type:               c.type,
             clickurl:           c.clickurl, 
             clicktrackerurl:    clicktrackerurl,
@@ -1641,7 +1645,6 @@ console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH:
          * @param {*} params 
          */
         function _assembleParams(params) {
-            debugger;
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
                 
