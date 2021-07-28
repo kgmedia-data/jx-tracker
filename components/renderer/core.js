@@ -795,7 +795,6 @@ function addGAMNoAdNotifyMaybe(str) {
      * scaling)
      */    
     function __handleResize() {
-
         //console.log(new Error().stack);
         let c = this.c;
         let jxbnDiv = this.divObjs.jxbnDiv;
@@ -1014,7 +1013,8 @@ const thresholdDiff_ = 120;
             else scaling = 'none';
          }
          cr.scaling = scaling;
-         
+         /////if (cr.id == 724)
+            //////cr.scaling = 'none'; 
          
         // (2) Get ready the Creative size (resize) info (some of these 
         // can be done before caching )
@@ -1127,7 +1127,7 @@ const thresholdDiff_ = 120;
             }
             //whether we can go higher ... that one is a technical thing which only
             //the creative can do, if they choose to:
-            if (cr.scaling == 'creative') {
+            if (cr.scaling == 'creative' || cr.scaling == 'renderer') {
                 if (maxW > crMaxW) {
                     crMaxW = maxW;
                 }
@@ -1155,6 +1155,7 @@ const thresholdDiff_ = 120;
         };
     }
      function doSizeMgmt(params, cr) {
+         //debugger;
         let crSizeRange = creativeSizeRangeRepair(cr);
         //console.log(crSizeRange);
         //console.log("^^ repaired sizes of adserver response above^^");
@@ -1662,6 +1663,9 @@ const thresholdDiff_ = 120;
                 // Checking the parameters and adding parameters if needed
                 _jxParams.pgwidth = parseInt(_jxParams.pgwidth) || 0;
                 _jxParams.maxwidth = parseInt(_jxParams.maxwidth) || 0;
+                if (_jxParams.pgwidth && !_jxParams.maxwidth) {
+                    _jxParams.maxwidth = _jxParams.pgwidth;
+                }
                 _jxParams.maxheight = parseInt(_jxParams.maxheight) || 0;
                 if (_jxParams.fixedheight) {
                     _jxParams.fixedHeight = _jxParams.fixedheight;
