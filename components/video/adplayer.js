@@ -415,18 +415,31 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             _comboDiv.style.height = blob.height + 'px';
         }
         else {
+            let tmp = document.getElementById(_containerId);
+            if (!tmp) {
+                tmp = document.body;
+            }
+            blob.width = tmp.offsetWidth; 
+            blob.height = tmp.offsetHeight;
+            
+            _comboDiv.style.width = '100%';
+            _comboDiv.style.height = '100%';
+            
+            //_comboDiv.style.width = blob.width +'px';
+            //_comboDiv.style.height = blob.height + 'px';
+            
             //we are trying this for KG masterad case:
             //already say 100%
             //you dun give I assume all good.
         }
-        if (_adObj) 
-            _adObj.reset();
+        //if (_adObj) 
+          //  _adObj.reset();
         
 
         _adObj = MakeOneAdObj(_comboDiv, _playerElt, _vectorForAdMgr, _env.controls);
-        if (blob.width || blob.height) {            
-            _adObj.forceDimensions(blob.width, blob.height);
-        }
+        //if (blob.width || blob.height) {            
+          //  _adObj.forceDimensions(blob.width, blob.height);
+        //}
         //let domain = data.domain? data.domain:'jixie.io';
         //let adURL = `https://ad.jixie.io/v1/video?source=sdk&domain=${domain}&creativeid=` + data.creativeid;
         //_adObj.setAutoAdsManagerStart(true);
@@ -640,7 +653,9 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         _spinner = MakeOneSpinner(document.getElementById(_containerId) ? document.getElementById(_containerId) : document.body);
         _showSpinner();
 
-        _env = extractEnv(crData, crData.universal);
+        //if this is from the video SDK then crData is actually the options/cfg
+        //object then.
+        _env = extractEnv(crData, crData.universal ? crData.universal: crData);
 
         _createInner(containerId);
         if (crData.adparameters) {
