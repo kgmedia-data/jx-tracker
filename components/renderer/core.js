@@ -863,12 +863,18 @@ function addGAMNoAdNotifyMaybe(str) {
       * In the AMP case, we call this explicitly (null, windowHeight: a number and
       * BCR, an object). We call this from the intersection observer in context of AMP.
       */
+
+// What is this constant?     
+// for case the container is taller than the ad     
+// if the difference is < this threshold, then we dun bother
+// else such little movements is just ridiculous
+const thresholdDiff_ = 150;     
      function __handleScrollEvent(event, windowHeight = null, BCR = null) {
         //console.log(`windowHeight=${windowHeight} BCR=${BCR}`);
         let c = this.c;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
         let diff = c.containerH - c.creativeH; 
-console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH: ${c.creativeH}`);
+        //console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH: ${c.creativeH}`);
         
         //for AMP we get this from the first parameter
         let winH = windowHeight ? windowHeight: top.innerHeight;
@@ -927,7 +933,9 @@ console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH:
             else {
                 // container is taller than creative
                 if (containerBCR_top < 0) {
-                    offset = Math.min(diff, 0 - containerBCR_top);
+                    if (diff > thresholdDiff_) {
+                        offset = Math.min(diff, 0 - containerBCR_top);
+                    }
                 }
             }
         }
