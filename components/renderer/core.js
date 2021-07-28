@@ -868,7 +868,7 @@ function addGAMNoAdNotifyMaybe(str) {
 // for case the container is taller than the ad     
 // if the difference is < this threshold, then we dun bother
 // else such little movements is just ridiculous
-const thresholdDiff_ = 150;     
+const thresholdDiff_ = 120;     
      function __handleScrollEvent(event, windowHeight = null, BCR = null) {
         //console.log(`windowHeight=${windowHeight} BCR=${BCR}`);
         let c = this.c;
