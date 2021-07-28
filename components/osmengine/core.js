@@ -387,7 +387,6 @@
                         _injectedDiv.appendChild(range.createContextualFragment(scriptBody));
                     }
                     else {//only partner Jixie has this. //so if this function is not there. then bye
-                        console.log("YES!!!!!!");
                         _partner.runCreative(_jsonObj.scriptcfg);
                     }
                     let parent = hangScriptDiv ? hangScriptDiv : document.getElementById(_parentID); //TODO HACK
@@ -1100,14 +1099,22 @@
                 if (p[prop])
                     url += '&' + prop + '=' + encodeURIComponent(p[prop]);
             });
-            ['maxwidth', 'minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
+            ['minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
                 if (p[prop])
                     url += '&' + prop + '=' + p[prop];
             });
-            
-            url += p.amp ? '&device=amp': '';
+            //<- maxwidth
+            let mw = null;
+            if (p.maxwidth) {
+                mw = p.maxwidth;
+            }
             let pNode = _getPgSelector();
-            url += (pNode && pNode.node.clientWidth ? '&width='+pNode.node.clientWidth:'');
+            if (pNode && pNode.node.offsetWidth) {
+                mw = pNode.node.offsetWidth;
+            }
+            if (mw) url += '&maxwidth=' +mw;
+            //-maxwidth->
+            url += p.amp ? '&device=amp': '';
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_fire ad request');
             }
