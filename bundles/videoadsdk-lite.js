@@ -34,8 +34,7 @@ const stylesSet                        = require('../components/video-styles/vid
 cssmgr.init(stylesSet.getCls(), stylesSet.getStyles());
 cssmgr.inject('adControls', { color: '#FF0000'});
 
-//For the case of video SDK they get the response XML from adserver directly. so no need
-const vast                             = require('../components/video/vast-dummy');
+const vast                             = require('../components/video/vast');
 modulesmgr.set('video/vast',         vast);
 
 // these we only use within this file, so dun bother
