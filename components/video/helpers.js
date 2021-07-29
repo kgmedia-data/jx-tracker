@@ -40,7 +40,7 @@ function MakeOneHelperObj_() {
         _unsent.loaded = 0; //1 --> 0
         _scriptLoadedTime = Date.now();
         let trackerBase = this.getTrackerBase(options);
-        let url = trackerBase + "&action=loaded&debug="+options.dbgVersion + "_";
+        let url = trackerBase + "&device=amp&action=loaded&debug="+options.dbgVersion + "_";
         fetch(url, {
             method: 'get',
             credentials: 'include' 
