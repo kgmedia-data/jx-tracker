@@ -77,12 +77,12 @@ const createObject                       = require('../components/video/adplayer
 
 var instMap = new Map(); //if we just always impose that if used from universal, then it's in
                          //iframe, then this Map is a bit stupid (only 1 item)  
-function makePlayer(containerId, adparameters, eventsVector = null) {
+function makePlayer(containerId, adparameters, config = null, eventsVector = null) {
     let instMaybe = instMap.get(containerId);
     if (instMaybe) {
         return;
     }
-    let playerInst = createObject(containerId, adparameters, eventsVector);
+    let playerInst = createObject(containerId, adparameters, config, eventsVector);
     instMap.set(containerId, playerInst);
     return playerInst;
 }

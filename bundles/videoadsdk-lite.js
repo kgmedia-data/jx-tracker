@@ -73,12 +73,16 @@ const createObject                       = require('../components/video/adplayer
 
 var instMap = new Map(); //if we just always impose that if used from universal, then it's in
                          //iframe, then this Map is a bit stupid (only 1 item)  
-function makePlayer(containerId, adparameters, eventsVector = null) {
+function makePlayer(containerId, adparameters, config = null, eventsVector = null) {
+    config.autopause = false; //i.e. we are not dependent on those jxvisible
+    //testing only config.autoplay = false;
+    //and what not.
+    //just depend on the autoplay flag.
     let instMaybe = instMap.get(containerId);
     if (instMaybe) {
         return;
     }
-    let playerInst = createObject(containerId, adparameters, eventsVector);
+    let playerInst = createObject(containerId, adparameters, config, eventsVector);
     instMap.set(containerId, playerInst);
     return playerInst;
 }
@@ -136,16 +140,27 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
         obj.data = data;
     }
     msgStr = "jxmsg::" + JSON.stringify(obj);
-    /* const exposedWinPropName_ = 'jxuniversallite';
-    if (window[exposedWinPropName_])
-        window.postMessage(msgStr, '*'); 
-    else */
     parent.postMessage(msgStr, '*'); 
 }
 
 
 //--- not really needed -->
 
+
+function fetchAdJsonP(cfg) {
+    let domain = cfg.domain? cfg.domain:'jixie.io';
+    let adURL = `https://ad.jixie.io/v1/universal?source=sdk&domain=${domain}&creativeid=` + cfg.creativeid;
+    return fetch(adURL)
+    .then((response) => response.json())
+    .then(function(respJson) {
+        let arr = respJson.creatives;
+        if (arr && arr.length >= 1) {
+            return arr[0];
+        }
+        throw new Error("no ad");
+    });
+}
+            
 
 /** This is the main usage the main way the jxvideo1.3.min.js is currently use
  * so we expose it here
@@ -180,19 +195,27 @@ if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
     var playerObj = {
         player: null,
         started: false,
-        start: function(json) {
+        start: function(config) {
             if (this.started) return; //to beat a problem with the ad looping
             this.started = true;
             //get the player instance 
-            let inst = oldPlayerSDKMap.get(json.container);
+            let thisObj = this;
+            let inst = oldPlayerSDKMap.get(config.container);
             if (!inst) {
-                //note here (TODO) this is not the JSON creative
-                //but only a config object.
-                inst = makePlayer(json.container, json, eventsVector_);
-                this.player = inst;
-                oldPlayerSDKMap.set(json.container, inst);
+                fetchAdJsonP(config)
+                .then(function(creativeJson) {
+                    inst = makePlayer(config.container, creativeJson, config, eventsVector_);
+                    thisObj.player = inst;
+                    //Just testing nonautoplay
+                    //setTimeout(function(){
+                      //  thisObj.player.play();
+                    //}, 7000);
+                    oldPlayerSDKMap.set(config.container, inst);
+                })
+                .catch(function(e) {
+                    console.log("CANNOT FETCH AD");
+                });
             }
-            //inst.changeCfg(json);
         },
         play: function() {
             //already playing by itself
