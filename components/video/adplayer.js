@@ -41,19 +41,6 @@ const imaEventsSubset_ =[
     "jxadstart"
 ];
 
-// Add a listener of the event to the element e which calls the function handler h
-// General helper funciton
-function addListener(e, event, h) {
-    if (e.addEventListener) {
-        //console.log('adding event listener');
-        e.addEventListener(event, h, false);
-    } else if (e.attachEvent) {
-        e.attachEvent('on' + event, h);
-    } else {
-        e[ 'on' + event] = h;
-    }
-}
-
 function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
     var _pDiv               = null;
     var _playerElt          = null;
@@ -116,7 +103,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
            }
        }
        _playerElt = document.getElementById('idJxPlayer');
-       addListener(_playerElt, 'ended', _onContentEnded);
+       common.addListener(_playerElt, 'ended', _onContentEnded);
     }
 
     var _manualReplayCB = function() {
@@ -295,7 +282,8 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             _vastSrcBlob.url = 'https://creatives.b-cdn.net/jx/jxsimidhybrid.min.html'; //crData.jxsimidurl;
         }
         /////console.log(`VAST FODDER: ${crData.id}, ${crData.name} ,${crData.duration}, ${crData.clickurl}`);
-        let vast = buildVastXml([vastSrcBlob]);
+        // if isRepeat, then suppress the trackers: (second arg)
+        let vast = buildVastXml([vastSrcBlob], isRepeat);
         _adObj.setAutoAdsManagerStart(autoStart); 
         _adObj.makeAdRequestFromXMLCB(vast, true, true, cb);
     }

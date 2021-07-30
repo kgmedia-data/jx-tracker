@@ -1008,7 +1008,15 @@ const thresholdDiff_ = 120;
          }
          if (scaling != 'creative'  && scaling != 'renderer') {
             if (cr.type == 'video') {
-                scaling = 'creative';
+                //Hack:
+                //this will be chnaged at adserver level.
+                //currently the video+banner subtype (of type=display) is
+                //changed to type=video vvpaid before being sent to the page
+                //in the universal response.
+                if (cr.adparameters && (cr.adparameters.topbanner || cr.adparameters.bottombanner))
+                    ;
+                else                    
+                    scaling = 'creative';
             }
             else scaling = 'none';
          }
