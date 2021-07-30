@@ -33,7 +33,7 @@ one day at a time!
  */
 //ugly... Move elsewhere. Dun belong in here.
 const modulesmgr                = require('../basic/modulesmgr');
-const _helpers                  = modulesmgr.get('renderer/helpers');
+const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 
 function addGAMNoAdNotifyMaybe(str) {
@@ -82,12 +82,12 @@ function addGAMNoAdNotifyMaybe(str) {
     }//while
     if (gIframe && !gIsUFif) gIsFifs = true;
    
-    //All our jixie-own scripts can be run without iframe. Currently there is only one:
     const jxScriptUrls_ = {
         video: {
             //default visibility threshold
             signature: 'jx_video_ad',
-            url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
+            url: 'https://scripts.jixie.io/jxvideocr.1.0.min.js'
+            /////url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
         }
     };
     const visThreshold_ = 0.4;
@@ -118,7 +118,7 @@ function addGAMNoAdNotifyMaybe(str) {
             return retObserver;
         },
         setupBlurHandler: function() {
-            _helpers.addListener(window, 'blur', boundCB);
+            common.addListener(window, 'blur', boundCB);
         },
         setupResizeHandler: function() {
 
@@ -135,10 +135,10 @@ function addGAMNoAdNotifyMaybe(str) {
                 case 'blur':
                     break;
                 case 'message':
-                    _helpers.removeListener(window, 'message', boundCB);
+                    common.removeListener(window, 'message', boundCB);
                     break;                    
                 case 'visibilitychange':
-                    _helpers.removeListener(window, 'amp:visibilitychange', boundCB);
+                    common.removeListener(window, 'amp:visibilitychange', boundCB);
                     break;
             }//switch
         }
@@ -151,34 +151,34 @@ function addGAMNoAdNotifyMaybe(str) {
                 threshold: visThreshold_
             });
             retObserver.observe(obsContainer); 
-            _helpers.addListener(document, "visibilitychange", boundCB);
+            common.addListener(document, "visibilitychange", boundCB);
             return retObserver;
         },
         setupResizeHandler: function(boundCB, isResponsive) {
-            if (isResponsive) {
-                _helpers.addListener(window, 'resize', boundCB);
+            //if (isResponsive) {
+                common.addListener(window, 'resize', boundCB);
                 boundCB();
-            }
+            //}
         },
         setupScrollEventHandler: function(boundCB) {
             //Listen on the top window.
-            _helpers.addListener(top, 'scroll', boundCB);
+            common.addListener(top, 'scroll', boundCB);
             boundCB();
         },
         setupBlurHandler: function(boundCB) {
-            _helpers.addListener(window, 'blur', boundCB);
+            common.addListener(window, 'blur', boundCB);
         },
         unlisten(type, boundCB) {
             if (!boundCB) return;
             switch (type) {
                 case 'scroll':
-                    _helpers.removeListener(top, type, boundCB);
+                    common.removeListener(top, type, boundCB);
                     break;
                 case 'resize':
                 case 'message':
                 case 'blur':
                 case 'visibilitychange':
-                    _helpers.removeListener(window, type, boundCB);
+                    common.removeListener(window, type, boundCB);
                     break;
             }//switch
         },
@@ -574,7 +574,7 @@ function addGAMNoAdNotifyMaybe(str) {
             let blob = normCrParams.div;
             if (blob.image) {
                 jxCoreElt.innerHTML = '<a style="border-bottom: none;" href="' + blob.image.clickurl + '" target="_blank"><img src="' + blob.image.url + '" class="jxImg"/></a>';
-                _helpers.addListener(jxCoreElt, 'click', (e) => {
+                common.addListener(jxCoreElt, 'click', (e) => {
                     fireTracker(blob.image.trackers, 'click');
                 });
             }
@@ -644,12 +644,12 @@ function addGAMNoAdNotifyMaybe(str) {
         
         //let id = "jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
         if (!oDiv) {
-            oDiv = _helpers.newDiv(jxContainer, 'div', null, null, 'f' + id);
+            oDiv = common.newDiv(jxContainer, 'div', null, null, 'f' + id);
         }
         if (!oDiv) {
             throw new Error("unable to create essential container (outer)");
         }
-        iDiv = _helpers.newDiv(oDiv, 'div', null, null, 'ifr' + id);
+        iDiv = common.newDiv(oDiv, 'div', null, null, 'ifr' + id);
         iDiv.style.cssText = "width: 100%; border: 0";
         iDiv.style.textAlign = "center";
         if (!iDiv) {
@@ -689,12 +689,13 @@ function addGAMNoAdNotifyMaybe(str) {
      */
     function createMainContainer(divObjs, normCrParams) {
         let id = divObjs.jxID;
-        let jxmasterDiv = _helpers.newDiv(divObjs.innerDiv, 'div', null, null, 'jxm_' + id);
-        let jxbnDiv = _helpers.newDiv(jxmasterDiv, 'div', null, null, 'jxb_' + id);
+        let jxmasterDiv = common.newDiv(divObjs.innerDiv, 'div', null, null, 'jxm_' + id);
+        let jxbnDiv = common.newDiv(jxmasterDiv, 'div', null, null, 'jxb_' + id);
         
-        let jxbnScaleDiv = _helpers.newDiv(jxbnDiv, 'div', null, null, 'jxbs_' + id);
-        let jxbnFixedDiv = _helpers.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
+        let jxbnScaleDiv = common.newDiv(jxbnDiv, 'div', null, null, 'jxbs_' + id);
+        let jxbnFixedDiv = common.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
         let jxCoreElt = null;
+
 
         jxmasterDiv.style.position = 'relative';
         jxmasterDiv.style.margin = 'auto';
@@ -703,10 +704,13 @@ function addGAMNoAdNotifyMaybe(str) {
         jxbnDiv.style.background = "transparent";
         jxbnDiv.style.overflow = 'hidden';
 
+
+        //20210723: still need to think about this a bit more
+        //sorry for the mess here:
         //this following stuff uses the creative's sizing info:
         //this is what is new!!!
         //if (normCrParams.maxwidth)
-            jxmasterDiv.style.maxWidth = normCrParams.maxwidth + 'px';
+        jxmasterDiv.style.maxWidth = normCrParams.maxwidth + 'px';
         //else            
         //    jxmasterDiv.style.width = normCrParams.width + 'px';
         //if (normCrParams.maxwidth)
@@ -763,6 +767,9 @@ function addGAMNoAdNotifyMaybe(str) {
         jxCoreElt.style.width = normCrParams.width + 'px';
         
         jxCoreElt.style.height = normCrParams.height + 'px';
+
+        
+
         //jxCoreElt.style.zIndex = 99999;
       
         insertCreative(jxCoreElt, normCrParams);
@@ -792,7 +799,7 @@ function addGAMNoAdNotifyMaybe(str) {
         let c = this.c;
         let jxbnDiv = this.divObjs.jxbnDiv;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
-
+    
         /*
             Renee new idea:
             suppose the maxwidth and maxheight given is not useful.
@@ -802,24 +809,10 @@ function addGAMNoAdNotifyMaybe(str) {
             250 is the real maxwidth --> 250x500
             400 is the real maxheight --> 200x400 --> this is the real possible.
         */
+        
         let ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
 
-        //FES-137 thinking aloud only:
-        //some flag about some special type of responsiveness (part of the creative)
-        //max1dim = 1 (stands for maximize 1 dimension)
-        //
-        //When will you have the info?
-        //the container somehow you need to "feel" its size available first.
-        //Then you compute also c.widthR and c.heightR.
-        //At some point in time, compute a 
-        //c.widthR, c.heightR 
-        //So here, in this logic if there is a widthR heightR, then use that instead of the c.width and c.height
-        //
-
-
-
-
-        let newH = ((c.height*ratio) + 5) + "px";
+        let newH = ((c.height*ratio) + 5);
         //console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
 
         //console.log(`__handleResizeContainer ratio=${ratio} (=${jxbnDiv.offsetWidth}/${c.width}) newH=${newH} (=${c.height}*${ratio})`);
@@ -833,7 +826,7 @@ function addGAMNoAdNotifyMaybe(str) {
         //the thing should be scaled to 250x500px
         //i.e. the challenge is to show 500px height of stuff within a 400px box.
         //this seems to work fine.
-        if (c.fixedHeight) {
+        if (c.fixedHeight && c.doDiffScroll) {
             ratio = jxbnDiv.offsetWidth/c.width;
             c.creativeH = c.height*ratio;
             //console.log(`_WOO_ H=${c.creativeH} h=${c.height} r=${ratio}`);
@@ -844,7 +837,9 @@ function addGAMNoAdNotifyMaybe(str) {
             case 'video':
                 jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
                 jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
-                jxbnDiv.style.height = newH + 'px';
+                if (!c.fixedHeight) {
+                    jxbnDiv.style.height = newH + 'px';
+                }
                 break;
             /*  REMOVE FOR NOW WE MIGHT NOT SUPPORT
             case 'iframe': // we just resize the width of the different elements
@@ -867,12 +862,18 @@ function addGAMNoAdNotifyMaybe(str) {
       * In the AMP case, we call this explicitly (null, windowHeight: a number and
       * BCR, an object). We call this from the intersection observer in context of AMP.
       */
+
+// What is this constant?     
+// for case the container is taller than the ad     
+// if the difference is < this threshold, then we dun bother
+// else such little movements is just ridiculous
+const thresholdDiff_ = 120;     
      function __handleScrollEvent(event, windowHeight = null, BCR = null) {
         //console.log(`windowHeight=${windowHeight} BCR=${BCR}`);
         let c = this.c;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
         let diff = c.containerH - c.creativeH; 
-
+        //console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH: ${c.creativeH}`);
         
         //for AMP we get this from the first parameter
         let winH = windowHeight ? windowHeight: top.innerHeight;
@@ -931,7 +932,9 @@ function addGAMNoAdNotifyMaybe(str) {
             else {
                 // container is taller than creative
                 if (containerBCR_top < 0) {
-                    offset = Math.min(diff, 0 - containerBCR_top);
+                    if (diff > thresholdDiff_) {
+                        offset = Math.min(diff, 0 - containerBCR_top);
+                    }
                 }
             }
         }
@@ -981,7 +984,260 @@ function addGAMNoAdNotifyMaybe(str) {
      *  END OF : POSITION AND SIZE MANIPULATION FUNCTIONS. 
      * CALLED AS BOUND FUNCTIONS
      *******************************************************************************/ 
+     const onlyARMatterTypes_ = ['video'];
+     const bigWidth_ = 999;
+     const bigHeight_ = 999;
+
+     function noDiffScroll(cr) {
+        return cr.type == 'video' || cr.subtype == 'video+banner';
+    }
+
+    /**
+     * Note: This will be put at adserver side soon. Then client side no need
+     * do this. The adserver will add that out blob into the response JSON.
+     * @param {*} cr 
+     * @returns 
+     */
+     function creativeSizeRangeRepair(cr) {
+         let scaling = 'none';
+         if (cr.assets && cr.assets.universal) {
+            scaling = cr.assets.universal.scaling;
+         }
+         if (cr.universal) {
+            scaling = cr.universal.scaling;
+         }
+         if (scaling != 'creative'  && scaling != 'renderer') {
+            if (cr.type == 'video') {
+                //Hack:
+                //this will be chnaged at adserver level.
+                //currently the video+banner subtype (of type=display) is
+                //changed to type=video vvpaid before being sent to the page
+                //in the universal response.
+                if (cr.adparameters && (cr.adparameters.topbanner || cr.adparameters.bottombanner))
+                    ;
+                else                    
+                    scaling = 'creative';
+            }
+            else scaling = 'none';
+         }
+         cr.scaling = scaling;
+         /////if (cr.id == 724)
+            //////cr.scaling = 'none'; 
+         
+        // (2) Get ready the Creative size (resize) info (some of these 
+        // can be done before caching )
+        //<--- This whole thing should be set in the precache preparation :
     
+        // (2a) width, height columns
+        let w = cr.width ? cr.width: 0;
+        let h = cr.height ? cr.height: 0;
+        // (2b) assets
+        if ((!w || !h) && cr.assets) { //server-side
+            w = cr.assets.width ? cr.assets.width: 0;
+            h = cr.assets.height ? cr.assets.height: 0;
+        }
+        // (2c) subtype
+        //still can get from the subtype
+        if ((!w || !h) && cr.type == 'display') {
+            let subtype = cr.subtype.replace("d", "").replace("r", "");
+            let arr = subtype.split("x");
+            if (arr.length == 2) {
+                w = parseInt(arr[0]);
+                h = parseInt(arr[1]);
+            }
+        }
+        // (2d) some are in adparameters ?
+        if (!w || !h) {
+            let p = cr.assets && cr.assets.adparameters ? cr.assets.adparameters: cr.adparameters;
+            if (p) {
+                w = p.width ? p.width: 0;
+                h = p.height ? p.height: 0;
+            }
+        }
+        // ok exhausted all 
+        if (!w || !h) {
+            //cannot serve this corrupted creative
+            return null;
+        }
+        let crAR = w/h;
+        if (cr.scaling == 'creative' && onlyARMatterTypes_.indexOf(cr.type)> -1) {
+            w = 0;// to facilate the below calculations
+            h = 0;
+        }
+        // Reminder that so for video : w and h are both set to 0 at this stage:
+        let crMaxW = w;
+        let crMinW = w;
+        let crMaxH = h;
+        let crMinH = h;
+
+        //none renderer, creative
+
+        if (scaling != 'none') {
+            // if it is not responsive, then crMaxW and crMinW = width of creative
+            // ditto for height, nothing much to further calculate then:
+            let u = cr.assets && cr.assets.universal ? cr.assets.universal : cr.universal;
+            //make the max W and H specified in the creative be consistent
+            //with aspect ratio
+            let maxW = u && u.maxwidth ? u.maxwidth: 0;
+            let maxH = u && u.maxheight ? u.maxheight: 0;
+            if (maxW && maxH) { //if both are given, then make sure they are
+                //consistent with AR.
+                let AR1 = maxW/maxH;
+                if (AR1 > crAR) {
+                    maxW = maxH*crAR;
+                }
+                else {
+                    maxH = maxW/crAR;
+                }
+            }
+            else if (maxW) {
+                //if one is given, make sure the other is set per AR.
+                maxH = maxW/crAR;
+            }
+            else if (maxH) {
+                //if one is given, make sure the other is set per AR.
+                maxW = maxH*crAR;
+            }
+    
+            // Same drill but for the MIN w and h:
+            let minW = u && u.minwidth ? u.minwidth: 0;
+            let minH = u && u.minheight ? u.minheight: 0;
+            if (minW && minH) {
+                let AR1 = minW/minH;
+                if (AR1 > crAR) {
+                    minW = minH*crAR;
+                }
+                else {
+                    minH = minW/crAR;
+                }
+            }
+            else if (minW) {
+                minH = minW/crAR;
+            }
+            else if (minH) {
+                minW = minH*crAR;
+            }
+            //
+            if (!maxW) {
+                maxW = bigWidth_;
+                maxH = bigHeight_;//dun care AR for such.
+            }
+            //now maxW, maxH, minW, minH are all set to intentional values//
+    
+            //Now revisit how to set crMaxW, ... etc:
+            //responsive=true, and go smaller is always technically possible 
+            //so whateverso we can lower the crMinH crMinW ...
+            if (minH  < crMinH) {
+                crMinH = minH;
+            }
+            if (minW  < crMinW) {
+                crMinW = minW;
+            }
+            //whether we can go higher ... that one is a technical thing which only
+            //the creative can do, if they choose to:
+            if (cr.scaling == 'creative' || cr.scaling == 'renderer') {
+                if (maxW > crMaxW) {
+                    crMaxW = maxW;
+                }
+                if (maxH > crMaxH) {
+                    crMaxH = maxH;
+                }
+            }
+        }
+          
+        // the precache should add the properties
+        //{
+            //crMaxW, crMinW, crMaxH, crMinH, crAR, ? width, height
+        //}
+        //--->
+        if (!crMaxW) crMaxW = bigWidth_;
+        if (!crMaxH) crMaxH = bigHeight_;
+        return {
+            aspectratio:    crAR,
+            width:          w, //for video will be 0
+            height:         h, //for video will be 0
+            maxwidth:       crMaxW,
+            minwidth:       crMinW, 
+            maxheight:      crMaxH,
+            minheight:      crMinH 
+        };
+    }
+     function doSizeMgmt(params, cr) {
+         //debugger;
+        let crSizeRange = creativeSizeRangeRepair(cr);
+        //console.log(crSizeRange);
+        //console.log("^^ repaired sizes of adserver response above^^");
+        //console.log(".........................................");
+        //console.log(params);
+        //console.log("^^ jxParams above^^");
+
+        let w_ = params.width ? params.width: 640; 
+        let h_ = params.height ? params.height: 360;
+        let mw_ = params.maxwidth ? params.maxwidth: 0;
+        let mh_ = params.maxheigth ? params.maxheight : 0;
+    
+        let AR = crSizeRange.aspectratio;
+        if (!AR) { 
+            AR = 1.66
+        };
+        let doDiffScroll = (params.fixedheight ? true: false);
+        if (cr.scaling == 'creative') {
+            if (params.fixedheight && noDiffScroll(cr)) {
+                doDiffScroll = false;
+                //try to fill this limited height:
+                h_ = params.fixedheight;
+                w_ = params.fixedheight*AR;
+                let l = Math.min(params.maxwidth ? params.maxwidth: bigWidth_, crSizeRange.maxwidth);
+                if (w_ > l) {
+                    w_ = l;
+                    h_ = w_/AR;
+                }
+                l = Math.min(params.maxheight ? params.maxheight: bigHeight_, crSizeRange.maxheight);
+                if (h_ > l) {
+                    h_ = l;
+                    w_ = l*AR;
+                }
+            }
+            else {
+                //for video remember now we are 0 hor.
+                //we have a width guideline
+                if (cr.width)
+                    w_ = cr.width;
+                if (params.pgwidth && params.pgwidth > w_) {
+                    w_ = params.pgwidth;
+                }
+                let l = Math.min(params.maxwidth? params.maxwidth: bigWidth_, crSizeRange.maxwidth);
+                if (w_ > l) {
+                    w_ = l;
+                }
+                h_ = w_/AR;
+            }
+            mh_ = h_;//so we won't have funny thing to trigger scaling at our level
+            mw_ = w_;
+        }
+        else {
+            if (params.fixedheight && noDiffScroll(cr)) {
+                //if not enough then we need to clip then?
+                doDiffScroll = false;
+            }
+            w_ = crSizeRange.width;
+            h_ = crSizeRange.height;
+            mw_ = Math.min(params.maxwidth?params.maxwidth:bigWidth_, crSizeRange.maxwidth);
+            mh_ = Math.min(params.maxheight?params.maxheight:bigHeight_, crSizeRange.maxheight);
+        }
+        
+        cr.width = w_;
+        cr.height = h_;
+        cr.maxwidth = mw_;
+        cr.maxheight = mh_;
+        cr.doDiffScroll = doDiffScroll;
+        //console.log(`${w_} ${h_} ${mw_} ${mh_}`);
+        //console.log("^^ w h mw mh ^^");
+    }
+
+    function sanitizeTitle(t){
+        return  t.normalize('NFD').replace(/[^a-zA-Z0-9\s]/g, '').replace(/[\u0300-\u036f]/g, '').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"]/g,'');
+    }
     /**
      * From every kind of creative supported we just extract a few common values
      * sufficiently to interact with the core element where we are supposed to
@@ -993,113 +1249,16 @@ function addGAMNoAdNotifyMaybe(str) {
      * @returns a normalized creative params object
      */
     function getNormalizedCreativeParams(jxParams, c) {
-        let scalable = true; 
-        if (!jxParams.responsive || (c && c.adparameters && c.iab)) {
-            scalable = false;
-        }
-        let fixedHeight = 0;
-        let nested = jxParams.nested;
-        let width = c.width;
-        let height = c.height;
-        
-        let forcecid = c.id;
-        
-        if (!width) {
-            //e.g. the video+banner does not have width directly 
-            //under creative level ...
-            if (c.adparameters) {
-                width = c.adparameters.width;
-                height = c.adparameters.height;
-            }
-        }
-        if (!width && c.type == 'video') {
-            //a bit hard to find 
-            if (c.adparameters && c.adparameters.video) {
-                width = c.adparameters.video.width;
-                height = c.adparameters.video.height;
-            }
-            if (!width) {
-                width = 640;
-                height = 360;
-            }
-        }
-        
         /** FANCYSCROLL:
          * if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
          * this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
          */
+        let nested = jxParams.nested;
+
         if (!isNaN(jxParams.fixedHeight)) {
             fixedHeight = parseInt(jxParams.fixedHeight);
             if (fixedHeight > 0)
                 nested = -1;
-        }
-    
-        let maxwidth = jxParams.maxwidth; //maxwidth refers to the available container
-        //we try to max out of course but not sure if succeed.
-        //at this point we also dunno what it is
-        //only until later we know.
-
-        if (c.universal && c.universal.maxwidth) {
-            if (maxwidth > c.universal.maxwidth || !maxwidth)
-                maxwidth = c.universal.maxwidth;
-        }
-        //if (c.width) {
-          //  width = parseInt(c.width);
-        //}
-        if (maxwidth > width || !maxwidth)
-            maxwidth = width; ///means we assume a creative always has a width ...?! at this point
-
-        // NOTE : RENEE NEW THING:
-        // In the universal there is also some logic like this:
-        //    else if (o.p.maxwidth > 0) here maxwidth is smaller than width
-        //    o.p.width = o.p.maxwidth;    
-        // What I think is: if we do this: basically we LOST the width info of this
-        // creative - which could very well be a 'nonscalable' thing. i.e. totally
-        // rely on our scale-transform to "fit in" the small real-estate
-        // So if e.g. width =400, maxwidth = 210
-        // then if width get also set to 210. then in the resize transform code, there is
-        // nothing to do coz ratio = 1. then the thing is not scaled/displayed properly
-        // then.
-        let maxheight = jxParams.maxheight;
-        if (c.universal && c.universal.maxHeight) {
-            if (maxheight > c.universal.maxHeight || !maxheight)
-                maxheight = c.universal.maxHeight;
-        }
-        if (maxheight > height || !maxheight)
-            maxheight = height;
-        //how to translate the maxheight ALSO to maxwidth so that later the transform just go by 
-        //the width!!
-        //if scalable then just do this would be enough!!!
-        //for video the problem would be when we cannot scale it!
-     
-        // My other thinking is the following:
-        // The max height should just be used as another thing to tune the maxwidth
-        // instead of imposing stuff 
-        /* HACK 
-        if ((!(fixedHeight > 0)) && maxheight > 0) { //if a maxheight is given:
-            //e.g. for the 9-16 video
-            let maxwidth1 = maxheight*(width/height);
-            if (maxwidth1 < maxwidth) {
-                maxwidth = maxwidth1;
-            }
-            maxheight = 0;
-        }
-        */
-        
-        //now for the rubber stuff which is video
-        //let's see what we can do.
-        //
-        if (c.type == 'video') {
-            let ar = width / height; //check this always legit?
-            // now we know that for video this width and height are not 'real'
-            // and unnegotiable. 
-            // meaning we can change it now.
-            width = Math.min(maxwidth, width);
-            height = width/ar;
-            if (c.adparameters && c.adparameters.video) {
-                c.adparameters.video.width = width;
-                c.adparameters.video.height = height;
-            }
         }
         
         //this is the case whereby the creative itself will not manage the tracker firing
@@ -1113,20 +1272,22 @@ function addGAMNoAdNotifyMaybe(str) {
         }
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
+        doSizeMgmt(jxParams, c);
 
         let out = { 
+            nested:             nested,
             type:               c.type,
-            width:              width, 
             clickurl:           c.clickurl, 
             clicktrackerurl:    clicktrackerurl,
-            height:             height,
-            maxwidth:           maxwidth,
-            maxheight:          maxheight,
-            scalable:           scalable,
+            width:              c.width, 
+            height:             c.height,
+            maxwidth:           c.maxwidth,
+            maxheight:          c.maxheight,
             fixedHeight:        jxParams.fixedHeight ? jxParams.fixedHeight: 0, //we stuff something in first.
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
+            doDiffScroll:       c.doDiffScroll
         };
-        
+
         if (c.adparameters)
             out.adparameters = c.adparameters;
         if (c.thirdpartytag) {
@@ -1150,6 +1311,7 @@ function addGAMNoAdNotifyMaybe(str) {
                     case 'pyoutube':
                     case 'pdailymotion':
                     case 'pivs':
+                        // the naked scripts all work in iframe only:
                         surl = playerUrls_[c.subtype];
                         out['iframe'] = { scripturl: surl, jxuni_p: JSON.parse(JSON.stringify(c)) };
                         delete out.adparameters;
@@ -1158,6 +1320,11 @@ function addGAMNoAdNotifyMaybe(str) {
                         surl = (!c.script ? c.url: c.script);
                         surl += (surl.indexOf('?') != -1 ? '&': '?') + 'trackers=' + btoa(JSON.stringify(c.trackers));
                         if (c.adparameters) surl += '&adparameters=' + btoa(JSON.stringify(c.adparameters));
+                        // add missing pagetitle property
+                        surl += '&pagetitle=' + btoa(sanitizeTitle(jxParams.pagetitle));
+                        // add missing pagekeywords property
+                        if (jxParams.pagekeywords) surl += '&pagekeywords=' + btoa((jxParams.pagekeywords));
+                        //should we also add those stuff from jxParams to the blob
                         out[trusted? 'div':'iframe'] = { scripturl: surl, jxuni_p: JSON.parse(JSON.stringify(c)) };
                         // add missing pagetitle property and pagekeywords
                 }//inner switch
@@ -1187,6 +1354,8 @@ function addGAMNoAdNotifyMaybe(str) {
             case 'video': 
                 trusted = false; //our video sdk will operate in friendly iframe
                 out.adparameters = c; //<--- this is a special behaviour for video sdk stuff.
+                //the videoadsdk needs more than the adparameters but 1 level up (still need generate vast)
+                //this c blob contains a property adparameters                 
                 if (!c.adparameters) { 
                     //case of third party tag; for vast generation
                     c.adparameters = { trackers: JSON.parse(JSON.stringify(c.trackers)) };
@@ -1200,8 +1369,7 @@ function addGAMNoAdNotifyMaybe(str) {
             case 'display':
                 switch (c.subtype) {
                     case 'video+banner':
-                        //that's one way
-                        out.fixedHeight = 0;
+                        //now from adserver it is already morphed into video vvpaid
                         break;
                     case 'script':
                         let sbody = null;
@@ -1234,6 +1402,12 @@ function addGAMNoAdNotifyMaybe(str) {
                                 c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
                                 c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
                             }
+                            if (c.scaling == 'creative') {
+                                //in the doSizeMgmt... it is possible
+                                //that the widht and height has changed:
+                                //instruct the DPA to do so:
+                                out.adparameters.display_htmlsize = out.width+"x"+out.height;
+                            }
                             out.iframe = { url: c.url };
                         }
                         break;
@@ -1256,7 +1430,7 @@ function addGAMNoAdNotifyMaybe(str) {
             out.nested = -1;
         }
         if (c.universal) {
-            out.universal = c.universal;
+            out.universal = c.universal;//??
         }
         return out;
     }
@@ -1340,7 +1514,7 @@ function addGAMNoAdNotifyMaybe(str) {
             msghandlers['jxloaded'] = crReady2HearAdParamsResolve;
             boundHandleCreativeMsgs = __handleCreativeMsgs.bind({ 
                 divObjs: divObjs, token: token, handlers: msghandlers });
-            _helpers.addListener(window, "message", boundHandleCreativeMsgs);
+            common.addListener(window, "message", boundHandleCreativeMsgs);
             unhook.listeners.message = boundHandleCreativeMsgs; 
             //-->
             
@@ -1371,7 +1545,7 @@ function addGAMNoAdNotifyMaybe(str) {
                         __pm2Creative.bind({divObjs:divObjs, c: normCrParams}) :
                         __direct2Creative.bind({divObjs:divObjs, c: normCrParams}))
                 );
-           
+                
             normCrParams.creativeH  = normCrParams.height;
             normCrParams.containerH = normCrParams.fixedHeight;
             boundHandleResize               = __handleResize.bind({divObjs:divObjs, c: normCrParams});
@@ -1416,9 +1590,9 @@ function addGAMNoAdNotifyMaybe(str) {
 
                 
                 /**
-                 *  if fixedheight env, then set up to do differential scrolling 
+                 *  if we do differential scrolling, then set up the listener
                  */
-                if (normCrParams.fixedHeight) {
+                if (normCrParams.doDiffScroll) {
                     boundScrollEvent = __handleScrollEvent.bind({
                         savedoffset:    0,
                         containerElt:   jxContainer,
@@ -1436,8 +1610,9 @@ function addGAMNoAdNotifyMaybe(str) {
                 /**
                  * Set up resize handlers
                  */
-                if (normCrParams.scalable) {
-                    cxtFcnsVector.setupResizeHandler(boundHandleResize, normCrParams.scalable);
+                //if (normCrParams.scalable) 
+                {
+                    cxtFcnsVector.setupResizeHandler(boundHandleResize);
                     //save the bound function "pointers" so we can unlisten later
                     unhook.listeners.resize = boundHandleResize;
                 }
@@ -1487,7 +1662,6 @@ function addGAMNoAdNotifyMaybe(str) {
          * @param {*} params 
          */
         function _assembleParams(params) {
-            
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
                 
@@ -1495,30 +1669,23 @@ function addGAMNoAdNotifyMaybe(str) {
                     _jxParams.excludedHeight = _jxParams.excludedheight;
                 }
                 // Checking the parameters and adding parameters if needed
-                
+                _jxParams.pgwidth = parseInt(_jxParams.pgwidth) || 0;
                 _jxParams.maxwidth = parseInt(_jxParams.maxwidth) || 0;
+                if (_jxParams.pgwidth && !_jxParams.maxwidth) {
+                    _jxParams.maxwidth = _jxParams.pgwidth;
+                }
                 _jxParams.maxheight = parseInt(_jxParams.maxheight) || 0;
                 if (_jxParams.fixedheight) {
                     _jxParams.fixedHeight = _jxParams.fixedheight;
                     _jxParams.maxheight = _jxParams.fixedheight;
                 }
-                
-                _jxParams.responsive = parseInt(_jxParams.responsive) || 1;
-                
-                // Checking if there is a specific creativeid in the parameters of the URL
-                // if (up.query.creativeid) _jxParams.creativeid = parseInt(up.query.creativeid) || null;
-                // if (up.query.campaignid) _jxParams.campaignid = parseInt(up.query.campaignid) || null;
-                //_jxParams.unit = _jxParams.unit || 'none';
-                //if (_jxParams.unit && _jxParams.unit != 'none') _jxParams.id = _jxParams.unit; //???
-                //else _jxParams.id = Math.floor(Math.random() * 100000) + 1;
-
                 //_jxParams.nested = parseInt(_jxParams.nested) || 0;
 
                 _jxParams.creativeid = parseInt(_jxParams.creativeid) || null;
                 
                 //but this stuff really no body use ah?!
-                _jxParams.width = parseInt(_jxParams.width) || 640;
-                _jxParams.height = parseInt(_jxParams.height) || 360;
+                //_jxParams.width = parseInt(_jxParams.width) || 640;
+                //_jxParams.height = parseInt(_jxParams.height) || 360;
                 _jxParams.campaignid = parseInt(_jxParams.campaignid) || null;
 
                 let isFloat = false;
@@ -1529,6 +1696,13 @@ function addGAMNoAdNotifyMaybe(str) {
                         if (!ctr) ctr = window.top.document.getElementById(params.container);
                     } else {
                         ctr = document.getElementById(params.container);
+                    }
+                    if (ctr) {
+                        let pgWidthGuide = Math.round(ctr.offsetWidth);
+                        //too off we dun use.
+                        if (!isNaN(pgWidthGuide) && pgWidthGuide > 300 && pgWidthGuide < 700) {
+                            _jxParams.pgwidth = pgWidthGuide;
+                        }
                     }
                 } 
                 if (_jxParams.context != 'amp' && gIsUFif) {
@@ -1578,6 +1752,10 @@ function addGAMNoAdNotifyMaybe(str) {
                         tmp += '&' + prop + '=' + _jxParams[prop];
                 });
                 ['pageurl', 'domain'].forEach(function(prop) {
+                    if (_jxParams[prop])
+                        tmp += '&' + prop + '=' + _jxParams[prop];
+                });
+                ['maxwidth', 'minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
                     if (_jxParams[prop])
                         tmp += '&' + prop + '=' + _jxParams[prop];
                 });

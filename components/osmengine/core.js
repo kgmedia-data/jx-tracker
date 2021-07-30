@@ -161,7 +161,11 @@
             //TODO: may be still catch the teads hasad 
             //so that next time if we turn on the timeout thing
             //we won't kill it if an ad is waiting to be shown (not shown due to slot not in view)
-            
+            //if(typeof e.data == 'string' && e.data.startsWith('jx') && e.data.indexOf('select') > -1) {
+                //alert(`JX OSM RECEIVED MSG ${e.data}`);
+                //return;
+            //}
+
             if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_msgListener (e.data=${e.data})`);
@@ -387,7 +391,6 @@
                         _injectedDiv.appendChild(range.createContextualFragment(scriptBody));
                     }
                     else {//only partner Jixie has this. //so if this function is not there. then bye
-                        console.log("YES!!!!!!");
                         _partner.runCreative(_jsonObj.scriptcfg);
                     }
                     let parent = hangScriptDiv ? hangScriptDiv : document.getElementById(_parentID); //TODO HACK
@@ -1100,9 +1103,22 @@
                 if (p[prop])
                     url += '&' + prop + '=' + encodeURIComponent(p[prop]);
             });
-            url += p.amp ? '&device=amp': '';
+            ['minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
+                if (p[prop])
+                    url += '&' + prop + '=' + p[prop];
+            });
+            //<- maxwidth
+            let mw = null;
+            if (p.maxwidth) {
+                mw = p.maxwidth;
+            }
             let pNode = _getPgSelector();
-            url += (pNode && pNode.node.clientWidth ? '&width='+pNode.node.clientWidth:'');
+            if (pNode && pNode.node.offsetWidth) {
+                mw = pNode.node.offsetWidth;
+            }
+            if (mw) url += '&maxwidth=' +mw;
+            //-maxwidth->
+            url += p.amp ? '&device=amp': '';
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_fire ad request');
             }

@@ -95,6 +95,9 @@
            }).join("\n");
        }
 
+       //Doctor the adparameters to be passed to the VPAID / SIMID creative:
+       if (suppressTrackers) adP.suppressTrackers = true;
+
        let json = {
            "Ad": {
                "@attr": `id="JXAD${creative.id}"`,

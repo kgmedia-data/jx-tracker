@@ -1,13 +1,11 @@
+
 /**
-     * 
-     * @param {*} container 
-     * @param {*} controlsColor 
-     * @param {*} vid 
-     * @param {*} fcnVector 
-     * @returns 
-     */
+ *  In development : meant to REPLACE the admgr-factory.js soon
+ * and be shared by both the videosdk and the normal video-ad-sdk (jxvideo.1.4.min.js and
+ * jxvideo.1.3.min.s)
+ **/
  const modulesmgr            = require('../basic/modulesmgr');
- const _helpers              = modulesmgr.get('video/helpers');
+ const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
  const adDivCls              = cssmgr.getRealCls('adDivCls');
  const hideCls               = cssmgr.getRealCls('hideCls');
@@ -19,8 +17,36 @@
 
  const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
+ //These we need to listen to for basic functioning:
+ const imaEventsSeed_ = [
+    "LINEAR_CHANGED",
+    "AD_PROGRESS",
+    "LOADED",
+    "SKIPPED",
+    "COMPLETE",
+    "PAUSED",
+    "RESUMED",
+    "CONTENT_PAUSE_REQUESTED",
+    "CONTENT_RESUME_REQUESTED",
+    "STARTED",
+    "ALL_ADS_COMPLETED"
+];
  
- function MakeOneAdObj_(container, vid, fcnVector, controlsObj) {
+ //In addition, We can call a callback when these things happen
+ const  subscribableEvents_ =  [
+    ["jxadended", "COMPLETE"],
+    ["jxadfirstQuartile", "FIRST_QUARTILE"],
+    ["jxadmidpoint", "MIDPOINT"],
+    ["jxadthirdQuartile", "THIRD_QUARTILE"],
+    ["jxadskipped", "SKIPPED"],
+    ["jxadalladscompleted","ALL_ADS_COMPLETED"],
+    ["jadclick", "CLICK"],
+    ["jxadimpression", "IMPRESSION"],
+    ["jxadstart", "STARTED"]
+ ];
+
+ function MakeOneAdObj_(container, vid, fcnVector, controlsObj, progressBar) {
+    var _doProgressBar = true;
     var _forceWidth = 0;
     var _forceHeight = 0;
     var _adEnduredVec = [0,0,0,0,0];//help us just add up in this ad slot how long the fella watched ads
@@ -40,6 +66,8 @@
 
     var _autoAdsManagerStart = false;
     var _adLoaderOutcome = 'jxnone';
+    var _controlsObj = null;
+
 
     /**
         this is the flag for us to not manipulating the DOM multiple times
@@ -54,21 +82,33 @@
      */
     var _isAdStarted = false;
 
-    var _controlsObj = null;
+    /**
+     * To support event firing (the old player sdk has this)
+     */
+    var _subscribedEvents = null;
+    var _preSubscribedEvents = {};
+    var _eventsCallback = null;
+    var _imaEvents = JSON.parse(JSON.stringify(imaEventsSeed_));
+    var _aStartApiCalled = false;
 
     //if you are making a long long adrequest
     //and when you are back, the whole thing was reset already.
 
     FactoryOneAd.prototype.reset = function() {
-        _autoAdsManagerStart = false;
-        
+        //reset will not erase the events subscription 
+
+        //for video ad really.
+        _aStartApiCalled = false;
+
+        /////_autoAdsManagerStart = false;
+        _isAdStarted = false;
+
         _adEnduredVec = [0,0,0,0,0];
         //for use of the next ad request
         //I am thinking of destroying the ads loader also?
 
         /** reset the state back to initial */
         _isProgressBarUpdated = false;
-        _isAdStarted = false;
 
         if (_adsManager) {
             _adsManager.destroy();
@@ -132,7 +172,9 @@
     var _pauseAd = function() {
         //this is only legit if really started ah
         if (_adsManager) {
-            _adsManager.pause();
+            if (_isAdStarted) {
+                _adsManager.pause();
+            }
         }
     };
     var _handleContentPauseReq = function(hideContent) {
@@ -177,6 +219,16 @@
         //console.log(`#$ #$ #$ #$ #$ #$ #$ #$ #$ ${evt.type}`);
         let ad = evt.getAd();
 
+        if (_eventsCallback) {
+            let jxEvtName = _subscribedEvents[evt.type];
+            if (jxEvtName) {
+                //console.log(`--WOOYANYU TO CB FOR - ${jxEvtName}----`);
+                setTimeout(function() {
+                    _eventsCallback(jxEvtName);
+                }, 0);
+            }
+        }
+
         switch(evt.type) {
             case google.ima.AdEvent.Type.LINEAR_CHANGED:
                 if (ad && ad.isLinear()) {
@@ -190,9 +242,10 @@
                 break;
             //or you can fire the thing 
             case google.ima.AdEvent.Type.AD_PROGRESS:
+                //_isAdStarted = true;
                 if (evt.type == google.ima.AdEvent.Type.AD_PROGRESS) {
                     let adData = evt.getAdData();
-                    //possible for the ad to be non linear leh...
+
                     if (adData.adPosition <= _adEnduredVec.length) {
                         _adEnduredVec[adData.adPosition] = adData.currentTime;
 
@@ -203,6 +256,7 @@
                             _ctrls.updateProgressBar(_container.offsetWidth, adData);
                         }
                     }
+
                     //console.log(`adBreakDuration=${adData.adBreakDuration} adPosition=${adData.adPosition} currentTime=${adData.currentTime} totalAds=${adData.totalAds} duration=${adData.duration}`);
                   }
                 break;
@@ -289,8 +343,6 @@
                 break;
             case google.ima.AdEvent.Type.COMPLETE:
             case google.ima.AdEvent.Type.SKIPPED:
-                //_pFcnVector.report('slotended'); 
-                //_pFcnVector.report('ended'); 
                 break;
             case google.ima.AdEvent.Type.PAUSED:
                 _pFcnVector.report('pause'); 
@@ -313,6 +365,7 @@
         }
     }
   
+
     function _onAdError(adErrorEvent) {
         let errcode = -1;
         if (adErrorEvent) {
@@ -329,29 +382,31 @@
             this.resolveFcn("jxaderrored");
         return; 
     }
+
+
+    
     var _onNoAd = function(e) {
         /********* _harvestErrorInfo2(e);    *******/
         _adLoaderOutcome = "jxnoad";
-        this.resolveFcn("jxnoad");
+        if (this.resolveFcn)
+            this.resolveFcn("jxnoad");
     };
     var _startAd = function(resolveFcn) {
+        // console.log(`___ adsManager init ${_forceWidth ? _forceWidth : _width} ${_forceHeight ? _forceHeight : _height}`);
         _adsManager.init(
             _forceWidth ? _forceWidth : _width, 
             _forceHeight ? _forceHeight : _height, 
             google.ima.ViewMode.NORMAL);
-        [
-            "LINEAR_CHANGED",
-            "AD_PROGRESS",
-            "LOADED",
-            "SKIPPED",
-            "COMPLETE",
-            "PAUSED",
-            "RESUMED",
-            "CONTENT_PAUSE_REQUESTED",
-            "CONTENT_RESUME_REQUESTED",
-            "STARTED",
-            "ALL_ADS_COMPLETED"
-        ].forEach(function(evtName) {
+        if (!_subscribedEvents) {            
+            //earlier the IMA SDK might not be loaded so the string like
+            //google.ima.AdEvent.Type.IMPRESSION might not be defined
+            //So do this now:
+            _subscribedEvents = {};
+            for (var p in _preSubscribedEvents) {
+                _subscribedEvents[google.ima.AdEvent.Type[p]] = _preSubscribedEvents[p]
+            }
+        }
+        _imaEvents.forEach(function(evtName) {
             _adsManager.addEventListener(
                 google.ima.AdEvent.Type[evtName],
                 _onAdEvent.bind({resolveFcn: resolveFcn})
@@ -401,6 +456,10 @@
     var _onAdsManagerLoaded = function(adsManagerLoadedEvent) {
         //use this to help us only fire each of this max once:
         //will be removing from here after firing.
+        //TODO PROPERLY ...
+        //var e = new Event('jxhasad');
+        //window.dispatchEvent(e);
+
         _leftoverEvents = { 
             'started': 1,
             'ended': 1,
@@ -450,36 +509,38 @@
         if (_forceWidth || _forceHeight) {
             return;
         }
+        
         if (_width != _container.offsetWidth || _height != _container.offsetHeight) { 
             
             _width = _container.offsetWidth;
             _height = _container.offsetHeight;
             if (_adsManager) {
+                // console.log(`___ adsManager resize ${_width} ${_height}`);
                 _adsManager.resize(_width, _height);
             }
         }
     };
     var _createControls = function() {
         if (!_ctrls) {
-            //the true says we want progress bar.
-            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), true, _controlsObj);
+            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), _doProgressBar, _controlsObj);
         }
         _ctrls.hide();
     };
     var _createUIElt = function() {
-        if (!_adDiv) _adDiv = _helpers.newDiv(_container, "div", "", adDivCls);
+        if (!_adDiv) _adDiv = common.newDiv(_container, "div", "", adDivCls);
         _adDiv.classList.add(adHideCls);
         // _adDiv.style.display = 'none'; //HACK Renee put in this fix. Without this
         //during countdown the content controls are not showing
     };
     
     //constructor
-    function FactoryOneAd(container, vid, fcnVector, controlsObj) {
+    function FactoryOneAd(container, vid, fcnVector, controlsObj, progressBar = true) {
         _vid = vid;
         _container = container;
         _pFcnVector = fcnVector;
         _width = container.offsetWidth;
         _height = container.offsetHeight;
+        _doProgressBar = progressBar;
         _controlsObj = controlsObj ? JSON.parse(JSON.stringify(controlsObj)): null;
     }
 
@@ -496,6 +557,22 @@
         this.reset();
         return _makeAdRequestP(adURL, null, autoplayFlag, mutedFlag);
     }
+    FactoryOneAd.prototype.makeAdRequestFromXMLCB = function(vastXML, autoplayFlag, mutedFlag, cb) {
+        this.reset();
+        _makeAdRequestCB(null, vastXML, autoplayFlag, mutedFlag, cb);
+    }
+    FactoryOneAd.prototype.makeAdRequestCB = function(adURL, autoplayFlag, mutedFlag, cb) {
+        this.reset();
+        _makeAdRequestCB(adURL, null, autoplayFlag, mutedFlag, cb);
+    }
+
+    function _makeAdRequestCB(adURL, adXML, autoplayFlag, mutedFlag, callback) {
+        let prom = _makeAdRequestP(adURL, adXML, autoplayFlag, mutedFlag);
+        prom.then(function(val){
+            callback(val);
+        });
+    }
+
     function _makeAdRequestP(adURL, adXML, autoplayFlag, mutedFlag) {
         _width = _container.offsetWidth;
         _height = _container.offsetHeight;
@@ -504,7 +581,7 @@
         _clearResizeListeners(); //paranoia
 
         return new Promise(function(resolve, reject) {
-            _helpers.loadIMAScriptP().then(function() {
+            common.loadIMAScriptP().then(function() {
                 google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
                 google.ima.settings.setNumRedirects(maxNumVastRedirects_);
 
@@ -552,16 +629,42 @@
         })
     };
     FactoryOneAd.prototype.startAd = function(resolveFcn) {
+        _aStartApiCalled = true;
         _startAd(resolveFcn);
     };
+    FactoryOneAd.prototype.playOrStartAd = function() {
+        if (!_aStartApiCalled) {
+            _aStartApiCalled = true;
+            _startAd();
+            return;
+        }
+        _playAd();
+    };
+    
     FactoryOneAd.prototype.playAd = function() {
         //this is called by the player.
-
         _playAd();
     };
     FactoryOneAd.prototype.pauseAd = function() {
         _pauseAd();
     };
+    FactoryOneAd.prototype.subscribeToEvents = function(eventsArr, callback) {
+        //it will reset everything
+        _imaEvents = JSON.parse(JSON.stringify(imaEventsSeed_));
+        _preSubscribedEvents = {};
+
+        eventsArr.forEach(function(jxEvtName) {
+            let found = subscribableEvents_.find((e) => e[0] == jxEvtName);
+            if (found) {
+                if (_imaEvents.indexOf(found[1]) == -1) {
+                    _imaEvents.push(found[1]);
+                }
+                _preSubscribedEvents[found[1]] = jxEvtName;
+            }
+        });
+        _eventsCallback = callback;
+    }
+
     //added this thing (repeat of code... aarh) This is for playerWrapper to call
     //coz when user press to continue with an ad , we turn the sound on for him:
     FactoryOneAd.prototype.unmuteAd = function() {
@@ -574,7 +677,7 @@
         _pFcnVector.setContentMuteState(false);
     }
 
-    let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj);
+    let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj, progressBar);
     return ret;
 };
 

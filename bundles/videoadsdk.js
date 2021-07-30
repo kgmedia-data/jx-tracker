@@ -14,18 +14,13 @@
    - the bundle (videoadsdk.js):
         - video/adplayer
             - video-styles/videoad
+            - video/spinner-factory
+            - video/replaybtn-factory
+            - video/horizbanner-factory
             - video/admgr-factory (We will use video/admgr-factory-bc) <-- need to give it better name
                 - video/adctrls-factory
                 - video-styles/videoad
             - video/vast
- 
- So to note that for now we are not using the same admgr-factory as for videosdk
- Due to the need to support other stuff e.g. emit events
-
- fire has ad
- fire ad ended
- visible and not visible
- change height
  *    
  */
 if (window.jxvideoadsdk) { //<--- NEW LEH
@@ -55,8 +50,8 @@ modulesmgr.set('video/vast',         vast);
 // script as the child JS will just require mmodulesmgr and get the right instance
 // from mmodulesmgr
 
-const helpers                           = require('../components/video/helpers');
-modulesmgr.set('video/helpers',         helpers);
+const common                           = require('../components/basic/common');
+modulesmgr.set('basic/common',         common);
 
 const consts                            = require('../components/video/consts'); 
 modulesmgr.set('video/consts',          consts);
@@ -64,11 +59,17 @@ modulesmgr.set('video/consts',          consts);
 const adctrls_fact                      = require('../components/video/adctrls-factory');
 modulesmgr.set('video/adctrls-factory', adctrls_fact);
 
-const admgr_fact                        = require('../components/video/admgr-factory-bc');
+const admgr_fact                        = require('../components/video/admgr-factory');
 modulesmgr.set('video/admgr-factory',   admgr_fact);
 
 const spinner_fact                      = require('../components/video/spinner-factory');
 modulesmgr.set('video/spinner-factory',   spinner_fact);
+
+const replaybtn_fact                    = require('../components/video/replaybtn-factory');
+modulesmgr.set('video/replaybtn-factory',  replaybtn_fact);
+
+const horizbanner_fact                  = require('../components/video/horizbanner-factory');
+modulesmgr.set('video/horizbanner-factory',   horizbanner_fact);
 
 
 const createObject                       = require('../components/video/adplayer');
@@ -76,12 +77,12 @@ const createObject                       = require('../components/video/adplayer
 
 var instMap = new Map(); //if we just always impose that if used from universal, then it's in
                          //iframe, then this Map is a bit stupid (only 1 item)  
-function makePlayer(containerId, adparameters) {
+function makePlayer(containerId, adparameters, config = null, eventsVector = null) {
     let instMaybe = instMap.get(containerId);
     if (instMaybe) {
         return;
     }
-    let playerInst = createObject(containerId, adparameters);
+    let playerInst = createObject(containerId, adparameters, config, eventsVector);
     instMap.set(containerId, playerInst);
     return playerInst;
 }
@@ -93,7 +94,7 @@ window.jxvideoadsdk = 1;
 //I am still considering..
 function listen(e) {
     let json = null;
-    if (e.data.startsWith('jx')) 
+    if (typeof e.data === 'string' && e.data.startsWith('jx')) 
         ;
     else {
         return;
@@ -147,51 +148,4 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
     else */
     parent.postMessage(msgStr, '*'); 
 }
-
-/**
- * Backward compatiability: Coz this current script is supposed to replace 
- * jxvideo.1.4.min.js AS WELL AS jxvideo.1.3.min.js (<-- only used by Kompas
- * to play masterhead ads)
- * 
- * Support the use case of typically the masterhead ads of our publishers
- * (jxvideo.1.3.min.js)
- * 
- * Basically the code using the sdk provides a 
- * function "onJXPlayerReady". This is supposedly called by jxvideo.1.3.min.js
- * when the jxvideo.1.3.min.js is loaded and initialized. 
- */
-var oldPlayerSDKMap = null;
-if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
-    window.onJXPlayerReadyProcessed = 1;
-    oldPlayerSDKMap = new Map();
-    //well, since these events are published in our documentation, we need to support them
-    const eventsVector_  = ['jxhasad','jxadended','jxnoad','jxplayvideo','jxvideoend',
-        'jxadfirstQuartile','jxadmidpoint','jxadthirdQuartile','jxadalladscompleted',
-        'jxadclick', 'jxadimpression'];
-    var playerObj = {
-        player: null,
-        started: false,
-        start: function(json) {
-            if (this.started) return; //to beat a problem with the ad looping
-            this.started = true;
-            //get the player instance 
-            let inst = oldPlayerSDKMap.get(json.container);
-            if (!inst) {
-                //note here (TODO) this is not the JSON creative
-                //but only a config object.
-                inst = makePlayer(json.container, json);
-                this.player = inst;
-                oldPlayerSDKMap.set(json.container, inst);
-            }
-            //inst.changeCfg(json);
-        },
-        play: function() {
-            //already playing by itself
-            //this.player.play();
-        }
-    }
-    window.onJXPlayerReady(playerObj);
-}
-
-
 

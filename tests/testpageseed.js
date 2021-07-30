@@ -403,18 +403,29 @@ function makeTable(cases, flag) {
     let buf = '';
     cases.forEach(function(oneRow) {
         let uUrl = `https://universal.jixie.io/demos/portal/hybrid.html?creativeid=${oneRow.id}`;
-        let uliteUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_ulite.html?creativeid=${oneRow.id}`;
+        let uliteUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_ulite_renee.html?creativeid=${oneRow.id}`;
         let osmUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_osm.html?creativeids=${oneRow.id}`;
         let osmDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxdesktop&creativeids=${oneRow.id}`;
         let osmMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxmobile&creativeids=${oneRow.id}`;
         let hbDUrl = null;
         if (oneRow.adUnitCodeD) {
-            hbDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbdesktop&jxhbadunitcode=${oneRow.adUnitCodeD}&jxhbcreativeid=${oneRow.id}`;
+            hbDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbdesktop&jxhbadunitcode=${oneRow.adUnitCodeD}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}`;
+            console.log(`
+                \ndesktop ${oneRow.width}x${oneRow.height}
+                ${oneRow.adUnitCodeD}
+                ${hbDUrl}
+            `);
+            
         }
 
         let hbMUrl = null;
         if (oneRow.adUnitCodeM) {
-            hbMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbmobile&jxhbadunitcode=${oneRow.adUnitCodeM}&jxhbcreativeid=${oneRow.id}`;
+            hbMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbmobile&jxhbadunitcode=${oneRow.adUnitCodeM}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}`;
+            console.log(`
+                \nmobile ${oneRow.width}x${oneRow.height}
+                ${oneRow.adUnitCodeM}
+                ${hbMUrl}
+            `);
         }
         let ampUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=ampad1&creativeid=${oneRow.id}`;
 

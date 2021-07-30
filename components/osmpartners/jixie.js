@@ -108,7 +108,7 @@
             rtjson.scriptcfg = {
                 responsive: 1, 
                 container: `jxOutstream${instID}`, 
-                maxwidth: aNode.node.clientWidth ? aNode.node.clientWidth: 300,
+                pgwidth: aNode.node.offsetWidth ? aNode.node.offsetWidth: 300,
                 fixedheight: fixedHeightBlob && fixedHeightBlob.fixedheight ? fixedHeightBlob.fixedheight: 0,
                 excludedheight: fixedHeightBlob && fixedHeightBlob.excludedheight ? fixedHeightBlob.excludedheight: 0,
                 jsoncreativeobj64: dbjson.adparameters.jsonbase64

@@ -296,6 +296,28 @@ const supported_ = [
         .pipe(gutil.noop())
   });
 
+  const videoadsdklitejsfile_ = 'bundles/videoadsdk-lite.js';
+  gulp.task('BUILD_VIDEOADSDKLITE_BUNDLE', function() {
+    return browserify('' + videoadsdklitejsfile_, {
+            debug: false
+        })
+        .bundle()
+        .pipe(source(videoadsdklitejsfile_))
+        .pipe(buffer())
+        .pipe(gulpif(config.minify, minify()))
+        .on('error', function(err) {
+            gutil.log(gutil.colors.red('[Error]'), err.toString());
+        })
+        .pipe(gulpif(true, rename({
+            basename: 'jx-app-videoadsdk-lite'
+        })))
+        .pipe(gulpif(true, rename({
+            extname: '.min.js'
+        })))
+        .pipe(gulp.dest('dist'))
+        //.s3(config_aws, s3_options.dev)
+        .pipe(gutil.noop())
+  });
   gulp.task('UPLOAD_TEST_HTML', function(cb) {
     pump([
             gulp.src(['dist/bundles/*.js', 'tests/*.html', 'tests/*.css']),
@@ -359,7 +381,7 @@ const supported_ = [
   //add this to the list later 'BUILD_OUTSTREAMJS'
   //we are continually modifying the ids common ah.
   
-  gulp.task('developer1', gulp.series('clean', 'BUILD_AMPOSM_BUNDLE', 'BUILD_JXRENDERER_BUNDLE', 'BUILD_HBRENDERER_BUNDLE', 'BUILD_OSM_BUNDLE','BUILD_VIDEOSDK_BUNDLE','BUILD_VIDEOADSDK_BUNDLE', 'BUILD_ULITE_BUNDLE', 'UPLOAD_TEST_HTML'));
+  gulp.task('developer1', gulp.series('clean', 'BUILD_AMPOSM_BUNDLE', 'BUILD_JXRENDERER_BUNDLE', 'BUILD_HBRENDERER_BUNDLE', 'BUILD_OSM_BUNDLE','BUILD_VIDEOSDK_BUNDLE','BUILD_VIDEOADSDK_BUNDLE','BUILD_VIDEOADSDKLITE_BUNDLE', 'BUILD_ULITE_BUNDLE', 'UPLOAD_TEST_HTML'));
   
   config = (function() {
     var
