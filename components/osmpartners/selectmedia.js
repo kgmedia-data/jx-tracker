@@ -1,4 +1,4 @@
-const defaultPTimeout_ = 10000;
+const defaultPTimeout_ = 6000;
 
 var getAdSlotAttachNode_ = function(dbjson, getPageSelectorFcn) {
     /* if (dbjson.adparameters.selectors) {

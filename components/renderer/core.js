@@ -82,12 +82,12 @@ function addGAMNoAdNotifyMaybe(str) {
     }//while
     if (gIframe && !gIsUFif) gIsFifs = true;
    
-    //All our jixie-own scripts can be run without iframe. Currently there is only one:
     const jxScriptUrls_ = {
         video: {
             //default visibility threshold
             signature: 'jx_video_ad',
-            url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
+            url: 'https://scripts.jixie.io/jxvideocr.2.0.min.js'
+            /////url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
         }
     };
     const visThreshold_ = 0.4;
