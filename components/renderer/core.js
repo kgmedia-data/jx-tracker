@@ -86,7 +86,7 @@ function addGAMNoAdNotifyMaybe(str) {
         video: {
             //default visibility threshold
             signature: 'jx_video_ad',
-            url: 'https://scripts.jixie.io/jxvideocr.2.0.min.js'
+            url: 'https://scripts.jixie.io/jxvideocr.1.0.min.js'
             /////url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
         }
     };
