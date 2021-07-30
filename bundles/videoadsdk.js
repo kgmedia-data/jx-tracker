@@ -50,8 +50,8 @@ modulesmgr.set('video/vast',         vast);
 // script as the child JS will just require mmodulesmgr and get the right instance
 // from mmodulesmgr
 
-const helpers                           = require('../components/video/helpers');
-modulesmgr.set('video/helpers',         helpers);
+const common                           = require('../components/basic/common');
+modulesmgr.set('basic/common',         common);
 
 const consts                            = require('../components/video/consts'); 
 modulesmgr.set('video/consts',          consts);

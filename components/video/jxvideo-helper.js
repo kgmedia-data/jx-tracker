@@ -129,16 +129,6 @@ function MakeOneHelperObj_() {
     FactoryOneHelper.prototype.injectStyles = function(stylesString, styleName) {
          _acss(stylesString, styleName);
     }
-    FactoryOneHelper.prototype.getCssObj = function() {
-        return _cssObj;
-    }
-    
-    FactoryOneHelper.prototype.setCssObj = function(cssObj) {
-        _cssObj = cssObj;
-        _acss(cssObj.getCss(), "JxPlayerStyle");
-
-    }
-  
     FactoryOneHelper.prototype.getNetworkType = function() {
         var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         if (connection) {

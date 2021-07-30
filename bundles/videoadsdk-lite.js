@@ -47,8 +47,8 @@ modulesmgr.set('video/vast',         vast);
 // script as the child JS will just require mmodulesmgr and get the right instance
 // from mmodulesmgr
 
-const helpers                           = require('../components/video/helpers');
-modulesmgr.set('video/helpers',         helpers);
+const common                           = require('../components/basic/common');
+modulesmgr.set('basic/common',         common);
 
 const consts                            = require('../components/video/consts'); 
 modulesmgr.set('video/consts',          consts);
@@ -75,6 +75,9 @@ var instMap = new Map(); //if we just always impose that if used from universal,
                          //iframe, then this Map is a bit stupid (only 1 item)  
 function makePlayer(containerId, adparameters, config = null, eventsVector = null) {
     config.autopause = false; //i.e. we are not dependent on those jxvisible
+    config.video = 'https://creative-ivstream.ivideosmart.com/3001004/1181736/3001004-1181736_360.mp4';
+    config.tag = 'https://search.spotxchange.com/vast/2.0/79391?VPAID=JS&content_page_url=&cb=1627609832&player_width=400&player_height=320&media_transcoding=low';
+    config.loop = 'auto';
     //testing only config.autoplay = false;
     //and what not.
     //just depend on the autoplay flag.
@@ -89,68 +92,35 @@ function makePlayer(containerId, adparameters, config = null, eventsVector = nul
 
 window.jxvideoadsdklite = 1;
 
-//Actually this is not needed if this code is just to replace jxvideo1.3.min.js
-//<----- Only needed when univeral unit is outside our iframe
-//I am still considering..
-function listen(e) {
-    let json = null;
-    if (typeof e.data === 'string' && e.data.startsWith('jx')) 
-        ;
-    else {
-        return;
-    }        
-    if (e.data == 'jxvisible' || e.data == 'jxnotvisible') {
-        json = {type : e.data};
-    }
-    if (!json && e.data.indexOf('jxmsg::') == 0) {
-        try {
-            json = JSON.parse(e.data.substr('jxmsg::'.length));
-        }
-        catch(err) {}
-    }
-    if (!json) return; //unrelated to us, we dun bother.
-    json.token = 'hardcode';
-    switch (json.type) {
-        case "jxvisible":
-        case "jxnotvisible":     
-            let instMaybe = instMap.get(json.token);
-            if (instMaybe) {
-                instMaybe.notifyMe(json.type);
-            }
-            break;
-        case "adparameters":
-            makePlayer(json.token, json.data);
-            break;                    
-    }
-}//listen
-window.addEventListener('message', listen, false);
-notifyMaster('jxloaded', 'jx_video_ad');
-
-//height change
-function notifyMaster(type, token, data = null) { //todo DATA HOW
-    let msgStr = '';
-    if (type == 'jxloaded') {
-        token = window.name;
-    }
-    let obj = {
-        type: type,
-        token: token
-    };
-    if (data) {
-        obj.data = data;
-    }
-    msgStr = "jxmsg::" + JSON.stringify(obj);
-    parent.postMessage(msgStr, '*'); 
-}
-
-
-//--- not really needed -->
-
-
+//aiyo cannot also
 function fetchAdJsonP(cfg) {
-    let domain = cfg.domain? cfg.domain:'jixie.io';
-    let adURL = `https://ad.jixie.io/v1/universal?source=sdk&domain=${domain}&creativeid=` + cfg.creativeid;
-    return fetch(adURL)
+    return Promise.resolve(null);
+    if (!cfg.unit && !cfg.creativeid && !cfg.campaignid && !cfg.tag && !cfg.xmltag) {
+        //then I don't think they are trying to play an ad.
+        //it may just be wanting to play a video then.
+        return Promise.resolve(null);
+    }
+    let tag = null;
+    let seg = cfg.debug ? '-rc':'';
+    if (cfg.tag) {
+        tag = cfg.tag;
+    }
+    else {
+        if (!cfg.source) { 
+            cfg.source = 'sdk'; 
+        }
+        if (!cfg.domain) { 
+            cfg.domain = 'jixie.io'; 
+        }
+        ['creativeid','campaignid','source','pageurl','unit'].forEach(function(qparam) {
+            tag += (cfg[qparam] ? '&' + qparam + '=' + cfg[qparam]: '');
+        });
+        tag = 'https://ad' + seg + '.jixie.io/v1/universal?';
+        ['creativeid','campaignid','source','pageurl','unit'].forEach(function(qparam) {
+            tag += (cfg[qparam] ? '&' + qparam + '=' + cfg[qparam]: '');
+        });
+    }
+    return fetch(tag)
     .then((response) => response.json())
     .then(function(respJson) {
         let arr = respJson.creatives;
@@ -160,14 +130,9 @@ function fetchAdJsonP(cfg) {
         throw new Error("no ad");
     });
 }
-            
 
 /** This is the main usage the main way the jxvideo1.3.min.js is currently use
  * so we expose it here
- * 
- * Backward compatiability: Coz this current script is supposed to replace 
- * jxvideo.1.4.min.js AS WELL AS jxvideo.1.3.min.js (<-- only used by Kompas
- * to play masterhead ads)
  * 
  * Support the use case of typically the masterhead ads of our publishers
  * (jxvideo.1.3.min.js)
@@ -182,6 +147,11 @@ if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
     oldPlayerSDKMap = new Map();
     //well, since these events are published in our documentation, we need to support them
     const eventsVector_ =[
+            "jxplayvideo",
+            "jxvideoend",
+            "jxhasad",
+            "jxnoad",
+
             "jxadended", 
             "jxadfirstQuartile",
             "jxadthirdQuartile",
@@ -204,12 +174,14 @@ if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
             if (!inst) {
                 fetchAdJsonP(config)
                 .then(function(creativeJson) {
+                    //creativeJson could be null 
+                    //if there is no ad.
                     inst = makePlayer(config.container, creativeJson, config, eventsVector_);
                     thisObj.player = inst;
                     //Just testing nonautoplay
                     //setTimeout(function(){
                       //  thisObj.player.play();
-                    //}, 7000);
+                    //}, 5000);
                     oldPlayerSDKMap.set(config.container, inst);
                 })
                 .catch(function(e) {
@@ -218,8 +190,13 @@ if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
             }
         },
         play: function() {
-            //already playing by itself
-            //this.player.play();
+            if (this.player) this.player.play();
+        },
+        pause: function() {
+            if (this.player) this.player.pause();
+        },
+        rewind: function() {
+            if (this.player) this.player.rewind();
         }
     }
     window.onJXPlayerReady(playerObj);

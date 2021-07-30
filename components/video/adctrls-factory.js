@@ -4,7 +4,7 @@
      * APIs for the ADS Controls object: TO BE FILLED IN (basically are the prototype functions)
      */
  const modulesmgr            = require('../basic/modulesmgr');
- const _helpers              = modulesmgr.get('video/helpers');
+ const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
  const adControlsCls         = cssmgr.getRealCls('adControlsCls');
  const adPlayBtnCls          = cssmgr.getRealCls('adPlayBtnCls');
@@ -61,7 +61,7 @@
      /** append specified style property to specified element */
      var _setStyleToElement =  function(el, prop, val) {
          _vendors.forEach(function(vendor) {
-             var p = _helpers.toCamelCase(vendor + prop);
+             var p = _common.toCamelCase(vendor + prop);
              if(p in el.style) {
                  el.style[p] = val;
                  }
@@ -81,7 +81,7 @@
                              '<a href="javascript:void(0)" id="' + btnPlayID + '-' + r + '" class="' + adPlayBtnCls + '"></a></div>' + 
                            '<div style="float:left; width:30px;margin-left:3px;">' + 
                              '<a href="javascript:void(0)" id="' + btnMuteID + '-' + r + '"  class="' + adMuteBtnCls + '"><span></span></a></div>';
-         _cDiv = _helpers.newDiv(
+         _cDiv = common.newDiv(
              _container,
              "div",
              controlDiv,
@@ -93,7 +93,7 @@
          }
  
          if (doProgressBar) {
-             _progressBarWrapper = _helpers.newDiv(
+             _progressBarWrapper = common.newDiv(
                  _container,
                  "div",
                  innerElm,

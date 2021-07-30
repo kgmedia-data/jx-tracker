@@ -5,7 +5,7 @@
  * jxvideo.1.3.min.s)
  **/
  const modulesmgr            = require('../basic/modulesmgr');
- const _helpers              = modulesmgr.get('video/helpers');
+ const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
  const adDivCls              = cssmgr.getRealCls('adDivCls');
  const hideCls               = cssmgr.getRealCls('hideCls');
@@ -527,7 +527,7 @@
         _ctrls.hide();
     };
     var _createUIElt = function() {
-        if (!_adDiv) _adDiv = _helpers.newDiv(_container, "div", "", adDivCls);
+        if (!_adDiv) _adDiv = common.newDiv(_container, "div", "", adDivCls);
         _adDiv.classList.add(adHideCls);
         // _adDiv.style.display = 'none'; //HACK Renee put in this fix. Without this
         //during countdown the content controls are not showing
@@ -580,7 +580,7 @@
         _clearResizeListeners(); //paranoia
 
         return new Promise(function(resolve, reject) {
-            _helpers.loadIMAScriptP().then(function() {
+            common.loadIMAScriptP().then(function() {
                 google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
                 google.ima.settings.setNumRedirects(maxNumVastRedirects_);
 
@@ -633,6 +633,7 @@
     };
     FactoryOneAd.prototype.playOrStartAd = function() {
         if (!_aStartApiCalled) {
+            _aStartApiCalled = true;
             _startAd();
             return;
         }

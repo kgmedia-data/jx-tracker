@@ -5,7 +5,7 @@
  * i.e. plays the role of jxvideo1.3.min.js and jxvideo1.4.mins.js
  */
 const modulesmgr            = require('../basic/modulesmgr');
-const _helpers              = modulesmgr.get('video/helpers');
+const common                = modulesmgr.get('basic/common');
 const MakeOneAdObj          = modulesmgr.get('video/admgr-factory');
 const MakeOneSpinner        = modulesmgr.get('video/spinner-factory');
 
@@ -27,6 +27,20 @@ const thumbnailCls          = cssmgr.getRealCls('thumbnailCls');
 const hideCls               = cssmgr.getRealCls('hideCls');
 const commonBigPlayBtnCls   = cssmgr.getRealCls('commonBigPlayBtnCls');
  
+//of all the subscribable stuff for jxvideo1.3.min.js, this subset 
+//we need from the admgr layer (IMA based)
+const imaEventsSubset_ =[ 
+    "jxadended", 
+    "jxadfirstQuartile",
+    "jxadthirdQuartile",
+    "jxadmidpoint",
+    "jxadskipped", 
+    "jxadalladscompleted",
+    "jadclick", 
+    "jxadimpression",
+    "jxadstart"
+];
+
 // Add a listener of the event to the element e which calls the function handler h
 // General helper funciton
 function addListener(e, event, h) {
@@ -47,12 +61,13 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
     var _thumbnailDiv       = null;
     /* var _bigPlayBtn         = null; */
     var _context            = null;
+    var _adReqParams        = {};
 
     var _spinner            = null;
     var _replayBtn          = null;
     
     var _adObj              = null;
-    var _env = null;
+    var _env                = null;
 
     var _eventsVector       = [];
     var _containerId        = null;
@@ -71,22 +86,22 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             tmp = document.body;
         }
         
-        _pDiv = _helpers.newDiv(tmp,'div','',''); 
+        _pDiv = common.newDiv(tmp,'div','',''); 
         _pDiv.style.width = '100%';
         _pDiv.style.height = '100%';
         _pDiv.style.position = 'relative';
         
        //combo div is ad or content.
-       _comboDiv = _helpers.newDiv(_pDiv, "div", "", comboDivCls); //this is not the real ad div
-       _contentDiv = _helpers.newDiv(_comboDiv, 'div', `<video id="idJxPlayer" class=${playerCls} controls muted playsinline></video>`, contentDivCls); 
-       _contentDiv.classList.add(hideCls);
+       _comboDiv = common.newDiv(_pDiv, "div", "", comboDivCls); //this is not the real ad div
+       _contentDiv = common.newDiv(_comboDiv, 'div', `<video id="idJxPlayer" class=${playerCls} controls muted playsinline></video>`, contentDivCls); 
+       //WHY DO THIS HERE ?? _contentDiv.classList.add(hideCls);
 
        if (_env) {
            if (_env.defaultImage) {
-               _thumbnailDiv = _helpers.newDiv(_comboDiv, "img", null, thumbnailCls);
+               _thumbnailDiv = common.newDiv(_comboDiv, "img", null, thumbnailCls);
                _thumbnailDiv.style.cursor = 'pointer';
                if (_env.clickurl){
-                   _helpers.addListener(_thumbnailDiv, 'click', function() {
+                    common.addListener(_thumbnailDiv, 'click', function() {
                        window.open(_env.clickurl, '_blank');
                    });
                }
@@ -99,16 +114,9 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
                    }
                }
            }
-           if (_env.video)
-            _videoSrc = _env.video;
-           //_videoSrc = 'https://creative-ivstream.ivideosmart.com/3001004/1181736/3001004-1181736_360.mp4'; // HACK
        }
-
        _playerElt = document.getElementById('idJxPlayer');
        addListener(_playerElt, 'ended', _onContentEnded);
-       //pretend there is a content:
-       //just to test the content stuff can work and show properly if we need to
-       if (_videoSrc) _playerElt.src = _videoSrc;
     }
 
     var _manualReplayCB = function() {
@@ -133,6 +141,11 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         } else if (_thumbnailDiv) {
             _thumbnailDiv.classList.remove(hideCls);
         } else {
+            //This one is for the universal unit to get 
+            //If player sdk (jxvideo1.3.min.js) then this
+            //is just wasted 
+            //wait .... we have to subscribe to it bah.
+            //for the case of universal.
             parent.postMessage("jxadended", '*');
         }
     }
@@ -153,7 +166,6 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         if (_spinner) _spinner.hide();
     }
 
-
     var _vectorForAdMgr = {
         report : function() {},
         setContentMuteState: function() {},
@@ -167,12 +179,9 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             _onAdEnded();
         },
         switch2Ad: function() {
-            console.log("switch2Ad was called!");
-            //WAS _playerElt.pause();
             _context = 'ad';
             _showSpinner();
             if (_thumbnailDiv) _thumbnailDiv.classList.add(hideCls)
-            parent.postMessage("jxhasad", '*'); 
             _playerElt.pause();
         }
     };         
@@ -210,7 +219,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
      * @param {*} isVisible 
      */
      OneAdInstance.prototype.visibilityChange = function(isVisible) {
-        /////console.log(`OneAdInstance.prototype.visibilityChange = ${isVisible} ${_context} `);
+        console.log(`OneAdInstance.prototype.visibilityChange = ${isVisible} ${_context} `);
         if (_adObj && _context === 'ad') {
             if (isVisible) {
                 _adObj.playOrStartAd(); //ok this one so far is only in the admgr-factory-bc version only aaarh
@@ -220,7 +229,6 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             }
         } else if (_context === 'content') {
             if (isVisible) {
-                _playerElt.play();
             }
             else {
                 _playerElt.pause();
@@ -228,48 +236,88 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         }
     }
 
-    function updateUniversal(v) {
-        let e;
+    //v is the value given to the callback on the adcall
+    function adOutcomeCB(v) {
+        let e = null;
         let msg = null;
         if (v == 'jxadstarted' || v == 'jxhasad') {
             _context = 'ad';
             msg = 'jxhasad'
-            e = new Event('jxhasad');
         }
         else if (v == 'jxaderrored' || v == 'jxnoad') {
             msg = 'jxnoad';
-            e = new Event('jxnoad');
         }
-        if (msg) {
-            parent.postMessage("jxhasad", '*'); 
+        if (msg == 'jxhasad' && _eventsVector.indexOf('jxhasad') > -1) {
+            e = new Event('jxhasad');
+        }
+        if (msg == 'jxnoad' && _eventsVector.indexOf('jxnoad') > -1) {
+            e = new Event('jxnoad');
         }
         if (e) {
             window.dispatchEvent(e);
-        } 
+        }
+        //if used in the universal context this is the one
+        //which is important: we are in an iframe
+        if (msg) {
+            parent.postMessage("jxhasad", '*'); 
+        }
         _hideSpinner();
 
     }
     function doNothing() {}
 
+    //the replay is also dependent on the whatever it is
     function _doReplay() {
         setTimeout(function() {
-            let vast = buildVastXml([_vastSrcBlob], true);//second param is SUPPRESS trackers
-            _adObj.setAutoAdsManagerStart(true); //since this is the second round, just play
-            _adObj.makeAdRequestFromXMLCB(vast, true, true, doNothing);
+            _makeAdRequest(_adReqParams, true);//last params is isRepeat
         }, 0);
     }
 
-    var _vastSrcBlob = {};
     /**
-     * 
-     * @param {*} data 
+     * a generic way to make ad call. whether from creative JSON (we compose
+     * the vast on the fly : possibly due to needing to do loop, suppress tracker stuff)
+     * or it can be from ad tag url or ad tag xml
      */
-    OneAdInstance.prototype.changeJson = function(crData) {
-        let adparameters = crData.adparameters;
+    var _adReqParams = {};
+    var _makeAdRequest = function(adReqParams, isRepeat) {
+        let crData = adReqParams.crJson;
+        let autoStart = isRepeat;
+        let cb = isRepeat ? doNothing: adOutcomeCB;
+
+      // OK We are making the ad call now:
+      if (crData) {
+        //This is those Jixie ads and we construct the vast XML from the JSON
+        //
+        let vastSrcBlob = crData;
+        //For testing SIMID... Normally won't come here
+        if (crData.jxsimidurl) {
+            _vastSrcBlob.subtype = 'vsimid';
+            _vastSrcBlob.url = 'https://creatives.b-cdn.net/jx/jxsimidhybrid.min.html'; //crData.jxsimidurl;
+        }
+        /////console.log(`VAST FODDER: ${crData.id}, ${crData.name} ,${crData.duration}, ${crData.clickurl}`);
+        let vast = buildVastXml([vastSrcBlob]);
+        _adObj.setAutoAdsManagerStart(autoStart); 
+        _adObj.makeAdRequestFromXMLCB(vast, true, true, cb);
+    }
+    else {
+        _adObj.setAutoAdsManagerStart(autoStart); 
+        if (adReqParams.tag) {
+            _adObj.makeAdRequestCB(adReqParams.tag, true, true, cb);
+        }
+        else if (adReqParams.xmltag)
+            _adObj.makeAdRequestFromXMLCB(adReqParams.xmltag, true, true, cb);
+        }
+    }
+    
+    var _setContainerSize = function(width, height) {
+        _comboDiv.style.width = width +'px';
+        _comboDiv.style.height = height + 'px';
+    }
+    var _triggerAd = function(crData, config) {
+        let adparameters = crData ? crData.adparameters: {};
         if (_adObj) {
             _adObj.reset();
         }
-        //_playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/954006/3001004-954006_480.mp4';
         let tmp = document.getElementById(_containerId);
         if (!tmp) {
             tmp = document.body;
@@ -305,35 +353,35 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             blob.width = tmp.offsetWidth; 
             blob.height = tmp.offsetHeight;
         }
-        _comboDiv.style.width = blob.width +'px';
-        _comboDiv.style.height = blob.height + 'px';
+        _setContainerSize(blob.width, blob.height);
+        if (crData || config.tag || config.xmltag) {            
+            _adReqParams = {};
+            if (config && config.xmltag) _adReqParams.xmltag = config.xmltag;
+            else if (config && config.tag) _adReqParams.tag = config.tag;
+            else if (crData) _adReqParams.crJson = crData;
             
-        _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls);
-        if (_eventsVector) {
-            _adObj.subscribeToEvents(
-                _eventsVector, function(jxname) {
+            _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls);
+            if (_eventsVector) {
+                let imaSubset = _eventsVector.filter((e) => imaEventsSubset_.indexOf(e)> -1);
+                _adObj.subscribeToEvents(
+                    imaSubset, function(jxname) {
+                    if (jxname == 'jxadended' && _env.loop != 'none') {
+                        //we don't fire the adend then.
+                        //I think we should also suppress the other events
+                        //when we are in a repeat too.
+                        //unless it is a click
+                        return;
+                    }   
                     let e = new Event(jxname);
                     window.dispatchEvent(e);
-                    //console.log(`-CB--- adplayer.js ${jxname} ---- `);
+                    //console.log(`-FROM IMA CB--- adplayer.js ${jxname} ---- `);
                 }); 
+            }
+            else {
+                //if the call is from universal 
+            }
+            _makeAdRequest(_adReqParams, false);
         }
-        _vastSrcBlob = crData;
-
-        //HACK for testing SIMID
-        if (crData.jxsimidurl) {
-            _vastSrcBlob.subtype = 'vsimid';
-            _vastSrcBlob.url = 'https://creatives.b-cdn.net/jx/jxsimidhybrid.min.html'; //crData.jxsimidurl;
-        }
-        /////console.log(`VAST FODDER: ${crData.id}, ${crData.name} ,${crData.duration}, ${crData.clickurl}`);
-        let vast = buildVastXml([_vastSrcBlob]);
-        //for use of the jxvideo1.3.js ("SDK"): autopause is false, so depends on autoplay flag
-        //for use from within our jixie universal (or lite, then we are autoplay and dependent
-        //on jxvisible (autopause == true)
-        //basically non-autoplay does not work now lah.
-        //So it is driven by API?
-        _adObj.setAutoAdsManagerStart(
-            _env.autopause? (false) : ( _env.autoplay ? true : false) ); 
-        _adObj.makeAdRequestFromXMLCB(vast, true, true, updateUniversal);
     }//
 
     /**
@@ -348,7 +396,6 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
     function extractEnv(cr, config) {
         let out = {
             autoplay : true,
-            autopause: true, //i.e. use the jxvisibility stuff
             controls: {
                 color: '#000000',
                 position: 'left'
@@ -356,23 +403,14 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             stripPosition: 'right',
             loop: 'none'
         };
-        if (cr.clickurl)  {
+        if (cr && cr.clickurl)  {
             out.clickurl = cr.clickurl;
         }
         let u = config;
-        if (!u) {
+        if (!u && cr) {
             u = cr.universal;
         }
         if (u) {
-            //if called from the jxvideoadsdk-lite (i.e. the successor of
-            //jxvideo1.3.min.js) then autopause is set to false
-            //i.e. we dun do those visiblity stuff for you.
-            //we either autoplay (no matter what) or click to play
-            if (u && u.hasOwnProperty('autopause')) {
-                if (Boolean(u.autopause) == false) {
-                    out.autopause = false;
-                }
-            }
             if (u.defaultImage) {
                 out.defaultImage = u.defaultImage;
             }
@@ -391,57 +429,87 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
                 out.autoplay = false;
             }
         }
-        else if (cr.adparameters && cr.adparameters.hasOwnProperty('autoplay')) {
+        else if (cr && cr.adparameters && cr.adparameters.hasOwnProperty('autoplay')) {
             if (Boolean(cr.adparameters.autoplay) == false) {
                 out.autoplay = false;
             }
         }
-        if (cr.adparameters && cr.adparameters.loop) {
+        if (cr && cr.adparameters && cr.adparameters.loop) {
                 out.loop = cr.adparameters.loop;
         } else if (u && u.loop) {
-                out.loop = false;
+                out.loop = u.loop;
         }
-        if (cr.adparameters && cr.adparameters.countpos) {
+        if (cr && cr.adparameters && cr.adparameters.countpos) {
             out.stripPosition = cr.adparameters.countpos;
         }
-        delete cr.adparameters.loop;
+        if (cr && cr.adparameters)
+            delete cr.adparameters.loop;
         return out;
      }
+
     /**
-     * 
+     * These next 3 are used by the ad sdk (i.e. the jxvideo.1.3.min.js)
+     * since this is in the interface document, we continue to support it
+     * Well, the play is important. Currently their (KG) usage pattern is 
+     * that they call it upon hearing jxhasad event
      */
     OneAdInstance.prototype.play = function() {
         if (_adObj)
-            _adObj.startAd();
+            _adObj.playOrStartAd();
+        else {
+            if (_thumbnailDiv) {
+                _thumbnailDiv.classList.add(hideCls);
+            }
+            _playerElt.play();
+        }            
     }
-
+    OneAdInstance.prototype.rewind = function() {
+        if (_adObj) {
+            ; //do nothing
+        }
+        else {
+            //set the playhead to 0 and let it play on
+            _playerElt.play();
+        }            
+    }
+    OneAdInstance.prototype.pause = function() {
+        if (_adObj)
+            _adObj.pauseAd();
+        else {
+            _playerElt.pause();
+        }            
+    }
     function OneAdInstance(containerId, crData, config = null, eventsVector = null) {
         _token = containerId;
-        _containerId        = containerId;
-        if (eventsVector) {
-            _eventsVector       = JSON.parse(JSON.stringify(eventsVector));
-        }
+        _containerId = containerId;
         
         _spinner = MakeOneSpinner(document.getElementById(_containerId) ? document.getElementById(_containerId) : document.body);
         _showSpinner();
-
-        _env = extractEnv(crData, config);
+        _env = extractEnv(crData, config); //this will set the default image, among many other things.
 
         _createInner(containerId);
-        this.changeJson(crData);
+        if (eventsVector) {
+            _eventsVector = JSON.parse(JSON.stringify(eventsVector));
+        }
+        if (config && config.video) {
+            _videoSrc = config.video;
+            if (_videoSrc) _playerElt.src = _videoSrc;
+        }
+        _triggerAd(crData, config);
     }
 
     /**
-     * triggered from universal
+     * Only the universal integration will trigger this
+     * The ads sdk (aka jxvideo1.3.min.js will not have this)
      * @param {*} action 
      */
     OneAdInstance.prototype.notifyMe = function(action) {
+        console.log(`notifyMe: ${action}`);
         if (action == 'jxvisible')
             this.visibilityChange(true);
         else if (action == 'jxnotvisible')
             this.visibilityChange(false);
     }
-
     let ret = new OneAdInstance(containerId, data, config, eventsVector);
     return ret;
 }
