@@ -33,7 +33,7 @@ one day at a time!
  */
 //ugly... Move elsewhere. Dun belong in here.
 const modulesmgr                = require('../basic/modulesmgr');
-const _helpers                  = modulesmgr.get('renderer/helpers');
+const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 
 function addGAMNoAdNotifyMaybe(str) {
@@ -118,7 +118,7 @@ function addGAMNoAdNotifyMaybe(str) {
             return retObserver;
         },
         setupBlurHandler: function() {
-            _helpers.addListener(window, 'blur', boundCB);
+            common.addListener(window, 'blur', boundCB);
         },
         setupResizeHandler: function() {
 
@@ -135,10 +135,10 @@ function addGAMNoAdNotifyMaybe(str) {
                 case 'blur':
                     break;
                 case 'message':
-                    _helpers.removeListener(window, 'message', boundCB);
+                    common.removeListener(window, 'message', boundCB);
                     break;                    
                 case 'visibilitychange':
-                    _helpers.removeListener(window, 'amp:visibilitychange', boundCB);
+                    common.removeListener(window, 'amp:visibilitychange', boundCB);
                     break;
             }//switch
         }
@@ -151,34 +151,34 @@ function addGAMNoAdNotifyMaybe(str) {
                 threshold: visThreshold_
             });
             retObserver.observe(obsContainer); 
-            _helpers.addListener(document, "visibilitychange", boundCB);
+            common.addListener(document, "visibilitychange", boundCB);
             return retObserver;
         },
         setupResizeHandler: function(boundCB, isResponsive) {
             //if (isResponsive) {
-                _helpers.addListener(window, 'resize', boundCB);
+                common.addListener(window, 'resize', boundCB);
                 boundCB();
             //}
         },
         setupScrollEventHandler: function(boundCB) {
             //Listen on the top window.
-            _helpers.addListener(top, 'scroll', boundCB);
+            common.addListener(top, 'scroll', boundCB);
             boundCB();
         },
         setupBlurHandler: function(boundCB) {
-            _helpers.addListener(window, 'blur', boundCB);
+            common.addListener(window, 'blur', boundCB);
         },
         unlisten(type, boundCB) {
             if (!boundCB) return;
             switch (type) {
                 case 'scroll':
-                    _helpers.removeListener(top, type, boundCB);
+                    common.removeListener(top, type, boundCB);
                     break;
                 case 'resize':
                 case 'message':
                 case 'blur':
                 case 'visibilitychange':
-                    _helpers.removeListener(window, type, boundCB);
+                    common.removeListener(window, type, boundCB);
                     break;
             }//switch
         },
@@ -574,7 +574,7 @@ function addGAMNoAdNotifyMaybe(str) {
             let blob = normCrParams.div;
             if (blob.image) {
                 jxCoreElt.innerHTML = '<a style="border-bottom: none;" href="' + blob.image.clickurl + '" target="_blank"><img src="' + blob.image.url + '" class="jxImg"/></a>';
-                _helpers.addListener(jxCoreElt, 'click', (e) => {
+                common.addListener(jxCoreElt, 'click', (e) => {
                     fireTracker(blob.image.trackers, 'click');
                 });
             }
@@ -644,12 +644,12 @@ function addGAMNoAdNotifyMaybe(str) {
         
         //let id = "jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
         if (!oDiv) {
-            oDiv = _helpers.newDiv(jxContainer, 'div', null, null, 'f' + id);
+            oDiv = common.newDiv(jxContainer, 'div', null, null, 'f' + id);
         }
         if (!oDiv) {
             throw new Error("unable to create essential container (outer)");
         }
-        iDiv = _helpers.newDiv(oDiv, 'div', null, null, 'ifr' + id);
+        iDiv = common.newDiv(oDiv, 'div', null, null, 'ifr' + id);
         iDiv.style.cssText = "width: 100%; border: 0";
         iDiv.style.textAlign = "center";
         if (!iDiv) {
@@ -689,11 +689,11 @@ function addGAMNoAdNotifyMaybe(str) {
      */
     function createMainContainer(divObjs, normCrParams) {
         let id = divObjs.jxID;
-        let jxmasterDiv = _helpers.newDiv(divObjs.innerDiv, 'div', null, null, 'jxm_' + id);
-        let jxbnDiv = _helpers.newDiv(jxmasterDiv, 'div', null, null, 'jxb_' + id);
+        let jxmasterDiv = common.newDiv(divObjs.innerDiv, 'div', null, null, 'jxm_' + id);
+        let jxbnDiv = common.newDiv(jxmasterDiv, 'div', null, null, 'jxb_' + id);
         
-        let jxbnScaleDiv = _helpers.newDiv(jxbnDiv, 'div', null, null, 'jxbs_' + id);
-        let jxbnFixedDiv = _helpers.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
+        let jxbnScaleDiv = common.newDiv(jxbnDiv, 'div', null, null, 'jxbs_' + id);
+        let jxbnFixedDiv = common.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
         let jxCoreElt = null;
 
 
@@ -1008,7 +1008,15 @@ const thresholdDiff_ = 120;
          }
          if (scaling != 'creative'  && scaling != 'renderer') {
             if (cr.type == 'video') {
-                scaling = 'creative';
+                //Hack:
+                //this will be chnaged at adserver level.
+                //currently the video+banner subtype (of type=display) is
+                //changed to type=video vvpaid before being sent to the page
+                //in the universal response.
+                if (cr.adparameters && (cr.adparameters.topbanner || cr.adparameters.bottombanner))
+                    ;
+                else                    
+                    scaling = 'creative';
             }
             else scaling = 'none';
          }
@@ -1506,7 +1514,7 @@ const thresholdDiff_ = 120;
             msghandlers['jxloaded'] = crReady2HearAdParamsResolve;
             boundHandleCreativeMsgs = __handleCreativeMsgs.bind({ 
                 divObjs: divObjs, token: token, handlers: msghandlers });
-            _helpers.addListener(window, "message", boundHandleCreativeMsgs);
+            common.addListener(window, "message", boundHandleCreativeMsgs);
             unhook.listeners.message = boundHandleCreativeMsgs; 
             //-->
             

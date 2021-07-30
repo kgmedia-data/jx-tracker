@@ -50,8 +50,8 @@ modulesmgr.set('video/vast',         vast);
 // script as the child JS will just require mmodulesmgr and get the right instance
 // from mmodulesmgr
 
-const helpers                           = require('../components/video/helpers');
-modulesmgr.set('video/helpers',         helpers);
+const common                           = require('../components/basic/common');
+modulesmgr.set('basic/common',         common);
 
 const consts                            = require('../components/video/consts'); 
 modulesmgr.set('video/consts',          consts);
@@ -77,12 +77,12 @@ const createObject                       = require('../components/video/adplayer
 
 var instMap = new Map(); //if we just always impose that if used from universal, then it's in
                          //iframe, then this Map is a bit stupid (only 1 item)  
-function makePlayer(containerId, adparameters, eventsVector = null) {
+function makePlayer(containerId, adparameters, config = null, eventsVector = null) {
     let instMaybe = instMap.get(containerId);
     if (instMaybe) {
         return;
     }
-    let playerInst = createObject(containerId, adparameters, eventsVector);
+    let playerInst = createObject(containerId, adparameters, config, eventsVector);
     instMap.set(containerId, playerInst);
     return playerInst;
 }

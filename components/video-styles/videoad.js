@@ -81,8 +81,8 @@ var stylesStrObj_ = {};
         '.' + bigPlayBtnCls + '.active:after {content: "";opacity: 1;width: 10px;height: 70px;position: absolute;left: -67px;top: -35px;border-color: white; border-style: double; border-width: 0px 0 0px 60px;}',
     
        /////// '.' + contentDivCls + ',.' + adDivCls + ',.' + playerCls + ',.' + thumbnailCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: 1;}',
-       '.' + playerCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: -1;}',
-       '.' + contentDivCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: -1;}',
+       '.' + playerCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;}',
+       '.' + contentDivCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;}',
        '.' + adDivCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;}',
        //'.' + adDivCls + '{position:relative; width: 100%;height: 100%; }',
        '.' + comboDivCls + '{position:relative; width: 100%;height: 100%; }',

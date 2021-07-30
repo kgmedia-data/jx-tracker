@@ -14,7 +14,8 @@
   //  window.JX = {};
 //}
 const modulesmgr            = require('../basic/modulesmgr');
-const _helpers              = modulesmgr.get('video/helpers');
+//Not needed const common                = modulesmgr.get('basic/common');
+const jxvhelper              = modulesmgr.get('video/jxvideo-helper');
 const consts                = modulesmgr.get('video/consts');
 const MakePlayerWrapperObj  = modulesmgr.get('video/player-factory');
 
@@ -245,7 +246,7 @@ function createObject_(options, ampIntegration) {
         }
         let diffTime = 0;
         if (action == 'ready' || action == 'creativeView') {
-            let refTime = _helpers.getScriptLoadedTime();
+            let refTime = jxvhelper.getScriptLoadedTime();
             diffTime = Date.now() - refTime;
         }
         else if (action == 'start') {
@@ -275,7 +276,7 @@ function createObject_(options, ampIntegration) {
         //console.log(`${e} Using refer time = ${refTime}`);
         //let vab = parseInt(_visFactor * 100);
         if (_visFactor2 == -1) {
-            _visFactor2 = _helpers.getViewFraction(_container);
+            _visFactor2 = jxvhelper.getViewFraction(_container);
         }
         let vab2 = parseInt(_visFactor2 * 100);
         if (v) {
@@ -336,7 +337,7 @@ function createObject_(options, ampIntegration) {
             hasWifi = (nwFromAPI == 'wifi');
         }
         else {
-            hasWifi = (_helpers.getNetworkType() == 'wifi'); 
+            hasWifi = (jxvhelper.getNetworkType() == 'wifi'); 
         }
         //we can use this for special testing
         if (_options.dev_network) {
@@ -396,7 +397,7 @@ function createObject_(options, ampIntegration) {
         }
         
         if (options.ads.delay>=0) {
-            let adUrl = (options.ads.unit ? _helpers.getAdTag(options): null);
+            let adUrl = (options.ads.unit ? jxvhelper.getAdTag(options): null);
             let adUrl1 = null, adUrl2 = null;
             if (adUrl) {
                 adUrl1 = adUrl + '&unit=' +options.ads.unit;
@@ -490,11 +491,11 @@ function createObject_(options, ampIntegration) {
         /* if (window.IntersectionObserver) {
             _visSetup2(); //for reporting trackers : one of the dimensiosn is this visiblity thing.
         }*/
-        _visFactor2 = _helpers.getViewFraction(_container);
+        _visFactor2 = jxvhelper.getViewFraction(_container);
         document.addEventListener("scroll", function() {
             //so the value is "dirty", next time, if we need to use it, need to call
             //getViewFraction again.
-            _visFactor2 = -1; //_helpers.getViewFraction(_container);
+            _visFactor2 = -1; //jxvhelper.getViewFraction(_container);
         });
         _triggerEarlyBirdP();
     }
@@ -588,7 +589,7 @@ function createObject_(options, ampIntegration) {
         /* 
         if (!_evtsHelperBlock) {
             _evtsHelperBlock = JSON.parse(JSON.stringify(unfiredOneTimeEvtsSeed_));
-            _evtsHelperBlock.trackerBase = _helpers.getTrackerBase() + '&accountid=' + _options.accountid + 
+            _evtsHelperBlock.trackerBase = jxvhelper.getTrackerBase() + '&accountid=' + _options.accountid + 
                      (_options.customid ? '&customid='+ _options.customid: '') +
                      '&autoplay=' + _options.autoplay,
             _evtsHelperBlock.vposition = -1;
@@ -596,7 +597,7 @@ function createObject_(options, ampIntegration) {
         */
         if (!_evtsHelperBlock) {
             _evtsHelperBlock = JSON.parse(JSON.stringify(unfiredOneTimeEvtsSeed_));
-            _evtsHelperBlock.trackerBase = _helpers.getTrackerBase(_options) + '&accountid=' + _options.accountid + 
+            _evtsHelperBlock.trackerBase = jxvhelper.getTrackerBase(_options) + '&accountid=' + _options.accountid + 
                      (_options.customid ? '&customid='+ _options.customid: '') +
                      '&autoplay=' + _options.autoplay,
             _evtsHelperBlock.vposition = -1;
@@ -869,7 +870,7 @@ function createObject_(options, ampIntegration) {
 
      
      var _load = function(idsAreInternal, param, playEndCB, forcePlatform) {
-        if (!_helpers.isBrowserSupported()) { 
+        if (!jxvhelper.isBrowserSupported()) { 
             //DO NOTHING.
             return; 
         }
@@ -1352,9 +1353,9 @@ function createObject_(options, ampIntegration) {
     function _writeCookie(playhead) {
         //no need to call this every time.
         if (playhead == -1)
-            _helpers.deleteVStoredPlayhead(_currVid);
+            jxvhelper.deleteVStoredPlayhead(_currVid);
         else                
-            _helpers.setVStoredPlayhead(_currVid, playhead);
+            jxvhelper.setVStoredPlayhead(_currVid, playhead);
     }
 
     /**
@@ -1499,7 +1500,7 @@ function createObject_(options, ampIntegration) {
             }
         }
         
-       let offset = _helpers.getVStoredPlayhead(_currVid);
+       let offset = jxvhelper.getVStoredPlayhead(_currVid);
         _workoutStartModeOnce(vData.network);
         /////EASIER TO SEE: thumbnailUrl = 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/dummythumbnails/tn_corsproblem.png'; //vData.metadata.thumbnail;
         //This will always stick the thumbnail first.
@@ -1792,7 +1793,7 @@ else {
     //else we cannot even get any pageurl info properly.
     //MOVE IT OUT?
     //if (!window.AmpVideoIframe) {
-      //  _helpers.sendScriptLoadedTracker();
+      //  jxvhelper.sendScriptLoadedTracker();
     //}
 }
 

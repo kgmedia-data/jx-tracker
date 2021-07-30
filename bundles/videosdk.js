@@ -28,8 +28,11 @@ cssmgr.init(stylesSet.getCls(), stylesSet.getStyles());
 const mpginfo                           = require('../components/basic/pginfo');
 modulesmgr.set('basic/pginfo',          mpginfo);
 
-const helpers                           = require('../components/video/helpers');
-modulesmgr.set('video/helpers',         helpers);
+const common                            = require('../components/basic/common');
+modulesmgr.set('basic/common',         common);
+
+const jxvhelper                           = require('../components/video/jxvideo-helper');
+modulesmgr.set('video/jxvideo-helper', jxvhelper);
 
 const consts                            = require('../components/video/consts'); 
 modulesmgr.set('video/consts',          consts);
@@ -86,7 +89,7 @@ window.JX = {
         let metadata = ampIntegration.getMetadata();
         let canonUrl = metadata.canonicalUrl;
         options.pageurl = canonUrl;//augment
-        helpers.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
+        jxvhelper.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
         return (makePlayer(options, ampIntegration));
     }
 };
@@ -95,6 +98,6 @@ window.JX = {
 // Dun have ids etc ready yet, it is ok.
 if (!window.AmpVideoIframe) {
     //get some basic info first
-    helpers.sendScriptLoadedTracker(pginfo);
+    jxvhelper.sendScriptLoadedTracker(pginfo);
 }
 

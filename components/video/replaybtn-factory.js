@@ -1,6 +1,6 @@
 
 const modulesmgr                = require('../basic/modulesmgr');
-const _helpers                  = modulesmgr.get('video/helpers');
+const common                    = modulesmgr.get('basic/common');
 const cssmgr                    = modulesmgr.get('video/cssmgr');
 const hideCls                   = cssmgr.getRealCls('hideCls');
 const replayBtnCls              = cssmgr.getRealCls('replayBtnCls');
@@ -22,7 +22,7 @@ let MakeOneReplayButton_ = function(container, position, clickCB) {
       }
 
       if (clickCB) {
-        _helpers.addListener(_replayButton, 'click', clickCB);
+        common.addListener(_replayButton, 'click', clickCB);
       }
 
       container.appendChild(_replayButton);

@@ -5,7 +5,7 @@
  * jxvideo.1.3.min.s)
  **/
  const modulesmgr            = require('../basic/modulesmgr');
- const _helpers              = modulesmgr.get('video/helpers');
+ const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
  const adDivCls              = cssmgr.getRealCls('adDivCls');
  const hideCls               = cssmgr.getRealCls('hideCls');
@@ -45,7 +45,8 @@
     ["jxadstart", "STARTED"]
  ];
 
- function MakeOneAdObj_(container, vid, fcnVector, controlsObj) {
+ function MakeOneAdObj_(container, vid, fcnVector, controlsObj, progressBar) {
+    var _doProgressBar = true;
     var _forceWidth = 0;
     var _forceHeight = 0;
     var _adEnduredVec = [0,0,0,0,0];//help us just add up in this ad slot how long the fella watched ads
@@ -521,25 +522,25 @@
     };
     var _createControls = function() {
         if (!_ctrls) {
-            //false: dun want progress bar.
-            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), false, _controlsObj);
+            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), _doProgressBar, _controlsObj);
         }
         _ctrls.hide();
     };
     var _createUIElt = function() {
-        if (!_adDiv) _adDiv = _helpers.newDiv(_container, "div", "", adDivCls);
+        if (!_adDiv) _adDiv = common.newDiv(_container, "div", "", adDivCls);
         _adDiv.classList.add(adHideCls);
         // _adDiv.style.display = 'none'; //HACK Renee put in this fix. Without this
         //during countdown the content controls are not showing
     };
     
     //constructor
-    function FactoryOneAd(container, vid, fcnVector, controlsObj) {
+    function FactoryOneAd(container, vid, fcnVector, controlsObj, progressBar = true) {
         _vid = vid;
         _container = container;
         _pFcnVector = fcnVector;
         _width = container.offsetWidth;
         _height = container.offsetHeight;
+        _doProgressBar = progressBar;
         _controlsObj = controlsObj ? JSON.parse(JSON.stringify(controlsObj)): null;
     }
 
@@ -580,7 +581,7 @@
         _clearResizeListeners(); //paranoia
 
         return new Promise(function(resolve, reject) {
-            _helpers.loadIMAScriptP().then(function() {
+            common.loadIMAScriptP().then(function() {
                 google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
                 google.ima.settings.setNumRedirects(maxNumVastRedirects_);
 
@@ -633,6 +634,7 @@
     };
     FactoryOneAd.prototype.playOrStartAd = function() {
         if (!_aStartApiCalled) {
+            _aStartApiCalled = true;
             _startAd();
             return;
         }
@@ -675,7 +677,7 @@
         _pFcnVector.setContentMuteState(false);
     }
 
-    let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj);
+    let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj, progressBar);
     return ret;
 };
 
