@@ -360,7 +360,8 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             else if (config && config.tag) _adReqParams.tag = config.tag;
             else if (crData) _adReqParams.crJson = crData;
             
-            _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls);
+            //the last param is about whether to do process bar:
+            _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls, false);
             if (_eventsVector) {
                 let imaSubset = _eventsVector.filter((e) => imaEventsSubset_.indexOf(e)> -1);
                 _adObj.subscribeToEvents(

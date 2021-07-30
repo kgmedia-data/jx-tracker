@@ -61,7 +61,7 @@
      /** append specified style property to specified element */
      var _setStyleToElement =  function(el, prop, val) {
          _vendors.forEach(function(vendor) {
-             var p = _common.toCamelCase(vendor + prop);
+             var p = common.toCamelCase(vendor + prop);
              if(p in el.style) {
                  el.style[p] = val;
                  }

@@ -89,7 +89,7 @@ window.JX = {
         let metadata = ampIntegration.getMetadata();
         let canonUrl = metadata.canonicalUrl;
         options.pageurl = canonUrl;//augment
-        helpers.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
+        jxvhelper.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
         return (makePlayer(options, ampIntegration));
     }
 };
@@ -98,6 +98,6 @@ window.JX = {
 // Dun have ids etc ready yet, it is ok.
 if (!window.AmpVideoIframe) {
     //get some basic info first
-    helpers.sendScriptLoadedTracker(pginfo);
+    jxvhelper.sendScriptLoadedTracker(pginfo);
 }
 

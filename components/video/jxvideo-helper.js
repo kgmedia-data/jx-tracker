@@ -40,7 +40,7 @@ function MakeOneHelperObj_() {
         _unsent.loaded = 0; //1 --> 0
         _scriptLoadedTime = Date.now();
         let trackerBase = this.getTrackerBase(options);
-        let url = trackerBase + "&action=loaded&debug="+options.dbgVersion + "_";
+        let url = trackerBase + "&device=amp&action=loaded&debug="+options.dbgVersion + "_";
         fetch(url, {
             method: 'get',
             credentials: 'include' 
@@ -126,9 +126,6 @@ function MakeOneHelperObj_() {
           //return (elementHeightInView / window.innerHeight) ;
           return (elementHeightInView / (elementPos.bottom - elementPos.top)) ;
     }
-    FactoryOneHelper.prototype.injectStyles = function(stylesString, styleName) {
-         _acss(stylesString, styleName);
-    }
     FactoryOneHelper.prototype.getNetworkType = function() {
         var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         if (connection) {
@@ -138,12 +135,6 @@ function MakeOneHelperObj_() {
         else {
             return 'unknown';
         }
-    }
-
-    FactoryOneHelper.prototype.toCamelCase = function(str) {
-        return str.toLowerCase().replace(/(\-[a-z])/g, function($1) {
-            return $1.toUpperCase().replace('-', '');
-         });
     }
 
     /**
@@ -250,45 +241,7 @@ function MakeOneHelperObj_() {
         return _loadShakaProm;
     };
 
-    FactoryOneHelper.prototype.addListener = function(e, event, h) {
-        if(e.addEventListener) {
-            e.addEventListener(event, h, false);
-        } else if(e.attachEvent) {
-            e.attachEvent('on' + event, h);
-        } else {
-            e['on' + event] = h;
-        }
-    };
-    FactoryOneHelper.prototype.removeListener = function(e, event, h) {
-        if (e.removeEventListener) {    // all browsers except IE before version 9
-            e.removeEventListener (event, h, false);
-        }
-        else {
-            if (e.detachEvent) {        // IE before version 9
-                e.detachEvent (event, h);
-            }
-        }
-    }
-    FactoryOneHelper.prototype.newDiv = function(p, t, h, c, id) {
-        var nd = document.createElement(t);
-        if(h && h != "") nd.innerHTML = h;
-        if(c && c != "") nd.className = c;
-        if(id) nd.id = id;
-        p.appendChild(nd);
-        return nd;
-    };
-    FactoryOneHelper.prototype.acss = function(stylesArr, id) {
-        _acss(stylesArr, id);
-    }
-
-    function _acss(stylesArr, id) {
-        var head = document.getElementsByTagName('HEAD')[0];
-        var s = document.createElement("style");
-        if(id) s.id = id;
-        s.innerHTML = stylesArr;
-        head.appendChild(s);
-    };
-
+    
     const cookieLifeDays_ = 1;
     const playheadCookieName_ = '_jxvideopos';
     var _playheadArr = null;

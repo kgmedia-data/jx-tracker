@@ -45,7 +45,8 @@
     ["jxadstart", "STARTED"]
  ];
 
- function MakeOneAdObj_(container, vid, fcnVector, controlsObj) {
+ function MakeOneAdObj_(container, vid, fcnVector, controlsObj, progressBar) {
+    var _doProgressBar = true;
     var _forceWidth = 0;
     var _forceHeight = 0;
     var _adEnduredVec = [0,0,0,0,0];//help us just add up in this ad slot how long the fella watched ads
@@ -521,8 +522,7 @@
     };
     var _createControls = function() {
         if (!_ctrls) {
-            //false: dun want progress bar.
-            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), false, _controlsObj);
+            _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), _doProgressBar, _controlsObj);
         }
         _ctrls.hide();
     };
@@ -534,12 +534,13 @@
     };
     
     //constructor
-    function FactoryOneAd(container, vid, fcnVector, controlsObj) {
+    function FactoryOneAd(container, vid, fcnVector, controlsObj, progressBar = true) {
         _vid = vid;
         _container = container;
         _pFcnVector = fcnVector;
         _width = container.offsetWidth;
         _height = container.offsetHeight;
+        _doProgressBar = progressBar;
         _controlsObj = controlsObj ? JSON.parse(JSON.stringify(controlsObj)): null;
     }
 
@@ -676,7 +677,7 @@
         _pFcnVector.setContentMuteState(false);
     }
 
-    let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj);
+    let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj, progressBar);
     return ret;
 };
 
