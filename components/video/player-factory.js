@@ -1,6 +1,7 @@
 
 const modulesmgr                = require('../basic/modulesmgr');
-const _helpers                  = modulesmgr.get('video/helpers');
+const common                    = modulesmgr.get('basic/common');
+const jxvhelper                 = modulesmgr.get('video/jxvideo-helper');
 const consts                    = modulesmgr.get('video/consts');
 const MakeOneAdObj              = modulesmgr.get('video/admgr-factory');
 const MakeOnePlayerControlsObjD = modulesmgr.get('video/ctrls-factory');
@@ -191,7 +192,7 @@ window.jxPromisePolyfill        = 'none';
                     if (_jxPreloadOverride == 'none') {
                         preloadString = 'none';
                     }
-                    _contentDiv = _helpers.newDiv(
+                    _contentDiv = common.newDiv(
                         _container,
                         "div",
                         '<video class="' + playerCls + '" width="100%" height="100%" id="' + JXPlayerID + '-' + r + '" muted controls playsinline preload="' + preloadString + '"></video>',
@@ -727,7 +728,7 @@ window.jxPromisePolyfill        = 'none';
         };
         var _createStripMessage = function(remaining) {
             const stripStyle = "#JXMessage{position: absolute;padding: 9px;bottom: 20px;padding-right: 32px;right: 0px;background: rgba(0, 0, 0, 0.74);z-index: 2;color: rgba(255, 255, 255, 0.8);border-radius: 4px;font-size: 13px;letter-spacing: 1px;}";
-            _helpers.acss(stripStyle);
+            common.acss(stripStyle);
             _stripMessageDiv = document.createElement('span');
             _stripMessageDiv.id = 'JXMessage';
             _stripMessageDiv.style.fontFamily = '"Open Sans",sans-serif';
@@ -1043,7 +1044,7 @@ window.jxPromisePolyfill        = 'none';
                     let newDim = _boundSizeManagerFcn();
                     //the dim of the video area has changed since we last checked:
                     if (newDim) {
-                        let maxH = _helpers.getClosestDamHLSHeight(newDim.width, newDim.height);
+                        let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
                         _shakaPlayer.configure({
                             abr: {
                                 restrictions: {
@@ -1179,7 +1180,7 @@ window.jxPromisePolyfill        = 'none';
                 _logoDiv.className = iconCls + ' ' + (logoObj.position? logoObj.position:'');
 
                 if(logoObj.link) {
-                    _helpers.addListener(_logoDiv, 'click', function() {
+                    common.addListener(_logoDiv, 'click', function() {
                         window.open(logoObj.link, '_blank');
                     })
                 }
@@ -1197,7 +1198,7 @@ window.jxPromisePolyfill        = 'none';
         function _newAShakaPlayer(video, sizeMgrFcn) {
             shakaPlayer = new shaka.Player(video);
             let newDim = sizeMgrFcn(true);//true means force return an object whether there was a change or not
-            let maxHeight2Req = _helpers.getClosestDamHLSHeight(newDim.width, newDim.height);
+            let maxHeight2Req = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
             shakaPlayer.configure({
                 streaming: {
                     useNativeHlsOnSafari: false,
@@ -1234,7 +1235,7 @@ window.jxPromisePolyfill        = 'none';
                     loadPlayerProm = Promise.resolve('native');
                 }
                 else {
-                    loadPlayerProm = _helpers.loadShakaScriptP('shaka','mp4');
+                    loadPlayerProm = jxvhelper.loadShakaScriptP('shaka','mp4');
                 }
                 loadPlayerProm.then(function(method) { //TMP HACK was async
                     if(method == 'native') {

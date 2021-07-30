@@ -1,5 +1,5 @@
 const modulesmgr = require('../basic/modulesmgr');
-const _helpers = modulesmgr.get('renderer/helpers');
+const common     = modulesmgr.get('basic/common');
 
 function mergeSettings(p, u) {
     let o = {};
@@ -42,7 +42,7 @@ function attachUniversalBlob_(attachNode, jxParams, universal, clickurl, clicktr
         };
     }
     const _jxTitleStyle = ".jxTitleContainer{overflow:auto;text-align:left;margin-bottom:5px;display:table;font-family:Arial;font-size:14px;}.jxImgBlock{float:left; max-width:70px;min-width:40px;margin-right:10px;}.jxImg{max-width: 100%;height: auto;width: auto;}.jxBlockTitle {margin-top:5px;display:table-cell;vertical-align:middle;}.jxBlockActions{margin-top:5px;margin-bottom:5px;}.jxInfo{float:left;height:15px;width:15px;border:2px solid #bbb;color:#bbb;border-radius:50%;display:table;font-size:10px;}.jxInfo a{text-decoration:none;color:#bbb;}.jxInfo a:hover{text-decoration:none;color:#bbb;}.jxInfo a:visited{text-decoration:none;color:#bbb;}.jxButtonBlock{float:right;margin-right:5px;}.jxTitle {display: inline;}" + ".jxTitle a:link,.jxTitle a:visited{" + merged.titleCSS + "}.jxTitle a:hover{" + merged.titleCSSHover + "}.jxDescription{" + merged.descriptionCSS + "}.jxButton {font-family: Arial, Helvetica, sans-serif;font-size: 11px;color: #494949 !important;background: #ffffff;padding: 5px;border: 2px solid #494949 !important;border-radius: 6px;display: inline-block;transition: all 0.3s ease 0s;}.jxButton:hover {color: #494949 !important;border-radius: 50px;border-color: #494949 !important;transition: all 0.3s ease 0s;}";
-    _helpers.acss(_jxTitleStyle, 'jxTitleStyle');
+    common.acss(_jxTitleStyle, 'jxTitleStyle');
     let jxImgBlock, jxInfo, jxBlockTitle, jxButtonBlock;
     let jxTitleDiv = document.createElement('div');
     let jxActionsDiv = document.createElement('div');
@@ -59,14 +59,14 @@ function attachUniversalBlob_(attachNode, jxParams, universal, clickurl, clicktr
     if (merged.nested == 0) {
         if (merged.thumbnail) {
             if (merged.thumbnailurl) {
-                jxImgBlock = _helpers.newDiv(jxTitleDiv, 'div',
+                jxImgBlock = common.newDiv(jxTitleDiv, 'div',
                     '<a href="' + merged.thumbnailurl + '" target="_blank"><img src="' + merged.thumbnail + '" class="jxImg"/></a>',
                     'jxImgBlock');
             } else {
-                jxImgBlock = _helpers.newDiv(jxTitleDiv, 'div',
+                jxImgBlock = common.newDiv(jxTitleDiv, 'div',
                     '<a href="' + merged.clickurl + '" target="_blank"><img src="' + merged.thumbnail + '" class="jxImg"/></a>',
                     'jxImgBlock');
-                _helpers.addListener(jxImgBlock, 'click', (e) => {
+                common.addListener(jxImgBlock, 'click', (e) => {
                     merged.click();
                 });
             }
@@ -77,29 +77,29 @@ function attachUniversalBlob_(attachNode, jxParams, universal, clickurl, clicktr
             jxBlockTitle.className = 'jxBlockTitle';
             jxTitleDiv.appendChild(jxBlockTitle);
 
-            jxTitle = _helpers.newDiv(jxBlockTitle, 'h3',
+            jxTitle = common.newDiv(jxBlockTitle, 'h3',
                 '<a href="' + merged.clickurl + '" target="_blank">' + merged.title + '</a>',
                 'jxTitle');
-            _helpers.addListener(jxTitle, 'click', (e) => {
+            common.addListener(jxTitle, 'click', (e) => {
                 merged.click();
             });
         }
         if (merged.description) {
-            jxDescription = _helpers.newDiv(jxBlockTitle, 'p', merged.description, 'jxDescription');
+            jxDescription = common.newDiv(jxBlockTitle, 'p', merged.description, 'jxDescription');
         }
 
         // Configuring the action block
         jxActionsDiv.style.overflow = 'auto';
         jxActionsDiv.className = 'jxBlockActions';
-        jxInfo = _helpers.newDiv(jxActionsDiv, 'div',
+        jxInfo = common.newDiv(jxActionsDiv, 'div',
             '<div style="display: table-cell;vertical-align: middle;"><a href="https://www.jixie.io/privacy-policy/" target="_blank">i</a></div>',
             'jxInfo');
 
         if (merged.clickurl && merged.buttonLabel) {
-            jxButtonBlock = _helpers.newDiv(jxActionsDiv, 'div',
+            jxButtonBlock = common.newDiv(jxActionsDiv, 'div',
                 '<a href="' + merged.clickurl + '" class="jxButton" target="_blank">' + merged.buttonLabel + '</a>',
                 'jxButtonBlock');
-            _helpers.addListener(jxButtonBlock, 'click', (e) => {
+            common.addListener(jxButtonBlock, 'click', (e) => {
                 merged.click();
             });
         }
@@ -112,10 +112,10 @@ function attachUniversalBlob_(attachNode, jxParams, universal, clickurl, clicktr
         jxActionsDiv.style.overflow = 'auto';
         jxActionsDiv.className = 'jxBlockActions';
         if (merged.nested > 0) { // if nested is negative then we don't display anything
-            jxInfo = _helpers.newDiv(jxActionsDiv, 'div',
+            jxInfo = common.newDiv(jxActionsDiv, 'div',
                 '<div style="display: table-cell;vertical-align: middle;"><a href="https://inside.kompas.com/policy" target="_blank">i</a></div>',
                 'jxInfo');
-            jxButtonBlock = _helpers.newDiv(jxActionsDiv, 'div',
+            jxButtonBlock = common.newDiv(jxActionsDiv, 'div',
                 '<div style="padding-top: 10px;color:grey;font-family:Arial;font-size:10px;">Advertisement</div>',
                 'jxButtonBlock');
         }

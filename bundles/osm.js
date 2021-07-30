@@ -6,8 +6,8 @@ if (window.jxoutstreammgr && window.jxoutstreammgr.init) {
 }
 const modulesmgr    = require('../components/basic/modulesmgr');
 
-const helpers                       = require('../components/renderer/helpers');
-modulesmgr.set('renderer/helpers',     helpers);
+const common                       = require('../components/basic/common');
+modulesmgr.set('basic/common',     common);
 
 const univelements  = require('../components/renderer/univelements-stub');
 modulesmgr.set('renderer/univelements',         univelements);

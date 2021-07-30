@@ -1,6 +1,6 @@
 
 const modulesmgr                = require('../basic/modulesmgr');
-const _helpers                  = modulesmgr.get('video/helpers');
+//Note used currently: const common                    = modulesmgr.get('basic/common');
 const cssmgr                    = modulesmgr.get('video/cssmgr');
 const spinnerCls                = cssmgr.getRealCls('spinnerCls');
 const hideCls                   = cssmgr.getRealCls('hideCls');

@@ -67,6 +67,13 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
 
     common_(rtjson);
     if (dbjson.adparameters.placing === 'fixed') {
+        //hack and test 1:
+        //dbjson.adparameters.script_id = 'AV61012c6aa4f8284ae05e4fe4';
+        //dbjson.adparameters.script_src = 'https://tg1.selectmedia.asia/api/adserver/spt?AV_TAGID=61012c6aa4f8284ae05e4fe4&AV_PUBLISHERID=59b23d43073ef46aa456f9a8';
+        //hack and test 2:
+        //dbjson.adparameters.script_id = 'AV61012d8067980e6640000849';
+        //dbjson.adparameters.script_src = 'https://tg1.selectmedia.asia/api/adserver/spt?AV_TAGID=61012d8067980e6640000849&AV_PUBLISHERID=59b23d43073ef46aa456f9a8';
+
         //Renee: 20210330 note:
         //apparently this got fixed sometime down the line. So this is no longer an issue.
         //I keep the constructs here, though the code all commented out

@@ -33,8 +33,8 @@ function common_(rtjson) {
 function inject_(pageId) {
     //to be bound 
 
-    pageId = '126472'; //100514 is the amp.kompas real one '126472'; //hack //128408 for no ad
-    console.log(`HACK REMEMBER THIS IS TESTING PLACEMENT`);
+    //pageId = '126472'; //100514 is the amp.kompas real one '126472'; //hack //128408 for no ad
+    //console.log(`HACK REMEMBER THIS IS TESTING PLACEMENT`);
     window._teads_amp = {
         allowed_data: ['pid', 'tag'],
         mandatory_data: ['pid'],

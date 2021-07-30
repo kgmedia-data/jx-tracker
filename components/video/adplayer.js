@@ -5,11 +5,10 @@
  * i.e. plays the role of jxvideo1.3.min.js and jxvideo1.4.mins.js
  */
 const modulesmgr            = require('../basic/modulesmgr');
-const _helpers              = modulesmgr.get('video/helpers');
+const common                = modulesmgr.get('basic/common');
 const MakeOneAdObj          = modulesmgr.get('video/admgr-factory');
 const MakeOneSpinner        = modulesmgr.get('video/spinner-factory');
 
-//TOD
 //so we should have stub for all of them.
 //We can build the new counterpart for jxvideo1.3.min.js
 //to use vast-dummy.js and horizbanner-factory-dummy.js
@@ -28,6 +27,20 @@ const thumbnailCls          = cssmgr.getRealCls('thumbnailCls');
 const hideCls               = cssmgr.getRealCls('hideCls');
 const commonBigPlayBtnCls   = cssmgr.getRealCls('commonBigPlayBtnCls');
  
+//of all the subscribable stuff for jxvideo1.3.min.js, this subset 
+//we need from the admgr layer (IMA based)
+const imaEventsSubset_ =[ 
+    "jxadended", 
+    "jxadfirstQuartile",
+    "jxadthirdQuartile",
+    "jxadmidpoint",
+    "jxadskipped", 
+    "jxadalladscompleted",
+    "jadclick", 
+    "jxadimpression",
+    "jxadstart"
+];
+
 // Add a listener of the event to the element e which calls the function handler h
 // General helper funciton
 function addListener(e, event, h) {
@@ -41,182 +54,27 @@ function addListener(e, event, h) {
     }
 }
 
-function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector = {}) {
+function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
     var _pDiv               = null;
     var _playerElt          = null;
     var _comboDiv           = null;
     var _thumbnailDiv       = null;
-    var _bigPlayBtn         = null;
+    /* var _bigPlayBtn         = null; */
     var _context            = null;
+    var _adReqParams        = {};
 
     var _spinner            = null;
     var _replayBtn          = null;
     
     var _adObj              = null;
-    var _env = null;
+    var _env                = null;
 
-    var _startAdWhenAvail   = true;
     var _eventsVector       = [];
     var _containerId        = null;
 
     var _videoSrc           = null; 
 
     var _boundImgLoadedFcn  = null;
-
-    /**
-     * 
-     * @param {*} masterObj 
-     * @param {*} pos 
-     * @returns 
-     */
-    function _doImgBanner(masterObj, pos) {
-        let obj = masterObj.companion[pos];
-        let pElmt = document.createElement('div'); // create a div 
-        pElmt.style.cursor = "pointer";
-        pElmt.style.margin = "auto";
-        // create an img tag
-        //what class? We dun have it yet?
-        pElmt.innerHTML = '<img src="' + obj.url + '" width="100%" height="' + obj.height + '" class="jxImg"/>';
-        // set the width and height of the div
-        if (obj.width && obj.height) {
-            pElmt.style.width = obj.width + "px";
-            pElmt.style.height = obj.height + "px";
-        } else {
-            pElmt.style.width = "100%";
-            pElmt.style.maxWidth = "100%";
-        }
-        if (obj.clicktracker) {
-            addListener(pElmt, 'click', function() {
-                fireTracker(obj.tracker4click)
-            });
-        }
-        return pElmt;
-   }
-
-    /**
-     * 
-     * @param {*} e 
-     * @returns 
-     */
-    function __noGoogleAdListener(e) {
-        let pos = (e.data == 'jxnobanneradtop' ? 'top' : (e.data == 'jxnobanneradbottom'? 'bottom': null));
-        if (!pos) return;
-        let sizeObj = this.masterObj;           
-        let iFr = document.getElementById(pos+'banner'); 
-        iFr.style.display = "none"; // set the display of iframe to none
-        if (sizeObj.companion && sizeObj.companion[pos]) {
-            delete sizeObj.companion[pos];
-        }
-        let h = sizeObj.height;
-        if (pos == 'top' && sizeObj.companion['bottom']) 
-            h += sizeObj.companion['bottom'].height + sizeObj.companion['bottom'].gap;
-        else if (pos == 'bottom' && sizeObj.companion['top']) 
-            h += sizeObj.companion['top'].height + sizeObj.companion['top'].gap;
-        //change size
-        parent.postMessage('jxmsg::' + JSON.stringify({'type': 'size',params: {'height': h}}), '*');
-    }
-    var _boundNoGAdListener = null;
-
-    function _doScriptBanner(masterObj, pos) {
-        let obj = masterObj.companion[pos];
-        let script = null;
-        let ifr = null;
-        try {
-            script = atob(obj.script); // decode the script
-        }
-        catch (e) {
-        }
-        let s = '';
-        if (script && script.includes("<script") && script.includes("googletag.pubads()")) {
-            s = `googletag.pubads().addEventListener('slotRenderEnded', function(event) {
-                    if (event.isEmpty) {
-                        var id = event.slot.getSlotElementId();
-                        var x = document.getElementById(id);
-                        x.parentElement.style.display = "none";
-                        parent.postMessage("jxnobannerad${pos}", "*");
-                    }
-                });`;
-                if (!_boundNoGAdListener) {
-                    _boundNoGAdListener = __noGoogleAdListener.bind({ masterObj: masterObj });                    
-                    window.addEventListener('message', _boundNoGAdListener, false);
-                    setTimeout(function() {
-                        if (_boundNoGAdListener) {
-                            window.removeEventListener('message', _boundNoGAdListener);
-                            _boundNoGAdListener = null;
-                        }
-                    }, 5000);
-                }
-        }
-        else {
-            s = script;
-        }
-        ifr = document.createElement('iframe');
-        ifr.id = pos + "banner";
-        ifr.style.border = 'none';
-        ifr.setAttribute('frameborder', '0');
-        ifr.setAttribute('scrolling', 'no');
-        if (obj.width && obj.height) {
-            ifr.style.width = obj.width + "px";
-            ifr.style.height = obj.height + "px";
-        } else { //??
-            ifr.onload = function(e) {
-                ifr.style.width = e.target.contentWindow.document.body.scrollWidth;
-                ifr.style.height = e.target.contentWindow.document.body.scrollHeight;
-            }
-        }
-        let interval = setInterval(function() {
-            if (ifr.contentWindow.document || ifr.contentDocument) {
-                clearInterval(interval);
-                    var doc = ifr.contentWindow.document || ifr.contentDocument;
-                    var jxjs = doc.createElement('script');
-                    if (s != "") {
-                        var script_body = document.createTextNode(s);
-                        jxjs.appendChild(script_body);
-                    }
-                    doc.open();
-                    doc.write('<!DOCTYPE html>'+
-                        '<html>'+
-                            '<head>'+
-                                '<meta name="viewport" content="width=device-width, initial-scale=1">'+
-                            '</head>'+
-                            '<body style="margin: 0;">'+
-                                script
-                                +jxjs.outerHTML+
-                            '</body>'+
-                        '</html>');
-                    doc.close();
-                    focus();
-                    addListener(window, 'blur', function(e) {
-                        if (document.activeElement == ifr) {
-                            fireTracker(obj.tracker4click, position == 'top' ? 'click2' : 'click3');
-                        }
-                    });
-
-            }
-        }, 500);
-        return ifr;
-    }
-
-    /**
-     * 
-     * @param {*} adDiv 
-     * @param {*} masterObj 
-     * @param {*} pos 
-     */
-    function _createBanner(adDiv, masterObj, pos) {
-        let obj = masterObj.companion ? masterObj.companion[pos]: null;
-        if (obj.gap > 0) {
-            adDiv.style[pos==='top'? 'marginTop':'marginBottom'] = obj.gap + "px";
-        }
-        let pElmt = obj.type === 'image' ? _doImgBanner(masterObj, pos) : _doScriptBanner(masterObj, pos);
-        if (pElmt) {
-            if (pos == 'top') { 
-                adDiv.parentNode.insertBefore(pElmt, adDiv); // insert above the ad div container
-            } else if (pos == 'bottom') { 
-                adDiv.parentNode.appendChild(pElmt); // insert below the ad div container
-            }
-        }
-    }
 
     /**
      * 
@@ -228,31 +86,22 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             tmp = document.body;
         }
         
-        _pDiv = _helpers.newDiv(tmp,'div','',''); 
+        _pDiv = common.newDiv(tmp,'div','',''); 
         _pDiv.style.width = '100%';
         _pDiv.style.height = '100%';
         _pDiv.style.position = 'relative';
         
-        /*
-        //combo div is ad or content.
-        _comboDiv = _helpers.newDiv(_pDiv, "div", "", comboDivCls); //this is not the real ad div
-        _contentDiv = _helpers.newDiv(_comboDiv, 'div', `<video id="idJxPlayer" class=${playerCls} controls muted playsinline></video>`, contentDivCls); 
-        _playerElt = document.getElementById('idJxPlayer');
-        //pretend there is a content:
-        //just to test the content stuff can work and show properly if we need to
-        //_playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/1181736/3001004-1181736_360.mp4';
-        */
        //combo div is ad or content.
-       _comboDiv = _helpers.newDiv(_pDiv, "div", "", comboDivCls); //this is not the real ad div
-       _contentDiv = _helpers.newDiv(_comboDiv, 'div', `<video id="idJxPlayer" class=${playerCls} controls muted playsinline></video>`, contentDivCls); 
-       _contentDiv.classList.add(hideCls);
+       _comboDiv = common.newDiv(_pDiv, "div", "", comboDivCls); //this is not the real ad div
+       _contentDiv = common.newDiv(_comboDiv, 'div', `<video id="idJxPlayer" class=${playerCls} controls muted playsinline></video>`, contentDivCls); 
+       //WHY DO THIS HERE ?? _contentDiv.classList.add(hideCls);
 
        if (_env) {
            if (_env.defaultImage) {
-               _thumbnailDiv = _helpers.newDiv(_comboDiv, "img", null, thumbnailCls);
+               _thumbnailDiv = common.newDiv(_comboDiv, "img", null, thumbnailCls);
                _thumbnailDiv.style.cursor = 'pointer';
                if (_env.clickurl){
-                   _helpers.addListener(_thumbnailDiv, 'click', function() {
+                    common.addListener(_thumbnailDiv, 'click', function() {
                        window.open(_env.clickurl, '_blank');
                    });
                }
@@ -265,16 +114,9 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                    }
                }
            }
-           if (_env.video)
-            _videoSrc = _env.video;
-           //_videoSrc = 'https://creative-ivstream.ivideosmart.com/3001004/1181736/3001004-1181736_360.mp4'; // HACK
        }
-
        _playerElt = document.getElementById('idJxPlayer');
        addListener(_playerElt, 'ended', _onContentEnded);
-       //pretend there is a content:
-       //just to test the content stuff can work and show properly if we need to
-       if (_videoSrc) _playerElt.src = _videoSrc;
     }
 
     var _manualReplayCB = function() {
@@ -299,6 +141,11 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         } else if (_thumbnailDiv) {
             _thumbnailDiv.classList.remove(hideCls);
         } else {
+            //This one is for the universal unit to get 
+            //If player sdk (jxvideo1.3.min.js) then this
+            //is just wasted 
+            //wait .... we have to subscribe to it bah.
+            //for the case of universal.
             parent.postMessage("jxadended", '*');
         }
     }
@@ -319,7 +166,6 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         if (_spinner) _spinner.hide();
     }
 
-
     var _vectorForAdMgr = {
         report : function() {},
         setContentMuteState: function() {},
@@ -330,32 +176,17 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         onAdPause: function() {},
         onAdPlaying: function() {},
         switch2Cnt: function() {
-            console.log(`switch2cnt is called??!`);
             _onAdEnded();
-            /*
-            //if it is unversal then it gets this msg and will kill this whole thing.
-            //was parent.postMessage("jxadended", '*'); 
-            //was _playerElt.play();
-            if (_videoSrc) {
-                _context = 'content';
-                _contentDiv.classList.remove(hideCls);
-                _playerElt.play();
-            } else if (_thumbnailDiv) {
-                _thumbnailDiv.classList.remove(hideCls);
-            } else {
-                parent.postMessage("jxadended", '*');
-            }*/
         },
         switch2Ad: function() {
-            console.log("switch2Ad was called!");
-            //WAS _playerElt.pause();
             _context = 'ad';
             _showSpinner();
             if (_thumbnailDiv) _thumbnailDiv.classList.add(hideCls)
-            parent.postMessage("jxhasad", '*'); 
             _playerElt.pause();
         }
-    };            
+    };         
+    //What is this for and when is this used?  
+    /* 
     var _createBigPlayBtn = function() {
         if (!_bigPlayBtn) {
             _bigPlayBtn = document.createElement("a");
@@ -370,7 +201,7 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             }
             _comboDiv.appendChild(_bigPlayBtn);
         }
-    };
+    };*/
 
     var imgLoadedFcn = function() {
         try {
@@ -382,81 +213,13 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             this.cb();
         }
     }    
-    
-    /**
-     * This is from the ads SDK usage jxvideo.1.3.min.js
-     * @param {*} data 
-     */
-    OneAdInstance.prototype.changeCfg = function(data) {
-        //this is the type where only got config json
-        //i.e. has creativeID unit, that kind of thing.
-        //can also get from them lah.
-        //current node is really Hard code and pretend to be 640 360
-        //no matter what.
-
-        //Another way is that your div is already styled like this
-        //of course your div should already obey the aspect ratio.
-        //then we just say we always follow your div.
-
-        let blob = {
-        }
-        //let us detect and follow your size.
-
-        if (data.video) {
-            //If they want to specify and we just stick to this.
-            //Let them do the scaling, fine.
-            //the KG usage can specify odd shaped video now.
-            //So they can specify odd shaped video if they like
-            //else we have the 640 360 default from the above.
-            blob.width = data.video.width;
-            blob.height = data.video.height;
-            //not sure if still need. may be not.
-            _comboDiv.style.width = blob.width +'px';
-            _comboDiv.style.height = blob.height + 'px';
-        }
-        else {
-            let tmp = document.getElementById(_containerId);
-            if (!tmp) {
-                tmp = document.body;
-            }
-            blob.width = tmp.offsetWidth; 
-            blob.height = tmp.offsetHeight;
-            
-            _comboDiv.style.width = '100%';
-            _comboDiv.style.height = '100%';
-            
-            //_comboDiv.style.width = blob.width +'px';
-            //_comboDiv.style.height = blob.height + 'px';
-            
-            //we are trying this for KG masterad case:
-            //already say 100%
-            //you dun give I assume all good.
-        }
-        //if (_adObj) 
-          //  _adObj.reset();
-        
-
-        _adObj = MakeOneAdObj(_comboDiv, _playerElt, _vectorForAdMgr, _env.controls);
-        //if (blob.width || blob.height) {            
-          //  _adObj.forceDimensions(blob.width, blob.height);
-        //}
-        //let domain = data.domain? data.domain:'jixie.io';
-        //let adURL = `https://ad.jixie.io/v1/video?source=sdk&domain=${domain}&creativeid=` + data.creativeid;
-        //_adObj.setAutoAdsManagerStart(true);
-        //_adObj.makeAdRequestCB(adURL, true, true, updateUniversal);
-        let domain = data.domain? data.domain:'jixie.io';
-        let adURL = `https://ad.jixie.io/v1/video?source=sdk&domain=${domain}&creativeid=` + data.creativeid;
-        _adObj.setAutoAdsManagerStart(_startAdWhenAvail);
-        _adObj.makeAdRequestCB(adURL, _startAdWhenAvail, _startAdWhenAvail ? true : false, updateUniversal);
-        if (!_startAdWhenAvail) _createBigPlayBtn();
-    }
-    
+   
     /**
      * 
      * @param {*} isVisible 
      */
      OneAdInstance.prototype.visibilityChange = function(isVisible) {
-        /////console.log(`OneAdInstance.prototype.visibilityChange = ${isVisible} ${_context} `);
+        console.log(`OneAdInstance.prototype.visibilityChange = ${isVisible} ${_context} `);
         if (_adObj && _context === 'ad') {
             if (isVisible) {
                 _adObj.playOrStartAd(); //ok this one so far is only in the admgr-factory-bc version only aaarh
@@ -466,7 +229,6 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             }
         } else if (_context === 'content') {
             if (isVisible) {
-                _playerElt.play();
             }
             else {
                 _playerElt.pause();
@@ -474,81 +236,112 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
         }
     }
 
-    function updateUniversal(v) {
-        let e;
+    //v is the value given to the callback on the adcall
+    function adOutcomeCB(v) {
+        let e = null;
         let msg = null;
         if (v == 'jxadstarted' || v == 'jxhasad') {
             _context = 'ad';
             msg = 'jxhasad'
-            e = new Event('jxhasad');
         }
         else if (v == 'jxaderrored' || v == 'jxnoad') {
             msg = 'jxnoad';
-            e = new Event('jxnoad');
         }
-        if (msg) {
-            parent.postMessage("jxhasad", '*'); 
+        if (msg == 'jxhasad' && _eventsVector.indexOf('jxhasad') > -1) {
+            e = new Event('jxhasad');
+        }
+        if (msg == 'jxnoad' && _eventsVector.indexOf('jxnoad') > -1) {
+            e = new Event('jxnoad');
         }
         if (e) {
             window.dispatchEvent(e);
-        } 
+        }
+        //if used in the universal context this is the one
+        //which is important: we are in an iframe
+        if (msg) {
+            parent.postMessage("jxhasad", '*'); 
+        }
         _hideSpinner();
 
     }
     function doNothing() {}
 
+    //the replay is also dependent on the whatever it is
     function _doReplay() {
         setTimeout(function() {
-            let vast = buildVastXml([_vastSrcBlob], true);//second param is SUPPRESS trackers
-            _adObj.setAutoAdsManagerStart(true); //since this is the second round, just play
-            _adObj.makeAdRequestFromXMLCB(vast, true, true, doNothing);
+            _makeAdRequest(_adReqParams, true);//last params is isRepeat
         }, 0);
     }
 
-    var _vastSrcBlob = {};
     /**
-     * 
-     * @param {*} data 
+     * a generic way to make ad call. whether from creative JSON (we compose
+     * the vast on the fly : possibly due to needing to do loop, suppress tracker stuff)
+     * or it can be from ad tag url or ad tag xml
      */
-    OneAdInstance.prototype.changeJson = function(crData) {
-        let adparameters = crData.adparameters;
+    var _adReqParams = {};
+    var _makeAdRequest = function(adReqParams, isRepeat) {
+        let crData = adReqParams.crJson;
+        let autoStart = isRepeat;
+        let cb = isRepeat ? doNothing: adOutcomeCB;
+
+      // OK We are making the ad call now:
+      if (crData) {
+        //This is those Jixie ads and we construct the vast XML from the JSON
+        //
+        let vastSrcBlob = crData;
+        //For testing SIMID... Normally won't come here
+        if (crData.jxsimidurl) {
+            _vastSrcBlob.subtype = 'vsimid';
+            _vastSrcBlob.url = 'https://creatives.b-cdn.net/jx/jxsimidhybrid.min.html'; //crData.jxsimidurl;
+        }
+        /////console.log(`VAST FODDER: ${crData.id}, ${crData.name} ,${crData.duration}, ${crData.clickurl}`);
+        let vast = buildVastXml([vastSrcBlob]);
+        _adObj.setAutoAdsManagerStart(autoStart); 
+        _adObj.makeAdRequestFromXMLCB(vast, true, true, cb);
+    }
+    else {
+        _adObj.setAutoAdsManagerStart(autoStart); 
+        if (adReqParams.tag) {
+            _adObj.makeAdRequestCB(adReqParams.tag, true, true, cb);
+        }
+        else if (adReqParams.xmltag)
+            _adObj.makeAdRequestFromXMLCB(adReqParams.xmltag, true, true, cb);
+        }
+    }
+    
+    var _setContainerSize = function(width, height) {
+        _comboDiv.style.width = width +'px';
+        _comboDiv.style.height = height + 'px';
+    }
+    var _triggerAd = function(crData, config) {
+        let adparameters = crData ? crData.adparameters: {};
         if (_adObj) {
             _adObj.reset();
         }
-        
-        //_playerElt.src = 'https://creative-ivstream.ivideosmart.com/3001004/954006/3001004-954006_480.mp4';
         let tmp = document.getElementById(_containerId);
         if (!tmp) {
             tmp = document.body;
         }
-        let containerW = tmp.offsetWidth;
-        let comp = { height: 0 }; //for companion
+        //companion banner 
+        let comp = { height: 0 }; 
         ['top', 'bottom'].forEach(function(banner){
             let label = banner+'banner';
             if (adparameters[label]) {
                 comp[banner] = {};
                 comp[banner] = JSON.parse(JSON.stringify(adparameters[label]));
-                //Testing and cheating and faking data
-                comp[banner].url = 'https://creatives.jixie.io/59a1361c5e23f2dcae1229fedbb4d8d5/700/pasanglklan320x100.jpeg';
-                comp[banner].gap = 0; //hack
-                comp[banner].ar = adparameters[label].width/adparameters[label].height;
-                comp[banner].width = 320;
-                comp[banner].height = 100;
-                
                 comp[banner].tracker4click = adparameters.trackers.baseurl + '?' + adparameters.trackers.parameters + '&action=click';
                 comp.height += comp[banner].height;
             }
         });
+        //ends up not very useful:
         let blob = {
             token : _containerId
         }
-        
-        if (comp.height) {
+        if (comp.height) { //i.e. there is a companion banner:
             //for video banner video case it is not responsive
             //we will do the size "as is"
             blob.width = adparameters.video.width;
             blob.height = adparameters.video.height;
-            
             blob.companion = comp;
             ['top','bottom'].forEach(function(pos) {
                 if (blob.companion[pos]) {
@@ -560,36 +353,48 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             blob.width = tmp.offsetWidth; 
             blob.height = tmp.offsetHeight;
         }
-        _comboDiv.style.width = blob.width +'px';
-        _comboDiv.style.height = blob.height + 'px';
+        _setContainerSize(blob.width, blob.height);
+        if (crData || config.tag || config.xmltag) {            
+            _adReqParams = {};
+            if (config && config.xmltag) _adReqParams.xmltag = config.xmltag;
+            else if (config && config.tag) _adReqParams.tag = config.tag;
+            else if (crData) _adReqParams.crJson = crData;
             
-        _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls);
-        if (_eventsVector) {
-            _adObj.subscribeToEvents(
-                _eventsVector, function(jxname) {
+            //the last param is about whether to do process bar:
+            _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls, false);
+            if (_eventsVector) {
+                let imaSubset = _eventsVector.filter((e) => imaEventsSubset_.indexOf(e)> -1);
+                _adObj.subscribeToEvents(
+                    imaSubset, function(jxname) {
+                    if (jxname == 'jxadended' && _env.loop != 'none') {
+                        //we don't fire the adend then.
+                        //I think we should also suppress the other events
+                        //when we are in a repeat too.
+                        //unless it is a click
+                        return;
+                    }   
                     let e = new Event(jxname);
                     window.dispatchEvent(e);
-                    console.log(`-CB--- adplayer.js ${jxname} ---- `);
+                    //console.log(`-FROM IMA CB--- adplayer.js ${jxname} ---- `);
                 }); 
+            }
+            else {
+                //if the call is from universal 
+            }
+            _makeAdRequest(_adReqParams, false);
         }
-
-        //_adObj.forceDimensions(blob.width, blob.height);
-        //we should not use any attribute of the container.
-        _vastSrcBlob = crData;
-
-        //send the jxsimidurl to the vast
-        if (crData.jxsimidurl) {
-            _vastSrcBlob.subtype = 'vsimid';
-            _vastSrcBlob.url = crData.jxsimidurl;
-        }
-        
-        /////console.log(`VAST FODDER: ${crData.id}, ${crData.name} ,${crData.duration}, ${crData.clickurl}`);
-        let vast = buildVastXml([_vastSrcBlob]);
-        _adObj.setAutoAdsManagerStart(false); 
-        _adObj.makeAdRequestFromXMLCB(vast, true, true, updateUniversal);
     }//
 
-    function extractEnv(cr, u) {
+    /**
+     * Combine the various sources of info into a normalized JSON
+     * make the subsequent code cleaner.
+     * @param {*} cr 
+     * @param {*} u 
+     * @returns an object with some key info
+     *    autoplay, controls (color, position), stripPostion, loop, clickurl,
+     *    defaultImge
+     */
+    function extractEnv(cr, config) {
         let out = {
             autoplay : true,
             controls: {
@@ -599,14 +404,18 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
             stripPosition: 'right',
             loop: 'none'
         };
-        if (cr.clickurl)  {
+        if (cr && cr.clickurl)  {
             out.clickurl = cr.clickurl;
+        }
+        let u = config;
+        if (!u && cr) {
+            u = cr.universal;
         }
         if (u) {
             if (u.defaultImage) {
                 out.defaultImage = u.defaultImage;
             }
-            if (Array.isArray(u.videos) && u.length > 0) {
+            if (Array.isArray(u.videos) && config.length > 0) {
                 out.video = u.videos[0];
             }
             if (u.controlsColor) {
@@ -616,75 +425,93 @@ function MakeOneInst_(containerId, data, startAdWhenAvail = true, eventsVector =
                 out.controls.position = u.controlsPos;
             }
         }
-        if (cr.adparameters && cr.adparameters.hasOwnProperty('autoplay')) {
-            if (Boolean(cr.adparameters.autoplay) == false) {
-                out.autoplay = false;
-            }
-        } else if (u && u.hasOwnProperty('autoplay')) {
+        if (u && u.hasOwnProperty('autoplay')) {
             if (Boolean(u.autoplay) == false) {
                 out.autoplay = false;
             }
         }
-        if (cr.adparameters && cr.adparameters.loop) {
+        else if (cr && cr.adparameters && cr.adparameters.hasOwnProperty('autoplay')) {
+            if (Boolean(cr.adparameters.autoplay) == false) {
+                out.autoplay = false;
+            }
+        }
+        if (cr && cr.adparameters && cr.adparameters.loop) {
                 out.loop = cr.adparameters.loop;
         } else if (u && u.loop) {
-                out.loop = false;
+                out.loop = u.loop;
         }
-        if (cr.adparameters && cr.adparameters.countpos) {
+        if (cr && cr.adparameters && cr.adparameters.countpos) {
             out.stripPosition = cr.adparameters.countpos;
         }
+        if (cr && cr.adparameters)
+            delete cr.adparameters.loop;
         return out;
      }
+
     /**
-     * 
+     * These next 3 are used by the ad sdk (i.e. the jxvideo.1.3.min.js)
+     * since this is in the interface document, we continue to support it
+     * Well, the play is important. Currently their (KG) usage pattern is 
+     * that they call it upon hearing jxhasad event
      */
     OneAdInstance.prototype.play = function() {
         if (_adObj)
-            _adObj.startAd();
+            _adObj.playOrStartAd();
+        else {
+            if (_thumbnailDiv) {
+                _thumbnailDiv.classList.add(hideCls);
+            }
+            _playerElt.play();
+        }            
     }
-    function OneAdInstance(containerId, crData, eventsVector = null) {
-        _token = containerId;
-        _containerId        = containerId;
-        _startAdWhenAvail   = true; //would be from adparameters if there is ever one.
-        if (eventsVector) {
-            _eventsVector       = JSON.parse(JSON.stringify(eventsVector));
-        }
-
-        _spinner = MakeOneSpinner(document.getElementById(_containerId) ? document.getElementById(_containerId) : document.body);
-        _showSpinner();
-
-        //if this is from the video SDK then crData is actually the options/cfg
-        //object then.
-        _env = extractEnv(crData, crData.universal ? crData.universal: crData);
-
-        _createInner(containerId);
-        if (crData.adparameters) {
-            //from our own renderer
-            this.changeJson(crData);
+    OneAdInstance.prototype.rewind = function() {
+        if (_adObj) {
+            ; //do nothing
         }
         else {
-            //from standalone "SDK" usage:
-            /* if (containerId == 'playerContainerJX') {
-                adparameters.video = {
-                    width: 640,
-                    height: 360
-                };
-            }*/
-            this.changeCfg(crData);
+            //set the playhead to 0 and let it play on
+            _playerElt.play();
+        }            
+    }
+    OneAdInstance.prototype.pause = function() {
+        if (_adObj)
+            _adObj.pauseAd();
+        else {
+            _playerElt.pause();
+        }            
+    }
+    function OneAdInstance(containerId, crData, config = null, eventsVector = null) {
+        _token = containerId;
+        _containerId = containerId;
+        
+        _spinner = MakeOneSpinner(document.getElementById(_containerId) ? document.getElementById(_containerId) : document.body);
+        _showSpinner();
+        _env = extractEnv(crData, config); //this will set the default image, among many other things.
+
+        _createInner(containerId);
+        if (eventsVector) {
+            _eventsVector = JSON.parse(JSON.stringify(eventsVector));
         }
+        if (config && config.video) {
+            _videoSrc = config.video;
+            if (_videoSrc) _playerElt.src = _videoSrc;
+        }
+        _triggerAd(crData, config);
     }
 
     /**
-     * triggered from universal
+     * Only the universal integration will trigger this
+     * The ads sdk (aka jxvideo1.3.min.js will not have this)
      * @param {*} action 
      */
     OneAdInstance.prototype.notifyMe = function(action) {
+        console.log(`notifyMe: ${action}`);
         if (action == 'jxvisible')
             this.visibilityChange(true);
         else if (action == 'jxnotvisible')
             this.visibilityChange(false);
     }
-    let ret = new OneAdInstance(containerId, data, startAdWhenAvail, eventsVector);
+    let ret = new OneAdInstance(containerId, data, config, eventsVector);
     return ret;
 }
 

@@ -5,7 +5,7 @@
      */
  
  const modulesmgr            = require('../basic/modulesmgr');
- const _helpers              = modulesmgr.get('video/helpers');
+ const common                = modulesmgr.get('basic/common');
 
  const cssmgr                = modulesmgr.get('video/cssmgr');
  const thumbnailCls          = cssmgr.getRealCls('thumbnailCls');
@@ -60,7 +60,7 @@
         if (_thumbnailImg)                
             _thumbnailImg.classList.add(hideCls);
         if (_boundClickedCB)  {              
-            _helpers.removeListener(_bigPlayBtn, 'click', _boundClickedCB);
+            common.removeListener(_bigPlayBtn, 'click', _boundClickedCB);
             _boundClickedCB = null;
         }
         for (var i = 0; i < _knownClickCBs.length; i++) {
@@ -114,7 +114,7 @@
                 _knownClickCBs.push(cb);
                 //note: may be no need to bind already...
                 _boundClickedCB = _clickedCB.bind({ cb: cb });
-                _helpers.addListener(_bigPlayBtn, 'click', _boundClickedCB);//not sure about touch
+                common.addListener(_bigPlayBtn, 'click', _boundClickedCB);//not sure about touch
             }
             _bigPlayBtn.classList.remove(hideCls)
         }
@@ -145,7 +145,7 @@
         if (!_thumbnailImg) {
             let r = Math.floor(Math.random() * (2000) + 1);
             let thumbnailID = thumbnailCls + '-' + r;//want ID for wat?
-            _thumbnailImg = _helpers.newDiv(_container, "img", null, thumbnailCls, thumbnailID);
+            _thumbnailImg = common.newDiv(_container, "img", null, thumbnailCls, thumbnailID);
         }
         if (thumbnailURL && thumbnailURL != _thumbnailImg.src) {
             _boundImgLoadedFcn = imgLoadedFcn.bind({ img: _thumbnailImg, cb: imgLoadedCB });

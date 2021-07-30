@@ -161,7 +161,11 @@
             //TODO: may be still catch the teads hasad 
             //so that next time if we turn on the timeout thing
             //we won't kill it if an ad is waiting to be shown (not shown due to slot not in view)
-            
+            //if(typeof e.data == 'string' && e.data.startsWith('jx') && e.data.indexOf('select') > -1) {
+                //alert(`JX OSM RECEIVED MSG ${e.data}`);
+                //return;
+            //}
+
             if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_msgListener (e.data=${e.data})`);
