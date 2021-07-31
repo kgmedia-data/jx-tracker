@@ -35,7 +35,7 @@ modulesmgr.set('video/admgr-factory',   admgr_fact);
 const spinner_fact                      = require('../components/video/spinner-factory');
 modulesmgr.set('video/spinner-factory',   spinner_fact);
 
-const replaybtn_fact                    = require('../components/video/replaybtn-factory-dummy');
+const replaybtn_fact                    = require('../components/video/replaybtn-factory');
 modulesmgr.set('video/replaybtn-factory',  replaybtn_fact);
 
 const horizbanner_fact                  = require('../components/video/horizbanner-factory-dummy');
@@ -48,11 +48,13 @@ var instMap = new Map(); //if we just always impose that if used from universal,
                          //iframe, then this Map is a bit stupid (only 1 item)  
 function makePlayer(containerId, adparameters, config = null, eventsVector = null) {
     config.autopause = false; //i.e. we are not dependent on those jxvisible
-    config.video = 'https://creative-ivstream.ivideosmart.com/3001004/1181736/3001004-1181736_360.mp4';
+    //config.video = 'https://creative-ivstream.ivideosmart.com/3001004/1181736/3001004-1181736_360.mp4';
     //config.tag = 'https://search.spotxchange.com/vast/2.0/79391?VPAID=JS&content_page_url=&cb=1627609832&player_width=400&player_height=320&media_transcoding=low';
-    config.loop = 'auto';
-    config.width = 640;
-    config.height = 360;
+    //////config.loop = 'manual';
+    //config.video = 'https://storage.googleapis.com/gvabox/media/samples/stock.mp4';
+    config.video = 'https://creatives.b-cdn.net/jx/white5sec.mp4';
+    //config.width = 640;
+    //config.height = 360;
     //testing only config.autoplay = false;
     //and what not.
     //just depend on the autoplay flag.
@@ -79,6 +81,7 @@ function fetchAdJsonP(cfg) {
     let seg = cfg.debug ? '-rc':'';
     if (cfg.tag) {
         tag = cfg.tag;
+        return Promise.resolve(null);
     }
     else {
         if (!cfg.source) { 
@@ -153,6 +156,12 @@ if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
                 })
                 .catch(function(e) {
                     console.log("CANNOT FETCH AD");
+                });
+            }
+            else {
+                fetchAdJsonP(config)
+                .then(function(creativeJson) {
+                    inst.triggerAd(creativeJson, config);
                 });
             }
         },

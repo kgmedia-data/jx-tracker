@@ -1,6 +1,5 @@
 const modulesmgr = require('../basic/modulesmgr');
 const common     = modulesmgr.get('basic/common');
-
 function mergeSettings(p, u) {
     let o = {};
 
@@ -134,10 +133,32 @@ let MakeOneUniversalMgr_ = function() {
     FactoryOneUniveralMgr.prototype.getHeight = function() {
         return _height;
     };
-    FactoryOneUniveralMgr.prototype.init = function(jxParams, clickurl, universal, attachNode) {
+    FactoryOneUniveralMgr.prototype.init = function(
+        attachNode, jxParams, universal, clickurl) {
         _height = attachUniversalBlob_(jxParams, clickurl, universal, attachNode);
     };
     let ret = new FactoryOneUniveralMgr();
     return ret;
 }
 module.exports = MakeOneUniversalMgr_;
+
+/* 
+ ************** module: renderer/univelements **************************************************
+
+* module.exports:
+    - a function which will make a universal manager object
+    - When run, an object will be created which has the following functions:
+        init( attachNode, jxParams, universal, clickurl)
+            -attachNode is where the created stuff will be attached  (should be the "master div")
+            -jxparams is the "p" var of the calling of the renderer
+                If it contains any from this: then they will be used
+                (we search jxparam, if not then see from universal object)
+                title, thumbnail, thumbnailurl,description,titleCSS,
+                titleCSSHover,descriptionCSS,
+            -universal is the assets: universal object from the ad response json
+            -clickurl 
+
+    
+* requires/dependencies:
+    - none
+*/

@@ -31,8 +31,8 @@ function common_(rtjson) {
 }
 //to be bound;
 function inject_(siteId, imp) {
-    siteId = '1018656'; //'amp-test';
-    console.log(`HACK REMEMBER THIS IS TESTING PLACEMENT`);
+    //siteId = '1018656'; //'amp-test';
+    //console.log(`HACK REMEMBER THIS IS TESTING PLACEMENT`);
     //1018656, 218003 3709286
     window.unruly = window.unruly || {};
     window.unruly.native = {
@@ -62,3 +62,27 @@ function makeNormalizedObj__(dbjson, rtjson) {
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;
 module.exports.name = 'unruly';
+
+/* 
+ ************** module: osmpartners/amp-unruly **************************************************
+
+* module.exports:
+    - makeNormalizedObj (function)
+        - returns an object which the amp-core JS can use to inject unruly script etc
+
+        - the output object has the following properties
+        timeout (-1 means dun have any)
+        partner (here it will be "unruly")
+        trackers
+        stackidx
+        stackdepth
+        instID: 
+        valid: true/false
+        inject: a function to be called (by the amp-core) 
+        msgs : an object of the messages to expect from partner script to inform of
+            noad, hasad, impression   <-- this does not apply to jixie ads (since the ad already finalized when we reach this stage)
+        customfcns  - not used                
+    
+* requires/dependencies:
+    - none
+*/

@@ -159,7 +159,7 @@ const animationDelays = [
                 '.' + timeLeftCls +'.top-left .time-left-inner-wrapper .time-left-text {padding-right:0;padding-left:3px;}',
                 '@keyframes '+timeLeftAnimationName+'{0%{height:5px;}30%{height:10px;}60%{height:12px;}80%{height:10px;}100%{height:5px;}}',
             ];
-            common.injectStyles(stylesArr.concat(animationRulesArr).join("\n"), "SoundIndWaveTimeLeft"+Date.now());//just a random thing //due to the color
+            common.acss(stylesArr.concat(animationRulesArr).join("\n"), "SoundIndWaveTimeLeft"+Date.now());//just a random thing //due to the color
 
             let innerWrapper = document.createElement('div');
             innerWrapper.className = 'time-left-inner-wrapper';
@@ -209,7 +209,7 @@ const animationDelays = [
                 '.' + unMuteBtnCls + ' .speaker-on::after {content: "";position: absolute;width: 0px;height: 0px;border-style: solid;border-color: transparent '+color+' transparent transparent;border-width: 10px 14px 10px 15px;left: -13px;top: 5px;}',
                 '.' + unMuteBtnCls + ' .slashed {position:absolute;background: '+color+';margin-top:-18px;height:28px;width:2px;left:0px;transform:translateX(13px) rotate(-45deg)}'
             ];
-            common.injectStyles(stylesArr.join("\n"), "SoundIndSpeaker"+Date.now());//just a random thing //due to the color
+            common.acss(stylesArr.join("\n"), "SoundIndSpeaker"+Date.now());//just a random thing //due to the color
 
             let soundInd = document.createElement('div');
             soundInd.className = unMuteBtnWrapperCls +' '+ position;
@@ -272,7 +272,7 @@ const animationDelays = [
                 stylesArr.push('.bar-wrapper {width: 100%;display: flex;height: 18px;justify-content: center;align-items: flex-end;}');
                 stylesArr.push('@keyframes '+soundIndAnimationName+'{0%{height:1px;}30%{height:11px;}60%{height:14px;}80%{height:11px;}100%{height:1px;}}');
             }
-            common.injectStyles(stylesArr.concat(animationRulesArr).join("\n"), "SoundIndWave"+Date.now());//just a random thing //due to the color
+            common.acss(stylesArr.concat(animationRulesArr).join("\n"), "SoundIndWave"+Date.now());//just a random thing //due to the color
 
             let soundInd = document.createElement('div');
             soundInd.className = waveCls +' '+ position;
