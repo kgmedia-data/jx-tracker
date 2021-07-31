@@ -3,6 +3,9 @@
 ## use gulp xxxx to build 
 - Just type gulp x and it will spit out the possible arguments
 
+
+## NOTE
+ - for the JS source code, typically there will be some "interface" info at the bottom of each file
 ## Deployment Names
 - bundles/amp-osm.js 
     ==x PLANNED BY NOT YET ==>  https://scripts.jixie.io/jxamp.min.js
