@@ -336,3 +336,23 @@ const animationDelays = [
         return ret;
     }
 module.exports = MakeOneSoundIndicator_;
+
+/* 
+ ************** module: video/soundind-factory*********************************************
+
+* module.exports:
+    - function which will make one sound indicator object
+     The object has the following public functions:
+        - start
+        - stop
+        - getDuration
+        - showMaybe (when finished ad, can call this
+              - if the sound indicator should still be shown, then it will be)
+        - hideMaybe
+        - setRemainingTime
+
+         currently only used in video/player-factory.js
+
+* requires/dependencies:
+    - none
+*/

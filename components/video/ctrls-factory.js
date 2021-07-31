@@ -182,3 +182,45 @@
     return ret;
 }
 module.exports = MakeOnePlayerControlsObjD_;
+
+
+/* 
+ ************** module: video/ctrls-factory ******************************************
+
+ lazy implementation which only uses the native controls ...
+
+* module.exports:
+    - function which will make one player controls object
+     The made object will have the following functions:
+    
+    - showBigPlayBtn function(cb)
+    - videoVisualsInit function(thumbnailURL, imgLoadedCB)
+        every video starts like this: stick the thumbnail there on top first
+        then put the loading spinner
+        When do we even put in the spinner then?
+        Thumbnail we put down very early.
+    - videoVisualsHide function() 
+        hide all those thumbnail stuff; called when we detect play
+    - videoVisualsRemoveSpinner= function()
+        called when Video is ready (metadataloaded) to be played so remove the 
+        loading spinner
+
+    - reset function()
+
+    The rest like do nothing since we are using the native controls:
+    -  
+    - updatePlayState function()
+    - updateMutedState function()
+    - hide function()
+    - show function()
+    - setBtnMuteActive function()
+    - setBtnPlayActive function()
+    - togglePlay function()
+    - updateProgressBar function()
+    - showProgressBar function()
+    - hideProgressBar function()
+    - setTramsitionProgressBar function()
+
+* requires/dependencies:
+    various
+*/

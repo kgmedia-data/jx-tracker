@@ -270,7 +270,8 @@
             case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
                 _handleContentPauseReq(true); 
                  break;
-            case google.ima.AdEvent.Type.LOADED:             
+            case google.ima.AdEvent.Type.LOADED:     
+                
                 //confusing when this is fired!        
                 //seems should be after adsManager.init but some webpages seems to suggest otherwise
                 /* not sure if I need to act upon the info here..
@@ -682,3 +683,47 @@
 };
 
 module.exports = MakeOneAdObj_;
+
+
+/* 
+ ************** module: video/admgr-factory ******************************************
+
+* module.exports:
+    - function which will make one ad mgr object
+     The made object will have the following functions:
+        - reset  function(): to kill any current ad play, if any. Get ready for next use
+        - subscribeToEvents function(eventsArr, callback) 
+            - possible entries in the array
+                "jxadended", 
+                "jxadfirstQuartile",
+                "jxadthirdQuartile",
+                "jxadmidpoint",
+                "jxadskipped", 
+                "jxadalladscompleted",
+                "jadclick", 
+                "jxadimpression",
+                "jxadstart"
+        - getAdsLoaderOutcome  function() : jxhasad, jxnoad, jxpending
+
+        - forceDimensions  function(width, height) (for the adManager size). Else we detect the ad container size and any change
+        - makeAdRequestFromXMLP  function(vastXML, autoplayFlag, mutedFlag) 
+        - makeAdRequestP  function(adURL, autoplayFlag, mutedFlag) 
+        - makeAdRequestFromXMLCB  function(vastXML, autoplayFlag, mutedFlag, cb) 
+        - makeAdRequestCB  function(adURL, autoplayFlag, mutedFlag, cb) 
+            - adrequest can be with tag or with XML
+            - see that there is a "CB" variant and a P variant
+            - P variant returns a promise. Can resolve to jxhasad, jxnoad
+        - setAutoAdsManagerStart  function(val)
+        
+        - startAd  function(resolveFcn) 
+            - possible resolved values "jxnonlinearadstarted", "jxadstarted", "jxaderrored"
+        - playOrStartAd  function() 
+        - playAd function() 
+        - pauseAd function()
+
+        - unmuteAd function() 
+
+    
+* requires/dependencies:
+    e.g. adctrls-factory 
+*/
