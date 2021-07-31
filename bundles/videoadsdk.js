@@ -1,29 +1,12 @@
 /**
- * This is meant to take the place of jxvideo.1.3.min.js and jxvideo.1.4.min.js 
- * (removing also need for playerbridgeJS)
+ * Bundle built to make videoad player JS to be used by Jixie's own renderer
+ * (i.e. outstream, OSM)
+ * Vs the other one (for publisher to use standalone which is videoadsdk-standalone.js)
  * 
- * NOTE: 
- * The 1.3 is used by partners (standalone) in typically masterhead ads
- * The 1.4 is used with "playerbridge js" in the context of jxoutstream1.3.4.min.js
- * 
- *  Current design is, when used with universal (new) we will still be in an IFRAME
- *  but using adparameters
- * 
- 
- * Dependencies (not showing modulesmgr, cssmgr)
-   - the bundle (videoadsdk.js):
-        - video/adplayer
-            - video-styles/videoad
-            - video/spinner-factory
-            - video/replaybtn-factory
-            - video/horizbanner-factory
-            - video/admgr-factory (We will use video/admgr-factory-bc) <-- need to give it better name
-                - video/adctrls-factory
-                - video-styles/videoad
-            - video/vast
- *    
+ * Documentation: refer to videoadsdk.md file in this same dir
  */
-if (window.jxvideoadsdk) { //<--- NEW LEH
+
+if (window.jxvideoadsdk) { 
     return;
 }
 

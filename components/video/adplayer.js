@@ -298,18 +298,24 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
     }
     
     var _setContainerSize = function(width, height) {
-        _comboDiv.style.width = width +'px';
-        _comboDiv.style.height = height + 'px';
+        if (width == 0) {
+            _comboDiv.style.width = '100%'; 
+            _comboDiv.style.height = '100%';
+        }
+        else {
+            _comboDiv.style.width = width +'px';
+            _comboDiv.style.height = height + 'px';
+        }
     }
     var _triggerAd = function(crData, config) {
         let adparameters = crData ? crData.adparameters: {};
         if (_adObj) {
             _adObj.reset();
         }
-        let tmp = document.getElementById(_containerId);
-        if (!tmp) {
-            tmp = document.body;
-        }
+        //let tmp = document.getElementById(_containerId);
+        //if (!tmp) {
+          //  tmp = document.body;
+        //}
         //companion banner 
         let comp = { height: 0 }; 
         ['top', 'bottom'].forEach(function(banner){
@@ -321,9 +327,8 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
                 comp.height += comp[banner].height;
             }
         });
-        //ends up not very useful:
         let blob = {
-            token : _containerId
+            //token : _containerId
         }
         if (comp.height) { //i.e. there is a companion banner:
             //for video banner video case it is not responsive
@@ -337,9 +342,15 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
                 }
             });
         }
+        else if (config && config.width && config.height) {
+            //force us to hard code the dims
+            blob.width = config.width;
+            blob.height = config.height;
+        }
         else {
-            blob.width = tmp.offsetWidth; 
-            blob.height = tmp.offsetHeight;
+            //follow container
+            blob.width = 0; 
+            blob.height = 0;
         }
         _setContainerSize(blob.width, blob.height);
         if (crData || config.tag || config.xmltag) {            
@@ -350,6 +361,9 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             
             //the last param is about whether to do process bar:
             _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls, false);
+            if (blob.width && blob.height) {
+                _adObj.forceDimensions(blob.width, blob.height);
+            }
             if (_eventsVector) {
                 let imaSubset = _eventsVector.filter((e) => imaEventsSubset_.indexOf(e)> -1);
                 _adObj.subscribeToEvents(
@@ -469,7 +483,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         }            
     }
     function OneAdInstance(containerId, crData, config = null, eventsVector = null) {
-        _token = containerId;
+        //_token = containerId;
         _containerId = containerId;
         
         _spinner = MakeOneSpinner(document.getElementById(_containerId) ? document.getElementById(_containerId) : document.body);

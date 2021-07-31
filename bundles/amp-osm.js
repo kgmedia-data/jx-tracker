@@ -1,5 +1,7 @@
 /**
- * script to do amp osm
+ * Bundle built to make AMP OSM script (so this will also be the universal script for AMP)
+ * 
+ * Documentation: refer to amp-osm.md file in this same dir
  */
 const mpjixie       = require('../components/osmpartners/amp-jixie');
 const mpteads       = require('../components/osmpartners/amp-teads');
