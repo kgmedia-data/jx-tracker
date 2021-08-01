@@ -232,6 +232,8 @@ module.exports.name = 'unruly';
         }
 
         scriptb: the script to inject (string)
+           a partner must have either scriptb or scriptcfg! Unruly case there is scriptb
+        scriptcfg: the module's runCreative function, if any, will be called with this cfg.
 
         scriptdiv = {
             inject the unruly script into a div of this id and style
