@@ -93,6 +93,20 @@
     var _callOnceUponStarted = null;
     //if you are making a long long adrequest
     //and when you are back, the whole thing was reset already.
+
+    //what is this thing? 
+    //It seems in the scenario whereby due to e.g. browser setting, the play failed (yes it is possible
+    //even muted can fail too)
+    //The PROPER way to handle these things are actually to TRY 
+    //https://developers.google.com/interactive-media-ads/docs/sdks/html5/client-side/autoplay
+    //i.e. make an independent test using the video element about what the browser can do
+    //But this will make us have to load another little video 
+
+    //For the videosdk we will not have this issue since the above test is done. And when cannot
+    //autoplay we will get user click gesture:
+
+    //So now doing a lazy way - just to get by since we are only going
+    //
     var _reallyProgressed = false;
     var _knownCurrentTime = -1;
     
@@ -318,7 +332,7 @@
 
                     if (adData.adPosition <= _adEnduredVec.length) {
                         _adEnduredVec[adData.adPosition] = adData.currentTime;
-
+                        
                         if (!_reallyProgressed && adData.currentTime > 0) {
                            if (_knownCurrentTime ==  -1) {
                                _knownCurrentTime = adData.currentTime;
@@ -333,9 +347,9 @@
                         if (adData.currentTime > 1 && _callOnceUponStarted) {
                             //if for some reason we missed the STARTED EVENT.
                             //then make up for it here...
-                            _callOnceUponStarted(ad);
+                            //_callOnceUponStarted(ad);
                         }
-                        
+                        //actually if we dun do progress bar, then dun bother.
                         if (!_isProgressBarUpdated && _isAdStarted) { // we check the progress bar has not been updated yet and the ad has really started
                             _isProgressBarUpdated = true; // change to be true so we only mainpulate the DOM just once
 
