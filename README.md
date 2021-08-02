@@ -3,6 +3,9 @@
 ## use gulp xxxx to build 
 - Just type gulp x and it will spit out the possible arguments
 
+
+## NOTE
+ - for the JS source code, typically there will be some "interface" info at the bottom of each file
 ## Deployment Names
 - bundles/amp-osm.js 
     ==x PLANNED BY NOT YET ==>  https://scripts.jixie.io/jxamp.min.js
@@ -16,9 +19,10 @@
 - bundles/ulite.js 
     - ==x PLANNED BUT NOT YET : replace https://scripts.jixie.io/jxfriendly1.3.min.js from universal repo
 
-- bundles/videoadsdk-lite.js 
+- bundles/videoadsdk-standalone.js 
     - ==x not yet ==> https://universal.jixie.io/js/jxvideo.1.3.min.js"
     - i.e. when i feel ready, likely I will just have the contents of the jxvideo.1.3.min.js will be replaced by the new stuff
+    - used mainly by publisher - the Kompas MASTER HEAD campaigns
 
 - bundles/videoadsdk.js
     - ===> LIVE AS https://scripts.jixie.io/jxvideocr.1.0.min.js"

@@ -25,3 +25,16 @@ let MakeOneSpinner_ = function(container) {
     return ret;
 }
 module.exports = MakeOneSpinner_;
+
+/* 
+ ************** module: video/spinner-factory*********************************************
+
+* module.exports:
+    - function which will make one spinner object
+     The object has 2 public functions:
+        - show
+        - hide
+        
+* requires/dependencies:
+    - none
+*/

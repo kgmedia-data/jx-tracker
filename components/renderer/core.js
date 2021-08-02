@@ -87,7 +87,7 @@ function addGAMNoAdNotifyMaybe(str) {
             //default visibility threshold
             signature: 'jx_video_ad',
             url: 'https://scripts.jixie.io/jxvideocr.1.0.min.js'
-            /////url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
+            //url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
         }
     };
     const visThreshold_ = 0.4;
@@ -1813,3 +1813,15 @@ const thresholdDiff_ = 120;
     }
     module.exports.createInstance = createInstance_;
 
+/* 
+ ************** module: renderer/core **************************************************
+
+* module.exports:
+    - createInstance (function(params)
+        kick off an ad rendering activity based on the params
+        there is no object being returned.
+        this created thing has a life of its own (fetch ad, render ad)
+    
+* requires/dependencies:
+    - none
+*/

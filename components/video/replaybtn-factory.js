@@ -40,4 +40,17 @@ let MakeOneReplayButton_ = function(container, position, clickCB) {
     return ret;
 }
 module.exports = MakeOneReplayButton_;
- 
+
+
+/* 
+ ************** module: video/replaybtn-factory*********************************************
+
+* module.exports:
+    - function which will make one replay button object object
+     The object has the following public functions:
+        - hide
+        - show
+
+* requires/dependencies:
+    - none
+*/

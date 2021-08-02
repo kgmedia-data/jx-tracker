@@ -367,3 +367,42 @@ function MakeOneHelperObj_() {
 };
 var gH = MakeOneHelperObj_();
 module.exports = gH;
+
+
+/* 
+ ************** module: video/jxvideo-helper ******************************************
+
+* module.exports:
+    - returns a helper object
+     The object has the following public functions:
+
+        - getClosestDamHLSHeight = function(width, height) 
+
+        - isBrowserSupported = function() - refering to intersectionObservers
+
+        Some of the earlier events needed to fire:
+        - getScriptLoadedTime = function() 
+        - sendScriptLoadedTrackerAMP = function(options) 
+        - sendScriptLoadedTracker = function(options) 
+
+        - getViewFraction = function(element) for viewability metric in the tracking events
+
+        - getNetworkType = function() 
+
+        - loadIMAScriptP = function() 
+        - FAKE_loadShakaScriptP = function(goodans, badans) 
+        - loadShakaScriptP = function(goodans, badans) 
+
+        Cookie to save the playhead of videos watched:
+        - getVStoredPlayhead = function(vid) 
+        - setVStoredPlayhead = function(vid, playhead) 
+        - deleteVStoredPlayhead = function(vid) 
+
+        - getTrackerBase = function(opions) 
+        - getAdTag = function(options) 
+
+  it is used by the bundle js for video sdk.
+        
+* requires/dependencies:
+    - a lot
+*/

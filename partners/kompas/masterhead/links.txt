@@ -1,0 +1,19 @@
+ 
+For Desktop
+https://www.kompas.com/?google_preview=h3Gu7hozDMMYuoqPiAYwuqbEjwaIAYCAgKCPjuLUFA&iu=31800665&gdfp_req=1&lineItemId=5741439080&creativeId=138356118843
+ 
+For Mobile
+https://adsimg.kompas.com/html5/vcbl/testpage/kompas-mobile-top-wp-28062021.html?google_preview=ry3NQwRq7woYioqPiAYwiqbEjwaIAYCAgKCPjpKa9gE&iu=31800665&gdfp_req=1&lineItemId=5741439080&creativeId=138356448520
+ 
+
+For Desktop
+https://www.kompas.com/?google_preview=MN0AZqKbrVUY_ZCPiAYw_azEjwaIAYCAgKCPjtKIxgE&iu=31800665&gdfp_req=1&lineItemId=5621265803&creativeId=138339760938
+ 
+And for mobile, because that time is the first time Master Head is rolling out, there’s a slight difference between script for iOS and for android.
+The difference is on the Ytranslation of jixie player.
+ 
+Mobile android
+https://adsimg.kompas.com/html5/vcbl/testpage/kompas-mobile-top-wp-28062021.html?google_preview=ebqj9FZrnqwY5pWPiAYw5rHEjwaIAYCAgKCPjtKqKw&iu=31800665&gdfp_req=1&lineItemId=5621138800&creativeId=138340178620
+ 
+Mobile iOS
+https://adsimg.kompas.com/html5/vcbl/testpage/kompas-mobile-top-wp-28062021.html?google_preview=tAIzGyqhhaMYj5iPiAYwj7TEjwaIAYCAgKCPjtL18QE&iu=31800665&gdfp_req=1&lineItemId=5621138800&creativeId=13833979024

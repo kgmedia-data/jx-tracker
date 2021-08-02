@@ -1,15 +1,15 @@
 /**
- * Bundle built to make a simple rendering script
- * Main use is to replace the current hbrenderer.min.js
- * Can also be used for OSM
- * (though I suspect for OSM we just build the renderer into the OSM script)
+ * Bundle built to make simple creative renderer 
+ * It is not good to make ad call coz it does not try to get ids/pg info etc
+ * BUt it be well equipped to render a creative available in the jsoncreativeobj64
+ * property of the options object
  * 
- * Very simple the whole creative is already in base64 encoded string
- * No need fetch ad.
- * But we support more than 1 creative though
- * Means the script loaded once only but if within same window
- * there are multiple chances to do work, we will
+ * Documentation: refer to jxrenderer.md in this same dir
+ * 
+ * There is no use for this script now. No deployment
  */
+ 
+
 
 if (window.jxrenderer && window.jxrenderer.init) {
     return;
