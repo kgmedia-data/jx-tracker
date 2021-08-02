@@ -90,11 +90,19 @@
     var _eventsCallback = null;
     var _imaEvents = JSON.parse(JSON.stringify(imaEventsSeed_));
     var _aStartApiCalled = false;
-
+    var _callOnceUponStarted = null;
     //if you are making a long long adrequest
     //and when you are back, the whole thing was reset already.
-
+    var _reallyProgressed = false;
+    var _knownCurrentTime = -1;
+    
     FactoryOneAd.prototype.reset = function() {
+
+        _reallyProgressed = false;
+        _knownCurrentTime = -1;
+
+         
+        _callOnceUponStarted = fcnCallOnceUponStarted;
         //reset will not erase the events subscription 
 
         //for video ad really.
@@ -166,6 +174,9 @@
         //or due to the playerWrapper calling
 
         if (_adsManager) {
+            if (!_reallyProgressed) {
+                _adsManager.pause();
+            }
             _adsManager.resume();
         }
     };
@@ -214,9 +225,67 @@
         } 
     }
 
+    var fcnCallOnceUponStarted= function(ad) {
+        _callOnceUponStarted = null;
+
+        _isAdStarted = true; // set the value to be true as we know that now the ad has really started
+        /////console.log(`adBreakDuration=${adData.adBreakDuration} adPosition=${adData.adPosition} currentTime=${adData.currentTime} totalAds=${adData.totalAds} duration=${adData.duration}`);
+        
+        //TODO: Renee Fery review tis:
+        //what is the content at this stage
+        //
+        let pauseAdToo = false;
+        if (_pFcnVector.isPaused()) {
+            //means we should also pause the ad lah!!
+            pauseAdToo = true;
+        }
+        //<----
+        _pFcnVector.hideSpinner();
+
+        if (ad && ad.isLinear()) {
+            _ctrls.show(); 
+        }
+        else {
+            console.log(`#$ no need show the ads controls then coz non linear`);
+        }
+        _adDiv.classList.remove(adHideCls); //
+        _adDiv.classList.remove(hideCls); //
+
+        // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
+        //pls fix this. the jxhide class does not work
+        if (this.resolveFcn) {
+            let nonlinear = (ad && !ad.isLinear());
+            //then if the play (start) has been held back then we signal the thing to start the content video
+            this.resolveFcn(nonlinear ? "jxnonlinearadstarted": "jxadstarted");
+        }
+        
+        //---->
+        _fireReportMaybe('started'); 
+        _ctrls.updatePlayState(true);
+
+        if(_adsManager.getVolume() > 0) {
+            //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 3 ${_adsManager.getVolume()}`);
+            _adsManager.setVolume(1);
+            _ctrls.updateMutedState(false);
+        } else {
+            //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 4 ${_adsManager.getVolume()}`);
+            _adsManager.setVolume(0);
+            _ctrls.updateMutedState(true);
+        }
+        /* if (pauseAdToo) {
+            setTimeout(function() {
+                console.log(`executing the pause ad in started: handler`);
+                _adsManager.pause();
+            }, 0);
+        }
+        Cannot lah stupid Just did a content pause ah.
+        */
+        //However, if the content was already paused (coz the stupid ad took such a long time to come)
+        //then here we should also 
+    }
     var _onAdEvent = function(evt) {
         if (!_adsManager) return; //in case closed shop
-        //console.log(`#$ #$ #$ #$ #$ #$ #$ #$ #$ ${evt.type}`);
+        console.log(`#$ #$ #$ #$ #$ #$ #$ #$ #$ ${evt.type}`);
         let ad = evt.getAd();
 
         if (_eventsCallback) {
@@ -232,6 +301,7 @@
         switch(evt.type) {
             case google.ima.AdEvent.Type.LINEAR_CHANGED:
                 if (ad && ad.isLinear()) {
+                    console.log(`google.ima.AdEvent.Type.LINEAR_CHANGED WOOYANYU`);
                     _handleContentPauseReq(true); 
                     _ctrls.show(); 
                 }
@@ -249,6 +319,23 @@
                     if (adData.adPosition <= _adEnduredVec.length) {
                         _adEnduredVec[adData.adPosition] = adData.currentTime;
 
+                        if (!_reallyProgressed && adData.currentTime > 0) {
+                           if (_knownCurrentTime ==  -1) {
+                               _knownCurrentTime = adData.currentTime;
+                           }
+                           else {
+                               if (adData.currentTime > _knownCurrentTime) {
+                                   console.log(`really vs ? ${adData.currentTime} ${_knownCurrentTime}`);
+                                   _reallyProgressed = true;
+                               }
+                           }
+                        }
+                        if (adData.currentTime > 1 && _callOnceUponStarted) {
+                            //if for some reason we missed the STARTED EVENT.
+                            //then make up for it here...
+                            _callOnceUponStarted(ad);
+                        }
+                        
                         if (!_isProgressBarUpdated && _isAdStarted) { // we check the progress bar has not been updated yet and the ad has really started
                             _isProgressBarUpdated = true; // change to be true so we only mainpulate the DOM just once
 
@@ -286,61 +373,9 @@
                 */
                 break;
             case google.ima.AdEvent.Type.STARTED:
-                _isAdStarted = true; // set the value to be true as we know that now the ad has really started
-                /////console.log(`adBreakDuration=${adData.adBreakDuration} adPosition=${adData.adPosition} currentTime=${adData.currentTime} totalAds=${adData.totalAds} duration=${adData.duration}`);
-                
-                //TODO: Renee Fery review tis:
-                //what is the content at this stage
-                //
-                let pauseAdToo = false;
-                if (_pFcnVector.isPaused()) {
-                    //means we should also pause the ad lah!!
-                    pauseAdToo = true;
+                if (_callOnceUponStarted) {
+                    _callOnceUponStarted(ad);
                 }
-                //<----
-                _pFcnVector.hideSpinner();
-
-                if (ad && ad.isLinear()) {
-                    _ctrls.show(); 
-                }
-                else {
-                    console.log(`#$ no need show the ads controls then coz non linear`);
-                }
-                _adDiv.classList.remove(adHideCls); //
-                _adDiv.classList.remove(hideCls); //
-
-                // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
-                //pls fix this. the jxhide class does not work
-                if (this.resolveFcn) {
-                    let nonlinear = (ad && !ad.isLinear());
-                    //then if the play (start) has been held back then we signal the thing to start the content video
-                    this.resolveFcn(nonlinear ? "jxnonlinearadstarted": "jxadstarted");
-                }
-                
-                //---->
-                _fireReportMaybe('started'); 
-                _ctrls.updatePlayState(true);
-
-                if(_adsManager.getVolume() > 0) {
-                    //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 3 ${_adsManager.getVolume()}`);
-                    _adsManager.setVolume(1);
-                    _ctrls.updateMutedState(false);
-                } else {
-                    //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 4 ${_adsManager.getVolume()}`);
-                    _adsManager.setVolume(0);
-                    _ctrls.updateMutedState(true);
-                }
-                /* if (pauseAdToo) {
-                    setTimeout(function() {
-                        console.log(`executing the pause ad in started: handler`);
-                        _adsManager.pause();
-                    }, 0);
-                }
-                Cannot lah stupid Just did a content pause ah.
-                */
-                //However, if the content was already paused (coz the stupid ad took such a long time to come)
-                //then here we should also 
-
                 break;
             case google.ima.AdEvent.Type.COMPLETE:
             case google.ima.AdEvent.Type.SKIPPED:
@@ -525,7 +560,7 @@
         if (!_ctrls) {
             _ctrls = MakeOneAdControlsObj(_adDiv, _makeFcnVectorForUI(), _doProgressBar, _controlsObj);
         }
-        _ctrls.hide();
+        //_ctrls.hide();
     };
     var _createUIElt = function() {
         if (!_adDiv) _adDiv = common.newDiv(_container, "div", "", adDivCls);
