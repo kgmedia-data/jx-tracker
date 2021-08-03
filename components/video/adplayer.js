@@ -43,6 +43,9 @@ const imaEventsSubset_ =[
 ];
 
 function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
+    var _adOutcomePromise = null;
+    var _adOutcomeResolveFcn = null;
+        
     var _pDiv               = null;
     var _playerElt          = null;
     var _comboDiv           = null;
@@ -207,6 +210,19 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         }
     }    
    
+    var _cannotAuto = false;
+    function startPlayWrapper(cb) {
+        if (_cannotAuto) {
+            _createBigPlayBtn(function() {
+                _cannotAuto = false;
+                cb();
+            });
+        }    
+        else {
+            cb();
+        }
+    }
+    
     /**
      * 
      * @param {*} isVisible 
@@ -215,13 +231,18 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         //console.log(`OneAdInstance.prototype.visibilityChange = ${isVisible} ${_context} `);
         if (_adObj && _context === 'ad') {
             if (isVisible) {
-                _adObj.playOrStartAd(); //ok this one so far is only in the admgr-factory-bc version only aaarh
+                startPlayWrapper(function(){
+                    _adObj.playOrStartAd();
+                });
             }
             else {
                 _adObj.pauseAd();
             }
         } else if (_context === 'content') {
             if (isVisible) {
+                startPlayWrapper(function(){
+                    _playerElt.play();
+                });           
             }
             else {
                 _playerElt.pause();
@@ -235,7 +256,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         let msg = null;
         if (v == 'jxadstarted' || v == 'jxhasad') {
             _context = 'ad';
-            msg = 'jxhasad'
+            msg = 'jxhasad';
         }
         else if (v == 'jxaderrored' || v == 'jxnoad') {
             msg = 'jxnoad';
@@ -246,14 +267,17 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         if (msg == 'jxnoad' && _eventsVector.indexOf('jxnoad') > -1) {
             e = new Event('jxnoad');
         }
-        if (e) {
-            window.dispatchEvent(e);
-        }
-        //if used in the universal context this is the one
-        //which is important: we are in an iframe
-        if (msg) {
-            parent.postMessage("jxhasad", '*'); 
-        }
+        _autoplayTestProm.then(function(val) {
+            _cannotAuto = val != 'pass';
+            if (e) {
+                window.dispatchEvent(e);
+            }
+            //if used in the universal context this is the one
+            //which is important: we are in an iframe
+            if (msg) {
+                parent.postMessage(msg, '*'); 
+            }
+        });
         _hideSpinner();
 
     }
@@ -481,8 +505,11 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
      * that they call it upon hearing jxhasad event
      */
     OneAdInstance.prototype.play = function() {
-        if (_adObj)
-            _adObj.playOrStartAd();
+        if (_adObj) {
+            startPlayWrapper(function() {
+                _adObj.playOrStartAd();    
+            })
+        }
         else {
             if (_thumbnailDiv) {
                 _thumbnailDiv.classList.add(hideCls);
@@ -506,6 +533,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             _playerElt.pause();
         }            
     }
+    var DO_AUTOPLAY_TEST = false;
     function OneAdInstance(containerId, crData, config = null, eventsVector = null) {
         //_token = containerId;
         _containerId = containerId;
@@ -523,31 +551,38 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             if (_videoSrc) _playerElt.src = _videoSrc;
         }
         else {
-            _playerElt.src = 'https://creatives.b-cdn.net/jx/white5sec.mp4';
+            if (DO_AUTOPLAY_TEST)
+                _playerElt.src = 'https://creatives.b-cdn.net/jx/white5sec.mp4';
         }
         /* By right is figure out whether this system can autoplay muted or not
         a very very short video....
         The problem is that for the IMA - if it cannot autoplay and you did
         it then it is not clear how to continue. By then already cannot use any
         api to revive the thing already */
-        
-        /* _playerElt.volume = 0;
-        _playerElt.muted = true;
-        var playPromise = _playerElt.play();
-        if (playPromise !== undefined) {
-           playPromise.then(function() {
-                _playerElt.pause();
-                _triggerAd(crData, config);
-           }).catch(function() {
-               //only trigger Ad later
-               _createBigPlayBtn(function() {
-                   _triggerAd(crData, config);
-               });
-           });
+        //we do trigger ad ah. this is independent.
+        if (DO_AUTOPLAY_TEST) {
+            _autoplayTestProm = new Promise(function(resolve) {
+                autoplayTestResolve = resolve;
+            });
+            _triggerAd(crData, config);
+            _playerElt.volume = 0;
+            _playerElt.muted = true;
+            var playPromise = _playerElt.play();
+            if (playPromise !== undefined) {
+                playPromise.then(function() {
+                    autoplayTestResolve('pass');
+                    _playerElt.pause();
+                }).catch(function() {
+                    _cannotAuto = true;
+                    autoplayTestResolve('fail');
+                });
+            }
         }
-        But it is better to hide it?
-        */
-        _triggerAd(crData, config);
+        else {
+            _autoplayTestProm = Promise.resolve('pass');
+            _triggerAd(crData, config);
+        }
+        
     }
 
     OneAdInstance.prototype.triggerAd = function(crData, config) {
