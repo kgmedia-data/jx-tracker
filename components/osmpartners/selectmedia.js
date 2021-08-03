@@ -1,4 +1,4 @@
-const defaultPTimeout_ = 6000;
+const defaultPTimeout_ = -1;
 
 var getAdSlotAttachNode_ = function(dbjson, getPageSelectorFcn) {
     /* if (dbjson.adparameters.selectors) {
@@ -132,6 +132,13 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         imp: `jxosm_imp_selectmedia${sid}`,
         timeout: `jxosm_timeout_selectmedia${sid}`
     };
+    //<--- triggerhouse:
+    if (rtjson.floating && rtjson.stackidx == rtjson.stackdepth-2) {
+        //this is the second last on the waterfall
+        rtjson.msgs.triggerhouse = `jxosm_triggerhouse_selectmedia${sid}`;
+    }
+    //-->
+
     //jxosm_noad_selectmediaJS417849795
     return true;
 }
