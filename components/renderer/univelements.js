@@ -135,17 +135,23 @@ let MakeOneUniversalMgr_ = function() {
     FactoryOneUniveralMgr.prototype.getHeight = function() {
         return _height;
     };
-    FactoryOneUniveralMgr.prototype.getElts = function() {
-        return _univEltsObj;
+    FactoryOneUniveralMgr.prototype.show = function() {
+        if (_univEltsObj) {
+            _univEltsObj.jxActionsDiv.style.display = 'block';
+            _univEltsObj.jxTitleDiv.style.display = 'block';
+        }
+    };
+    FactoryOneUniveralMgr.prototype.hide = function() {
+        if (_univEltsObj) {
+            _univEltsObj.jxActionsDiv.style.display = 'none';
+            _univEltsObj.jxTitleDiv.style.display = 'none';
+        }
     };
     FactoryOneUniveralMgr.prototype.init = function(
         attachNode, jxParams, universal, clickurl) {
-        let universalObj = attachUniversalBlob_(attachNode, jxParams, universal, clickurl);
-        _height = universalObj.height;
-        _univEltsObj = {
-            jxActionsDiv: universalObj.jxActionsDiv,
-            jxTitleDiv: universalObj.jxTitleDiv
-        }
+        _univEltsObj = attachUniversalBlob_(attachNode, jxParams, universal, clickurl);
+        if (_univEltsObj)
+            _height = _univEltsObj.height;
     };
     let ret = new FactoryOneUniveralMgr();
     return ret;

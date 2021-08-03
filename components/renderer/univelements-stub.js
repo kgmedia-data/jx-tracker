@@ -4,8 +4,9 @@ let MakeOneUniversalMgr_ = function() {
     FactoryOneUniveralMgr.prototype.getHeight = function() {
         return 0;
     };
-    FactoryOneUniveralMgr.prototype.getElts = function() {
-        return null;
+    FactoryOneUniveralMgr.prototype.show = function() {
+    };
+    FactoryOneUniveralMgr.prototype.hide = function() {
     };
     FactoryOneUniveralMgr.prototype.init = function(jxParams, clickurl, universal, attachNode) {
     };        
