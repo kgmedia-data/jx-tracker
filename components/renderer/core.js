@@ -36,6 +36,12 @@ const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 
+// if (JX_FLOAT_COND_COMPILE) {
+    const JXFloatingClsName = 'jxfloating';
+    const JXCloseBtnClsName = 'jxfloating-close-button';
+    const JXFloatingStyleID = 'JXFloatingStyle';
+// }
+
 function addGAMNoAdNotifyMaybe(str) {
     if (str.includes("<script") && str.includes("googletag.pubads()")) {
         var script = new DOMParser().parseFromString(str, "text/html");
@@ -52,6 +58,177 @@ function addGAMNoAdNotifyMaybe(str) {
     return str;
 }
 
+// if (JX_FLOAT_COND_COMPILE) {
+let MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn) {
+    var _floatParams = null;
+    var _closeBtn = null;
+    var _token = null;
+    
+    var _container = null;
+    var _parentContainer = null;
+    var _placeholderDiv = null;
+
+    var _initialHeight = 0;
+    var _visThreshold = 0.4;
+
+    var _floating = false;
+    var _pm2CreativeFcn = null;
+    var _placeholderObs = null;
+
+    function FactoryOneFloating(container, params, divObjs, token, pm2CreativeFcn) {
+        var _innerDiv = divObjs.innerDiv;
+        var _outterDiv = divObjs.outerDiv;
+
+        _parentContainer = container;
+        _floatParams = params;
+        _container = _outterDiv;
+        _token = token;
+        _pm2CreativeFcn = pm2CreativeFcn;
+
+        _initialHeight = Math.max(_innerDiv.offsetHeight, _innerDiv.offsetHeight);
+
+        _prepareFloatingUnits();
+    }
+
+    var _prepareFloatingUnits = function() {
+        var stylesArr = [
+            "."+JXCloseBtnClsName+"{position: absolute;box-sizing: border-box;display: block;left: -12px;bottom: auto;top: 15px;right: auto;cursor:pointer;z-index: 99;}",
+            "."+JXCloseBtnClsName+":before,."+JXCloseBtnClsName+":after{width: 20px;height: 5px;transform: rotate(-45deg);content: '';position: absolute;display: block;background-color: #000;transition: all 0.2s ease-out;top: 50%;left: 50%;}",
+            "."+JXCloseBtnClsName+":after{transform: rotate(45deg);}",
+            "."+JXCloseBtnClsName+":hover:after{transform: rotate(-45deg);}",
+            "."+JXCloseBtnClsName+":hover:before{transform: rotate(45deg);}",
+            "."+JXCloseBtnClsName+".left{position: absolute;box-sizing: border-box;display: block;right: 2px;bottom: auto;top: 18px;left: auto;cursor:pointer;z-index: 99;}",
+            "."+JXFloatingClsName+"{position:fixed;height:auto;opacity:1;z-index:9999}",
+        ].join("\n");
+        common.acss(stylesArr, JXFloatingStyleID);
+
+        _closeBtn = document.createElement('a');
+        _closeBtn.className = JXCloseBtnClsName;
+
+        if (_floatParams.floatLocation == "bottom left" || _floatParams.floatLocation == "top left") _closeBtn.classList.add('left');
+        _closeBtn.onclick = function() {
+            _stopFloat();
+            _floatParams.isFloat = false;
+            _pm2CreativeFcn("jxnotvisible");
+        }
+
+        _container.appendChild(_closeBtn);
+        _hideCloseBtn();
+    }
+
+    var _setContainerStyle = function(elmStyle) {
+        if (["bottom right","bottom left","bottom"].includes(_floatParams.floatLocation)) elmStyle.top = "auto";
+        if (["top right","top left","top"].includes(_floatParams.floatLocation)) elmStyle.top = _floatParams.floatVMargin + "px";
+
+        if (["bottom right","top right"].includes(_floatParams.floatLocation)) elmStyle.left = "auto"; 
+        if (["bottom left","top left"].includes(_floatParams.floatLocation)) elmStyle.left = _floatParams.floatHMargin + "px"; 
+
+        if (["top","top right", "top left"].includes(_floatParams.floatLocation)) elmStyle.bottom = "auto"; 
+        if (["bottom right","bottom left","bottom"].includes(_floatParams.floatLocation)) elmStyle.bottom = _floatParams.floatVMargin + "px";
+
+        if (["bottom left", "top left"].includes(_floatParams.floatLocation)) elmStyle.right = "auto"; 
+        if (["bottom right","bottom","top right"].includes(_floatParams.floatLocation)) elmStyle.right = _floatParams.floatHMargin + "px";
+
+        if (["bottom","top"].includes(_floatParams.floatLocation)) {
+            elmStyle.right = "0px";
+            elmStyle.left = "0px";
+            elmStyle.margin = "auto";
+        } else elmStyle.margin  = "0px 10px 10px";
+    }
+
+    var _setPlaceholderDiv = function() {
+        if (!_placeholderDiv) {
+            _placeholderDiv = common.newDiv(_parentContainer, 'div');
+            _placeholderDiv.style.cssText = "display:block;width:100%;clear:both;height:" + _initialHeight + "px";
+        } else _placeholderDiv.style.display = "block";
+
+        _placeholderObs = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry){
+                if (entry.intersectionRatio > _visThreshold) {
+                    _placeholderObs.unobserve(entry.target);
+                    _stopFloat();
+                }
+            });
+        }, {threshold: _visThreshold});
+        _placeholderObs.observe(_placeholderDiv);
+    }
+
+    var _hidePlaceholderDiv = function() {
+        if (_placeholderDiv) _placeholderDiv.style.display = "none";
+    }
+
+    var _sendEvent = function(msg) {
+        var evt = new Event(msg);
+        _parentContainer.dispatchEvent(evt);
+    }
+
+    var _startFloat = function(hasBeenViewed) {
+        _floating = true;
+        _container.classList.add(JXFloatingClsName);
+        var ctrStyle = _container.style;
+        ctrStyle.background = _floatParams.floatBackground;
+        ctrStyle.height = "auto";
+        ctrStyle.width = _floatParams.floatWidth + "px";
+        
+        _setContainerStyle(ctrStyle);
+        _showCloseBtn();
+        _sendEvent("jxfloat");
+
+        _setPlaceholderDiv();
+
+        if (_floatParams.floatType == "always" && !hasBeenViewed) _pm2CreativeFcn("jxvisible");
+    }
+
+    var _stopFloat = function() {
+        if (_floating && _floatParams.isFloat) {
+            _container.classList.remove(JXFloatingClsName);
+            _container.style.cssText = "";
+            _container.style.height = _initialHeight + "px";
+            _hidePlaceholderDiv();
+            if (_closeBtn) _hideCloseBtn();
+
+            _sendEvent("jxdocked");
+        }
+    }
+
+    var _hideCloseBtn = function() {
+        if (_closeBtn) _closeBtn.style.display = "none";
+    }
+
+    var _showCloseBtn = function() {
+        if (_closeBtn) _closeBtn.style.display = "block";
+    }
+
+    var _shouldFloat = function(hasBeenViewed, isVisible) {
+        if (_floatParams.isFloat && ((_floatParams.floatType == "always" && !isVisible) || (_floatParams.floatType == "view" && hasBeenViewed && !isVisible)))
+            return true;
+        else 
+            return false;
+    }
+
+    var _cleanUpElement = function() {
+        if (_placeholderDiv && _placeholderDiv.parentNode) _placeholderDiv.parentNode.removeChild(_placeholderDiv);
+        _placeholderObs = null;
+        _floating = false;
+    }
+
+    FactoryOneFloating.prototype.startFloat = function(hasBeenViewed) {
+        _startFloat(hasBeenViewed);
+    }
+    FactoryOneFloating.prototype.shouldFloat = function(hasBeenViewed, isVisible) {
+        return _shouldFloat(hasBeenViewed, isVisible);
+    }
+    FactoryOneFloating.prototype.stopFloat = function() {
+        _stopFloat();
+    }
+    FactoryOneFloating.prototype.cleanup = function() {
+        _cleanUpElement();
+    }
+
+    let floatUnit = new FactoryOneFloating(container, params, divObjs, token, pm2CreativeFcn);
+    return floatUnit;   
+}
+// }
 
 //////(function() {
     var _resolvePartnerAd = null;
@@ -276,6 +453,9 @@ function addGAMNoAdNotifyMaybe(str) {
 
         }
         if (fire != -1) {
+            if (!this.firstViewed) {
+                if (fire == 1) this.firstViewed = true;
+            }
             this.notifyFcn(fire == 1 ? true: false);
             this.lastFired = fire;
         }
@@ -410,7 +590,7 @@ function addGAMNoAdNotifyMaybe(str) {
                         this.handlers.jxchangeheight(json.params.height, this.handlers.resize);
                     }
                     //we need to trigger an on window resize actually.
-                    break;                    
+                    break;     
             }
         }
 
@@ -810,7 +990,11 @@ function addGAMNoAdNotifyMaybe(str) {
             400 is the real maxheight --> 200x400 --> this is the real possible.
         */
         
-        let ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
+        // if (JX_FLOAT_COND_COMPILE) {
+            let ratio = jxbnDiv.offsetWidth/c.width;
+        // } else {
+            // let ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
+        // }
 
         let newH = ((c.height*ratio) + 5);
         //console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
@@ -862,7 +1046,29 @@ function addGAMNoAdNotifyMaybe(str) {
       * In the AMP case, we call this explicitly (null, windowHeight: a number and
       * BCR, an object). We call this from the intersection observer in context of AMP.
       */
+    
+    // if (JX_FLOAT_COND_COMPILE) {
+        function __handleFloated() {
+            if (this.univEltsObj) {
+                let jxActionsDiv = this.univEltsObj.jxActionsDiv;
+                let jxTitleDiv = this.univEltsObj.jxTitleDiv;
 
+                if (jxActionsDiv) jxActionsDiv.style.display = "none";
+                if (jxTitleDiv) jxTitleDiv.style.display = "none";
+                if (this.cb) this.cb();
+            }
+        }
+        function __handleDocked() {
+            if (this.univEltsObj) {
+                let jxActionsDiv = this.univEltsObj.jxActionsDiv;
+                let jxTitleDiv = this.univEltsObj.jxTitleDiv;
+
+                if (jxActionsDiv) jxActionsDiv.style.display = "block";
+                if (jxTitleDiv) jxTitleDiv.style.display = "block";
+                if (this.cb) this.cb();
+            }
+        }
+    // }
 // What is this constant?     
 // for case the container is taller than the ad     
 // if the difference is < this threshold, then we dun bother
@@ -1274,6 +1480,18 @@ const thresholdDiff_ = 120;
         //width and height supposed to be the perceived height of the creative.
         doSizeMgmt(jxParams, c);
 
+        // if (JX_FLOAT_COND_COMPILE) {
+            let floatingBlob = {
+                isFloat:            jxParams.isFloat,
+                floatType:          jxParams.floatType,
+                floatLocation:      jxParams.floatLocation,
+                floatWidth:         jxParams.floatWidth,
+                floatVMargin:       jxParams.floatVMargin,
+                floatHMargin:       jxParams.floatHMargin,
+                floatBackground:    jxParams.floatBackground,
+            }
+        // }
+
         let out = { 
             nested:             nested,
             type:               c.type,
@@ -1287,6 +1505,10 @@ const thresholdDiff_ = 120;
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
             doDiffScroll:       c.doDiffScroll
         };
+
+        // if (JX_FLOAT_COND_COMPILE) {
+            out.floating = floatingBlob;
+        // }
 
         if (c.adparameters)
             out.adparameters = c.adparameters;
@@ -1440,6 +1662,10 @@ const thresholdDiff_ = 120;
     var makeAdRenderer = function(params) {
         var _jxParams = null;
         var _jxContainer = null;
+        // if (JX_FLOAT_COND_COMPILE) {
+            var _floatInst = null;
+            var _univEltsObj = null;
+        // }
         //not sure if we need to put this here at this level or just functional scope enough.
         
         //we just bound this to the createOuterContainer, createMainContainer, cleanupContainers
@@ -1475,6 +1701,11 @@ const thresholdDiff_ = 120;
             let boundScrollEvent                = null; //wait but this is only for non-AMP and certain scenarios.  TODO
             let boundCleanupThisCreative        = null;
             let normCrParams                    = null;
+
+            // if (JX_FLOAT_COND_COMPILE) {
+                let boundHandleFloated              = null;
+                let boundHandleDocked               = null;
+            // }
             //some stuff about the creative, may still change during runtime.
             //let sharedCreativeRTObj;
             let creativeObj = remainingCreativesArr.shift();
@@ -1557,6 +1788,9 @@ const thresholdDiff_ = 120;
             msghandlers['jxadended'] = boundCleanupThisCreative;
             msghandlers['jxnoad'] = function() {
                 boundCleanupThisCreative();
+                // if (JX_FLOAT_COND_COMPILE) {
+                    if (_floatInst) _floatInst.cleanup();
+                // }
                 if (remainingCreativesArr.length > 0){
                     //waterfall to next layer
                     next(jxContainer, remainingCreativesArr, next);
@@ -1567,8 +1801,8 @@ const thresholdDiff_ = 120;
             msghandlers['jxhasad'] = crHasAdResolve; //boundHandleResize;
             //save the bound function "pointers" so we can unlisten later
 
-            
 
+            
             
             crReady2HearAdParamsProm.then(function() {
                 /**
@@ -1618,10 +1852,22 @@ const thresholdDiff_ = 120;
                 }
                 
                 univmgr.init(divObjs.jxmasterDiv, _jxParams, normCrParams.universal, normCrParams.clickurl, normCrParams.clicktrackerurl);
+                _univEltsObj = univmgr.getElts();
 
                 cxtFcnsVector.handleHasAd(normCrParams.width, normCrParams.height, normCrParams.fixedHeight);
                 boundHandleResize();
 
+                // if (JX_FLOAT_COND_COMPILE) {
+                    if (normCrParams.floating && normCrParams.floating.isFloat) {
+                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floating, divObjs, token, boundPM2Creative);
+                        boundHandleFloated = __handleFloated.bind({ univEltsObj: _univEltsObj, cb: boundHandleResize });
+                        boundHandleDocked = __handleDocked.bind({ univEltsObj: _univEltsObj, cb: boundHandleResize });
+        
+                        //Need to unlisten to this event, but still dunno where is the suitable place
+                        common.addListener(jxContainer, 'jxfloat', boundHandleFloated);
+                        common.addListener(jxContainer, 'jxdocked', boundHandleDocked);
+                    }
+                // }
 
                 /**
                  * visibility detection (for AMP, the differential scrolling depends on same callback
@@ -1635,7 +1881,19 @@ const thresholdDiff_ = 120;
                     lastVisVal: -1,
                     lastPgVis: -1,
                     lastFired: -1,
-                    notifyFcn: function(vis) { boundPM2Creative(vis ? 'jxvisible': 'jxnotvisible'); }
+                    firstViewed: false,
+                    notifyFcn: function(vis) {
+                        if (_floatInst) { // JX_FLOAT_COND_COMPILE
+                            if (vis) {
+                                boundPM2Creative('jxvisible');
+                            } else {
+                                if (!_floatInst.shouldFloat(this.firstViewed, vis) || !this.lastPgVis) boundPM2Creative('jxnotvisible');
+                                else _floatInst.startFloat(this.firstViewed);
+                            }
+                        } else {
+                            boundPM2Creative(vis ? 'jxvisible': 'jxnotvisible');
+                        }
+                    }
                 };   
                 let boundCombiVisChange = __combiVisibilityChange.bind(combiVisChangeHelper);
                 observer = cxtFcnsVector.setupVisChangeNotifiers(boundCombiVisChange, jxContainer); 
@@ -1688,10 +1946,25 @@ const thresholdDiff_ = 120;
                 //_jxParams.height = parseInt(_jxParams.height) || 360;
                 _jxParams.campaignid = parseInt(_jxParams.campaignid) || null;
 
-                let isFloat = false;
                 let ctr = null;
+
+                _jxParams.isFloat = params.float || false;
+                // if (JX_FLOAT_COND_COMPILE) {
+                    _jxParams.floatType = "view";
+                    _jxParams.floatLocation = "bottom right";
+    
+                    if (_jxParams.isFloat) {
+                        if (params.floatType && ["view","always"].includes(params.floatType)) _jxParams.floatType = params.floatType;
+                        if (params.floatLocation && ["top","bottom","top right","top left","bottom right","bottom left"].includes(params.floatLocation)) _jxParams.floatLocation = params.floatLocation;
+                        _jxParams.floatWidth = parseInt(params.floatWidth) || 300;
+                        _jxParams.floatVMargin = parseInt(params.floatVMargin) || 0;
+                        _jxParams.floatHMargin = parseInt(params.floatHMargin) || 10;
+                        _jxParams.floatBackground = params.floatBackground || "transparent";
+                    }
+                // }
+
                 if (params.container) {
-                    if (gIsFifs && isFloat) { //<--?
+                    if (gIsFifs && _jxParams.isFloat) { //<--?
                         ctr = parent.document.getElementById(params.container);
                         if (!ctr) ctr = window.top.document.getElementById(params.container);
                     } else {
