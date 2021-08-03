@@ -1,5 +1,7 @@
 /**
- * Bundle built to make OSM script (non OSM)
+ * Bundle built to make OSM script (non AMP)
+ * 
+ * Documentation: refer to osm.md file in this same dir
  */
 if (window.jxoutstreammgr && window.jxoutstreammgr.init) {
     return;
@@ -20,7 +22,7 @@ const mpunruly      = require('../components/osmpartners/unruly');
 
 
 //<-- If we want, we can build the renderer code right in
-//    of course our script will be much bigger than.
+//    of course our script will be much bigger then.
 //    If e.g. Teads has a ad (say, as top of waterfall), then
 //    the JX renderer stuff would have been included in vain.
 const mrenderer     = require('../components/renderer/core');
@@ -44,6 +46,9 @@ const mids          = require('../components/basic/ids');
 var instMap = new Map();
 
 function start(options) {
+    //ability to handle a few OSM units on the page.
+    //I assume the publisher is sensible enough to put different
+    //selectors in the options. Else the ads will go haywire.
     let hashStr = btoa(JSON.stringify(options));
     let instMaybe = instMap.get(hashStr);
     if (instMaybe) {

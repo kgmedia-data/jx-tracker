@@ -128,3 +128,69 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;
 module.exports.name = 'teads';
+
+/* 
+ ************** module: osmpartners/teads **************************************************
+
+* module.exports:
+    - makeNormalizedObj (function)
+        - returns an object which the osm core JS can use to inject teads ad script etc
+
+        - the output object has the following properties
+        timeout (-1 means dun have any)
+        partner (here it will be "teads")
+        trackers
+        stackidx
+        stackdepth
+        instID: 
+        valid: true/false
+
+        scriptdiv : {
+            id: 
+            style: 
+        };
+
+        
+
+        createslot: {  <-- for the osm core when creating the div for the script
+            parent: {
+                - the HTML element to attach the created slot to
+                node - if node is present, corejs uses code, else use selector
+                selector
+            },
+            div: { 
+                id: id to give to the div to create
+                css: any special css to add
+            }
+        }
+        
+        msgs : an object of the messages to expect from partner script to inform of
+            noad, hasad, impression   
+            core js uses this to map incoming messages to 'noad', 'imp' etc and act accordingly            
+        
+        customfcns  : {
+            - none for the case of teads
+        }
+
+        visibilityslot : {
+            - the visibility measurement done by core.js , which container should it monitor?:
+            selector: 
+        }
+
+        scriptb: the script to inject (string)
+           a partner must have either scriptb or scriptcfg! Unruly case there is scriptb
+        scriptcfg: the module's runCreative function, if any, will be called with this cfg.
+
+        scriptdiv = {
+            inject the unruly script into a div of this id and style
+            id: 
+            style:
+        }
+        scriptselector - the selector to describe the parent to which to hang the script div
+
+        floating - boolean - float or not is not managed by us but by the partner. 
+           we just need to know for the sake of creative view events generation
+    
+* requires/dependencies:
+    - none
+*/

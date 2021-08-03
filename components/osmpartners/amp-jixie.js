@@ -70,3 +70,35 @@ function makeNormalizedObj_(dbjson, p) {
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;
 module.exports.name = 'jixie';
+
+
+/* 
+ ************** module: osmpartners/amp-jixie **************************************************
+
+* module.exports:
+    - makeNormalizedObj (function)
+        - returns an object which the amp-core JS can use to inject jixie ad etc
+
+        - the output object has the following properties
+        timeout (-1 means dun have any)
+        partner (here it will be "jixie")
+        trackers
+        stackidx
+        stackdepth
+        instID: 
+        valid: true/false
+        inject: a function to be called (by the amp-core) 
+        msgs : an object of the messages to expect from partner script to inform of
+            noad
+            imp
+            virtimp
+            timeout
+            - this is not needed for jixie. Coz jixie sure has ad. 
+        customfcns : {
+          currently not used for amp
+        }
+     
+    
+* requires/dependencies:
+    - none
+*/

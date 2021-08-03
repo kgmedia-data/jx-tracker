@@ -83,6 +83,18 @@ const supported_ = [
   const wrap = require('wordwrap')(5, 100);
   var config = null;
   
+   var minify_options_strip_float = {
+    compress: {
+      global_defs: {
+      }
+    }
+   };
+   minify_options_strip_float.compress.global_defs['JX_FLOAT_COND_COMPILE'] = false;
+   
+  const floatPatternStub = `DO_NOT_REMOVE_GULPBUILD_REPLACE_FLOAT_COND_COMPILE`;
+  const floatPatternTurnOff = `window.JX_FLOAT_COND_COMPILE = false;`;
+  const floatPatternTurnOn = `window.JX_FLOAT_COND_COMPILE = true;`;
+  
     var configKeys = require("./config-keys")(); //PLEASE SEE THIS FILE config-keys-seed.js is commited though
     var config_aws = {
         key: configKeys.awsKey,
@@ -144,7 +156,8 @@ const supported_ = [
         .bundle()
         .pipe(source(osmjsfile_))
         .pipe(buffer())
-        .pipe(gulpif(config.minify, minify()))
+        .pipe(replace(floatPatternStub,    floatPatternTurnOff))
+        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
         .on('error', function(err) {
             gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
@@ -159,14 +172,19 @@ const supported_ = [
         .pipe(gutil.noop())
   });
   const ulitejsfile_ = 'bundles/ulite.js';
+
+  
   gulp.task('BUILD_ULITE_BUNDLE', function() {
+   
+    floatNewPattern =  `window.JX_FLOAT_COND_COMPILE = false;`;
     return browserify('' + ulitejsfile_, {
             debug: false
         })
         .bundle()
         .pipe(source(ulitejsfile_))
         .pipe(buffer())
-        .pipe(gulpif(config.minify, minify()))
+        .pipe(replace(floatPatternStub,    floatPatternTurnOff))
+        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
         .on('error', function(err) {
             gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
@@ -180,7 +198,31 @@ const supported_ = [
         //.s3(config_aws, s3_options.dev)
         .pipe(gutil.noop())
   });
- 
+
+  
+  gulp.task('BUILD_FLOATABLE_ULITE_BUNDLE', function() {
+    return browserify('' + ulitejsfile_, {
+            debug: false
+        })
+        .bundle()
+        .pipe(source(ulitejsfile_))
+        .pipe(buffer())
+        .pipe(replace(floatPatternStub,    floatPatternTurnOn))
+        .pipe(gulpif(config.minify, minify()))
+        .on('error', function(err) {
+            gutil.log(gutil.colors.red('[Error]'), err.toString());
+        })
+        .pipe(gulpif(true, rename({
+            basename: 'jx-app-ulite-floatable'
+        })))
+        .pipe(gulpif(true, rename({
+            extname: '.min.js'
+        })))
+        .pipe(gulp.dest('dist'))
+        //.s3(config_aws, s3_options.dev)
+        .pipe(gutil.noop())
+  });
+
   const videosdkjsfile_ = 'bundles/videosdk.js';
   gulp.task('BUILD_VIDEOSDK_BUNDLE', function() {
     return browserify('' + videosdkjsfile_, {
@@ -212,7 +254,8 @@ const supported_ = [
         .bundle()
         .pipe(source(amposmjsfile_))
         .pipe(buffer())
-        .pipe(gulpif(config.minify, minify()))
+        .pipe(replace(floatPatternStub,   floatPatternTurnOff))
+        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
         .on('error', function(err) {
             gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
@@ -235,7 +278,8 @@ const supported_ = [
         .bundle()
         .pipe(source(hbrendererjsfile_))
         .pipe(buffer())
-        .pipe(gulpif(config.minify, minify()))
+        .pipe(replace(floatPatternStub,    floatPatternTurnOff))
+        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
         .on('error', function(err) {
             gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
@@ -258,7 +302,8 @@ const supported_ = [
         .bundle()
         .pipe(source(jxrendererjsfile_))
         .pipe(buffer())
-        .pipe(gulpif(config.minify, minify()))
+        .pipe(replace(floatPatternStub,    floatPatternTurnOff))
+        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
         .on('error', function(err) {
             gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
@@ -296,20 +341,20 @@ const supported_ = [
         .pipe(gutil.noop())
   });
 
-  const videoadsdklitejsfile_ = 'bundles/videoadsdk-lite.js';
-  gulp.task('BUILD_VIDEOADSDKLITE_BUNDLE', function() {
-    return browserify('' + videoadsdklitejsfile_, {
+  const videoadsdkstandalonejsfile_ = 'bundles/videoadsdk-standalone.js';
+  gulp.task('BUILD_VIDEOADSDKSTANDALONE_BUNDLE', function() {
+    return browserify('' + videoadsdkstandalonejsfile_, {
             debug: false
         })
         .bundle()
-        .pipe(source(videoadsdklitejsfile_))
+        .pipe(source(videoadsdkstandalonejsfile_))
         .pipe(buffer())
         .pipe(gulpif(config.minify, minify()))
         .on('error', function(err) {
             gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
         .pipe(gulpif(true, rename({
-            basename: 'jx-app-videoadsdk-lite'
+            basename: 'jx-app-videoadsdk-standalone'
         })))
         .pipe(gulpif(true, rename({
             extname: '.min.js'
@@ -320,7 +365,7 @@ const supported_ = [
   });
   gulp.task('UPLOAD_TEST_HTML', function(cb) {
     pump([
-            gulp.src(['dist/bundles/*.js', 'tests/*.html', 'tests/*.css']),
+            gulp.src(['dist/bundles/*.js', 'tests/vpaid*.js', 'tests/*.html', 'tests/*.css']),
             gulpif(true, s3(config_aws, s3_options.dev))
         ],
         cb
@@ -380,8 +425,28 @@ const supported_ = [
   
   //add this to the list later 'BUILD_OUTSTREAMJS'
   //we are continually modifying the ids common ah.
+  gulp.task('main', gulp.series('clean', 
+    'BUILD_AMPOSM_BUNDLE', 
+    'BUILD_JXRENDERER_BUNDLE', 
+    'BUILD_HBRENDERER_BUNDLE', 
+    'BUILD_OSM_BUNDLE',
+    'BUILD_VIDEOSDK_BUNDLE',
+    'BUILD_VIDEOADSDK_BUNDLE',
+    'BUILD_VIDEOADSDKSTANDALONE_BUNDLE', 
+    'BUILD_ULITE_BUNDLE', 
+    'BUILD_FLOATABLE_ULITE_BUNDLE'));
   
-  gulp.task('developer1', gulp.series('clean', 'BUILD_AMPOSM_BUNDLE', 'BUILD_JXRENDERER_BUNDLE', 'BUILD_HBRENDERER_BUNDLE', 'BUILD_OSM_BUNDLE','BUILD_VIDEOSDK_BUNDLE','BUILD_VIDEOADSDK_BUNDLE','BUILD_VIDEOADSDKLITE_BUNDLE', 'BUILD_ULITE_BUNDLE', 'UPLOAD_TEST_HTML'));
+  gulp.task('developer1', gulp.series('clean', 
+    'BUILD_AMPOSM_BUNDLE', 
+    'BUILD_JXRENDERER_BUNDLE', 
+    'BUILD_HBRENDERER_BUNDLE', 
+    'BUILD_OSM_BUNDLE',
+    'BUILD_VIDEOSDK_BUNDLE',
+    'BUILD_VIDEOADSDK_BUNDLE',
+    'BUILD_VIDEOADSDKSTANDALONE_BUNDLE', 
+    'BUILD_ULITE_BUNDLE', 
+    'BUILD_FLOATABLE_ULITE_BUNDLE',
+    'UPLOAD_TEST_HTML'));
   
   config = (function() {
     var

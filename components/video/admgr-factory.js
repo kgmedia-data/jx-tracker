@@ -90,11 +90,31 @@
     var _eventsCallback = null;
     var _imaEvents = JSON.parse(JSON.stringify(imaEventsSeed_));
     var _aStartApiCalled = false;
+    var _callOnceUponStarted = null;
+    
+    //what is this thing? 
+    //It seems in the scenario whereby due to e.g. browser setting, the play failed (yes it is possible
+    //even muted can fail too)
+    //The PROPER way to handle these things are actually to TRY 
+    //https://developers.google.com/interactive-media-ads/docs/sdks/html5/client-side/autoplay
+    //i.e. make an independent test using the video element about what the browser can do
+    //But this will make us have to load another little video 
 
-    //if you are making a long long adrequest
-    //and when you are back, the whole thing was reset already.
+    //For the videosdk we will not have this issue since the above test is done. And when cannot
+    //autoplay we will get user click gesture:
 
+    //So now doing a lazy way - just to get by since we are only going
+    //the 'reallyProgressed' is used in the resume pause code . just grep for it.
+    var _reallyProgressed = false;
+    var _knownCurrentTime = -1;
+    
     FactoryOneAd.prototype.reset = function() {
+
+        _reallyProgressed = false;
+        _knownCurrentTime = -1;
+
+         
+        _callOnceUponStarted = fcnCallOnceUponStarted;
         //reset will not erase the events subscription 
 
         //for video ad really.
@@ -166,6 +186,9 @@
         //or due to the playerWrapper calling
 
         if (_adsManager) {
+            if (!_reallyProgressed) {
+                _adsManager.pause();
+            }
             _adsManager.resume();
         }
     };
@@ -178,6 +201,16 @@
         }
     };
     var _handleContentPauseReq = function(hideContent) {
+        //Added this here (this is also called upon STARTED event)
+        //this is for our vide ad sdk case.
+        //sometimes the play() just cannot work (e.g. browser prevents autoplay)
+        //then the lazy way out is to show the controls for the user to click
+        //but without the STARTED event, we will the controls will still be hidden
+        //so call a show here....
+        //
+        //video sdk will not have this issue. Coz it always check if autoplay is really
+        //possible . if not, then it will put up a big play button to start with
+        _ctrls.show();
         _pFcnVector.switch2Ad(hideContent); 
     }
     var _setupResizeListeners = function() {
@@ -214,15 +247,72 @@
         } 
     }
 
+    var fcnCallOnceUponStarted= function(ad) {
+        _callOnceUponStarted = null;
+
+        _isAdStarted = true; // set the value to be true as we know that now the ad has really started
+        /////console.log(`adBreakDuration=${adData.adBreakDuration} adPosition=${adData.adPosition} currentTime=${adData.currentTime} totalAds=${adData.totalAds} duration=${adData.duration}`);
+        
+        //TODO: Renee Fery review tis:
+        //what is the content at this stage
+        //
+        let pauseAdToo = false;
+        if (_pFcnVector.isPaused()) {
+            //means we should also pause the ad lah!!
+            pauseAdToo = true;
+        }
+        //<----
+        _pFcnVector.hideSpinner();
+
+        if (ad && ad.isLinear()) {
+            _ctrls.show(); 
+        }
+        else {
+            console.log(`#$ no need show the ads controls then coz non linear`);
+        }
+
+        _adDiv.classList.remove(adHideCls); //
+        _adDiv.classList.remove(hideCls); //
+
+        // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
+        //pls fix this. the jxhide class does not work
+        if (this.resolveFcn) {
+            let nonlinear = (ad && !ad.isLinear());
+            //then if the play (start) has been held back then we signal the thing to start the content video
+            this.resolveFcn(nonlinear ? "jxnonlinearadstarted": "jxadstarted");
+        }
+        
+        //---->
+        _fireReportMaybe('started'); 
+        _ctrls.updatePlayState(true);
+
+        if(_adsManager.getVolume() > 0) {
+            //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 3 ${_adsManager.getVolume()}`);
+            _adsManager.setVolume(1);
+            _ctrls.updateMutedState(false);
+        } else {
+            //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 4 ${_adsManager.getVolume()}`);
+            _adsManager.setVolume(0);
+            _ctrls.updateMutedState(true);
+        }
+        /* if (pauseAdToo) {
+            setTimeout(function() {
+                console.log(`executing the pause ad in started: handler`);
+                _adsManager.pause();
+            }, 0);
+        }
+        Cannot lah stupid Just did a content pause ah.
+        */
+        //However, if the content was already paused (coz the stupid ad took such a long time to come)
+        //then here we should also 
+    }
     var _onAdEvent = function(evt) {
         if (!_adsManager) return; //in case closed shop
-        //console.log(`#$ #$ #$ #$ #$ #$ #$ #$ #$ ${evt.type}`);
         let ad = evt.getAd();
 
         if (_eventsCallback) {
             let jxEvtName = _subscribedEvents[evt.type];
             if (jxEvtName) {
-                //console.log(`--WOOYANYU TO CB FOR - ${jxEvtName}----`);
                 setTimeout(function() {
                     _eventsCallback(jxEvtName);
                 }, 0);
@@ -248,7 +338,23 @@
 
                     if (adData.adPosition <= _adEnduredVec.length) {
                         _adEnduredVec[adData.adPosition] = adData.currentTime;
-
+                        
+                        if (!_reallyProgressed && adData.currentTime > 0) {
+                           if (_knownCurrentTime ==  -1) {
+                               _knownCurrentTime = adData.currentTime;
+                           }
+                           else {
+                               if (adData.currentTime > _knownCurrentTime) {
+                                   _reallyProgressed = true;
+                               }
+                           }
+                        }
+                        if (adData.currentTime > 1 && _callOnceUponStarted) {
+                            //if for some reason we missed the STARTED EVENT.
+                            //then make up for it here...
+                            //_callOnceUponStarted(ad);
+                        }
+                        //actually if we dun do progress bar, then dun bother.
                         if (!_isProgressBarUpdated && _isAdStarted) { // we check the progress bar has not been updated yet and the ad has really started
                             _isProgressBarUpdated = true; // change to be true so we only mainpulate the DOM just once
 
@@ -270,7 +376,7 @@
             case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
                 _handleContentPauseReq(true); 
                  break;
-            case google.ima.AdEvent.Type.LOADED:             
+            case google.ima.AdEvent.Type.LOADED:     
                 //confusing when this is fired!        
                 //seems should be after adsManager.init but some webpages seems to suggest otherwise
                 /* not sure if I need to act upon the info here..
@@ -285,61 +391,9 @@
                 */
                 break;
             case google.ima.AdEvent.Type.STARTED:
-                _isAdStarted = true; // set the value to be true as we know that now the ad has really started
-                /////console.log(`adBreakDuration=${adData.adBreakDuration} adPosition=${adData.adPosition} currentTime=${adData.currentTime} totalAds=${adData.totalAds} duration=${adData.duration}`);
-                
-                //TODO: Renee Fery review tis:
-                //what is the content at this stage
-                //
-                let pauseAdToo = false;
-                if (_pFcnVector.isPaused()) {
-                    //means we should also pause the ad lah!!
-                    pauseAdToo = true;
+                if (_callOnceUponStarted) {
+                    _callOnceUponStarted(ad);
                 }
-                //<----
-                _pFcnVector.hideSpinner();
-
-                if (ad && ad.isLinear()) {
-                    _ctrls.show(); 
-                }
-                else {
-                    console.log(`#$ no need show the ads controls then coz non linear`);
-                }
-                _adDiv.classList.remove(adHideCls); //
-                _adDiv.classList.remove(hideCls); //
-
-                // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
-                //pls fix this. the jxhide class does not work
-                if (this.resolveFcn) {
-                    let nonlinear = (ad && !ad.isLinear());
-                    //then if the play (start) has been held back then we signal the thing to start the content video
-                    this.resolveFcn(nonlinear ? "jxnonlinearadstarted": "jxadstarted");
-                }
-                
-                //---->
-                _fireReportMaybe('started'); 
-                _ctrls.updatePlayState(true);
-
-                if(_adsManager.getVolume() > 0) {
-                    //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 3 ${_adsManager.getVolume()}`);
-                    _adsManager.setVolume(1);
-                    _ctrls.updateMutedState(false);
-                } else {
-                    //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 4 ${_adsManager.getVolume()}`);
-                    _adsManager.setVolume(0);
-                    _ctrls.updateMutedState(true);
-                }
-                /* if (pauseAdToo) {
-                    setTimeout(function() {
-                        console.log(`executing the pause ad in started: handler`);
-                        _adsManager.pause();
-                    }, 0);
-                }
-                Cannot lah stupid Just did a content pause ah.
-                */
-                //However, if the content was already paused (coz the stupid ad took such a long time to come)
-                //then here we should also 
-
                 break;
             case google.ima.AdEvent.Type.COMPLETE:
             case google.ima.AdEvent.Type.SKIPPED:
@@ -441,7 +495,6 @@
             }
 
             //On purpose
-            //HACK RENEE TRY _adDiv.classList.remove(hideCls);
             // _adDiv.style.display = 'block'; //TODO
             //console.log(`#$ calling adsManager start`);
             _adsManager.start();
@@ -682,3 +735,47 @@
 };
 
 module.exports = MakeOneAdObj_;
+
+
+/* 
+ ************** module: video/admgr-factory ******************************************
+
+* module.exports:
+    - function which will make one ad mgr object
+     The made object will have the following functions:
+        - reset  function(): to kill any current ad play, if any. Get ready for next use
+        - subscribeToEvents function(eventsArr, callback) 
+            - possible entries in the array
+                "jxadended", 
+                "jxadfirstQuartile",
+                "jxadthirdQuartile",
+                "jxadmidpoint",
+                "jxadskipped", 
+                "jxadalladscompleted",
+                "jadclick", 
+                "jxadimpression",
+                "jxadstart"
+        - getAdsLoaderOutcome  function() : jxhasad, jxnoad, jxpending
+
+        - forceDimensions  function(width, height) (for the adManager size). Else we detect the ad container size and any change
+        - makeAdRequestFromXMLP  function(vastXML, autoplayFlag, mutedFlag) 
+        - makeAdRequestP  function(adURL, autoplayFlag, mutedFlag) 
+        - makeAdRequestFromXMLCB  function(vastXML, autoplayFlag, mutedFlag, cb) 
+        - makeAdRequestCB  function(adURL, autoplayFlag, mutedFlag, cb) 
+            - adrequest can be with tag or with XML
+            - see that there is a "CB" variant and a P variant
+            - P variant returns a promise. Can resolve to jxhasad, jxnoad
+        - setAutoAdsManagerStart  function(val)
+        
+        - startAd  function(resolveFcn) 
+            - possible resolved values "jxnonlinearadstarted", "jxadstarted", "jxaderrored"
+        - playOrStartAd  function() 
+        - playAd function() 
+        - pauseAd function()
+
+        - unmuteAd function() 
+
+    
+* requires/dependencies:
+    e.g. adctrls-factory 
+*/

@@ -63,3 +63,31 @@ function makeNormalizedObj__(dbjson, rtjson) {
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;
 module.exports.name = 'teads';
+
+/* 
+ ************** module: osmpartners/amp-teads **************************************************
+
+* module.exports:
+    - makeNormalizedObj (function)
+        - returns an object which the amp-core JS can use to inject teads script etc
+
+        - the output object has the following properties
+        timeout (-1 means dun have any)
+        partner (here it will be "teads")
+        trackers
+        stackidx
+        stackdepth
+        instID: 
+        valid: true/false
+        inject: a function to be called (by the amp-core) to inject teads stuff onto the page
+        msgs : an object of the messages to expect from partner script to inform of
+            noad
+            imp
+            virtimp (not all partners have this, Teads does not)
+            timeout
+        customfcn: {
+            not used for amp OSM
+        }    
+* requires/dependencies:
+    - none
+*/

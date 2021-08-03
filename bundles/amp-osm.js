@@ -1,6 +1,16 @@
 /**
- * script to do amp osm
+ * Bundle built to make AMP OSM script (so this will also be the universal script for AMP)
+ * 
+ * Documentation: refer to amp-osm.md file in this same dir
  */
+const modulesmgr    = require('../components/basic/modulesmgr');
+
+const common                       = require('../components/basic/common');
+modulesmgr.set('basic/common',     common);
+ 
+const univelements  = require('../components/renderer/univelements-stub');
+modulesmgr.set('renderer/univelements',         univelements);
+ 
 const mpjixie       = require('../components/osmpartners/amp-jixie');
 const mpteads       = require('../components/osmpartners/amp-teads');
 const mpunruly      = require('../components/osmpartners/amp-unruly');
@@ -46,9 +56,31 @@ function start() {
         });
 }
 
+//<--- NOTE: For now we just build the jixie-ad-rendering capability
+//into the JS file too (so no loading of yet another file to play JX ad)
+const mrenderer     = require('../components/renderer/core');
+if (!window.jxrenderer) {
+    window.jxrenderer = {
+        init: function(options) {
+            mrenderer.createInstance(options);
+        }
+    };
+}
+
 start();
 
 /*
+
+ampSlotIndex: "0"
+cid: "1174"
+maybe do a fixed height then?
+height: 300
+options: "{\"miscParams\":{\"reserve1\":\"test1\",\"reserve2\":\"test2\"}}"
+type: "jixie"
+unit: "jixietestunit"
+width: 400
+
+
    'data',
         'canonicalUrl',      
         'container',

@@ -4,10 +4,7 @@ function MakeOneHelperObj_() {
     let _loadIMAProm = null; //these are promises
     function FactoryOneHelper() {}
    
-    FactoryOneHelper.prototype.injectStyles = function(stylesString, styleName) {
-         _acss(stylesString, styleName);
-    }
-
+    
     FactoryOneHelper.prototype.toCamelCase = function(str) {
         return str.toLowerCase().replace(/(\-[a-z])/g, function($1) {
             return $1.toUpperCase().replace('-', '');
@@ -73,8 +70,9 @@ function MakeOneHelperObj_() {
         p.appendChild(nd);
         return nd;
     };
-    FactoryOneHelper.prototype.acss = function(stylesArr, id) {
-        _acss(stylesArr, id);
+
+    FactoryOneHelper.prototype.acss = function(stylesStr, id) {
+        _acss(stylesStr, id);
     }
 
     function _acss(stylesArr, id) {
@@ -89,3 +87,21 @@ function MakeOneHelperObj_() {
 };
 var gH = MakeOneHelperObj_();
 module.exports = gH;
+
+/* 
+ ************** module: basic/pginfo **************************************************
+ basically since this stuff is duplicated every where. so put into 
+ a common place.
+ Please just read the code to know what it tries to do. Too simple
+* module.exports:
+    - toCamelCase function(str)
+    - ancestor function(el, tagName)
+    - loadIMAScriptP function()
+    - addListener  function(e, event, h)
+    - removeListener function(e, event, h)
+    - newDiv function(p, t, h, c, id)
+    - acss function(stylesStr, id)
+  
+* requires/dependencies:
+    - none
+*/
