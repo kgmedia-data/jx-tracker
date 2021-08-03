@@ -52,7 +52,7 @@ function makePlayer(containerId, adparameters, config = null, eventsVector = nul
     //config.tag = 'https://search.spotxchange.com/vast/2.0/79391?VPAID=JS&content_page_url=&cb=1627609832&player_width=400&player_height=320&media_transcoding=low';
     //////config.loop = 'manual';
     //config.video = 'https://storage.googleapis.com/gvabox/media/samples/stock.mp4';
-  //  config.video = 'https://creatives.b-cdn.net/jx/white5sec.mp4';
+    //config.video = 'https://creatives.b-cdn.net/jx/white5sec.mp4';
     config.defaultImage = 'https://adsimg.kompas.com/html5/assets_ads/inslider/update/image/defaultloading.png';
     //config.width = 640;
     //config.height = 360;
@@ -137,7 +137,7 @@ if (window.onJXPlayerReady && !window.onJXPlayerReadyProcessed) {
         player: null,
         started: false,
         start: function(config) {
-            if (this.started) return; //to beat a problem with the ad looping
+            //if (this.started) return; //to beat a problem with the ad looping
             this.started = true;
             //get the player instance 
             let thisObj = this;
