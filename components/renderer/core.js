@@ -112,16 +112,16 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
             _placeholderDiv.style.cssText = "display:block;width:100%;clear:both;height:" + _initialHeight + "px";
         } else _placeholderDiv.style.display = "block";
 
-        _placeholderObs = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry){
-                if (entry.intersectionRatio > _visThreshold) {
-                    console.log(`THE OTHER ONE IN `);
-                    _placeholderObs.unobserve(entry.target);
-                    _stopFloat();
-                }
-            });
-        }, {threshold: _visThreshold});
-        _placeholderObs.observe(_placeholderDiv);
+        // _placeholderObs = new IntersectionObserver(function(entries) {
+        //     entries.forEach(function(entry){
+        //         if (entry.intersectionRatio > _visThreshold) {
+        //             console.log(`THE OTHER ONE IN `);
+        //             _placeholderObs.unobserve(entry.target);
+        //             _stopFloat();
+        //         }
+        //     });
+        // }, {threshold: _visThreshold});
+        // _placeholderObs.observe(_placeholderDiv);
     }
 
     var _hidePlaceholderDiv = function() {
@@ -1842,6 +1842,7 @@ const thresholdDiff_ = 120;
                     notifyFcn: function(vis) {
                         if (_floatInst) { // JX_FLOAT_COND_COMPILE
                             if (vis) {
+                                _floatInst.stopFloat();
                                 boundPM2Creative('jxvisible');
                             } else {
                                 if (!_floatInst.shouldFloat(this.firstViewed, vis) || !this.lastPgVis) boundPM2Creative('jxnotvisible');
