@@ -1194,10 +1194,13 @@ const thresholdDiff_ = 120;
         // (2a) width, height columns
         let w = cr.width ? cr.width: 0;
         let h = cr.height ? cr.height: 0;
+        
+        let crDetails = (cr.assets ? cr.assets: cr); //this logic, run from adserver will have cr.assets
+                                                     //if from renderer, then will be cr
         // (2b) assets
-        if ((!w || !h) && cr.assets) { //server-side
-            w = cr.assets.width ? cr.assets.width: 0;
-            h = cr.assets.height ? cr.assets.height: 0;
+        if ((!w || !h)) { //server-side
+            w = crDetails.width ? crDetails.width: 0;
+            h = crDetails.height ? crDetails.height: 0;
         }
         // (2c) subtype
         //still can get from the subtype
@@ -1211,10 +1214,16 @@ const thresholdDiff_ = 120;
         }
         // (2d) some are in adparameters ?
         if (!w || !h) {
-            let p = cr.assets && cr.assets.adparameters ? cr.assets.adparameters: cr.adparameters;
+            let p = crDetails.adparameters;
             if (p) {
                 w = p.width ? p.width: 0;
                 h = p.height ? p.height: 0;
+                if (!w || !h) {
+                    if (p.video) {
+                        w = p.video.width ? p.video.width: 0;
+                        h = p.video.height ? p.video.height: 0;
+                    }
+                }
             }
         }
         // ok exhausted all 
@@ -1238,7 +1247,7 @@ const thresholdDiff_ = 120;
         if (scaling != 'none') {
             // if it is not responsive, then crMaxW and crMinW = width of creative
             // ditto for height, nothing much to further calculate then:
-            let u = cr.assets && cr.assets.universal ? cr.assets.universal : cr.universal;
+            let u = crDetails.universal; 
             //make the max W and H specified in the creative be consistent
             //with aspect ratio
             let maxW = u && u.maxwidth ? u.maxwidth: 0;
