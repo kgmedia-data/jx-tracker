@@ -76,6 +76,7 @@ function createObject_(options, ampIntegration) {
     //var _obsEntry = null;
     //var _visFactor = 0; //for reporting (we have this dimension)
     var _visFactor2 = -1; //alternative calculation. -1 means dunno
+    var _msLastErrorTracker = 0; //a mechanism to prevent firing too many error trackers (used in _sendVTracker)
 
     //catalog of all the events we exposed to the caller of the SDK (e.g. widget code)
     //the property name is always the name of the listenable event exposed to the user of our sdk
@@ -245,9 +246,10 @@ function createObject_(options, ampIntegration) {
             //but looks like emitted e.g. cannot read DAM API etc.
         }
         let diffTime = 0;
+        let DateNow = Date.now();
         if (action == 'ready' || action == 'creativeView') {
             let refTime = jxvhelper.getScriptLoadedTime();
-            diffTime = Date.now() - refTime;
+            diffTime = DateNow - refTime;
         }
         else if (action == 'start') {
             diffTime = 0;
@@ -269,9 +271,21 @@ function createObject_(options, ampIntegration) {
                 dbgProp += "_NOREF_1";
             }
             //reference point of all the events.
-            let tt = Date.now();
-            diffTime = tt - _evtsHelperBlock.video.startts;
+            diffTime = DateNow - _evtsHelperBlock.video.startts;
         }
+        if (action == 'error') {
+            //We suppress errors that occurs in too close proximity
+            //Why? if a setup is unable to play any video (HLS+mp4), we will emit an error
+            //event and then try the next video. However, it is the same setup, so likely
+            //another fail and another error event, as the playlist is traversed;
+            //That will spoil our data coz really,
+            //it is about the same thing, no need to fire so many events. 
+            //Threshold is currently set to 1 minute 60*1000ms
+            if (DateNow - _msLastErrorTracker < 60000) {
+                return;
+            }
+        }
+
         let url = "";
         //console.log(`${e} Using refer time = ${refTime}`);
         //let vab = parseInt(_visFactor * 100);
@@ -314,6 +328,9 @@ function createObject_(options, ampIntegration) {
                 //console.log(`SENDINGB ${diffTime} `);
         }
         let delta = ('&elapsedms=' + diffTime) + ('&action=' + action);
+        if (action == 'error') {
+            _msLastErrorTracker = DateNow;
+        }
         fetch(url +delta, {
             method: 'get',
             credentials: 'include' 
