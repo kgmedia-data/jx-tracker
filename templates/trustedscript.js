@@ -1,4 +1,22 @@
-/* The earlier "trusted" scripts actually have issues in the sense that
+/* 
+   For jixie creatives which wants to run as a trusted + untrusted script
+
+   Why need follow a template: ensure all communication between 
+        renders <--> creative
+   are only received and handled by the intended recipient 
+
+   If you follow this template, your script will be fine both as trusted and
+   non-trusted
+
+   Communications can be:
+    jxloaded (only needed if untrusted)
+    jxhasad, jxnoad
+    
+    adparameters jxvisible jxnotvisible
+
+    
+
+   The earlier "trusted" scripts actually have issues in the sense that
    the communication with the renderer side is broken
    If there are a few of these in the same "window", there is no good way 
    to make sure the right renderer instance is hearing from the creative
