@@ -63,14 +63,13 @@ function addGAMNoAdNotifyMaybe(str) {
 var MakeOneFloatingUnit = function() { return null; };
 
 if (JX_FLOAT_COND_COMPILE) {
-MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn) {
+MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
     const JXFloatingClsName = 'jxfloating';
     const JXCloseBtnClsName = 'jxfloating-close-button';
     const JXFloatingStyleID = 'JXFloatingStyle';
 
     var _floatParams = null;
     var _closeBtn = null;
-    var _token = null;
     
     var _container = null;
     var _parentContainer = null;
@@ -81,7 +80,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
     var _floating = false;
     var _pm2CreativeFcn = null;
     
-    function FactoryOneFloating(container, params, divObjs, token, pm2CreativeFcn) {
+    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn) {
         var _innerDiv = divObjs.innerDiv;
         var _outterDiv = divObjs.outerDiv;
 
@@ -89,7 +88,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
         _floatParams = JSON.parse(JSON.stringify(params));
         _floatParams.isFloat = true;
         _container = _outterDiv;
-        _token = token;
         _pm2CreativeFcn = pm2CreativeFcn;
 
         _initialHeight = Math.max(_innerDiv.offsetHeight, _innerDiv.offsetHeight);
@@ -218,7 +216,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
     FactoryOneFloating.prototype.cleanup = function() {
         _cleanUpElement();
     }
-    let floatUnit = new FactoryOneFloating(container, params, divObjs, token, pm2CreativeFcn);
+    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn);
     return floatUnit;   
 }
 }
@@ -503,7 +501,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
     function __handleCrEvtsMsgs(e) {
         if (this.divObjs.jxCoreElt && this.divObjs.jxCoreElt.contentWindow) {
             //creative is in iframe iframe situation:
-            //not meant for us, the parent then.
+            //Then we can easily check if the source of the message is that
+            //iframe
             if (!(this.divObjs.jxCoreElt.contentWindow === e.source)) {
                 return;
             }
@@ -517,7 +516,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
             if (!e.data || typeof e.data === 'string' && e.data.indexOf('jx') != 0 ) {
                 return;
             }
-            //////console.log(`LITE received ${e.data}________________`);
             if (e.data && typeof e.data === 'string' && e.data.indexOf('jxmsg::') == 0) {
                 try {
                     json = JSON.parse(e.data.substr('jxmsg::'.length));
@@ -536,30 +534,37 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
         if (json) {
             type = json.type;
         }
+
+        if (this.c.trusted && this.c.crSig) {
+            //if the creative has a signature (new trusted script type) 
+            //and it is trusted
+            //then we need to also do a token match check too (token
+            //is derived from the id of the div)
+            //Else if different univeral units on the page has a few 
+            //have this kind of trusted scripts, the msgs may end up
+            //to wrong renderer listener
+            //
+            //Currently we do not yet have such creatives
+            if (!json || json.token != this.c.token) {
+                return; //not meant for us.
+            }
+        }
+        
+
         if (type) {
             switch (type) {
-                case "jxloaded":
-                    //if (!json || json.token == this.token) 
-                    {
-                        if (this.handlers.jxloaded) {
-                            this.handlers.jxloaded();
-                        }
-                    }
-                    break;
+                case "jxloaded": //only used for untrusted
+                    //for trusted, the old creatives dun need this sign to talk to the creative
+                    //for trusted, the future creative will follow template/trustedscript.js
+                    //and will not need this.
                 case "jxhasad":     
-                    if (this.handlers.jxhasad) {
-                        this.handlers.jxhasad();
+                case "jxnoad":
+                case "jxadended":
+                    if (this.handlers[type]) {
+                        this.handlers[type]();
                     }
                     break;
-                case "jxnoad":     
-                    if (this.handlers.jxnoad)
-                       this.handlers.jxnoad();
-                    break;
-                case "jxadended":
-                        if (this.handlers.jxadended)
-                           this.handlers.jxadended();
-                        break;
-                    case "jxchangeheight":
+                case "jxchangeheight":
                 case "size":
                     //things have to be rewritten in order to get the benefits of the new design.
                     //if we are not something that can change height, then ... well.
@@ -572,8 +577,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
                     }
                     //we need to trigger an on window resize actually.
                     break;     
-            }
-        }
+            }//case
+        }//if type
 
     }
 
@@ -581,24 +586,22 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
     /*
     Talk to the creative using messages. 
     For iframe case
+    Right now, the iframe non iframe both come here
+    This function will also fire events (for trusted case)
+    if is simple event.
     */
-    function __pm2Creative(msgtype, dataMaybe = null) {
+    function __pm2CrWithMsgsEvts(msgtype, dataMaybe = null) {
         let creativeNode = this.divObjs.jxCoreElt;
         let msgStr;
         if (msgtype == 'jxvisible' || msgtype == 'jxnotvisible') {
             msgStr = msgtype;
         }
         else {
-            //if (this.c.crSig) 
-            {
-                let obj = {
-                    type: msgtype,
-                    token: this.c.token,
-                    sig: this.c.crSig ? this.c.crSig: '',
-                    data: dataMaybe ? dataMaybe: {}
-                }
-                msgStr = "jxmsg::" + JSON.stringify(obj);
+            let obj = {
+                type: msgtype,
+                data: dataMaybe ? dataMaybe: {}
             }
+            msgStr = "jxmsg::" + JSON.stringify(obj);
         }
         if (creativeNode && creativeNode.contentWindow) {
             console.log(`__rendere emit to iframe ${msgStr}`);
@@ -614,6 +617,40 @@ MakeOneFloatingUnit = function(container, params, divObjs, token, pm2CreativeFcn
         }
     }
 
+    // This is my new suggested way renderer can work with 
+    // a trusted script
+    // The script ought to be developed following the pattern 
+    // in template/trustedscript.js
+    // Then all these would work nicely.
+    // The script needs to have a signature unique to itself
+    //
+    // the new type which are trusted + with signature, then
+    // can use this to talk to the creative.
+    // We don't have a use case yet, so this is commented out for now
+    // 'self' 'sig'
+    function __pm2CrDirectCall(msgtype, dataMaybe = null) {
+        let sig = this.c.crSig;
+        let token = this.c.token;
+        //Doing it like this, we don't need to know whether the
+        //script is loaded yet
+        //we can just stick the communication in. It will
+        //eventually (or immediately) be processed by the
+        //creative script
+        window[sig] = window[sig] || {}; 
+        window[sig].queue = window[sig].queue || [];
+        if (msgtype == 'adparameters' && dataMaybe) {
+            let p = JSON.parse(JSON.stringify(dataMaybe));
+            window[sig].queue.push(function(){
+                window[sig].run(token, p);
+            });//queue push
+        }
+        else {
+            window[sig].queue.push(function(){
+                window[sig].notify(token, msgtype);
+            });//queue push
+        }
+    }
+    
     /**
      * Super generic stuff to use fetch API to return a promise (the json object)
      * @param {*} adTagUrl 
@@ -1045,6 +1082,12 @@ const thresholdDiff_ = 120;
      function __handleScrollEvent(event, windowHeight = null, BCR = null) {
         //console.log(`windowHeight=${windowHeight} BCR=${BCR}`);
         let c = this.c;
+        if (!c.hasOwnProperty('creativeH')) {
+            //first time only.
+            c.creativeH = c.height;
+            c.containerH = c.fixedHeight;
+        }
+
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
         let diff = c.containerH - c.creativeH; 
         //console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH: ${c.creativeH}`);
@@ -1473,6 +1516,23 @@ const thresholdDiff_ = 120;
                 pivs: 'https://universal.jixie.io/js/jxplayerivs.1.2.js?'
             };
         let assumeHasAd = false;
+
+        /**
+         * Get ready for a new type
+         * Next time to develop a jixie script AND if it MUST be run as trusted
+         * (Coz that opens a lot of problems actually; if stick it in 
+         * 
+         * You need to develop it using the template/trustedscript.js as a model
+         * 
+         * Over here, in the handling case for this type, subtype
+         * 
+         * You need to set 
+         * out.crSig = '<signature of your creative script>' <-- this is needed.
+         * out.trusted = true;
+         * if got adparameters to pass this this script then just
+         * out.adparameters ...
+         * The renderer will be able to pass it then.
+         */
         switch (c.type) {
             case 'player': {
                 let surl;
@@ -1642,6 +1702,10 @@ const thresholdDiff_ = 120;
         this.ctr = container;
         this.excludedH = normCrParams.excludedHeight;
 
+        if (normCrParams.crSig && normCrParams.trusted) {
+            //
+            normCrParams.token = divObjs.jxCoreElt.id;
+        }
         this.allhooks = [];
         this.msghandlers = {};
 
@@ -1659,11 +1723,13 @@ const thresholdDiff_ = 120;
         this.msghandlers['jxchangeheight'] =  this.bf_heightchange;
         this.msghandlers['resize'] = this.bf_resize;
         this.bf_processCrEvtsMgs = __handleCrEvtsMsgs.bind({ 
-            divObjs: this.divObjs, token: '', handlers: this.msghandlers });
+            divObjs: this.divObjs, c: this.c, handlers: this.msghandlers });
       }
       HooksMgr.prototype.getPM2CreativeFcn = function(mode) {
         if (mode == 'self') return __pm2Self.bind({divObjs:this.divObjs, c: this.c});
-        return __pm2Creative.bind({divObjs:this.divObjs, c: this.c});
+        //We don't have direct type yet.
+        if (mode == 'direct') return __pm2CrDirectCall.bind({divObjs:this.divObjs, c: this.c});
+        return __pm2CrWithMsgsEvts.bind({divObjs:this.divObjs, c: this.c});
       }
       HooksMgr.prototype.overrideHandler = function(e, cb) {
           this.msghandlers[e] = cb;
@@ -1771,21 +1837,15 @@ const thresholdDiff_ = 120;
                 new Promise(function(resolve) {crReady2HearAdParamsResolve = resolve;}) : 
                 Promise.resolve());
             
-            let token = destContainerPrefix_ + instId; 
-            normCrParams.token = token; //Does not work lah.
-
             hooksMgr.overrideHandler('jxloaded', crReady2HearAdParamsResolve);
 
             hooksMgr.hookMsgs();
             if (!normCrParams.iframe) 
                 hooksMgr.hookEvts(); //the creative may use events to talk to us
   
-            let talkMode = (normCrParams.trackers ? 'self': normCrParams.iframe ? 'iframe':'div');                        
+            let talkMode = normCrParams.trackers ? 'self': (normCrParams.crSig ? 'direct': 'other');
             let boundPM2Creative = hooksMgr.getPM2CreativeFcn(talkMode);    
-                
-            normCrParams.creativeH  = normCrParams.height; //why have to do it here ?
-            normCrParams.containerH = normCrParams.fixedHeight; //????
-
+            
             /**
              * SETTING UP OUR RESPONDING TO ANY COMMUNICATIONS FROM CREATIVE 
              * 3 things to do:
@@ -1815,11 +1875,14 @@ const thresholdDiff_ = 120;
                 if (normCrParams.adparameters) {
                     //Moving forward, for "trusted" type of script whereby we 
                     //need to pass them the adparameters, we need to match signature already
-                    //else things will fly everywhere, if there are several units
-                    //The older creatives (esp players) is a mess, we cannot help it
-                    //But moving forward, we must follow rules
+                    //But even signature is not fool proof...
                     //
-                    //whether iframe (messages) or direct call to the creative object, we are here:
+                    //The older creatives definitely suffer a problem esp with the trusted type
+                    //The problem occurs when the trusted type communicate with renderer using
+                    //messages
+                    //They may receive message from another UNIT
+                    //Their messagse may go to renderer of another UNIT
+                    //also the change height, how?
                     boundPM2Creative('adparameters', normCrParams.adparameters);
                 }
 
@@ -1862,7 +1925,7 @@ const thresholdDiff_ = 120;
 
                 if (JX_FLOAT_COND_COMPILE) {
                     if (normCrParams.floatParams) {
-                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, token, boundPM2Creative);
+                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative);
                         boundHandleFloated = __handleFloated.bind({ univmgr: univmgr, cb: hooksMgr.resize.bind(hooksMgr) });
                         boundHandleDocked = __handleDocked.bind({ univmgr: univmgr, cb: hooksMgr.resize.bind(hooksMgr) });
                         hooksMgr.hookGeneric(jxContainer, 'jxfloat', boundHandleFloated);
@@ -1936,7 +1999,6 @@ const thresholdDiff_ = 120;
 
                 let ctr = null;
 
-                _jxParams.doFloat = true;
                 if (JX_FLOAT_COND_COMPILE) {
                     _jxParams.doFloat = params.float || false;
                     _jxParams.floatType = "view";
