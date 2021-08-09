@@ -63,11 +63,11 @@ function addGAMNoAdNotifyMaybe(str) {
 var MakeOneFloatingUnit = function() { return null; };
 
 if (JX_FLOAT_COND_COMPILE) {
-MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
+MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univmgr) {
     const JXFloatingClsName = 'jxfloating';
     const JXCloseBtnClsName = 'jxfloating-close-button';
     const JXFloatingStyleID = 'JXFloatingStyle';
-
+    var _univmgr = null;
     var _floatParams = null;
     var _closeBtn = null;
     
@@ -80,7 +80,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
     var _floating = false;
     var _pm2CreativeFcn = null;
     
-    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn) {
+    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn, univmgr) {
+        _univmgr = univmgr;
         var _innerDiv = divObjs.innerDiv;
         var _outterDiv = divObjs.outerDiv;
 
@@ -147,16 +148,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
             _placeholderDiv.style.cssText = "display:block;width:100%;clear:both;height:" + _initialHeight + "px";
         } else _placeholderDiv.style.display = "block";
     }
-
     var _hidePlaceholderDiv = function() {
         if (_placeholderDiv) _placeholderDiv.style.display = "none";
     }
-
-    var _sendEvent = function(msg) {
-        var evt = new Event(msg);
-        _parentContainer.dispatchEvent(evt);
-    }
-
     var _startFloat = function(hasBeenViewed) {
             _floating = true;
             _container.classList.add(JXFloatingClsName);
@@ -167,7 +161,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
         
             _setContainerStyle(ctrStyle);
             _showCloseBtn();
-            _sendEvent("jxfloat");
+            _univmgr.hide();
+            window.dispatchEvent(new Event('resize'));
 
             _setPlaceholderDiv();
             if (_floatParams.floatType == "always" && !hasBeenViewed) _pm2CreativeFcn("jxvisible");
@@ -180,10 +175,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
                 _container.style.height = _initialHeight + "px";
                 _hidePlaceholderDiv();
                 if (_closeBtn) _hideCloseBtn();
-                _sendEvent("jxdocked");
+                _univmgr.show();
+                window.dispatchEvent(new Event('resize'));
             }
     }
-
     var _hideCloseBtn = function() {
         if (_closeBtn) _closeBtn.style.display = "none";
     }
@@ -216,7 +211,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
     FactoryOneFloating.prototype.cleanup = function() {
         _cleanUpElement();
     }
-    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn);
+    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn, univmgr);
     return floatUnit;   
 }
 }
@@ -757,6 +752,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
                     jxCoreElt.dispatchEvent(new Event('jxnoad'));
                 }
                 img.src = blob.image.url;
+                //img.src = 'https://creatives.b-cdn.net/KG116cVoTd/377/1251/house1x.jpeg';
                 //actually to do it properly we should only do the creativeView and stuff
                 //based on onload-ed-ness of the image ah TODO
                 jxCoreElt.innerHTML = '<a style="border-bottom: none;" href="' + blob.image.clickurl + '" target="_blank"><img src="' + blob.image.url + '" class="jxImg"/></a>';
@@ -986,6 +982,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
      * scaling)
      */    
     function __handleResize() {
+        console.log(`_RESIZE IS BEING CALLED.`);
         //console.log(new Error().stack);
         let c = this.c;
         let jxbnDiv = this.divObjs.jxbnDiv;
@@ -1060,14 +1057,14 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn) {
       * BCR, an object). We call this from the intersection observer in context of AMP.
       */
     
-    function __handleFloated() {
-        this.univmgr.hide();
-        if (this.cb) this.cb();
-    }
-    function __handleDocked() {
-        this.univmgr.show();
-        if (this.cb) this.cb();
-    }
+    //function __handleFloated() {
+      //  this.univmgr.hide();
+        //if (this.cb) this.cb();
+    //}
+    //function __handleDocked() {
+      //  this.univmgr.show();
+        //if (this.cb) this.cb();
+    //}
 
 // For Differential scroll (fixeHeight)
 // This logic of this differential you can find in docs/
@@ -1099,7 +1096,7 @@ const thresholdDiff_ = 120;
         // The whole job of this function, is to calculate offset:
         let offset = 0;
 
-        let delta = this.excludedH; 
+        let delta = this.c.excludedHeight; 
         let vertOffsetToOurFrame = 0;
 
         if (!BCR) {
@@ -1700,7 +1697,7 @@ const thresholdDiff_ = 120;
         this.divObjs = divObjs;
         this.trackers = normCrParams.trackers; //not nec present
         this.ctr = container;
-        this.excludedH = normCrParams.excludedHeight;
+        //this.excludedH = normCrParams.excludedHeight;
 
         if (normCrParams.crSig && normCrParams.trusted) {
             //
@@ -1714,8 +1711,10 @@ const thresholdDiff_ = 120;
         this.bf_resize = __handleResize.bind({divObjs:this.divObjs, c: this.c });
         this.bf_scroll = __handleScrollEvent.bind({
             savedoffset:    0,
+            //creativeH : normCrParams.height,
+            //containerH : normCrParams.fixedHeight,
             containerElt:   this.ctr,
-            excludedH:      this.excludedHeight,
+            //excludedH:      normCrParams.excludedHeight,
             divObjs:        this.divObjs,
             c:              this.c
         }); 
@@ -1744,9 +1743,6 @@ const thresholdDiff_ = 120;
       }
       HooksMgr.prototype.hookResize = function() {
         this.cxtFcns.addListener(this.allhooks, window, "resize", this.bf_resize);
-      }
-      HooksMgr.prototype.resize = function() {
-        this.bf_resize();
       }
       HooksMgr.prototype.hookVisChangeNotifiers = function(notifyFcn) {
         let o = {
@@ -1925,11 +1921,7 @@ const thresholdDiff_ = 120;
 
                 if (JX_FLOAT_COND_COMPILE) {
                     if (normCrParams.floatParams) {
-                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative);
-                        boundHandleFloated = __handleFloated.bind({ univmgr: univmgr, cb: hooksMgr.resize.bind(hooksMgr) });
-                        boundHandleDocked = __handleDocked.bind({ univmgr: univmgr, cb: hooksMgr.resize.bind(hooksMgr) });
-                        hooksMgr.hookGeneric(jxContainer, 'jxfloat', boundHandleFloated);
-                        hooksMgr.hookGeneric(jxContainer, 'jxdocked', boundHandleDocked);
+                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative, univmgr);
                     }
                 }
 
