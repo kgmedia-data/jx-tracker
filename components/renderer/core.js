@@ -652,6 +652,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
      * @returns 
      */
     function fetchAdP(adTagUrl) {
+        //oh my good ness the cookies ah!!!
         //wrap around the normal network apis.
         //returns a promise.
         //resolve with the json or reject
@@ -907,8 +908,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
 
         if (normCrParams.maxheight) {
-            //jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
-            //jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
+            jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
+            jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
         
         jxbnDiv.style.height = normCrParams.height + 'px';
@@ -1180,6 +1181,8 @@ const thresholdDiff_ = 120;
      const bigHeight_ = 999;
 
      function noDiffScroll(cr) {
+         if (cr.universal && cr.universal.hasOwnProperty('diffscroll') &&
+         !cr.universal.diffscroll) return true;
         return cr.type == 'video' || cr.subtype == 'video+banner';
     }
 
