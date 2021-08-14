@@ -82,16 +82,21 @@ But then the script part of your creative should be this
 
     function listen(e) {
         let json = null;
+        let type = null;
+        if (e.data == 'jxvisible' || e.data == 'jxnotvisible') {
+            type = e.data;
+        }
         if (e.data.indexOf('jxmsg::') == 0) {
             try {
                 json = JSON.parse(e.data.substr('jxmsg::'.length));
+                type = json.type;
             } catch (err) {}
         }
-        if (!json) return; //unrelated to us, we dun bother.
-        switch (json.type) {
+        if (!type) return; //unrelated to us, we dun bother.
+        switch (type) {
             case "jxvisible":
             case "jxnotvisible":
-                notifyMe(null, json.type);
+                notifyMe(null, type);
                 break;
             case "adparameters":
                 runMe(null, json.data);
