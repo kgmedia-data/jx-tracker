@@ -392,6 +392,88 @@ const demoCases_ = [
         adUnitCodeM: "div-gpt-ad-Zone_2",
 
         id: 883
+    },
+    //Now Players of all sorts
+    {
+        name: 'Jx demo Bayer CDR YouTube',
+        types: [player],
+        width: 640,
+        height: 360,
+        id: 22
+    },
+    {
+        name: 'Trial Pijaru YouTube',
+        types: [player],
+        width: 640,
+        height: 400,
+        id: 26
+    },
+
+    {
+        name: 'Trial Digital ADV Kompascom YouTube',
+        types: [player],
+        width: 640,
+        height: 400,
+        id: 27
+    },
+    {
+        name: 'Trial - Stylo.id - Makeup untuk Pemula',
+        types: [player],
+        width: 640,
+        height: 400,
+        id: 40
+    },
+    {
+        name: 'Youtube - playing an IMA ad',
+        types: [player],
+        width: 640,
+        height: 360,
+        id: 295
+    },
+    {
+        name: 'Essai of youtube player',
+        types: [player],
+        id: 954
+    },
+    {
+        name: 'New YT Player integration with IMA (plays an ad)',
+        types: [player],
+        id: 335
+    },
+    {
+        name: 'TBN IVS Player (pscript) in jxfriendly.1.3.min.js already broken (No CV, IMP)',
+        types: [player],
+        id: 72
+    },
+    {
+        name: 'TBN YT Player (pscript)',
+        types: [player],
+        id: 73
+    },
+    {
+        name: 'TBN DM Player (pscript)',
+        types: [player],
+        id: 74
+    },
+    {
+        name: 'Kompasiana DM (pscript)',
+        types: [player],
+        id: 99
+    },
+    {
+        name: 'Kompasiana IVS (pscript) - in jxfriendly.1.3.min.js already broken (No CV, IMP)',
+        types: [player],
+        id: 151
+    },
+    {
+        name: 'New Kompasiana DM (pscript)',
+        types: [player],
+        id: 262
+    },
+    {
+        name: 'DailyMotionPlayer (non-script)',
+        types: [player],
+        id: 851
     }
 ];
 
