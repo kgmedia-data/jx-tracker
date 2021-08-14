@@ -18,11 +18,33 @@ const mosm          = require('../components/osmengine/amp-core');
 
 function start() {
     let params = {};
-    params.responsive = 1; //for AMP must
+    params.responsive = 1; //for AMP must ?!
     params.context = 'amp';
     let cxt = window.context;
     if (!cxt) {
         return;
+    }
+    let clientId = cxt.clientId;
+    if (clientId) {
+        //this can be our jixie_jx cookie thing or it can be the 
+        //amp id
+        if (clientId.length == 36) {
+            var count = 0, i = 0;
+            for(i;i<clientId.length;i++)if(clientId[i]=='-')count++;
+            if (count == 4) {
+                params.aclient_id = clientId;
+            }
+        }
+        if (!params.aclient_id) { 
+            //those starting with amp- are when the page is from publisher
+            //domain, this is per domain. the else case is when served
+            //from AMP cache. Seems to be tied to the subdomain (publisher subdomain)
+            //and hence is ...less high quality then.
+            if (clientId.startsWith('amp-')) 
+                params.aaclient_id = clientId;
+            else
+                params.aaaclient_id = clientId;
+        }
     }
     if (cxt.canonicalUrl) {
         params.pageurl = cxt.canonicalUrl;
@@ -33,22 +55,19 @@ function start() {
     if (cxt.sourceUrl) {
         //our own folks can still force a creativeid to check creatives;
         let qparams = (new URL(cxt.sourceUrl)).searchParams;
-        if (qparams.has('creativeid'))
-            params.creativeid = qparams.get('creativeid');
+        ['creativeids','creativeid'].forEach(function(p) {
+            if (qparams.has(p))
+            params[p] = qparams.get(p);
+        });
     }
-
     params.maxwidth = cxt.data.width;
     params.fixedheight = cxt.data.height; 
     params.container = 'c'; //Yup, with amp 3p, the div is always called 'c'
-    if (cxt.data.unit) {
-        params.unit = cxt.data.unit;
-    }
-    if (cxt.data.cid) {
-        params.creativeid = cxt.data.cid;
-    }
-    if (cxt.data.creativeid) {
-        params.creativeid = cxt.data.creativeid;
-    }
+    ['unit','cid','creativeid','creativeids'].forEach(function(p){
+        if (cxt.data[p]) {
+            params[p] = cxt.data[p];
+        }
+    });
     var inst = mosm.createInstance(params, {
             jixie: mpjixie,
             teads: mpteads,

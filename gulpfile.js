@@ -363,9 +363,22 @@ const supported_ = [
         //.s3(config_aws, s3_options.dev)
         .pipe(gutil.noop())
   });
+  
+  gulp.task('BUILD_3PARTYCR_PROXY_SDK', function(cb) {
+    pump([
+            gulp.src('sdks/jxcrproxysdk.js'),
+            gulpif(config.minify, minify({})),
+            gulpif(true, rename({
+                extname: `.min.js`
+            })),//always generate min extension whether min or no min.
+            gulp.dest('dist/sdks')
+        ],
+        cb
+    );
+  });
   gulp.task('UPLOAD_TEST_HTML', function(cb) {
     pump([
-            gulp.src(['dist/bundles/*.js', 'tests/vpaid*.js', 'tests/*.html', 'tests/*.css']),
+            gulp.src(['dist/sdks/*.js', 'dist/bundles/*.js', 'tests/*.json', 'tests/*.html', 'tests/*.css']),
             gulpif(true, s3(config_aws, s3_options.dev))
         ],
         cb
@@ -426,6 +439,7 @@ const supported_ = [
   //add this to the list later 'BUILD_OUTSTREAMJS'
   //we are continually modifying the ids common ah.
   gulp.task('main', gulp.series('clean', 
+    'BUILD_3PARTYCR_PROXY_SDK',
     'BUILD_AMPOSM_BUNDLE', 
     'BUILD_JXRENDERER_BUNDLE', 
     'BUILD_HBRENDERER_BUNDLE', 
@@ -437,6 +451,7 @@ const supported_ = [
     'BUILD_FLOATABLE_ULITE_BUNDLE'));
   
   gulp.task('developer1', gulp.series('clean', 
+    'BUILD_3PARTYCR_PROXY_SDK',
     'BUILD_AMPOSM_BUNDLE', 
     'BUILD_JXRENDERER_BUNDLE', 
     'BUILD_HBRENDERER_BUNDLE', 
