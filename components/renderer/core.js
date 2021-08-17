@@ -1445,6 +1445,21 @@ const thresholdDiff_ = 120;
         if (!t) return "";
         return  t.normalize('NFD').replace(/[^a-zA-Z0-9\s]/g, '').replace(/[\u0300-\u036f]/g, '').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"]/g,'');
     }
+
+    /**
+     * For the case of OSM the response event is to be fired by us here
+     * Not by adserver, not by the OSM engine (coz the whole thing is in a base64 blob)
+     * which a bit troublesome for osm engine to handle ... A bit hacky lah ... aaah
+     * @param {*} c 
+     */
+
+    function fireOSMResponseMaybe(c) {
+        let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
+        if (trackers && trackers.parameters && trackers.parameters.indexOf('source=osm')>-1) {
+            fireTracker(trackers, 'response');
+        }
+    }
+
     /**
      * From every kind of creative supported we just extract a few common values
      * sufficiently to interact with the core element where we are supposed to
@@ -1799,6 +1814,7 @@ const thresholdDiff_ = 120;
          *  handles 1 level of the waterfall                     
          */
         var _startP = function(jxContainer, remainingCreativesArr, next) {
+
             let univmgr = MakeOneUniversalMgr();
             let instId = "jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
         
@@ -1806,9 +1822,13 @@ const thresholdDiff_ = 120;
             if (!cxtFcns) {
                 cxtFcns = fcnVectorsByContext_.default;
             }
-            
+            let cr = remainingCreativesArr.shift();
+            fireOSMResponseMaybe(cr);
+
             // MOST IMPORTANT CALL. THE NORMALIZED PARAMS OF THE CREATIVE: 
-            let normCrParams = getNormalizedCreativeParams(_jxParams, remainingCreativesArr.shift());
+            let normCrParams = getNormalizedCreativeParams(_jxParams, cr);
+
+            
 
             // This will create all the needed DIVs. And we are going to insert the
             // creative in a bit. but before that , set up the needed listens first
