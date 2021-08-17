@@ -657,7 +657,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //returns a promise.
         //resolve with the json or reject
         //no ad then just reject promise
-        return fetch(adTagUrl).then((response) => response.json());
+        fetch(adTagUrl, {
+            method: 'GET',
+            credentials: 'include'
+        }).then((response) => response.json());
     }
 
     /**
@@ -1004,6 +1007,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         } 
         else 
         {
+            //console.log(`##### xx ${jxbnDiv.offsetWidth/c.width}, yy ${jxbnDiv.offsetHeight / c.height}`);
             ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
         }
 
