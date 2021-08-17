@@ -577,7 +577,28 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
 
     }
 
-    
+    function __pm2JxEvtsSDKWithMsgs(msgtype, dataMaybe = null) {
+        if (msgtype == 'jxvisible' || msgtype == 'jxnotvisible') {
+            this.visState = msgtype;
+            if (msgtype == 'jxvisible') {
+                __pm2Self.call(this, 'jxvisible');
+            }
+        }
+        if (this.openshop) {
+            //operate like normal
+            return __pm2CrWithMsgsEvts.call(this, msgtype, dataMaybe);
+        }
+        if (msgtype == 'openshop') {
+            __pm2CrWithMsgsEvts.call(this, 'adparameters', this.c.adparameters);
+            if (this.visState == 'jxvisible' || this.visState == 'jxnotvisible') {
+                __pm2CrWithMsgsEvts.call(this, this.visState);
+            }
+            this.openshop = 1;
+            return;
+        }
+        //else we do nothing then.
+    }
+
     /*
     Talk to the creative using messages. 
     For iframe case
@@ -586,30 +607,34 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     if is simple event.
     */
     function __pm2CrWithMsgsEvts(msgtype, dataMaybe = null) {
-        let creativeNode = this.divObjs.jxCoreElt;
-        let msgStr;
-        if (msgtype == 'jxvisible' || msgtype == 'jxnotvisible') {
-            msgStr = msgtype;
-        }
-        else {
-            let obj = {
-                type: msgtype,
-                data: dataMaybe ? dataMaybe: {}
+            //Most most of the time we are here of course!
+            let msgStr;
+            if (msgtype == 'jxvisible' || msgtype == 'jxnotvisible') {
+                msgStr = msgtype;
             }
-            msgStr = "jxmsg::" + JSON.stringify(obj);
-        }
-        if (creativeNode && creativeNode.contentWindow) {
-            console.log(`__rendere emit to iframe ${msgStr}`);
-            creativeNode.contentWindow.postMessage(msgStr, '*');
-        }
-        else {
-            console.log(`__rendere emit to non iframe ${msgStr}`);
-            window.postMessage(msgStr, '*');
-        }
-        if (this.c.div && (msgtype == 'jxvisible' || msgtype == 'jxnotvisible')) {
-            console.log(`__rendere emit event  ${msgtype}`);
-            creativeNode.dispatchEvent(new Event(msgtype));
-        }
+            else {
+                let obj = {
+                    type: msgtype,
+                    data: dataMaybe ? dataMaybe: {}
+                }
+                msgStr = "jxmsg::" + JSON.stringify(obj);
+            }
+     let creativeNode = this.divObjs.jxCoreElt;
+       
+          
+            if (creativeNode && creativeNode.contentWindow) {
+                console.log(`__rendere emit to iframe ${msgStr}`);
+                creativeNode.contentWindow.postMessage(msgStr, '*');
+            }
+            else {
+                console.log(`__rendere emit to non iframe ${msgStr}`);
+                window.postMessage(msgStr, '*');
+            }
+            if (this.c.div && (msgStr == 'jxvisible' || msgStr == 'jxnotvisible')) {
+                console.log(`__rendere emit event  ${msgStr}`);
+                creativeNode.dispatchEvent(new Event(msgStr));
+            }
+        
     }
 
     // This is my new suggested way renderer can work with 
@@ -1485,8 +1510,8 @@ const thresholdDiff_ = 120;
         
         //this is the case whereby the creative itself will not manage the tracker firing
         //so WE HERE need to do it.
-        let doBasicTrackers = false; //later may become true, depends on the type of creative.
-
+        //let doBasicTrackers = false; //later may become true, depends on the type of creative.
+        let sendTrackerActions = null; 
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
         let clicktrackerurl = null;
         if (trackers) {
@@ -1594,11 +1619,24 @@ const thresholdDiff_ = 120;
                         out[trusted? 'div':'iframe'] = { scripturl: surl };
                         out.json = JSON.parse(JSON.stringify(c));
                         break;
-                    default:
+                    default: //igeneric
                         //e.g. the famous cid=29
                         //srcUrl = o.bUrl.iother;
-                        let url = 'https://universal.jixie.io/iframe.1.1.html?'; //broker
-                        url += 'creative=' + btoa(JSON.stringify(c)) + '&trackers=' + btoa(JSON.stringify(c.trackers));
+                        //if it is SDK type, then need to talk to it.
+                        //and this type need to fire creative View also
+                        //and also need to self fire a hasad.
+                        //MIOW WOO
+                        let url ;
+                        if (c.adparameters.jxeventssdk) {
+                            url = c.url; //https://universal.jixie.io/iframe.1.1.html?'; //broker
+                            sendTrackerActions = { creativeView: 1 };
+                            assumeHasAd = true; //<== !!!
+                            out.adparameters = c.adparameters;
+                        }
+                        else {
+                            url = 'https://universal.jixie.io/iframe.1.1.html?'; //broker
+                            url += 'creative=' + btoa(JSON.stringify(c)) + '&trackers=' + btoa(JSON.stringify(c.trackers));
+                        }
                         out['iframe'] = { url: url };
                         break;
                 }
@@ -1641,14 +1679,14 @@ const thresholdDiff_ = 120;
                             sbody = sbody1;
                         }
                         assumeHasAd = true; //<== !!!
-                        doBasicTrackers = true; //<== !!!
+                        sendTrackerActions = { creativeView: 1, impression: 1};
                         out[trusted? 'div':'iframe'] = { scriptbody: sbody };
                         break;
                     default: //can be either simple image or DPA (html). Still have to figure out...
                         let psr = document.createElement('a');
                         psr.href = c.url;
                         if (psr.pathname.indexOf('.htm') === -1 && psr.pathname.indexOf('.html') === -1) {
-                            doBasicTrackers = true; //totally managed by us in fact.
+                            sendTrackerActions = {creativeView: 1, impression: 1};
                             c.noclickevents = true; //so below we force it to not do click events
                             out['div'] = { image: { url: c.url, clickurl: c.clickurl, trackers: c.trackers }};
                         }
@@ -1672,10 +1710,10 @@ const thresholdDiff_ = 120;
                 break;
         }//switch
         //console.log(JSON.stringify(out, null, 2));
-        if (doBasicTrackers && trackers) {
+        if (sendTrackerActions && trackers) {
             //tracker local var set earlier in the function
             trackers = JSON.parse(JSON.stringify(trackers));
-            trackers.actions = { creativeView: 1, impression: 1, creativeHide: 1};
+            trackers.actions = sendTrackerActions; 
             if (!c.noclickevents) {
                 //some of those there is our click proxy integrated into the tag so for those
                 //we no need use such mechanism to approximate clicks
@@ -1683,6 +1721,8 @@ const thresholdDiff_ = 120;
             }
             out.trackers = trackers;
         }
+        if (c.adparameters && c.adparameters.jxeventssdk)
+            out.jxeventssdk = 1;
         if (out.fixedHeight > 0) {
             //if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
             //this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
@@ -1747,10 +1787,11 @@ const thresholdDiff_ = 120;
             divObjs: this.divObjs, c: this.c, handlers: this.msghandlers });
       }
       HooksMgr.prototype.getPM2CreativeFcn = function(mode) {
+        if (mode == 'jxeventssdk') return __pm2JxEvtsSDKWithMsgs.bind({divObjs:this.divObjs, c: this.c});
         if (mode == 'self') return __pm2Self.bind({divObjs:this.divObjs, c: this.c});
         //We don't have direct type yet.
         if (mode == 'direct') return __pm2CrDirectCall.bind({divObjs:this.divObjs, c: this.c});
-        return __pm2CrWithMsgsEvts.bind({divObjs:this.divObjs, c: this.c});
+        return __pm2CrWithMsgsEvts.bind({divObjs:this.divObjs, c: this.c });
       }
       HooksMgr.prototype.overrideHandler = function(e, cb) {
           this.msghandlers[e] = cb;
@@ -1856,18 +1897,34 @@ const thresholdDiff_ = 120;
             // then & only then, fire the info of adparameters
             // In those cases where this is not needed (e.g. the parameters passed thru object in the
             // injected fragments, then this is resolved here.)
-            let crReady2HearAdParamsProm =  ( normCrParams.iframe && normCrParams.adparameters ? 
-                new Promise(function(resolve) {crReady2HearAdParamsResolve = resolve;}) : 
-                Promise.resolve());
-            
-            hooksMgr.overrideHandler('jxloaded', crReady2HearAdParamsResolve);
 
+            
+
+            let firstProm = null;
+            let thirdProm = null;
+            //second promise is the hasad one
+            if (normCrParams.jxeventssdk) {
+                //for events sdk integration, we just proceed to the phase of
+                //hooking up the visibility handlers so that we can fire the CV on our side.
+                firstProm = Promise.resolve();
+                thirdProm = new Promise(function(resolve) {crReady2HearAdParamsResolve = resolve;});
+            }
+            else {
+                firstProm =  ( normCrParams.iframe && normCrParams.adparameters ? 
+                    new Promise(function(resolve) {crReady2HearAdParamsResolve = resolve;}) : 
+                    Promise.resolve());
+                thirdProm = Promise.resolve();                    
+            }
+            hooksMgr.overrideHandler('jxloaded', crReady2HearAdParamsResolve);
             hooksMgr.hookMsgs();
             if (!normCrParams.iframe) 
                 hooksMgr.hookEvts(); //the creative may use events to talk to us
   
             let talkMode = normCrParams.trackers ? 'self': (normCrParams.crSig ? 'direct': 'other');
+            if (normCrParams.jxeventssdk) talkMode = 'jxeventssdk';
             let boundPM2Creative = hooksMgr.getPM2CreativeFcn(talkMode);    
+            //for the case of the sdk stuff then we will talk later.
+            //ah I know what to do!
             
             /**
              * SETTING UP OUR RESPONDING TO ANY COMMUNICATIONS FROM CREATIVE 
@@ -1891,7 +1948,7 @@ const thresholdDiff_ = 120;
             // FROM US    
             insertCreative(divObjs, normCrParams);
 
-            crReady2HearAdParamsProm.then(function() {
+            firstProm.then(function() {
                 /**
                  * the creative (script, html ..or nothing) is loaded and ready to listen to our orders.
                  */
@@ -1970,6 +2027,10 @@ const thresholdDiff_ = 120;
                     }
                 };
                 hooksMgr.hookVisChangeNotifiers(notifyFcn);
+                return thirdProm; 
+            })
+            .then(function() {
+                boundPM2Creative('openshop');
             })
             .catch(function() {
                 hooksMgr.teardown();

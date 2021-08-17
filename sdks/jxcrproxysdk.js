@@ -1,17 +1,15 @@
 (function() {
-    //var crStarterFunction = null;
     var jxReady = false;
     var crReady = false;
     var visState = 'unknown';
     var unfiredTrackers = {
-        creativeView: 1,
         impression: 1
     }
     var trackerBaseUrl = null;
 
     //For testing and development
     function emitDbgStr(msg) {
-        console.log(msg);
+        console.log(`##### ${msg}`);
         return; //
         try {
             let subj = 'Dbg: ' + (new Date()).toISOString();
@@ -27,7 +25,7 @@
     //this is for the type where the "application" triggers a event firing
     //we just send it
     function fireTracker(action, extraSegment) {
-        emitDbgStr(`############## FIRING ${action}`);
+        emitDbgStr(`FIRING ${action}`);
         //and then actually fire it ajax call
         fetch(trackerBaseUrl + '&action='+action + (extraSegment ? '&'+extraSegment:''), {
             method: 'GET',
@@ -40,7 +38,7 @@
     function fireOneOffTracker(action) {
         if (unfiredTrackers[action]) {
             unfiredTrackers[action] = 0;
-            emitDbgStr(`############## FIRING ${action}`);
+            emitDbgStr(`FIRING ${action}`);
             //and then actually fire it ajax call
             fetch(trackerBaseUrl + '&action='+action, {
                 method: 'GET',
@@ -60,9 +58,8 @@
         if (visState == 'unknown' || unfiredTrackers.done || !crReady ) {
             return; //do nothing
         }
-        emitDbgStr(`############## handleVisUpdate ${newState}`);
+        emitDbgStr(`handleVisUpdate ${newState}`);
         if (visState == 'jxvisible') {
-            fireOneOffTracker('creativeView');
             setTimeout(function() {
                 if (visState == "jxvisible") {
                     unfiredTrackers.done = true;
@@ -72,26 +69,8 @@
         }
     }
 
-    /*****
-     * the callback being the last step to call to start the ad
-     * provided by the sdk caller
-    function runWhenReady_(callback) {
-        if (jxReady) { //already true
-            crReady = true;
-            callback();
-            console.log(`############## Bcalling starter functions`);
-            handleVisUpdate(null);
-        }
-        else {
-            //so that when jxReady, then this will be run.
-            crReady = true;
-            crStarterFunction = callback;
-        }
-    }
-    *****/
-
     function creativeReady_() {
-        emitDbgStr(`CCC ############## creativeReady called`);
+        emitDbgStr(`CCC creativeReady called`);
         if (jxReady) { //if already true
             crReady = true;
             handleVisUpdate(null); //This is in case the vis states already started 
@@ -99,14 +78,14 @@
             //visible, say.
         }
         else {
-            //Flag this true, so that when jxReady, then the creativeView-firing 
+            //Flag this true, so that when jxReady, then the events-firing 
             //prep can got ahead
             crReady = true;
         }
     }
 
     function reportEvent_(action, extraSegment) {
-        emitDbgStr(`CCC ############## reportEvent called ${action} ${extraSegment}`);
+        emitDbgStr(`CCC reportEvent called ${action} ${extraSegment}`);
         fireTracker(action, extraSegment);
     }
 
@@ -126,6 +105,7 @@
         parent.postMessage(msgStr, '*');
     }
     function listen(e) {
+        console.log(`!!!!!!!!!!!!!! ${JSON.stringify(e)}`);
         let json = null;
         let type = null;
         if (e.data == 'jxvisible' || e.data == 'jxnotvisible') {
@@ -145,59 +125,19 @@
                 break;
             case "adparameters":
                 trackerBaseUrl = json.data.trackers.baseurl + '?' + json.data.trackers.parameters;
-                emitDbgStr(`############## just gotten adparameters`);
+                emitDbgStr(`just gotten adparameters`);
                 //we can start to process any things.
                 jxReady = true; //jx SDK side all ready as already armed with tracker Base URL info
                 //and also will be expected visibility notifications from renderer any time.
-
-                notifyMaster('jxhasad'); //YES <-- this does not depend on the calling of creativeReady
+                ///////notifyMaster('jxhasad'); //YES <-- this does not depend on the calling of creativeReady
                 if (crReady) {
                     handleVisUpdate(null); //well, usu by this time (since we just posted the)
                     //jxhasad, we will not have jxvisible state updates yet. So this is redundant.
                 }
-                /* if (crStarterFunction) {
-                    //if creative already said they ready, then nothing to wait for
-                    let tmp = crStarterFunction;
-                    crStarterFunction = null;
-                    handleVisUpdate();
-                    emitDbgStr(`############## Acalling starter functions`);
-                    tmp();
-                }*/
                 break;
         }
     } //listen
     window.addEventListener('message', listen, false);
     notifyMaster('jxloaded');
 
-    window.jxproxy = (function() {
-        var queue = [];
-        if (window.jxproxy) {
-            // queue from outside might be null... 
-            queue = window.jxproxy.queue || queue;
-        }
-        //here we execute code that is in the queue
-        if (queue.length > 0) {
-            window.jxproxy = {
-                //runWhenReady: runWhenReady_,
-                creativeReady: creativeReady_,
-                reportEvent: reportEvent_
-            };
-        }
-        while (queue.length > 0) {
-            var command = queue.shift();
-            command();
-        }
-        //must override the thing so that the queue functionis eual to running it then.
-        return {
-            //runWhenReady: runWhenReady_,
-            creativeReady: creativeReady_,
-            reportEvent: reportEvent_,
-            queue: {
-                push: function(fcn) {
-                    //executing it now!!!
-                    fcn();
-                }
-            }
-        };
-    })();
 })();
