@@ -366,7 +366,7 @@ const supported_ = [
   
   gulp.task('BUILD_3PARTYCR_PROXY_SDK', function(cb) {
     pump([
-            gulp.src('sdks/jxcrproxysdk.js'),
+            gulp.src('sdks/jxeventssdk.js'),
             gulpif(config.minify, minify({})),
             gulpif(true, rename({
                 extname: `.min.js`

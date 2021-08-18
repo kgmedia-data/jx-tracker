@@ -512,8 +512,21 @@
             catch(e){
                 console.log(`__JX_ clear Interval in prepareGoNext exception`);
             }
+
             if (_injectedDiv) {
                 _injectedDiv.parentNode.removeChild(_injectedDiv);
+            }
+            if (_jsonObj.removedivclass) {
+                //This is an invention just for SelectMedia.
+                //console.log(`__##### ${_jsonObj.removedivclass}`);
+                //somehow they create some div away from the _injectedDiv
+                //so more stuff to get rid of . else users will see a
+                //big white floating window upon declaration of no ad by SM:
+                let div2Del = document.getElementsByClassName(_jsonObj.removedivclass);
+                if (div2Del && div2Del.length>0) {
+                    div2Del = div2Del[0];
+                    div2Del.parentNode.removeChild(div2Del);
+                }
             }
             if(_msgListener) {
                 window.removeEventListener('message', _msgListener);

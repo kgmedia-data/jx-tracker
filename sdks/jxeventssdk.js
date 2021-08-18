@@ -1,17 +1,19 @@
+/**
+ * Jixie SDK 
+ */
 (function() {
-    //var crStarterFunction = null;
     var jxReady = false;
     var crReady = false;
+    var preJxReadyEvents = [];
     var visState = 'unknown';
     var unfiredTrackers = {
-        creativeView: 1,
         impression: 1
     }
     var trackerBaseUrl = null;
 
     //For testing and development
     function emitDbgStr(msg) {
-        console.log(msg);
+        //console.log(`jxevetnsdk__##### ${msg}`);
         return; //
         try {
             let subj = 'Dbg: ' + (new Date()).toISOString();
@@ -27,7 +29,7 @@
     //this is for the type where the "application" triggers a event firing
     //we just send it
     function fireTracker(action, extraSegment) {
-        emitDbgStr(`############## FIRING ${action}`);
+        emitDbgStr(`FIRING ${action}`);
         //and then actually fire it ajax call
         fetch(trackerBaseUrl + '&action='+action + (extraSegment ? '&'+extraSegment:''), {
             method: 'GET',
@@ -40,7 +42,7 @@
     function fireOneOffTracker(action) {
         if (unfiredTrackers[action]) {
             unfiredTrackers[action] = 0;
-            emitDbgStr(`############## FIRING ${action}`);
+            emitDbgStr(`FIRING ${action}`);
             //and then actually fire it ajax call
             fetch(trackerBaseUrl + '&action='+action, {
                 method: 'GET',
@@ -60,9 +62,8 @@
         if (visState == 'unknown' || unfiredTrackers.done || !crReady ) {
             return; //do nothing
         }
-        emitDbgStr(`############## handleVisUpdate ${newState}`);
+        emitDbgStr(`handleVisUpdate ${newState}`);
         if (visState == 'jxvisible') {
-            fireOneOffTracker('creativeView');
             setTimeout(function() {
                 if (visState == "jxvisible") {
                     unfiredTrackers.done = true;
@@ -72,44 +73,34 @@
         }
     }
 
-    /*****
-     * the callback being the last step to call to start the ad
-     * provided by the sdk caller
-    function runWhenReady_(callback) {
-        if (jxReady) { //already true
-            crReady = true;
-            callback();
-            console.log(`############## Bcalling starter functions`);
-            handleVisUpdate(null);
-        }
-        else {
-            //so that when jxReady, then this will be run.
-            crReady = true;
-            crStarterFunction = callback;
-        }
-    }
-    *****/
-
     function creativeReady_() {
-        emitDbgStr(`CCC ############## creativeReady called`);
         if (jxReady) { //if already true
+            emitDbgStr(`CCC creativeReady called1`);
             crReady = true;
             handleVisUpdate(null); //This is in case the vis states already started 
             //to come in (we keeping state so we may already know the area is currently
             //visible, say.
         }
         else {
-            //Flag this true, so that when jxReady, then the creativeView-firing 
+            emitDbgStr(`CCC creativeReady called2`);
+            //Flag this true, so that when jxReady, then the events-firing 
             //prep can got ahead
+            ////we have to queue this stuff up then.
             crReady = true;
         }
     }
 
-    function reportEvent_(action, extraSegment) {
-        emitDbgStr(`CCC ############## reportEvent called ${action} ${extraSegment}`);
-        fireTracker(action, extraSegment);
+    function reportEvent_(arg) { //action, extraSegment) {
+        if (jxReady) {
+            emitDbgStr(`CCC reportEvent called ${arg}`);
+            fireTracker('click', 'clickid='+arg);
+        }
+        else {
+            preJxReadyEvents.push(arg);
+            //we have to queue this stuff up then. coz dunno the tracker url how to fire!
+        }
     }
-
+  
     function notifyMaster(type, data = null) {
         if (type == 'jxloaded' || type == 'jxhasad') {  
             parent.postMessage(type, '*'); 
@@ -145,59 +136,64 @@
                 break;
             case "adparameters":
                 trackerBaseUrl = json.data.trackers.baseurl + '?' + json.data.trackers.parameters;
-                emitDbgStr(`############## just gotten adparameters`);
+                emitDbgStr(`just gotten adparameters crReady=${crReady}`);
                 //we can start to process any things.
                 jxReady = true; //jx SDK side all ready as already armed with tracker Base URL info
                 //and also will be expected visibility notifications from renderer any time.
-
-                notifyMaster('jxhasad'); //YES <-- this does not depend on the calling of creativeReady
                 if (crReady) {
                     handleVisUpdate(null); //well, usu by this time (since we just posted the)
                     //jxhasad, we will not have jxvisible state updates yet. So this is redundant.
+                    if (preJxReadyEvents.length > 0) {
+                        for (var i  = 0; i < preJxReadyEvents.length; i++) {
+                            emitDbgStr(`### Making up for the event that was emitted before SDK was ready`);
+                            reportEvent_(preJxReadyEvents[i]);
+                        }
+                        preJxReadyEvents.length = 0;
+                    }
                 }
-                /* if (crStarterFunction) {
-                    //if creative already said they ready, then nothing to wait for
-                    let tmp = crStarterFunction;
-                    crStarterFunction = null;
-                    handleVisUpdate();
-                    emitDbgStr(`############## Acalling starter functions`);
-                    tmp();
-                }*/
                 break;
         }
     } //listen
     window.addEventListener('message', listen, false);
     notifyMaster('jxloaded');
+    //for the creative to call on us.
+    window.jxeventssdk = {
+        creativeReady: creativeReady_,
+        reportEvent: reportEvent_
+    };
 
-    window.jxproxy = (function() {
-        var queue = [];
-        if (window.jxproxy) {
-            // queue from outside might be null... 
-            queue = window.jxproxy.queue || queue;
-        }
-        //here we execute code that is in the queue
-        if (queue.length > 0) {
-            window.jxproxy = {
-                //runWhenReady: runWhenReady_,
-                creativeReady: creativeReady_,
-                reportEvent: reportEvent_
-            };
-        }
-        while (queue.length > 0) {
-            var command = queue.shift();
-            command();
-        }
-        //must override the thing so that the queue functionis eual to running it then.
-        return {
-            //runWhenReady: runWhenReady_,
-            creativeReady: creativeReady_,
-            reportEvent: reportEvent_,
-            queue: {
-                push: function(fcn) {
-                    //executing it now!!!
-                    fcn();
+    //<---
+    //https://mrcoles.com/blog/google-analytics-asynchronous-tracking-how-it-work/
+    var JxEventsQ = function () {
+        this.push = function () {
+            for (var i = 0; i < arguments.length; i++) try {
+                if (typeof arguments[i] === "function") arguments[i]();
+                else {
+                    let fcnname = arguments[i][0];
+                    //console.log(`##### x = ${x}`);
+                    //console.log(`##### y = ${y}`);
+                    if (fcnname == 'creativeReady') {
+                        //if our thing is really really loaded late, then perhaps we don't even have the stuff to send the event!
+                        creativeReady_();
+                    }
+                    else if (fcnname == 'reportEvent') {
+                        let arg = arguments[i][1];
+                        //if our thing is really really loaded late, then perhaps we don't even have the stuff to send the event!
+                        reportEvent_(arg);
+                    }
+                    // get tracker function from arguments[i][0]
+                    // get tracker function arguments from arguments[i].slice(1)
+                    // call it!  trackers[arguments[i][0]].apply(trackers, arguments[i].slice(1));
                 }
-            }
-        };
-    })();
+            } catch (e) {}
+        }
+    };
+    // get the existing _jxeventsq array
+    var _old_jxeventsq = window._jxeventsq;
+    // create a new _jxeventsq object
+    window._jxeventsq = new JxEventsQ(); //actually no need object, just cloned from some website's snipplet .. :-)
+    // execute all of the queued up events - apply() turns the array entries into individual arguments
+    window._jxeventsq.push.apply(window._jxeventsq, _old_jxeventsq);
+    //--->
+
 })();

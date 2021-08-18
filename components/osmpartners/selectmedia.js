@@ -1,4 +1,4 @@
-const defaultPTimeout_ = -1;
+const defaultPTimeout_ = -1; //;
 
 var getAdSlotAttachNode_ = function(dbjson, getPageSelectorFcn) {
     /* if (dbjson.adparameters.selectors) {
@@ -137,6 +137,10 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         //this is the second last on the waterfall
         rtjson.msgs.triggerhouse = `jxosm_triggerhouse_selectmedia${sid}`;
     }
+    //for selectmedia their floating window sometimes is outside the
+    //injected div, so still need to try to kill it
+    rtjson.removedivclass = dbjson.adparameters.script_id;
+    
     //-->
 
     //jxosm_noad_selectmediaJS417849795
