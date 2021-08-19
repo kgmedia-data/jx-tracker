@@ -582,6 +582,7 @@
 
         return new Promise(function(resolve, reject) {
             common.loadIMAScriptP().then(function() {
+                google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
                 google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
                 google.ima.settings.setNumRedirects(maxNumVastRedirects_);
 
