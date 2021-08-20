@@ -263,10 +263,16 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         },
         handleHasAd: function(width, height, fixedHeight) { 
             //console.log(`calling the render start .... ${width} ${height} ${fixedHeight}`);
-            window.context.renderStart({
+            /* window.context.renderStart({
                 width: width,
                 height: fixedHeight > 0 ? fixedHeight : height
             });
+            */
+            window.context.renderStart({
+                width: 300,
+                height: 600
+            });
+           
         },
         setupVisChangeNotifiers: function(allhooks, obsCtr, boundCB) {
             //dun care the container
@@ -817,7 +823,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 //console.log(`Type div | scriptBody`);
                 let range = document.createRange();
                 range.setStart(jxCoreElt, 0);
-                jxCoreElt.appendChild(range.createContextualFragment(blob.scriptBody));
+                jxCoreElt.appendChild(range.createContextualFragment(blob.scriptbody));
             }
         }
         divObjs.jxbnFixedDiv.appendChild(jxCoreElt);
@@ -1503,6 +1509,7 @@ const thresholdDiff_ = 120;
      * @returns a normalized creative params object
      */
     function getNormalizedCreativeParams(jxParams, c) {
+        debugger;
         /** FANCYSCROLL:
          * if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
          * this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
@@ -2148,6 +2155,7 @@ const thresholdDiff_ = 120;
             if (!_jxContainer) {
                 return;
             }
+            debugger;
             let respBlob = null;
             if (_jxParams.jsoncreativeobj64) {
                 try {

@@ -55,20 +55,22 @@ function cb(param) {
 }
 let unlisten = window.context.observeIntersection(cb);
 
-
+//2 modes: size = 1
+//other mode is fixed size and cannot be too small lah.
+//
 
 var p_imp = null; //global ...set to corr to whatever current partner 
 var p_noad = null; //global ...
+
+//The value window.context.initialLayoutRect contains the initial rect of the ad's position in the page.
+
+
 function ampOneOffInit_() {
-    return; //HACK
-    //Not sure why ... after I do the following then
-    //now the e.g. teads ads cannot even work properly.
-    //Whye leh.. we tested before.
+    return;//
     let boundRealRenderStart = window.context.renderStart.bind(window.context);
     let boundRealRequestResize = window.context.requestResize.bind(window.context);
-    //let boundRealNoContent = window.context.noContentAvailable.bind(window.context);
-   
-    window.context.requestResize = function(requestedWidth, requestedHeight) {
+    
+    /* window.context.requestResize = function(requestedWidth, requestedHeight) {
         console.log(`__$$$$ ${requestedWidth} ${requestedHeight}`);
         if (requestedWidth == 0 || requestedHeight == 0) {
             return Promise.resolve();
@@ -78,15 +80,56 @@ function ampOneOffInit_() {
         });
     }
     window.context.renderStart = function(arg1, arg2) {
-        console.log(`__$$$$ renderStart ${requestedWidth} ${requestedHeight}`);
+        console.log(`__$$$$ renderStart ${arg1} ${arg2}`);
         //should call the bound function to fire trackers to make sure
         //only fire each action at most once.
         if (p_imp)
             window.postMessage(p_imp, "*");    
         //not accurate. depends on the vendor.
         return boundRealRenderStart();
+        opt_hasOverflow
+    }*/
+    window.context.requestResize = function(...args) {
+        if (args && args.length >= 2) 
+            console.log(`### requestResize ${args[0]}x${args[1]}`);
+        else
+            console.log(`### requestResize no enough arg`);
+        if (args && args.length >= 2) {
+            if (args[0] <= gParams.data.width && args[1] <= gParams.data.height) {
+                console.log(`### requestResize No need pass to amp runtime ${args[0]}x${args[1]}`);
+                //setTimeout(function() {
+                  //  if (window.context.onResizeSuccess)
+                    //    window.context.onResizeSuccess(args[0], args[1]);
+                //}, 50);    
+                return boundRealRequestResize(args[0], args[1]);
+                //return Promise.resolve(); //no need tell AMP runtime lah...
+            }
+        }
+        console.log(`### requestResize need pass to amp runtime`);
+        return boundRealRequestResize(...args);
+    }
+    
+    window.context.renderStart = function(...args) {
+        if (args && args.length >= 1) 
+            console.log(`### renderStart ${JSON.stringify(args[0])}`);
+        else
+            console.log(`### renderStart no enough arg`);
+        if (p_imp)
+            window.postMessage(p_imp, "*");    
+        if (args && args.length >= 1) {
+            let o = args[0];
+            if (o && o.width && o.height) {
+                if (o.width <= gParams.data.width && o.height <= gParams.data.height) {
+                    console.log(`### renderStart we ate your arg`);
+                    return boundRealRenderStart(); // no need give arg then.
+                }   
+            }
+        }
+        console.log(`### renderStart we passing your arg`);
+        return boundRealRenderStart(...args);
     }
     window.context.noContentAvailable = function() {
+        console.log(`### noContentAvailable`);
         if (p_noad)
             window.postMessage(p_noad, "*");    
     }
@@ -183,6 +226,11 @@ function fetchAdP(adTagUrl) {
     }).then((response) => response.json());
 }
 
+//2 modes: fixed height mode
+//2 modes: unusable hiehgt mode
+//2 different modes for JIXIE ads and partner ads
+//try to ask for chance of our ads to increase in size.
+
 //what kind of ids do we get
 //my test page
 //then my latest OSM amp js file
@@ -192,12 +240,18 @@ function fetchAdP(adTagUrl) {
 //
 function createInstance_(p, partners) {
     gParams = p;
+    console.log(gParams);
+    console.log("--- --- --- --- --- ");
     ampOneOffInit_();
+    if (p.data.height == 1) {
+        //means we really must do the request for resize else nothing will work
+
+    }
     let url = `https://${p.debug?'ad-rc':'ad'}.jixie.io/v2/osm?source=osm`;
     if (p.creativeid == '11111') {
         url = `https://ad-rc.jixie.io/v2/osm?source=osm`;
     }
-    ['aaclient_id', 'aaaclient_id', 'aclient_id', 'unit', 'client_id', 'sid', 'creativeids', 'creativeid'].forEach(function(prop) {
+    ['amp_client_id','client_id', 'unit', 'sid', 'creativeids', 'creativeid'].forEach(function(prop) {
         if (p[prop])
             url += '&' + prop + '=' + p[prop];
     });

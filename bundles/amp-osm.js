@@ -89,14 +89,31 @@ function start() {
             params[p] = qparams.get(p);
         });
     }
-    params.maxwidth = cxt.data.width;
-    params.fixedheight = cxt.data.height; 
+    let iLR = window.context.initialLayoutRect;
+    if (cxt.data.height == 1) {
+        //this type we will need to resize to AMP runtime for size change.
+        //note actually we 
+        //we will never ask for more width lah. it is the height.
+        params.maxwidth = iLR.width;
+        //then we do it abit like jixie friendly standard loh.
+    }
+    else {
+        if (iLR && iLR.width && iLR.height) {
+            params.maxwidth = iLR.width;
+            params.fixedheight = iLR.height;
+        }
+    }
     params.container = 'c'; //Yup, with amp 3p, the div is always called 'c'
+    console.log(cxt.data);
+    console.log("--- --- --- --- --- --- --- --- --- ---");
     ['unit','cid','creativeid','creativeids'].forEach(function(p){
         if (cxt.data[p]) {
             params[p] = cxt.data[p];
         }
     });
+    params.data = JSON.parse(JSON.stringify(cxt.data));
+    params.data.iwidth = iLR.width; //actual
+    params.data.iheight = iLR.height;
     var inst = mosm.createInstance(params, {
             jixie: mpjixie,
             teads: mpteads,
