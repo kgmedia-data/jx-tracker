@@ -91,9 +91,8 @@ function start() {
     }
     let iLR = window.context.initialLayoutRect;
     if (cxt.data.height == 1) {
-        //this type we will need to resize to AMP runtime for size change.
-        //note actually we 
-        //we will never ask for more width lah. it is the height.
+        //Since this one we start with nothing, then we will need to indicate to 
+        //AMP that we'd like to requestResize
         params.maxwidth = iLR.width;
         //then we do it abit like jixie friendly standard loh.
     }
@@ -112,8 +111,10 @@ function start() {
         }
     });
     params.data = JSON.parse(JSON.stringify(cxt.data));
-    params.data.iwidth = iLR.width; //actual
-    params.data.iheight = iLR.height;
+    params.data.iwidth = iLR.width; //actual width 
+    params.data.iheight = iLR.height; //actual height
+    //the data.width and data.height is the width and height specified in the amp-ad tag.
+    console.log(`#### CREATEINST_${(new Date()).toUTCString()}`);
     var inst = mosm.createInstance(params, {
             jixie: mpjixie,
             teads: mpteads,

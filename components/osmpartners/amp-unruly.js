@@ -30,9 +30,72 @@ function common_(rtjson) {
     //};
 }
 //to be bound;
-
+/*
+var iframe = document.createElement('iframe');
+var html = '<body>Foo</body>';
+document.body.appendChild(iframe);
+iframe.contentWindow.document.open();
+iframe.contentWindow.document.write(html);
+iframe.contentWindow.document.close();
+*/
 function xinject_(siteId, imp) {
+    siteId = '1018656';
+    var iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    let html =              `<body style="margin: 0;">
+    <script>
+        var unruly = window.unruly || {};
+        unruly.native = unruly.native || {};
+        unruly.native.siteId = ${siteId};
+        unruly.native.onFallback = function(){
+            console.log('abcdef');
+            return "";
+        }; 
+        unruly.native.onAdLoaded = function(){ 
+            return "";
+        }; 
+        </script>
+        <script src="https://video.unrulymedia.com/native/native-loader.js"></script>
+        </body>`;
+        let theC = document.getElementById("c");
+        theC.parentNode.appendChild(iframe);
+        iframe.contentWindow.document.open();
+        iframe.contentWindow.document.write(html);
+        iframe.contentWindow.document.close();
+}
+
+function cannot_null_inject_(siteId, imp) {
+    siteId = '1018656';
+    var iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    iframe.setAttribute("style","height:1px !important;width:100% !important;");
+    iframe.name = 'jxunrulyaux';
+    let html =              `<body style="margin: 0;">
+    <script>
+        var unruly = window.unruly || {};
+        unruly.native = unruly.native || {};
+        unruly.native.siteId = ${siteId};
+        unruly.native.onFallback = function(){
+            console.log('abcdef');
+            return "";
+        }; 
+        unruly.native.onAdLoaded = function(){ 
+            return "";
+        }; 
+        </script>
+        <script src="https://video.unrulymedia.com/native/native-loader.js"></script>
+        </body>`;
+    iframe.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
+    let theC = document.getElementById("c");
+    theC.parentNode.appendChild(iframe);
+   
+}
+
+function xxinject_(siteId, imp) {
+    siteId = '1018656'; //'amp-test';
+
     let htmlcode = `
+            console.log("#### UNRULY YES");
             var unruly = window.unruly || {};
             unruly.native = unruly.native || {};
             unruly.native.siteId = ${siteId};
@@ -44,6 +107,8 @@ function xinject_(siteId, imp) {
                 console.log("___ WE ARE here2");
                 return "";
               }; 
+              console.log("#### UNRULY YES2");
+
              `;
     let cleanhtmlcode = htmlcode.replace(/\n|\r/g, "");
     //actually the 100% is means what ah?
@@ -84,9 +149,10 @@ function xinject_(siteId, imp) {
 }
 
 function inject_(siteId, msgs) {
+    console.log(`#### INJECT_${(new Date()).toUTCString()}`);
     window.unruly_has_ad = "00";
     siteId = '1018656'; //'amp-test';
-    siteId = '1111362'; //tribunnews amp
+   // siteId = '1111362'; //tribunnews amp
     //siteId = '218003'; //kompas
     //console.log(`HACK REMEMBER THIS IS TESTING PLACEMENT`);
     //1018656, 218003 3709286
@@ -94,19 +160,13 @@ function inject_(siteId, msgs) {
     window.unruly.native = {
         siteId: siteId
     };
-    console.log(`__ .. .. plant stuff`);
-    //just do your own self-signed deaht?
-    //unruly.native.onFallback = function(){
-      //  console.log(`___UNRULY BOOOOO`);
-        //parent.postMessage("${rtjson.msgs.noad}", "*");
-        //return "";
-    //}; 
     //we cannot do the fallback: else it will wipe out all the scripts
     //it needs to be inside an iframe.
     //but here we cannot do that.
     //How near we are to the view port.
     //console.log(`calling set time out__ .. .. xtimeout`);
     //it is not that our code is called all the time.
+    /*
     console.log("__setInterval to check");
     setInterval(function() {
         console.log("__check");
@@ -115,12 +175,26 @@ function inject_(siteId, msgs) {
           //  window.postMessage(msgs.timeout, "*");
         }
     }, 500);
+    */
      window.unruly.native.onAdLoaded = function() {
-         console.log(`__ .. .. onAdLoaded`);
-        window.unruly_has_ad = "11";
+         console.log(`__#### .. .. onAdLoaded`);
+        //window.unruly_has_ad = "11";
         window.postMessage(msgs.imp, "*");
         return '';
     };
+    window.unruly.native.onFallback = function(){
+        console.log(`#### ON FALLBACK ${(new Date()).toUTCString()}`);
+        
+        window.postMessage(msgs.noad, "*");
+        //then it is something to bring in our own ad loh
+        //Need to throw an exception else if it goes back to Unruly code,
+        //it will wipe out the whole window.
+        //but unruly onFallback is called very very late,
+        //it is when the user almost passes the slot visually.
+        //so there is no point to waterfall it to anything then!
+        //meaning this thing here is useless.
+        throw new Error('');
+    }; 
     let scriptUrl = 'https://video.unrulymedia.com/native/native-loader.js';
     const s = document.createElement('script');
     s.src = scriptUrl;
@@ -130,6 +204,7 @@ function inject_(siteId, msgs) {
 function makeNormalizedObj__(dbjson, rtjson) {
     common_(rtjson);
     rtjson.msgs = {
+        noad: `jxosm_noad_unruly`,
         imp: `jxosm_imp_unruly`,
         timeout: `jxosm_timeout_unruly`
     };

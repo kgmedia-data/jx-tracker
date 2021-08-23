@@ -262,15 +262,19 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             window.context.noContentAvailable();
         },
         handleHasAd: function(width, height, fixedHeight) { 
-            //console.log(`calling the render start .... ${width} ${height} ${fixedHeight}`);
+            console.log(`#### calling the render start .... ${width} ${height} ${fixedHeight}`);
+            if (fixedHeight) {
+                window.context.renderStart();    
+                return;
+            }
             /* window.context.renderStart({
                 width: width,
                 height: fixedHeight > 0 ? fixedHeight : height
             });
             */
             window.context.renderStart({
-                width: 300,
-                height: 600
+                width: width,
+                height: height
             });
            
         },
@@ -1475,7 +1479,7 @@ const thresholdDiff_ = 120;
         cr.maxwidth = mw_;
         cr.maxheight = mh_;
         cr.doDiffScroll = doDiffScroll;
-        //console.log(`${w_} ${h_} ${mw_} ${mh_}`);
+        console.log(`#### # # # # # ${w_} ${h_} ${mw_} ${mh_}`);
         //console.log("^^ w h mw mh ^^");
     }
 

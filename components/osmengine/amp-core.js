@@ -1,49 +1,33 @@
 /**
- * Instrumentation of the AMP context functions
- * One-off only !
- * This whole thing will be in its own iframe lah.
- * So no need worry about many instances and all that.
- * Can also use global variables ...
- * Need a lot more heuristic and junk
+ * Since AMP ad is in its own iframe, the just let the variables
+ * lie around like this (global variables) would do.
+ * 
  */
-
 var gParams = {};//later will be set.
-  
-/*
-window.context
-  .requestResize(requestedWidth, requestedHeight)
-  .then(function () {
-    // Hide any overflow elements that were shown.
-    // The requestedHeight and requestedWidth arguments may be used to
-    // check which size change the request corresponds to.
-  })
-  .catch(function () {
-    // Show the overflow element and send a window.context.requestResize(width, height)
-    // when the overflow element is clicked.
-    // You may use the requestedHeight and requestedWidth to check which
-    // size change the request corresponds to.
-  });
-*/
-
+var p_imp = null; //global ...set to corr to whatever current partner's
+var p_noad = null; //global ...
 /**
  * This is to take care of the creativeView tracker firing of all the partners
  */
-window.jxOSMVisible = 0;
-window.jxOSMCVTrackers = [];
+var gOSMVisible = 0;
+var gOSMCVTrackers = [];
+
 const visThreshold_ = 0.4;
+
 //what if there is no change?
 function cb(param) {
     param.forEach(function(entry) {
+        console.log(JSON.stringify(entry, 2));
         let trackers = [];
         if (entry.intersectionRatio > visThreshold_) {
-            window.jxOSMVisible = 1;
+            gOSMVisible = 1;
         }
         else {
-            window.jxOSMVisible = 0;
+            gOSMVisible = 0;
         }
-        if (entry.intersectionRatio > visThreshold_ && window.jxOSMCVTrackers.length > 0) {
-            trackers = trackers.concat(window.jxOSMCVTrackers);
-            window.jxOSMCVTrackers.length = 0;
+        if (entry.intersectionRatio > visThreshold_ && gOSMCVTrackers.length > 0) {
+            trackers = trackers.concat(gOSMCVTrackers);
+            gOSMCVTrackers.length = 0;
         }
         for (var i = 0; i < trackers.length; i++) {
             trackers[i]('creativeView');
@@ -53,56 +37,49 @@ function cb(param) {
     });
     //if everything fired then can unlistne ah!
 }
-let unlisten = window.context.observeIntersection(cb);
+//https://github.com/ampproject/amphtml/blob/main/examples/ampcontext-creative.html
+//https://jixieamptest.kompas.com/api/testpagegen?filename=ampcombikompas300x400&creativeids=1005|1027
+function cb2(changes) {
+    // Code below is simply an example.
+    var latestChange = changes[changes.length - 1];
 
-//2 modes: size = 1
-//other mode is fixed size and cannot be too small lah.
-//
+    // Amp-ad width and height.
+    var w = latestChange.boundingClientRect.width;
+    var h = latestChange.boundingClientRect.height;
 
-var p_imp = null; //global ...set to corr to whatever current partner 
-var p_noad = null; //global ...
+    // Visible width and height.
+    var vw = latestChange.intersectionRect.width;
+    var vh = latestChange.intersectionRect.height;
 
-//The value window.context.initialLayoutRect contains the initial rect of the ad's position in the page.
+    // Position in the viewport.
+    var vx = latestChange.boundingClientRect.x;
+    var vy = latestChange.boundingClientRect.y;
 
+    // Viewable percentage.
+    var viewablePerc = ((vw * vh) / (w * h)) * 100;
 
+    console.log(viewablePerc, w, h, vw, vh, vx, vy);
+  }
+console.log(`#### OBSERVE START ${(new Date()).toUTCString()}`);
+let unlisten = window.context.observeIntersection(cb2);
+//let unlisten = window.context.observeIntersection(cb);
+
+//this is like our instrumentation to figure out if there is an ad.
 function ampOneOffInit_() {
-    return;//
     let boundRealRenderStart = window.context.renderStart.bind(window.context);
     let boundRealRequestResize = window.context.requestResize.bind(window.context);
     
-    /* window.context.requestResize = function(requestedWidth, requestedHeight) {
-        console.log(`__$$$$ ${requestedWidth} ${requestedHeight}`);
-        if (requestedWidth == 0 || requestedHeight == 0) {
-            return Promise.resolve();
-        }
-        //THINK ...
-        return boundRealRequestResize(requestedWidth, requestedHeight).catch(function (err) {
-        });
-    }
-    window.context.renderStart = function(arg1, arg2) {
-        console.log(`__$$$$ renderStart ${arg1} ${arg2}`);
-        //should call the bound function to fire trackers to make sure
-        //only fire each action at most once.
-        if (p_imp)
-            window.postMessage(p_imp, "*");    
-        //not accurate. depends on the vendor.
-        return boundRealRenderStart();
-        opt_hasOverflow
-    }*/
+    //we use this to intercept the partner's calls to the amp runtime!!
     window.context.requestResize = function(...args) {
         if (args && args.length >= 2) 
             console.log(`### requestResize ${args[0]}x${args[1]}`);
         else
             console.log(`### requestResize no enough arg`);
         if (args && args.length >= 2) {
-            if (args[0] <= gParams.data.width && args[1] <= gParams.data.height) {
+            //the real width and height of our unit
+            if (args[0] <= gParams.data.rwidth && args[1] <= gParams.data.rheight) {
                 console.log(`### requestResize No need pass to amp runtime ${args[0]}x${args[1]}`);
-                //setTimeout(function() {
-                  //  if (window.context.onResizeSuccess)
-                    //    window.context.onResizeSuccess(args[0], args[1]);
-                //}, 50);    
-                return boundRealRequestResize(args[0], args[1]);
-                //return Promise.resolve(); //no need tell AMP runtime lah...
+                return boundRealRequestResize(gParams.data.rwidth, gParams.data.rheight);
             }
         }
         console.log(`### requestResize need pass to amp runtime`);
@@ -129,6 +106,7 @@ function ampOneOffInit_() {
         return boundRealRenderStart(...args);
     }
     window.context.noContentAvailable = function() {
+        //we will not pass this on of course. else we will get collapsed!
         console.log(`### noContentAvailable`);
         if (p_noad)
             window.postMessage(p_noad, "*");    
@@ -136,7 +114,7 @@ function ampOneOffInit_() {
 }
 
 function msgListener(e) {
-    console.log(`${e.data}`);
+    console.log(`_____ #### ${e.data}`);
     if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
         console.log(e.data);
         let msgs = this.msgs;
@@ -153,6 +131,7 @@ function msgListener(e) {
             p_imp = null;
             p_noad = null;
             trackerFirer.bind(this)('error', '303');
+            console.log(`### waterfalling down since you no ad`);
             this.next();
         }
         
@@ -193,7 +172,7 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
             impression: 1,
             creativeView: 1
         },
-        fcn: oneLayer.bind(null, jxContainer, remainingCreativesArr, partners, next),
+        nextfcn: oneLayer.bind(null, jxContainer, remainingCreativesArr, partners, next),
         msgs: rtjson.msgs,
         trackers: rtjson.trackers? rtjson.trackers.baseurl + '?' + rtjson.trackers.parameters: ''
     };
@@ -202,29 +181,33 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
 
     o.next = function() {
         window.removeEventListener('message', boundMsgListener);
-        this.fcn();
+        this.nextfcn();
     }
     window.addEventListener('message', boundMsgListener, false);
     if (subtype !== 'jixie') {
-        if (window.jxOSMVisible) {
+        if (gOSMVisible) {
             //already visible
             boundTrackerFirer('creativeView');
         }
         else {
             //later when visible then can 
             //no matter how much later.
-            window.jxOSMCVTrackers.push(boundTrackerFirer);
+            gOSMCVTrackers.push(boundTrackerFirer);
         }
     }
     rtjson.inject();
 }
 function fetchAdP(adTagUrl) {
     return fetch(adTagUrl, {
-        //no typo?
         method: 'GET',
         credentials: 'include'
     }).then((response) => response.json());
 }
+
+//UNRULY
+//TEADS
+//IT WILL BE IN AN IFRAME.
+
 
 //2 modes: fixed height mode
 //2 modes: unusable hiehgt mode
@@ -243,10 +226,6 @@ function createInstance_(p, partners) {
     console.log(gParams);
     console.log("--- --- --- --- --- ");
     ampOneOffInit_();
-    if (p.data.height == 1) {
-        //means we really must do the request for resize else nothing will work
-
-    }
     let url = `https://${p.debug?'ad-rc':'ad'}.jixie.io/v2/osm?source=osm`;
     if (p.creativeid == '11111') {
         url = `https://ad-rc.jixie.io/v2/osm?source=osm`;
@@ -293,4 +272,19 @@ module.exports.createInstance = createInstance_;
 * requires/dependencies:
   - none (nothing direct - the arrayOfPartner objects is passed to us from the bundles
     layer)
+*/
+/*
+window.context
+  .requestResize(requestedWidth, requestedHeight)
+  .then(function () {
+    // Hide any overflow elements that were shown.
+    // The requestedHeight and requestedWidth arguments may be used to
+    // check which size change the request corresponds to.
+  })
+  .catch(function () {
+    // Show the overflow element and send a window.context.requestResize(width, height)
+    // when the overflow element is clicked.
+    // You may use the requestedHeight and requestedWidth to check which
+    // size change the request corresponds to.
+  });
 */

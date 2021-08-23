@@ -31,6 +31,8 @@ function common_(rtjson) {
 function inject_(params) {
     if (window.jxrenderer) {
         //check the exact prop name. this is just the idea only
+        console.log(JSON.stringify(params, null));
+        console.log("----------#####-");
         return window.jxrenderer.init(params);
     }
 
