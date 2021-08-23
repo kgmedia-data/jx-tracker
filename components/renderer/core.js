@@ -655,7 +655,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             }
             else {
                 let crSig = this.c.crSig;
-                console.log(`CCC#### Simple type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
+                //console.log(`CCC#### Simple type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
                 //not in iframe (trusted) so need more care:
                 if (crSig) {
                     crSig += 'q';
@@ -681,7 +681,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             }
             else { //div type but there is the new stuff and the old stuff.
                 let crSig = this.c.crSig;
-                console.log(`CCC#### Complex type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
+                //console.log(`CCC#### Complex type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
                 if (crSig) { //new way. then we only call a queue push 
                     crSig += 'q';
                     window[crSig] = window[crSig] || [];
@@ -1684,7 +1684,7 @@ const thresholdDiff_ = 120;
                     trusted = true;
                     out.crSig = jxScriptUrls_.video.signature
                 }
-                console.log(`CCC##### sucked out the signature ${c.crSig}`);
+                //console.log(`CCC##### sucked out the signature ${c.crSig}`);
                 out.adparameters = c; //<--- this is a special behaviour for video sdk stuff.
                 //the videoadsdk needs more than the adparameters but 1 level up (still need generate vast)
                 //this c blob contains a property adparameters                 
@@ -1813,7 +1813,7 @@ const thresholdDiff_ = 120;
         this.ctr = container;
         //this.excludedH = normCrParams.excludedHeight;
 
-        if (normCrParams.crSig && normCrParams.div) { //MIOW
+        if (normCrParams.crSig && normCrParams.div) { 
             //
             normCrParams.token = divObjs.jxCoreElt.id;
         }

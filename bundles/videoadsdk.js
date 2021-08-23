@@ -9,7 +9,7 @@
 if (window.jxvideoadsdk) { 
     return;
 }
-console.log(`#### videoadsdk (first new lines. cannot set breakpoint?!)`);
+//console.log(`#### videoadsdk (first new lines. cannot set breakpoint?!)`);
 window.jxvideoadsdk = 1;
 const ourSig = 'jxvideoadsdk';
 const ourSigQ = 'jxvideoadsdkq';
@@ -19,11 +19,6 @@ if (window.jxrenderercore) {
     //then we know we as a creative were created as trusted
     //since we are in the same window as the renderer.
     trusted = true;
-    console.log(`#### TTTTTTTT______ videoadsdk (trusted is now true ah)`);
-
-}
-else {
-    console.log(`#### TTTTTTTT______ videoadsdk (trusted is still false ah)`);
 }
  
 const modulesmgr                       = require('../components/basic/modulesmgr');
@@ -110,8 +105,6 @@ function listen(e) {
         catch(err) {}
     }
     if (!json) return; //unrelated to us, we dun bother.
-    ////if (jsonjson.token = 'hardcode';
-    console.log(`###### we are receiging stuff `);
     if (!json.token) {
         json.token = 'default';
     }
@@ -124,13 +117,13 @@ function listen(e) {
             }
             break;
         case "adparameters":
-            console.log(`___ SUPER IMPORTANT IN VIDEOADSDK ###### we are receiging stuff ${json.token}`);
+            //console.log(`___ SUPER IMPORTANT IN VIDEOADSDK ###### we are receiging stuff ${json.token}`);
             makePlayer(json.token, json.data);
             break;                    
     }
 }//listen
 
-console.log(`#### videoadsdk init trusted = ${trusted}`);
+
 if (!trusted) {
     window.addEventListener('message', listen, false);
     notifyMaster('jxloaded', ourSig);
@@ -150,7 +143,7 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
         obj.data = data;
     }
     msgStr = "jxmsg::" + JSON.stringify(obj);
-    console.log(`##### videoadsdk trusted=${trusted} ${msgStr}`);
+    //console.log(`##### videoadsdk trusted=${trusted} ${msgStr}`);
     if (trusted) { //it is just a function call then
         jxrenderer.message(msgStr);
     }
@@ -159,31 +152,28 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
     }
 }
 
-var newEra = false;
-console.log(``);
     var JxEventsQ = function () {
         this.push = function () {
-            console.log(`#### INSIDE THE NEW THIS.PUSH!!!`);
+            //console.log(`#### INSIDE THE NEW THIS.PUSH!!!`);
             for (var i = 0; i < arguments.length; i++) try {
                 if (typeof arguments[i][0] === "string") {
                     let fcnname = arguments[i][0];
                     if (fcnname == 'message' && arguments[i].length >= 2) {
-                        console.log(`##### videoadsdk calling listen with stuff`); //${arguments[i][1]}`);
+                        //console.log(`##### videoadsdk calling listen with stuff`); //${arguments[i][1]}`);
                         listen({
                          data:   arguments[i][1]
                         });
                     }
-                    else {
-                        console.log(`##### videoadsdk currently unable to handle this fcnname ${fcnname}`);
-                    }
+                    //else {
+                      //  console.log(`##### videoadsdk currently unable to handle this fcnname ${fcnname}`);
+                    //}
                 }
-                else {
-                    console.log(`##### videoadsdk currently unable to handle type: ${typeof arguments[i]}`);
-                }
+                //else {
+                  //  console.log(`##### videoadsdk currently unable to handle type: ${typeof arguments[i]}`);
+                //}
             } catch (e) {}
         }
     };
-    console.log(`#### ________________SHOULD ONLY BE HERE ONCE AND NOT 3x`);
     // get the existing queue array
     var _old_eventsq = window[ourSigQ];
     //console.log(`#### when videoadsdk comes the queue is like this: ${_old_eventsq.length}`);
