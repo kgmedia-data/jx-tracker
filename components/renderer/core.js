@@ -35,7 +35,7 @@ DO_NOT_REMOVE_GULPBUILD_REPLACE_FLOAT_COND_COMPILE
 
     */
 
-window.jxrendererabc = 1;
+window.jxrenderercore = 1;
 
 const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');

@@ -15,7 +15,7 @@ const ourSig = 'jxvideoadsdk';
 const ourSigQ = 'jxvideoadsdkq';
 
 var trusted = false;
-if (window.jxrendererabc) {
+if (window.jxrenderercore) {
     //then we know we as a creative were created as trusted
     //since we are in the same window as the renderer.
     trusted = true;
