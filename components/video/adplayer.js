@@ -333,7 +333,8 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         //we will need the "jxvisible", for the playerad sdk case we will need the caller to
         //call our play API. Hence autostart will be false
         let cb = isRepeat ? doNothing: adOutcomeCB;
-
+        //if in iframe, then true (must be secure)
+        _adObj.setVpaidSecure(_containerId == 'default' ? true: false); //see what we are in now?
         // OK We are making the ad call now:
         if (crData) {
             //This is those Jixie ads and we construct the vast XML from the JSON

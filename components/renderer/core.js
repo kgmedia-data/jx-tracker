@@ -35,6 +35,8 @@ DO_NOT_REMOVE_GULPBUILD_REPLACE_FLOAT_COND_COMPILE
 
     */
 
+window.jxrenderercore = 1;
+
 const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
@@ -240,7 +242,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
    
     const jxScriptUrls_ = {
         video: {
-            signature: 'jx_video_ad',
+            //signature: 'jx_video_ad',
+            signature: "jxvideoadsdk",
             url: 'https://scripts.jixie.io/jxvideocr.1.0.min.js'
             //url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
         }
@@ -493,8 +496,35 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     }
 
     function __handleBlur(e) {
-        if (document.activeElement == this.divObjs.jxCoreElt) {
-            fireTracker(this.trackers, 'click'); 
+        let node = document.activeElement;
+        let loop = 0;
+        try {
+            while (node && loop < 10) {
+                if (node == this.divObjs.jxCoreElt) {
+                    break;
+                }
+                else {
+                    node = node.parentNode;
+                    loop++;
+                }
+            }
+        }
+        catch(e) {}
+        if (node && node == this.divObjs.jxCoreElt) {
+            let fire = false;
+            let tsNow = Date.now();
+            if (this.lastFired) {
+                //else sometimes there will be 2:
+                if (tsNow - this.lastFired > 3000) {
+                    fire = true;
+                }
+            }
+            else {
+                fire = true;
+            }
+            if (fire) {
+                this.lastFired = tsNow;
+            }
         }
     }
 
@@ -617,73 +647,85 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //else we do nothing then.
     }
 
-    /*
-    Talk to the creative using messages. 
-    For iframe case
-    Right now, the iframe non iframe both come here
-    This function will also fire events (for trusted case)
-    if is simple event.
-    */
+    /**
+     * This function is quite comprehensive in the sense that it handles both simple and complex
+     * communications (simple: e.g. jxvisible; complex: e.g. adparameters)
+     * and the creative can be in iframe or in div (trusted)
+     * For the latter we have the older legacy creatives and the newer cratives (with a much improved
+     * protocol of communication with this renderer)
+     * @param {*} msgtype 
+     * @param {*} dataMaybe 
+     * @returns 
+     */
     function __pm2CrWithMsgsEvts(msgtype, dataMaybe = null) {
-            let msgStr;
-            if (msgtype == 'jxvisible' || msgtype == 'jxnotvisible') {
-                msgStr = msgtype;
+        let postMsgStr = null;
+        let eventStr = null;
+        //from this we know if trusted or not: this.c.div
+        if (!dataMaybe) {
+            //simple type of stuff e.g. jxvisible and jxnotvisible. there is no "data"
+            if (this.c.iframe) { //iframe type. just post the message, no other options
+                postMsgStr = msgtype;
             }
             else {
-                let obj = {
-                    type: msgtype,
-                    data: dataMaybe ? dataMaybe: {}
+                let crSig = this.c.crSig;
+                //console.log(`CCC#### Simple type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
+                //not in iframe (trusted) so need more care:
+                if (crSig) {
+                    crSig += 'q';
+                    //new type of creatives (using our creatives Template to develop) and running in trusted mode:
+                    //we need that token else there will be problem if there are several instances
+                    //of the thing flying in the same "window"
+                    window[crSig] = window[crSig] || [];
+                    window[crSig].push(['message', 
+                        "jxmsg::" + JSON.stringify({ type: msgtype, token: this.c.token})
+                    ]);
+                    return; //nothing else to send
                 }
-                msgStr = "jxmsg::" + JSON.stringify(obj);
+                else { //older creatives - not sure if they listening to msgs or events. so do both
+                    postMsgStr = msgtype;
+                    eventStr = msgtype;
+                }
             }
-            let creativeNode = this.divObjs.jxCoreElt;
-       
-            if (creativeNode && creativeNode.contentWindow) {
-                creativeNode.contentWindow.postMessage(msgStr, '*');
-            }
-            else {
-                window.postMessage(msgStr, '*');
-            }
-            if (this.c.div && (msgStr == 'jxvisible' || msgStr == 'jxnotvisible')) {
-                creativeNode.dispatchEvent(new Event(msgStr));
-            }
-        
-    }
-
-    // This is my new suggested way renderer can work with 
-    // a trusted script
-    // The script ought to be developed following the pattern 
-    // in template/trustedscript.js
-    // Then all these would work nicely.
-    // The script needs to have a signature unique to itself
-    //
-    // the new type which are trusted + with signature, then
-    // can use this to talk to the creative.
-    // We don't have a use case yet, so this is commented out for now
-    // 'self' 'sig'
-    function __pm2CrDirectCall(msgtype, dataMaybe = null) {
-        let sig = this.c.crSig;
-        let token = this.c.token;
-        //Doing it like this, we don't need to know whether the
-        //script is loaded yet
-        //we can just stick the communication in. It will
-        //eventually (or immediately) be processed by the
-        //creative script
-        window[sig] = window[sig] || {}; 
-        window[sig].queue = window[sig].queue || [];
-        if (msgtype == 'adparameters' && dataMaybe) {
-            let p = JSON.parse(JSON.stringify(dataMaybe));
-            window[sig].queue.push(function(){
-                window[sig].run(token, p);
-            });//queue push
         }
         else {
-            window[sig].queue.push(function(){
-                window[sig].notify(token, msgtype);
-            });//queue push
+            //complex type . So far only have 1 which is adparameters
+            if (this.c.iframe) { //most clear what to do
+                postMsgStr = "jxmsg::" + JSON.stringify({type: msgtype, data: dataMaybe});
+            }
+            else { //div type but there is the new stuff and the old stuff.
+                let crSig = this.c.crSig;
+                //console.log(`CCC#### Complex type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
+                if (crSig) { //new way. then we only call a queue push 
+                    crSig += 'q';
+                    window[crSig] = window[crSig] || [];
+                    window[crSig].push(['message', 
+                        "jxmsg::" + JSON.stringify({ type: msgtype, token: this.c.token, data: dataMaybe})]);
+                    return; //nothing else to send.                        
+                }
+                else {
+                    //there will not be any such creatives.
+                    //those "old ways" they all have other ways to pass the adparameters which is
+                    //e.g. inject a fragment of code which has the jx_uni var p that kind of stuff
+                }
+            }
         }
+
+        //Ok all figured out, so time to emit the stuff:
+        let crNode = this.divObjs.jxCoreElt;
+        if (postMsgStr) {
+            if (crNode && crNode.contentWindow) {
+                crNode.contentWindow.postMessage(postMsgStr, '*');
+            }
+            else {
+                window.postMessage(postMsgStr, '*');
+            }
+        }
+        if (eventStr) {
+            crNode.dispatchEvent(new Event(eventStr));
+        }
+        return;
     }
-    
+  
     /**
      * Super generic stuff to use fetch API to return a promise (the json object)
      * @param {*} adTagUrl 
@@ -817,7 +859,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 //console.log(`Type div | scriptBody`);
                 let range = document.createRange();
                 range.setStart(jxCoreElt, 0);
-                jxCoreElt.appendChild(range.createContextualFragment(blob.scriptBody));
+                jxCoreElt.appendChild(range.createContextualFragment(blob.scriptbody));
             }
         }
         divObjs.jxbnFixedDiv.appendChild(jxCoreElt);
@@ -943,9 +985,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //if (normCrParams.maxwidth)
             jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
 
+        //is this causing the problem of UNIV
         if (normCrParams.maxheight) {
-            jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
-            jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
+        //    jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
+          //  jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
         
         jxbnDiv.style.height = normCrParams.height + 'px';
@@ -1543,7 +1586,7 @@ const thresholdDiff_ = 120;
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
             doDiffScroll:       c.doDiffScroll
         };
-
+        
         if (JX_FLOAT_COND_COMPILE) {
             if (jxParams.doFloat) {
                 out.floatParams = {
@@ -1649,7 +1692,12 @@ const thresholdDiff_ = 120;
                 }
                 break;    
             case 'video': 
-                trusted = false; //our video sdk will operate in friendly iframe
+                trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
+                if (c.adparameters.trusted) {
+                    trusted = true;
+                    out.crSig = jxScriptUrls_.video.signature
+                }
+                //console.log(`CCC##### sucked out the signature ${c.crSig}`);
                 out.adparameters = c; //<--- this is a special behaviour for video sdk stuff.
                 //the videoadsdk needs more than the adparameters but 1 level up (still need generate vast)
                 //this c blob contains a property adparameters                 
@@ -1659,7 +1707,8 @@ const thresholdDiff_ = 120;
                 }
                 //only those that are managed by us have this property
                 delete out.adparameters.trackers;
-                out['iframe'] = { 
+                
+                out[trusted ? 'div': 'iframe'] = { 
                     scripturl: jxScriptUrls_.video.url
                 };
                 //for this type we will use postMessage to post the adparameters.
@@ -1777,7 +1826,7 @@ const thresholdDiff_ = 120;
         this.ctr = container;
         //this.excludedH = normCrParams.excludedHeight;
 
-        if (normCrParams.crSig && normCrParams.trusted) {
+        if (normCrParams.crSig && normCrParams.div) { 
             //
             normCrParams.token = divObjs.jxCoreElt.id;
         }
@@ -1806,7 +1855,7 @@ const thresholdDiff_ = 120;
         if (mode == 'jxeventssdk') return __pm2JxEvtsSDKWithMsgs.bind({divObjs:this.divObjs, c: this.c});
         if (mode == 'self') return __pm2Self.bind({divObjs:this.divObjs, c: this.c});
         //We don't have direct type yet.
-        if (mode == 'direct') return __pm2CrDirectCall.bind({divObjs:this.divObjs, c: this.c});
+        ///direct also do what is below lah: if (mode == 'direct') return __pm2CrDirectCall.bind({divObjs:this.divObjs, c: this.c});
         return __pm2CrWithMsgsEvts.bind({divObjs:this.divObjs, c: this.c });
       }
       HooksMgr.prototype.overrideHandler = function(e, cb) {
@@ -2016,6 +2065,7 @@ const thresholdDiff_ = 120;
                     normCrParams.universal, 
                     normCrParams.clickurl, 
                     normCrParams.clicktrackerurl);
+                    //MIOW
 
                 cxtFcns.handleHasAd(normCrParams.width, normCrParams.height, normCrParams.fixedHeight);
                 
