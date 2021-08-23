@@ -68,6 +68,8 @@
     var _adLoaderOutcome = 'jxnone';
     var _controlsObj = null;
 
+    var _vpaidSecure = true;
+
 
     /**
         this is the flag for us to not manipulating the DOM multiple times
@@ -596,7 +598,9 @@
         _doProgressBar = progressBar;
         _controlsObj = controlsObj ? JSON.parse(JSON.stringify(controlsObj)): null;
     }
-
+    FactoryOneAd.prototype.setVpaidSecure = function(flag) {
+        _vpaidSecure = flag;
+    }
     FactoryOneAd.prototype.forceDimensions = function(width, height) {
         _forceWidth = width;
         _forceHeight = height;
@@ -635,7 +639,7 @@
 
         return new Promise(function(resolve, reject) {
             common.loadIMAScriptP().then(function() {
-                google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
+                //////google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
                 google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
                 google.ima.settings.setNumRedirects(maxNumVastRedirects_);
 
@@ -676,6 +680,13 @@
                 adsRequest.setAdWillAutoPlay(autoplayFlag); 
                 adsRequest.setAdWillPlayMuted(mutedFlag);
 
+                //console.log(`__VPAID VPAID VPAID VPAID VPAID# # # # ##### ${_vpaidSecure ? 
+                  //  google.ima.ImaSdkSettings.VpaidMode.ENABLED:
+                    //google.ima.ImaSdkSettings.VpaidMode.INSECURE}`);
+                google.ima.settings.setVpaidMode(
+                    _vpaidSecure ? 
+                    google.ima.ImaSdkSettings.VpaidMode.ENABLED:
+                    google.ima.ImaSdkSettings.VpaidMode.INSECURE);
                 //console.log(`auto=${autoplayFlag} muted=${mutedFlag}`);
                 _pFcnVector.report('requested'); //FERY NOTE
                 _adsLoader.requestAds(adsRequest); // checking if we can get an ad
