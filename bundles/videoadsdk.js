@@ -19,12 +19,12 @@ if (window.jxrendererabc) {
     //then we know we as a creative were created as trusted
     //since we are in the same window as the renderer.
     trusted = true;
-}
-else {
-    console.log(`#### videoadsdk (trusted is still false ah)`);
+    console.log(`#### TTTTTTTT______ videoadsdk (trusted is now true ah)`);
 
 }
-trusted = true;
+else {
+    console.log(`#### TTTTTTTT______ videoadsdk (trusted is still false ah)`);
+}
  
 const modulesmgr                       = require('../components/basic/modulesmgr');
 const cssmgr                           = require('../components/video/cssmgr');
@@ -76,6 +76,9 @@ const createObject                       = require('../components/video/adplayer
 var instMap = new Map(); //if we just always impose that if used from universal, then it's in
                          //iframe, then this Map is a bit stupid (only 1 item)  
 function makePlayer(containerId, adparameters, config = null, eventsVector = null) {
+    if (!containerId) {
+        containerId = 'default';
+    }
     let instMaybe = instMap.get(containerId);
     if (instMaybe) {
         return;
@@ -108,6 +111,10 @@ function listen(e) {
     }
     if (!json) return; //unrelated to us, we dun bother.
     ////if (jsonjson.token = 'hardcode';
+    console.log(`###### we are receiging stuff `);
+    if (!json.token) {
+        json.token = 'default';
+    }
     switch (json.type) {
         case "jxvisible":
         case "jxnotvisible":     
@@ -117,6 +124,7 @@ function listen(e) {
             }
             break;
         case "adparameters":
+            console.log(`___ SUPER IMPORTANT IN VIDEOADSDK ###### we are receiging stuff ${json.token}`);
             makePlayer(json.token, json.data);
             break;                    
     }

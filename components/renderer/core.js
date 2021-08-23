@@ -687,14 +687,14 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         let crNode = this.divObjs.jxCoreElt;
         if (postMsgStr) {
             if (crNode && crNode.contentWindow) {
-                crNode.contentWindow.postMessage(msgStr, '*');
+                crNode.contentWindow.postMessage(postMsgStr, '*');
             }
             else {
-                window.postMessage(msgStr, '*');
+                window.postMessage(postMsgStr, '*');
             }
         }
         if (eventStr) {
-            crNode.dispatchEvent(new Event(msgStr));
+            crNode.dispatchEvent(new Event(eventStr));
         }
         return;
     }
@@ -958,9 +958,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //if (normCrParams.maxwidth)
             jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
 
+        //is this causing the problem of UNIV
         if (normCrParams.maxheight) {
-            jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
-            jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
+        //    jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
+          //  jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
         
         jxbnDiv.style.height = normCrParams.height + 'px';
@@ -1665,7 +1666,7 @@ const thresholdDiff_ = 120;
                 break;    
             case 'video': 
                 trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
-                if (true || c.adparameters.trusted) {
+                if (c.adparameters.trusted) {
                     trusted = true;
                     out.crSig = jxScriptUrls_.video.signature
                 }
@@ -2037,6 +2038,7 @@ const thresholdDiff_ = 120;
                     normCrParams.universal, 
                     normCrParams.clickurl, 
                     normCrParams.clicktrackerurl);
+                    //MIOW
 
                 cxtFcns.handleHasAd(normCrParams.width, normCrParams.height, normCrParams.fixedHeight);
                 
