@@ -15,8 +15,10 @@ var gOSMCVTrackers = [];
 const visThreshold_ = 0.4;
 
 //what if there is no change?
-function cb(param) {
-    param.forEach(function(entry) {
+function cb(changes) {
+    //param.forEach(function(entry) 
+    var entry = changes[changes.length - 1];
+    {
         console.log(JSON.stringify(entry, 2));
         let trackers = [];
         if (entry.intersectionRatio > visThreshold_) {
@@ -34,7 +36,7 @@ function cb(param) {
             //execute these bound functions
             //clear the backlog of creativeViews to fire.
         }
-    });
+    }
     //if everything fired then can unlistne ah!
 }
 //https://github.com/ampproject/amphtml/blob/main/examples/ampcontext-creative.html
@@ -61,7 +63,7 @@ function cb2(changes) {
     console.log(viewablePerc, w, h, vw, vh, vx, vy);
   }
 console.log(`#### OBSERVE START ${(new Date()).toUTCString()}`);
-let unlisten = window.context.observeIntersection(cb2);
+let unlisten = window.context.observeIntersection(cb);
 //let unlisten = window.context.observeIntersection(cb);
 
 //this is like our instrumentation to figure out if there is an ad.
@@ -168,6 +170,7 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
     p_noad = rtjson.msgs.noad;
     let o = {
         unfired: {
+            response: 1,
             error: 1,
             impression: 1,
             creativeView: 1
@@ -185,6 +188,7 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
     }
     window.addEventListener('message', boundMsgListener, false);
     if (subtype !== 'jixie') {
+        boundTrackerFirer('response');
         if (gOSMVisible) {
             //already visible
             boundTrackerFirer('creativeView');
@@ -203,11 +207,6 @@ function fetchAdP(adTagUrl) {
         credentials: 'include'
     }).then((response) => response.json());
 }
-
-//UNRULY
-//TEADS
-//IT WILL BE IN AN IFRAME.
-
 
 //2 modes: fixed height mode
 //2 modes: unusable hiehgt mode
