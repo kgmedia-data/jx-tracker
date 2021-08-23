@@ -496,7 +496,21 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     }
 
     function __handleBlur(e) {
-        if (document.activeElement == this.divObjs.jxCoreElt) {
+        let node = document.activeElement;
+        let loop = 0;
+        try {
+            while (node && loop < 10) {
+                if (node == this.divObjs.jxCoreElt) {
+                    break;
+                }
+                else {
+                    node = node.parentNode;
+                    loop++;
+                }
+            }
+        }
+        catch(e) {}
+        if (node && node == this.divObjs.jxCoreElt) {
             fireTracker(this.trackers, 'click'); 
         }
     }
@@ -832,7 +846,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 //console.log(`Type div | scriptBody`);
                 let range = document.createRange();
                 range.setStart(jxCoreElt, 0);
-                jxCoreElt.appendChild(range.createContextualFragment(blob.scriptBody));
+                jxCoreElt.appendChild(range.createContextualFragment(blob.scriptbody));
             }
         }
         divObjs.jxbnFixedDiv.appendChild(jxCoreElt);
