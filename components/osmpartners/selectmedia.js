@@ -127,6 +127,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     let script_id = (dbjson.adparameters.msg_script_id ?
         dbjson.adparameters.msg_script_id : dbjson.adparameters.script_id);
     let sid = script_id.replace('select', ''); //selectJS417849795
+    sid = 'JS417849795'; //due to their problem, everything is this!!
     rtjson.msgs = {
         noad: `jxosm_noad_selectmedia${sid}`,
         imp: `jxosm_imp_selectmedia${sid}`,
