@@ -71,3 +71,30 @@ window.jxoutstreammgr = {
     init: start
 };
 
+var JxOSMQ = function () {
+    this.push = function () {
+        for (var i = 0; i < arguments.length; i++) try {
+            //if (typeof arguments[i] === "function") arguments[i]();
+            //else 
+            {
+                let fcnname = arguments[i][0];
+                //console.log(`##### x = ${x}`);
+                //console.log(`##### y = ${y}`);
+                if (fcnname == 'init') {
+                    //if our thing is really really loaded late, then perhaps we don't even have the stuff to send the event!
+                    start(arguments[i][1]);
+                }
+            }
+        } catch (e) {}
+    }
+};
+
+// get the existing _jxoutstreammgrq array
+var _old_jxoutstreammgrq = window._jxoutstreammgrq;
+// create a new object
+window._jxoutstreammgrq = new JxOSMQ(); //actually no need object, just cloned from some website's snipplet .. :-)
+// execute all of the queued up events - apply() turns the array entries into individual arguments
+if (_old_jxoutstreammgrq) {
+    window._jxoutstreammgrq.push.apply(window._jxoutstreammgrq, _old_jxoutstreammgrq);
+}
+
