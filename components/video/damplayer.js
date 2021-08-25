@@ -1815,3 +1815,25 @@ else {
 }
 
 module.exports = createObject_;
+
+/* 
+ ************** module: video/damplayer ******************************************
+
+ TO WRITE MORE...
+* module.exports:
+    - function which will make one damplayer object
+     the dam player object has the following functions:
+    addListener  function(eName, cb) 
+    addEventListener  function(eName, cb) 
+    
+    play  function(videoId = null) 
+    pause  function() 
+    
+    notifyResize  function() 
+
+    loadJx  function(param, playEndCB, forcePlatform) 
+    load  function(param, playEndCB, forcePlatform) 
+    
+* requires/dependencies:
+    a lot
+*/

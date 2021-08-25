@@ -239,6 +239,11 @@
                         _fcnTriggerNextLayer(_syntheticCVList);
                     } 
                 } 
+                else if(e.data == _jsonObj.msgs.triggerhouse) {
+                    //<-- triggerhouse
+                    _fcnTriggerNextLayer([]);
+                    //
+                } 
                 else if(e.data == _jsonObj.msgs.timeout) {
                     //if there is still other stuff under this in the waterfall, then it should get out and make way
                     if (_jsonObj.stackidx < _jsonObj.stackdepth -1) {
@@ -507,8 +512,21 @@
             catch(e){
                 console.log(`__JX_ clear Interval in prepareGoNext exception`);
             }
+
             if (_injectedDiv) {
                 _injectedDiv.parentNode.removeChild(_injectedDiv);
+            }
+            if (_jsonObj.removedivclass) {
+                //This is an invention just for SelectMedia.
+                //console.log(`__##### ${_jsonObj.removedivclass}`);
+                //somehow they create some div away from the _injectedDiv
+                //so more stuff to get rid of . else users will see a
+                //big white floating window upon declaration of no ad by SM:
+                let div2Del = document.getElementsByClassName(_jsonObj.removedivclass);
+                if (div2Del && div2Del.length>0) {
+                    div2Del = div2Del[0];
+                    div2Del.parentNode.removeChild(div2Del);
+                }
             }
             if(_msgListener) {
                 window.removeEventListener('message', _msgListener);
@@ -543,6 +561,13 @@
                     window.postMessage(_jsonObj.msgs.timeout, "*");    
                 }, _jsonObj.timeout);
             }
+             //<--- triggerhouse
+             if (_jsonObj.msgs.triggerhouse) {
+                setTimeout(function() {
+                    window.postMessage(_jsonObj.msgs.triggerhouse, "*");    
+                }, 1000);
+            }
+            //--->
             _startVisibilityTrack();
         };
         var _startVisibilityTrack = function() {
@@ -1006,6 +1031,8 @@
             //but some partners they need to hang the script fragments somewhere else.
             let pCtr = getAnElt('#' + (p.managerdiv ? p.managerdiv: idJXOSMDiv_));
             if (!pCtr) {
+                throw new Error("no slot");
+                //no do.
                 pCtr = getAnElt('body');
             }
             let pDiv = document.createElement('div');

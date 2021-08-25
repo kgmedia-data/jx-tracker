@@ -1,8 +1,10 @@
 /**
- * . Bundle built for a universal lite
- * Unable to play those exotic player DM, YT etc
+ * Bundle built to make universal (general outstream player)
+ * 
+ * Documentation: refer to ulite.md file in this same dir
  */
-if (window.jxuniversallite) {
+
+if (window.jxuniversal) {
     return;
 }
 
@@ -34,5 +36,5 @@ function start_(options) {
     instMap.set(hashStr, uliteInst);
 }
 
-window.jxuniversallite = start_;
+window.jxuniversal = { init: start_}; 
 

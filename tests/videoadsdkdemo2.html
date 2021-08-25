@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>JX Video Ad Player Test</title>
+		<meta http-equiv='cache-control' content='max-age=0'/>
+		<meta http-equiv='cache-control' content='no-cache'/>
+		<meta http-equiv='Cache-Control' content='no-store'/>
+		<meta http-equiv='expires' content='0'/>
+		<meta http-equiv='expires' content='Tue, 01 Jan 1980 1:00:00 GMT'/>
+		<meta http-equiv='pragma' content='no-cache'/>
+		<meta name='ad.size' content='width=640,height=360'>
+		<meta charset='UTF-8'>
+		<style>body { background-color:rgba(255,255,255,1)}</style>
+	</head>
+	<body style='margin:0; padding:0;'>
+		<div class="bn_outter_container preloader fallback" style="position:relative;">
+			<div id="bn_main_canvas" class="bn_main" style='position:relative;'>
+				<div class="_container" data-parent-id="component-0">
+					<!-- <div id="playerContainer" class="trans-text-item" style="position:absolute; display: block;">
+					</div> -->
+                    <div id="playerContainer" style="position:relative; display: block;width: 600px; padding-top:56%">
+                        <div id="playerContainer1" style="position:absolute; top:0px; bottom:0px; left:0px; right:0px">    
+                        </div>
+                      </div>
+				</div>
+			</div>
+		</div>
+    	<script>
+    		var myplayer = null; // to get a global variable with the player used in the subsequent sequence
+
+    		// Function to use to set the video player parameters
+    		function onJXPlayerReady(jx){
+    			console.log("calling onJXPlayerReady");
+    			myplayer = jx;
+    			var p={
+    				    container: "playerContainer1",
+            			domain: "jixie.io",
+            			autoplay:true,
+                        loop: 'auto',
+            			tag: "https://ad.jixie.io/v1/video?source=outstream&domain=jixie.io&unit=none&pageurl=https%3A%2F%2Funiversal.jixie.io%2Fdemos%2Fportal%2Fhybrid.html%3Fcreativeid%3D38&device=desktop&creativeid=23",
+    			};
+    			myplayer.start(p);
+
+	    		// Event listeners: jxhasad (there is an ad ready to play), jxnoad (no ad in the response from ad server), jxadended (ad completed), jxcomplete (video completed)
+	    		window.addEventListener('jxhasad', readyToPlay);
+	    		window.addEventListener('jxnoad', function(e){console.log("No ad");});
+	    		window.addEventListener('jxadended', function(e){console.log("Ad fully played")});
+                window.addEventListener('jxplayvideo', function(e){console.log("We start the video")});
+	    		window.addEventListener('jxvideoend', function(e){console.log("Video ended")});
+	    		window.addEventListener('jxadstart', function(e){console.log("Ad start");});
+	    		window.addEventListener('jxadfirstQuartile', function(e){console.log("Ad first quartile");});
+	    		window.addEventListener('jxadmidpoint', function(e){console.log("Ad midpoint");});
+	    		window.addEventListener('jxadthirdQuartile', function(e){console.log("Ad third quartile");});
+	    		window.addEventListener('jxadalladscompleted', whenAdEndsWeRestart);
+	    		window.addEventListener('jxadclick', function(e){console.log("Ad click");});
+	    		window.addEventListener('jxadimpression', function(e){console.log("Ad impression");});
+
+    		}
+
+    		function readyToPlay(){
+    			console.log("We have an ad, then we play it");
+    			myplayer.play(); // if there is an ad it will display the ad, otherwise the video directly or the image depending on the configuration
+    		}
+
+    		// With this function we restart the process. Note that we cannot change the tag called, otherwise it generates 
+    		// a cross domain call error. The best is to define a campaign specifically for the player. However we can change the URL of the video.
+    		function whenAdEndsWeRestart(){
+                return;
+    			console.log("Jx video end");
+    			var p={
+    				    container: "playerContainer",
+            			domain: "jixie.io",
+    			};
+    			myplayer.start(p);
+    		}
+
+    		// note that the function myplayer.pause(); is also available
+
+    	</script>
+       	<script type="text/javascript" src="https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk-standalone.min.js"></script>
+        <!-- <script type="text/javascript" src="https://jx-creatives.s3-ap-southeast-1.amazonaws.com/universal-ad-unit/js/jxvideo.1.3.min.js"></script> -->
+
+
+	</body>
+</html>

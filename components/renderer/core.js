@@ -1,48 +1,58 @@
+DO_NOT_REMOVE_GULPBUILD_REPLACE_FLOAT_COND_COMPILE
+
 /*
-With this refactoring then all those stuff to do with
-ID and to do with pageinfo etc and adtag url construction
-could be moved outside
-Coz hbrenderer dun want all these code for nothing
+    video and banner+video types
+    -put our video js-script in IFRAME
+    -wait for jxloaded message
+    -postMessage(adparameters)
+    -wait for jxhasad etc message
+    -postMessage(jxvisible etc) - creatives fires the trackers, not us
 
-Still need quite a bit of surgery with some new ideas of organizing but just
-deploy it first coz need to go live.
+    DPA
+    -inject the template HTML in IFRAME
+    -wait for jxloaded message
+    -postMessage(adparameters)
+    -wait for jxhasad etc message
+    -postMessage(jxvisible etc) - creatives fires the trackers, not us
 
- * GENERAL SERVICE:
-LITTLE TODO:
-getting client IDs - for non OSM and no HB use
-that stupid multi-line script body should be minified 
-the below ugly addScriptChecking
-pagekeywords whatever, creativeid, debug=1 etc <-- the domain whatever is not too clear which to take
-            //if (o.p.hbparams64 && o.p.hburlpath) {
-              //  o.surl = o.p.hburlpath; 
-            //}
+    simple display image
+    -we just stick in the image into the DOM (DIV), but we hook onload, onerror and talk to self using events on the div
+    -wait for jxhasad etc event
+    -call our own handler upon jxvisible (we fire trackers)
+    
+    display script fragment (can be injected into DIV or IFRAME)
+    -we just stick the fragment into the DOM
+    -we fake jxhasad
+    -call our own handler upon jxvisible (we fire trackers)
 
-GAME PLAN:
-==========
-the delta 64 flag for portal team need to put back - test that it works
--put back the SIMID stuff also
--LITE AND CLASSIC DPA
--DISPLAY IMAGES
--DISPLAY SCRIPTS OF VARIOUS TYPES (iframe...)
--VIDEO <-- great coz what we have is totally compatiable with what KG expects to use with their 
-  headerboard ads (jxvideo.1.3.min.js)
-After that step by step bring all those 
--DM, YT stuff to work with this new universal:
--IVS player scripts etc
-one day at a time!
- */
-//ugly... Move elsewhere. Dun belong in here.
+    player script (can be injected into DIV or IFRAME)
+    -stick the script into the DOM 
+    -these older generation of stuff they are all talk using arguments or query params
+        (for trusted, they use query param to the script url, for IFRAME
+            they seem to use the jxuni_p injected into the iframe)
+    -wait for jxhasad etc event or message
+    -we postMessage (& dispatchEvents too) for jxvisibile etc.
+
+    */
+
+window.jxrenderercore = 1;
+
 const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 
 function addGAMNoAdNotifyMaybe(str) {
+    //also need to give it some time to act ah.
+    //means we fire the has ad after a while.
+    //Note instead of jxnoad, we do adended which will trigger a teardown
+    //for this type we always assume hasad to start with (normCrParams.assumeAsAd), 
+    //so it will be weird to fire jxnoad
     if (str.includes("<script") && str.includes("googletag.pubads()")) {
         var script = new DOMParser().parseFromString(str, "text/html");
         var t = `googletag.pubads().addEventListener('slotRenderEnded', function(event) {
                 if (event.isEmpty) {
                     var id = event.slot.getSlotElementId();
-                    parent.postMessage('jxnoad', '*');
+                    parent.postMessage('jxadended', '*');
                 }
             });
             `;
@@ -52,17 +62,165 @@ function addGAMNoAdNotifyMaybe(str) {
     return str;
 }
 
+var MakeOneFloatingUnit = function() { return null; };
+
+if (JX_FLOAT_COND_COMPILE) {
+MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univmgr) {
+    const JXFloatingClsName = 'jxfloating';
+    const JXCloseBtnClsName = 'jxfloating-close-button';
+    const JXFloatingStyleID = 'JXFloatingStyle';
+    var _univmgr = null;
+    var _floatParams = null;
+    var _closeBtn = null;
+    
+    var _container = null;
+    var _parentContainer = null;
+    var _placeholderDiv = null;
+
+    var _initialHeight = 0;
+    
+    var _floating = false;
+    var _pm2CreativeFcn = null;
+    
+    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn, univmgr) {
+        _univmgr = univmgr;
+        var _innerDiv = divObjs.innerDiv;
+        var _outterDiv = divObjs.outerDiv;
+
+        _parentContainer = container;
+        _floatParams = JSON.parse(JSON.stringify(params));
+        _floatParams.isFloat = true;
+        _container = _outterDiv;
+        _pm2CreativeFcn = pm2CreativeFcn;
+
+        _initialHeight = Math.max(_innerDiv.offsetHeight, _innerDiv.offsetHeight);
+
+        _prepareFloatingUnits();
+    }
+
+    var _prepareFloatingUnits = function() {
+        var stylesArr = [
+            "."+JXCloseBtnClsName+"{position: absolute;box-sizing: border-box;display: block;left: -12px;bottom: auto;top: 15px;right: auto;cursor:pointer;z-index: 99;}",
+            "."+JXCloseBtnClsName+":before,."+JXCloseBtnClsName+":after{width: 20px;height: 5px;transform: rotate(-45deg);content: '';position: absolute;display: block;background-color: #000;transition: all 0.2s ease-out;top: 50%;left: 50%;}",
+            "."+JXCloseBtnClsName+":after{transform: rotate(45deg);}",
+            "."+JXCloseBtnClsName+":hover:after{transform: rotate(-45deg);}",
+            "."+JXCloseBtnClsName+":hover:before{transform: rotate(45deg);}",
+            "."+JXCloseBtnClsName+".left{position: absolute;box-sizing: border-box;display: block;right: 2px;bottom: auto;top: 18px;left: auto;cursor:pointer;z-index: 99;}",
+            "."+JXFloatingClsName+"{position:fixed;height:auto;opacity:1;z-index:9999}",
+        ].join("\n");
+        common.acss(stylesArr, JXFloatingStyleID);
+
+        _closeBtn = document.createElement('a');
+        _closeBtn.className = JXCloseBtnClsName;
+
+        if (_floatParams.floatLocation == "bottom left" || _floatParams.floatLocation == "top left") _closeBtn.classList.add('left');
+        _closeBtn.onclick = function() {
+            _stopFloat();
+            _floatParams.isFloat = false;
+            _pm2CreativeFcn("jxnotvisible");
+        }
+
+        _container.appendChild(_closeBtn);
+        _hideCloseBtn();
+    }
+
+    var _setContainerStyle = function(elmStyle) {
+        if (["bottom right","bottom left","bottom"].includes(_floatParams.floatLocation)) elmStyle.top = "auto";
+        if (["top right","top left","top"].includes(_floatParams.floatLocation)) elmStyle.top = _floatParams.floatVMargin + "px";
+
+        if (["bottom right","top right"].includes(_floatParams.floatLocation)) elmStyle.left = "auto"; 
+        if (["bottom left","top left"].includes(_floatParams.floatLocation)) elmStyle.left = _floatParams.floatHMargin + "px"; 
+
+        if (["top","top right", "top left"].includes(_floatParams.floatLocation)) elmStyle.bottom = "auto"; 
+        if (["bottom right","bottom left","bottom"].includes(_floatParams.floatLocation)) elmStyle.bottom = _floatParams.floatVMargin + "px";
+
+        if (["bottom left", "top left"].includes(_floatParams.floatLocation)) elmStyle.right = "auto"; 
+        if (["bottom right","bottom","top right"].includes(_floatParams.floatLocation)) elmStyle.right = _floatParams.floatHMargin + "px";
+
+        if (["bottom","top"].includes(_floatParams.floatLocation)) {
+            elmStyle.right = "0px";
+            elmStyle.left = "0px";
+            elmStyle.margin = "auto";
+        } else elmStyle.margin  = "0px 10px 10px";
+    }
+
+    var _setPlaceholderDiv = function() {
+        if (!_placeholderDiv) {
+            _placeholderDiv = common.newDiv(_parentContainer, 'div');
+            _placeholderDiv.style.cssText = "display:block;width:100%;clear:both;height:" + _initialHeight + "px";
+        } else _placeholderDiv.style.display = "block";
+    }
+    var _hidePlaceholderDiv = function() {
+        if (_placeholderDiv) _placeholderDiv.style.display = "none";
+    }
+    var _startFloat = function(hasBeenViewed) {
+            _floating = true;
+            _container.classList.add(JXFloatingClsName);
+            var ctrStyle = _container.style;
+            ctrStyle.background = _floatParams.floatBackground;
+            ctrStyle.height = "auto";
+            ctrStyle.width = _floatParams.floatWidth + "px";
+        
+            _setContainerStyle(ctrStyle);
+            _showCloseBtn();
+            _univmgr.hide();
+            window.dispatchEvent(new Event('resize'));
+
+            _setPlaceholderDiv();
+            if (_floatParams.floatType == "always" && !hasBeenViewed) _pm2CreativeFcn("jxvisible");
+    }
+
+    var _stopFloat = function() {
+            if (_floating && _floatParams.isFloat) {
+                _container.classList.remove(JXFloatingClsName);
+                _container.style.cssText = "";
+                _container.style.height = _initialHeight + "px";
+                _hidePlaceholderDiv();
+                if (_closeBtn) _hideCloseBtn();
+                _univmgr.show();
+                window.dispatchEvent(new Event('resize'));
+            }
+    }
+    var _hideCloseBtn = function() {
+        if (_closeBtn) _closeBtn.style.display = "none";
+    }
+
+    var _showCloseBtn = function() {
+        if (_closeBtn) _closeBtn.style.display = "block";
+    }
+
+    var _shouldFloat = function(hasBeenViewed, isVisible) {
+        if (_floatParams.isFloat && ((_floatParams.floatType == "always" && !isVisible) || (_floatParams.floatType == "view" && hasBeenViewed && !isVisible)))
+            return true;
+        else 
+            return false;
+    }
+
+    var _cleanUpElement = function() {
+        if (_placeholderDiv && _placeholderDiv.parentNode) _placeholderDiv.parentNode.removeChild(_placeholderDiv);
+        _placeholderObs = null;
+        _floating = false;
+    }
+    FactoryOneFloating.prototype.startFloat = function(hasBeenViewed) {
+        _startFloat(hasBeenViewed);
+    }
+    FactoryOneFloating.prototype.shouldFloat = function(hasBeenViewed, isVisible) {
+        return _shouldFloat(hasBeenViewed, isVisible);
+    }
+    FactoryOneFloating.prototype.stopFloat = function() {
+        _stopFloat();
+    }
+    FactoryOneFloating.prototype.cleanup = function() {
+        _cleanUpElement();
+    }
+    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn, univmgr);
+    return floatUnit;   
+}
+}
 
 //////(function() {
-    var _resolvePartnerAd = null;
 
     const destContainerPrefix_ = 'jxifr_';
-    if (!window.jxfeslite)
-        window.jxfeslite = {};
-    const exposedWinPropName_ = 'jxuniversallite';
-    //if (window[exposedWinPropName_]) {
-      //  return;
-    //}
     // Globals
     //Initialize and then set them properly.
     var gIsUFif = false;
@@ -84,10 +242,10 @@ function addGAMNoAdNotifyMaybe(str) {
    
     const jxScriptUrls_ = {
         video: {
-            //default visibility threshold
-            signature: 'jx_video_ad',
+            //signature: 'jx_video_ad',
+            signature: "jxvideoadsdk",
             url: 'https://scripts.jixie.io/jxvideocr.1.0.min.js'
-            /////url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
+            //url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
         }
     };
     const visThreshold_ = 0.4;
@@ -100,6 +258,7 @@ function addGAMNoAdNotifyMaybe(str) {
      */
     const fcnVectorsByContext_ = {
     'amp' :  {
+        getType: function() {return 'amp';},
         handleNoAd: function() {
             //This stuff what you do also depends on context ..e.g. So AMP you need to call context API
             // to tell runtime to collapsee your slot
@@ -112,79 +271,64 @@ function addGAMNoAdNotifyMaybe(str) {
                 height: fixedHeight > 0 ? fixedHeight : height
             });
         },
-        setupVisChangeNotifiers: function(boundCB, obsContainer = null) {
-            let retObserver = window.context.observeIntersection(boundCB);
+        setupVisChangeNotifiers: function(allhooks, obsCtr, boundCB) {
+            //dun care the container
+            let unlisten = window.context.observeIntersection(boundCB);
+            allhooks.push({ e: 'intersection', f: unlisten});
             window.addEventListener('amp:visibilitychange', boundCB);
-            return retObserver;
+            allhooks.push({ t: window, e: 'amp:visibilitychange', f:boundCB});
         },
-        setupBlurHandler: function() {
-            common.addListener(window, 'blur', boundCB);
+        addListener: function(allhooks, target, event, boundCB) {
+            if (event == 'jxhasad' || event == 'jxnoad' || event == 'message' || event == 'blur') {
+                common.addListener(target, event, boundCB);    
+                allhooks.push({ t: target, e: event, f:boundCB});
+            }
+            //ignore resize and scroll
         },
-        setupResizeHandler: function() {
-
-        },
-        setupScrollEventHandler: function() {
-            //for AMP: do nothing.
-        },
-        unlisten(type, boundCB) {
-            //TODO : for AMP also
-            if (!boundCB) return;
-            switch (type) {
-                case 'scroll': //no listen
-                case 'resize':
-                case 'blur':
-                    break;
-                case 'message':
-                    common.removeListener(window, 'message', boundCB);
-                    break;                    
-                case 'visibilitychange':
-                    common.removeListener(window, 'amp:visibilitychange', boundCB);
-                    break;
-            }//switch
+        teardown(allhooks) {
+            allhooks.forEach(function(l) {
+                if (l.e == 'intersection') {
+                    l.f(); //an unlisten function
+                }
+                if (['jxhasad','jxhasnoad', 'message','blur','amp:visibilitychange'].indexOf(l.e) > -1) {
+                    common.removeListener(l.t, l.e, l.f);
+                }
+            })
         }
     },//end of amp group
     //non AMP:
     'default': {
-        setupVisChangeNotifiers: function(boundCB, obsContainer) {
-            let retObserver = null;
-            retObserver = new IntersectionObserver(boundCB, {
+        getType: function() {return 'default';},
+        setupVisChangeNotifiers: function(allhooks, obsCtr, boundCB) {
+            let ob = new IntersectionObserver(boundCB, {
                 threshold: visThreshold_
             });
-            retObserver.observe(obsContainer); 
+            ob.observe(obsCtr); 
+            allhooks.push({ t: obsCtr, e: 'intersection', f: ob});
             common.addListener(document, "visibilitychange", boundCB);
-            return retObserver;
+            allhooks.push({ t: document, e: 'visibilitychange', f: boundCB});
         },
-        setupResizeHandler: function(boundCB, isResponsive) {
-            //if (isResponsive) {
-                common.addListener(window, 'resize', boundCB);
-                boundCB();
-            //}
+        addListener: function(allhooks, target, event, boundCB) {
+            if (['jxfloat', 'jxdocked','jxhasad','jxnoad','message','blur','scroll','resize'].indexOf(event) > -1) {
+                if (event == 'scroll') {
+                    target = top;
+                }
+                common.addListener(target, event, boundCB);    
+                allhooks.push({ t: target, e: event, f:boundCB});
+                if (event == 'scroll' || event == 'resize') {
+                    boundCB();
+                }
+            }
         },
-        setupScrollEventHandler: function(boundCB) {
-            //Listen on the top window.
-            common.addListener(top, 'scroll', boundCB);
-            boundCB();
-        },
-        setupBlurHandler: function(boundCB) {
-            common.addListener(window, 'blur', boundCB);
-        },
-        unlisten(type, boundCB) {
-            if (!boundCB) return;
-            switch (type) {
-                case 'scroll':
-                    common.removeListener(top, type, boundCB);
-                    break;
-                case 'resize':
-                case 'message':
-                case 'blur':
-                case 'visibilitychange':
-                    common.removeListener(window, type, boundCB);
-                    break;
-            }//switch
-        },
-        unobserve(observer, container) {
-            if (!observer) return;
-            observer.unobserve(container);
+        teardown(allhooks) {
+            allhooks.forEach(function(l) {
+                if (l.e == 'intersection') {
+                    l.f.unobserve(l.t); //an unlisten function
+                }
+                if (['jxhasad','jxhasnoad', 'message','blur','scroll','resize','visibilitychange'].indexOf(l.e) > -1) {
+                    common.removeListener(l.t, l.e, l.f);
+                }
+            })
         },
         handleNoAd: function() {
         },
@@ -205,6 +349,13 @@ function addGAMNoAdNotifyMaybe(str) {
          * @param {*} param 
          */
     function __combiVisibilityChange(param, secondParam) {
+        if (!this.hasOwnProperty('lastVisVal')) {
+            //not initialized yet
+            this.lastVisVal = -1;
+            this.lastPgVis = -1;
+            this.lastFired = -1;
+            this.firstViewed = false;
+        }
         let lastVisVal = this.lastVisVal; //-1 , 1, 0
         let lastPgVis = this.lastPgVis; //-1, 1, 0
         let lastFired = this.lastFired; //-1, 1, 0
@@ -276,12 +427,21 @@ function addGAMNoAdNotifyMaybe(str) {
 
         }
         if (fire != -1) {
+            if (!this.firstViewed) {
+                if (fire == 1) this.firstViewed = true;
+            }
             this.notifyFcn(fire == 1 ? true: false);
             this.lastFired = fire;
         }
     }
 
     function fireTracker(trackers, action, extra) {
+        if (trackers.actions) {
+            if (!trackers.actions.hasOwnProperty(action)) {
+                //console.log("#####WE ARE NOT MEANT TO EVER FIRE THIS!!!!!");
+                return;
+            }
+        }
         let url = trackers.baseurl + '?' + trackers.parameters + '&action='+action;
         fetch(url, {
             method: 'get',
@@ -297,6 +457,10 @@ function addGAMNoAdNotifyMaybe(str) {
      */
     function __pm2Self(msgtype) {
         let trackers = this.c.trackers;
+        let time2imp = 2000;
+        if (this.c.time2imp) {
+            time2imp = this.c.time2imp;
+        }
         switch (msgtype) {
             case "jxvisible":
                 this.visible = 1;
@@ -308,10 +472,17 @@ function addGAMNoAdNotifyMaybe(str) {
                     let theObj = this;
                     setTimeout(function(){
                         if (theObj.visible == 1) {
-                            theObj.c.trackers.actions.impression = 0;
-                            fireTracker(theObj.c.trackers, 'impression');
+                            if (theObj.c.trackers) {
+                                //if the object is torn down, then c.trackers
+                                //will not be there.
+                                theObj.c.trackers.actions.impression = 0;
+                                fireTracker(theObj.c.trackers, 'impression');
+                            }
+                            else {
+                                console.log(`trackers properly is gone. Torn down already `);
+                            }
                         }
-                    }, 2000);
+                    }, time2imp);
                 }
                 break;
             case "jxnotvisible":
@@ -325,78 +496,90 @@ function addGAMNoAdNotifyMaybe(str) {
     }
 
     function __handleBlur(e) {
-        if (document.activeElement == this.divObjs.jxCoreElt) {
+        let node = document.activeElement;
+        let loop = 0;
+        try {
+            while (node && loop < 10) {
+                if (node == this.divObjs.jxCoreElt) {
+                    break;
+                }
+                else {
+                    node = node.parentNode;
+                    loop++;
+                }
+            }
+        }
+        catch(e) {}
+        if (node && node == this.divObjs.jxCoreElt) {
             fireTracker(this.trackers, 'click'); 
         }
     }
 
-    //iframe, totally controlled by us. 
-    function __handleCreativeMsgs(e) {
+    function __handleCrEvtsMsgs(e) {
         if (this.divObjs.jxCoreElt && this.divObjs.jxCoreElt.contentWindow) {
             //creative is in iframe iframe situation:
-            //not meant for us, the parent then.
+            //Then we can easily check if the source of the message is that
+            //iframe
             if (!(this.divObjs.jxCoreElt.contentWindow === e.source)) {
                 return;
             }
         }
-        
         let type = null;                    
         let json = null;
-        if (!e.data || typeof e.data === 'string' && e.data.indexOf('jx') != 0 ) {
-            return;
+        if (e && e.type && e.type.startsWith('jx')) {
+            type = e.type;
         }
-        console.log(`LITE received ${e.data}________________`);
-        if (e.data && typeof e.data === 'string' && e.data.indexOf('jxmsg::') == 0) {
-            try {
-                json = JSON.parse(e.data.substr('jxmsg::'.length));
+        if (!type) {
+            if (!e.data || typeof e.data === 'string' && e.data.indexOf('jx') != 0 ) {
+                return;
             }
-            catch(err) {}
+            if (e.data && typeof e.data === 'string' && e.data.indexOf('jxmsg::') == 0) {
+                try {
+                    json = JSON.parse(e.data.substr('jxmsg::'.length));
+                }
+                catch(err) {}
+            }
         }
-        //if (!json) return; //unrelated to us, we dun bother.
-        if (!json) {
+        if (!type && !json) {
             if (e.data == 'jxadended' || e.data == 'jxhasad' || e.data == 'jxnoad' || e.data == 'jxloaded')
                 type = e.data;
         }
         if (!type && !json) return; //unrelated to us, we dun bother.
-
-        //this thing will fly everywhere loh...
-        //because of this type of trusted and unreformed things.
-        //Things like cid=262 are precisely the problem.
-        //they cannot be present with other creatives fullstop.
-        //we can only limit the damage then.
-        /*
-        if (!(e.source === window)) {
-            if (this.divObjs.jxCoreElt.contentWindow && e.source ) {
-            }
-            else {
-            }
-        }
-        else {
-        }
-        */
+        //Frankly we still have an issue with trusted creatives
+        //But hopefully with trusted type the creative will communicate 
+        //more using events then it won't have the mismatch...
         if (json) {
             type = json.type;
         }
+
+        if (this.c.trusted && this.c.crSig) {
+            //if the creative has a signature (new trusted script type) 
+            //and it is trusted
+            //then we need to also do a token match check too (token
+            //is derived from the id of the div)
+            //Else if different univeral units on the page has a few 
+            //have this kind of trusted scripts, the msgs may end up
+            //to wrong renderer listener
+            //
+            //Currently we do not yet have such creatives
+            if (!json || json.token != this.c.token) {
+                return; //not meant for us.
+            }
+        }
+        
+
         if (type) {
             switch (type) {
-                case "jxloaded":
-                    
-                    //if (!json || json.token == this.token) 
-                    {
-                        if (this.handlers.jxloaded) {
-                            this.handlers.jxloaded();
-                        }
-                    }
-                    break;
+                case "jxloaded": //only used for untrusted
+                    //for trusted, the old creatives dun need this sign to talk to the creative
+                    //for trusted, the future creative will follow template/trustedscript.js
+                    //and will not need this.
                 case "jxhasad":     
-                    if (this.handlers.jxhasad) {
-                        this.handlers.jxhasad();
-                    }
-                    break;
-                case "jxnoad":     
+                case "jxnoad":
                 case "jxadended":
-                    if (this.handlers.jxnoad)
-                       this.handlers.jxnoad();
+                    if (this.handlers[type]) {
+                        this.handlers[type]();
+                    }
                     break;
                 case "jxchangeheight":
                 case "size":
@@ -410,124 +593,172 @@ function addGAMNoAdNotifyMaybe(str) {
                         this.handlers.jxchangeheight(json.params.height, this.handlers.resize);
                     }
                     //we need to trigger an on window resize actually.
-                    break;                    
-            }
-        }
+                    break;     
+            }//case
+        }//if type
 
     }
 
-    /*
-     to be bound coreElt is assumed.
-     postMessage to the creative. So that the calling code does not have to think about iframe 
-     dadad bla blabla 
+    /**
+     * This is the case the creative loads the jx events sdk.
+     * the firing of creativeView is our responsibility. That's the __pm2Self part
+     * Once we here knows the sdk side is ready this function will be
+     * 
+     * called with openShop. It will clear the back log of stuff to talk to that entity
+     * 
+     * thereafter (when already openshop state), then it is to be handled just like
+     * __pm2CrWithMsgsEvts then.
+     * @param {*} msgtype 
+     * @param {*} dataMaybe 
+     * @returns 
      */
-    function __pm2Creative(msgtype, dataMaybe = null) {
-        
-        //aiyo I want to fix it lah!
-        //jxvisible, jxnotvisible, cannot be in this form lah.
-        let creativeNode = this.divObjs.jxCoreElt;
-        let msgStr;
+    function __pm2JxEvtsSDKWithMsgs(msgtype, dataMaybe = null) {
         if (msgtype == 'jxvisible' || msgtype == 'jxnotvisible') {
-            msgStr = msgtype;
-        }
-        else {
-            //if (this.c.crSig) 
-            {
-                let obj = {
-                    type: msgtype,
-                    token: this.c.token,
-                    sig: this.c.crSig ? this.c.crSig: '',
-                    data: dataMaybe ? dataMaybe: {}
-                }
-                msgStr = "jxmsg::" + JSON.stringify(obj);
+            this.visState = msgtype;
+            if (msgtype == 'jxvisible') {
+                __pm2Self.call(this, 'jxvisible');
             }
         }
-        if (creativeNode && creativeNode.contentWindow) {
-            creativeNode.contentWindow.postMessage(msgStr, '*');
+        if (this.openshop) {
+            //operate like normal
+            return __pm2CrWithMsgsEvts.call(this, msgtype, dataMaybe);
         }
-        else {
-            window.postMessage(msgStr, '*');
-        }
-    }
-
-    function __direct2Creative(msgtype, dataMaybe = null) {
-        if (!this.c.crSig) {
-            //for the classical stuff (not converted to the new type), we use this:
-            //as they are expecting events:
-            if (msgtype.indexOf('visible') > -1) {
-                this.divObjs.jxCoreElt.dispatchEvent(new Event(msgtype));
+        if (msgtype == 'openshop') {
+            __pm2CrWithMsgsEvts.call(this, 'adparameters', this.c.adparameters);
+            if (this.visState == 'jxvisible' || this.visState == 'jxnotvisible') {
+                __pm2CrWithMsgsEvts.call(this, this.visState);
             }
+            this.openshop = 1;
             return;
         }
-        //dun worry nobody use this now ah
-        //except your video.
-        let sig = this.c.crSig;
-        let token = this.c.token;
-        //console.log(`MESS ${msgtype} ${sig} ${token}`);
-        //console.log(dataMaybe);
+        //else we do nothing then.
+    }
 
-        window[sig] = window[sig] || {}; 
-        window[sig].queue = window[sig].queue || [];
-        if (msgtype == 'adparameters' && dataMaybe) {
-            let p = JSON.parse(JSON.stringify(dataMaybe));
-            window[sig].queue.push(function(){
-                window[sig].run(token, p);
-            });//queue push
+    /**
+     * This function is quite comprehensive in the sense that it handles both simple and complex
+     * communications (simple: e.g. jxvisible; complex: e.g. adparameters)
+     * and the creative can be in iframe or in div (trusted)
+     * For the latter we have the older legacy creatives and the newer cratives (with a much improved
+     * protocol of communication with this renderer)
+     * @param {*} msgtype 
+     * @param {*} dataMaybe 
+     * @returns 
+     */
+    function __pm2CrWithMsgsEvts(msgtype, dataMaybe = null) {
+        let postMsgStr = null;
+        let eventStr = null;
+        //from this we know if trusted or not: this.c.div
+        if (!dataMaybe) {
+            //simple type of stuff e.g. jxvisible and jxnotvisible. there is no "data"
+            if (this.c.iframe) { //iframe type. just post the message, no other options
+                postMsgStr = msgtype;
+            }
+            else {
+                let crSig = this.c.crSig;
+                //console.log(`CCC#### Simple type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
+                //not in iframe (trusted) so need more care:
+                if (crSig) {
+                    crSig += 'q';
+                    //new type of creatives (using our creatives Template to develop) and running in trusted mode:
+                    //we need that token else there will be problem if there are several instances
+                    //of the thing flying in the same "window"
+                    window[crSig] = window[crSig] || [];
+                    window[crSig].push(['message', 
+                        "jxmsg::" + JSON.stringify({ type: msgtype, token: this.c.token})
+                    ]);
+                    return; //nothing else to send
+                }
+                else { //older creatives - not sure if they listening to msgs or events. so do both
+                    postMsgStr = msgtype;
+                    eventStr = msgtype;
+                }
+            }
         }
         else {
-            window[sig].queue.push(function(){
-                window[sig].notify(token, msgtype);
-            });//queue push
+            //complex type . So far only have 1 which is adparameters
+            if (this.c.iframe) { //most clear what to do
+                postMsgStr = "jxmsg::" + JSON.stringify({type: msgtype, data: dataMaybe});
+            }
+            else { //div type but there is the new stuff and the old stuff.
+                let crSig = this.c.crSig;
+                //console.log(`CCC#### Complex type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
+                if (crSig) { //new way. then we only call a queue push 
+                    crSig += 'q';
+                    window[crSig] = window[crSig] || [];
+                    window[crSig].push(['message', 
+                        "jxmsg::" + JSON.stringify({ type: msgtype, token: this.c.token, data: dataMaybe})]);
+                    return; //nothing else to send.                        
+                }
+                else {
+                    //there will not be any such creatives.
+                    //those "old ways" they all have other ways to pass the adparameters which is
+                    //e.g. inject a fragment of code which has the jx_uni var p that kind of stuff
+                }
+            }
         }
+
+        //Ok all figured out, so time to emit the stuff:
+        let crNode = this.divObjs.jxCoreElt;
+        if (postMsgStr) {
+            if (crNode && crNode.contentWindow) {
+                crNode.contentWindow.postMessage(postMsgStr, '*');
+            }
+            else {
+                window.postMessage(postMsgStr, '*');
+            }
+        }
+        if (eventStr) {
+            crNode.dispatchEvent(new Event(eventStr));
+        }
+        return;
     }
   
-
     /**
      * Super generic stuff to use fetch API to return a promise (the json object)
      * @param {*} adTagUrl 
      * @returns 
      */
     function fetchAdP(adTagUrl) {
-        //wrap around the normal network apis.
-        //returns a promise.
-        //resolve with the json or reject
-        //no ad then just reject promise
-        return fetch(adTagUrl).then((response) => response.json());
+        return fetch(adTagUrl, {
+            method: 'GET',
+            credentials: 'include'
+        }).then((response) => response.json());
     }
 
     /**
-     *  isFrame
-     *  isPlainScript (the meat of it, not a url of a JS file)
-     *  isScript
-     */
-    /**
      * it will take general object normCrParams (normalized creative parameters)
      * produced by getNormalizedCreativeParams
-     * 
      * and then stick the stuff into the core element (core destination element)
-     * @param {*} jxCoreElt 
+     * @param {*} divObjs
      * @param {*} normCrParams 
      */
-     function insertCreative(jxCoreElt, normCrParams) {
-         
+    function insertCreative(divObjs, normCrParams) {
+        let jxCoreElt = divObjs.jxCoreElt;
         if (normCrParams.iframe) {
             let blob = normCrParams.iframe;
             if (blob.url) {
-                //e.g. DPA: self managed firing of events
+                //console.log(`Type iframe | url`);
+                //e.g. DPA will come here
                 jxCoreElt.src = normCrParams.iframe.url;
             }
             else if (blob.scripturl && !blob.jxuni_p) {
+                console.log(`Type iframe | script | no jxuni_p`);
+                //OUR VIDEO ADS belong here. Not using the old jxuni_p to pass params
+                //but using postMessages later.
+                //So simpler injection
+                //Moving forward, this should be the way for any new jixie crative type
+                //whether trusted or not
                 let html = `<body style="margin: 0;"><script type="text/javascript" src="${blob.scripturl}"></script></body>`;
                 jxCoreElt.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
             }
             else if (blob.scripturl && blob.jxuni_p) {
-                //Who need this kind of things?
-                //many old players. video sdk
-                //compatiability stuff:
+                //console.log(`Type iframe | script | using jxuni_p`);
+                //Our older stuff like the player scripts come here:
+                //those that are not "trusted"
+                //They depend on the whole blob of parameters injected into the DOM
+                //as code: var p = blablabla
+                //to work: that's why the big blob of code here:
                 let jxuni_p = {c: normCrParams.iframe.jxuni_p};
-                jxuni_p.creativeid = 23;
-                jxuni_p.unit = 'xyz';
-
                 //This is script by URL
                 // The creative is a script, then we create a div element in the friendly iFrame to add and execute it
                 var jxinter = window.setInterval(function() {
@@ -552,6 +783,11 @@ function addGAMNoAdNotifyMaybe(str) {
                 },500);
             }
             else if (blob.scriptbody) {
+                //console.log(`Type iframe | scriptBody`);
+                //the other untrusted scripts. 
+                //These are typically not jixie stuff. but things like DFP script
+                //Amazaon display ads script etc
+                //So no parameters to pass either
                 let html = '<!DOCTYPE html>'+
                     '<html>'+
                         '<head>'+
@@ -568,17 +804,35 @@ function addGAMNoAdNotifyMaybe(str) {
                 //this is characteristic of third party!!
             }
             jxCoreElt.name = jxCoreElt.id;
-
         }
         else if (normCrParams.div) {
             let blob = normCrParams.div;
             if (blob.image) {
+                //console.log(`Type div | simpleimage`);
+                //SIMPLE IMAGE MANAGED BY US
+                var img = new Image();
+                img.onload = function () {
+                   jxCoreElt.dispatchEvent(new Event('jxhasad'));
+                }
+                img.onerror= function() {
+                    jxCoreElt.dispatchEvent(new Event('jxnoad'));
+                }
+                img.src = blob.image.url;
+                //img.src = 'https://creatives.b-cdn.net/KG116cVoTd/377/1251/house1x.jpeg';
+                //actually to do it properly we should only do the creativeView and stuff
+                //based on onload-ed-ness of the image ah TODO
                 jxCoreElt.innerHTML = '<a style="border-bottom: none;" href="' + blob.image.clickurl + '" target="_blank"><img src="' + blob.image.url + '" class="jxImg"/></a>';
                 common.addListener(jxCoreElt, 'click', (e) => {
                     fireTracker(blob.image.trackers, 'click');
                 });
             }
             else if (blob.scripturl) {
+                //this can be a non-JX script
+                //Or some players that are trusted would come here too.
+                //console.log(`Type div | scripturl ${blob.scripturl}`);
+                //JX stuff like trusted player scripts will come here.
+                //These things work so far by tails of query params in the script url
+                //so that's how these things get the adparameters
                 //the likes of cid=70 (tribunnews ivs player, if force trusted = 1 )will not work here
                 //that code assumes there is a div with id exactly equal to jxOutstreamContainer 
                 //hardcoded ...
@@ -589,11 +843,13 @@ function addGAMNoAdNotifyMaybe(str) {
                 jxCoreElt.appendChild(jxjs);
             }
             else if (blob.scriptbody) {
-                //TODO
-                //this one needs fragment.
-                
+                //console.log(`Type div | scriptBody`);
+                let range = document.createRange();
+                range.setStart(jxCoreElt, 0);
+                jxCoreElt.appendChild(range.createContextualFragment(blob.scriptbody));
             }
         }
+        divObjs.jxbnFixedDiv.appendChild(jxCoreElt);
     }
 
     /******************************************************************************
@@ -716,9 +972,10 @@ function addGAMNoAdNotifyMaybe(str) {
         //if (normCrParams.maxwidth)
             jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
 
+        //is this causing the problem of UNIV
         if (normCrParams.maxheight) {
-            //jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
-            //jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
+        //    jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
+          //  jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
         
         jxbnDiv.style.height = normCrParams.height + 'px';
@@ -768,19 +1025,16 @@ function addGAMNoAdNotifyMaybe(str) {
         
         jxCoreElt.style.height = normCrParams.height + 'px';
 
-        
-
-        //jxCoreElt.style.zIndex = 99999;
-      
-        insertCreative(jxCoreElt, normCrParams);
-        jxbnFixedDiv.appendChild(jxCoreElt);
-
         //at this stage it is unclear to me if we really need to remember all these things:
         divObjs.jxmasterDiv = jxmasterDiv;
         divObjs.jxbnDiv = jxbnDiv;
         divObjs.jxbnFixedDiv = jxbnFixedDiv;
         divObjs.jxbnScaleDiv = jxbnScaleDiv;
         divObjs.jxCoreElt = jxCoreElt;
+
+        //insertCreative(jxCoreElt, normCrParams);
+        //jxbnFixedDiv.appendChild(jxCoreElt);
+
         return jxCoreElt;
     }
    
@@ -795,7 +1049,6 @@ function addGAMNoAdNotifyMaybe(str) {
      * scaling)
      */    
     function __handleResize() {
-        //console.log(new Error().stack);
         let c = this.c;
         let jxbnDiv = this.divObjs.jxbnDiv;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
@@ -809,8 +1062,15 @@ function addGAMNoAdNotifyMaybe(str) {
             250 is the real maxwidth --> 250x500
             400 is the real maxheight --> 200x400 --> this is the real possible.
         */
-        
-        let ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
+        let ratio;
+        if (JX_FLOAT_COND_COMPILE) {
+            ratio = jxbnDiv.offsetWidth/c.width;
+        } 
+        else 
+        {
+            //console.log(`##### xx ${jxbnDiv.offsetWidth/c.width}, yy ${jxbnDiv.offsetHeight / c.height}`);
+            ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
+        }
 
         let newH = ((c.height*ratio) + 5);
         //console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
@@ -835,6 +1095,7 @@ function addGAMNoAdNotifyMaybe(str) {
             case 'player':
             case 'display': // we resize applying a transformation ratio
             case 'video':
+            case 'iframe':                
                 jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
                 jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
                 if (!c.fixedHeight) {
@@ -862,15 +1123,35 @@ function addGAMNoAdNotifyMaybe(str) {
       * In the AMP case, we call this explicitly (null, windowHeight: a number and
       * BCR, an object). We call this from the intersection observer in context of AMP.
       */
+    
+    //function __handleFloated() {
+      //  this.univmgr.hide();
+        //if (this.cb) this.cb();
+    //}
+    //function __handleDocked() {
+      //  this.univmgr.show();
+        //if (this.cb) this.cb();
+    //}
 
+// For Differential scroll (fixeHeight)
+// This logic of this differential you can find in docs/
+// differentialScroll_RendererCore.pptx
+//
 // What is this constant?     
 // for case the container is taller than the ad     
 // if the difference is < this threshold, then we dun bother
 // else such little movements is just ridiculous
+//
 const thresholdDiff_ = 120;     
      function __handleScrollEvent(event, windowHeight = null, BCR = null) {
         //console.log(`windowHeight=${windowHeight} BCR=${BCR}`);
         let c = this.c;
+        if (!c.hasOwnProperty('creativeH')) {
+            //first time only.
+            c.creativeH = c.height;
+            c.containerH = c.fixedHeight;
+        }
+
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
         let diff = c.containerH - c.creativeH; 
         //console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH: ${c.creativeH}`);
@@ -882,7 +1163,7 @@ const thresholdDiff_ = 120;
         // The whole job of this function, is to calculate offset:
         let offset = 0;
 
-        let delta = this.excludedH; 
+        let delta = this.c.excludedHeight; 
         let vertOffsetToOurFrame = 0;
 
         if (!BCR) {
@@ -952,29 +1233,6 @@ const thresholdDiff_ = 120;
      * called as bound function . See comment above "START OF : POSITION AND SIZE MANIPULATION FUNCTIONS."
      **/
     function __cleanup() {
-        let unhook = this.unhook;
-        if (unhook.observer) {
-            unhook.unobserve(unhook.observer, unhook.container);
-        }
-        if (unhook.listeners) {
-            //use a loop lah
-            if (unhook.listeners.message) {
-                unhook.unlisten('message', unhook.listeners.message);
-            }
-            if (unhook.listeners.scroll) {
-                unhook.unlisten('scroll', unhook.listeners.scroll);
-            }
-            if (unhook.listeners.resize) {
-                unhook.unlisten('resize', unhook.listeners.resize);
-            }
-            if (unhook.listeners.visibilitychange) {
-                unhook.unlisten('visibilitychange', unhook.listeners.visibilitychange);
-            }
-            if (unhook.listeners.blur) {
-                unhook.unlisten('blur', unhook.listeners.blur);
-            }
-        }
-        
         let tmp = this.divObjs.outerDiv;
         if (tmp && tmp.parentNode) {
             tmp.parentNode.removeChild(tmp);    
@@ -989,6 +1247,8 @@ const thresholdDiff_ = 120;
      const bigHeight_ = 999;
 
      function noDiffScroll(cr) {
+         if (cr.universal && cr.universal.hasOwnProperty('diffscroll') &&
+         !cr.universal.diffscroll) return true;
         return cr.type == 'video' || cr.subtype == 'video+banner';
     }
 
@@ -1021,8 +1281,6 @@ const thresholdDiff_ = 120;
             else scaling = 'none';
          }
          cr.scaling = scaling;
-         /////if (cr.id == 724)
-            //////cr.scaling = 'none'; 
          
         // (2) Get ready the Creative size (resize) info (some of these 
         // can be done before caching )
@@ -1031,10 +1289,13 @@ const thresholdDiff_ = 120;
         // (2a) width, height columns
         let w = cr.width ? cr.width: 0;
         let h = cr.height ? cr.height: 0;
+        
+        let crDetails = (cr.assets ? cr.assets: cr); //this logic, run from adserver will have cr.assets
+                                                     //if from renderer, then will be cr
         // (2b) assets
-        if ((!w || !h) && cr.assets) { //server-side
-            w = cr.assets.width ? cr.assets.width: 0;
-            h = cr.assets.height ? cr.assets.height: 0;
+        if ((!w || !h)) { //server-side
+            w = crDetails.width ? crDetails.width: 0;
+            h = crDetails.height ? crDetails.height: 0;
         }
         // (2c) subtype
         //still can get from the subtype
@@ -1048,16 +1309,23 @@ const thresholdDiff_ = 120;
         }
         // (2d) some are in adparameters ?
         if (!w || !h) {
-            let p = cr.assets && cr.assets.adparameters ? cr.assets.adparameters: cr.adparameters;
+            let p = crDetails.adparameters;
             if (p) {
                 w = p.width ? p.width: 0;
                 h = p.height ? p.height: 0;
+                if (!w || !h) {
+                    if (p.video) {
+                        w = p.video.width ? p.video.width: 0;
+                        h = p.video.height ? p.video.height: 0;
+                    }
+                }
             }
         }
         // ok exhausted all 
         if (!w || !h) {
             //cannot serve this corrupted creative
-            return null;
+            w = 640;
+            h = 360;
         }
         let crAR = w/h;
         if (cr.scaling == 'creative' && onlyARMatterTypes_.indexOf(cr.type)> -1) {
@@ -1075,7 +1343,7 @@ const thresholdDiff_ = 120;
         if (scaling != 'none') {
             // if it is not responsive, then crMaxW and crMinW = width of creative
             // ditto for height, nothing much to further calculate then:
-            let u = cr.assets && cr.assets.universal ? cr.assets.universal : cr.universal;
+            let u = crDetails.universal; 
             //make the max W and H specified in the creative be consistent
             //with aspect ratio
             let maxW = u && u.maxwidth ? u.maxwidth: 0;
@@ -1236,8 +1504,24 @@ const thresholdDiff_ = 120;
     }
 
     function sanitizeTitle(t){
+        if (!t) return "";
         return  t.normalize('NFD').replace(/[^a-zA-Z0-9\s]/g, '').replace(/[\u0300-\u036f]/g, '').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"]/g,'');
     }
+
+    /**
+     * For the case of OSM the response event is to be fired by us here
+     * Not by adserver, not by the OSM engine (coz the whole thing is in a base64 blob)
+     * which a bit troublesome for osm engine to handle ... A bit hacky lah ... aaah
+     * @param {*} c 
+     */
+
+    function fireOSMResponseMaybe(c) {
+        let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
+        if (trackers && trackers.parameters && trackers.parameters.indexOf('source=osm')>-1) {
+            fireTracker(trackers, 'response');
+        }
+    }
+
     /**
      * From every kind of creative supported we just extract a few common values
      * sufficiently to interact with the core element where we are supposed to
@@ -1263,13 +1547,15 @@ const thresholdDiff_ = 120;
         
         //this is the case whereby the creative itself will not manage the tracker firing
         //so WE HERE need to do it.
-        let doBasicTrackers = c.type != 'video' && c.thirdpartytag;
+        //let doBasicTrackers = false; //later may become true, depends on the type of creative.
+        let sendTrackerActions = null; 
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
         let clicktrackerurl = null;
         if (trackers) {
-            trackers = JSON.parse(JSON.stringify(trackers));
+            //need for universal mgr init:
             clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
         }
+
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
         doSizeMgmt(jxParams, c);
@@ -1287,12 +1573,20 @@ const thresholdDiff_ = 120;
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
             doDiffScroll:       c.doDiffScroll
         };
-
-        if (c.adparameters)
-            out.adparameters = c.adparameters;
-        if (c.thirdpartytag) {
-            delete out.adparameters;
+        
+        if (JX_FLOAT_COND_COMPILE) {
+            if (jxParams.doFloat) {
+                out.floatParams = {
+                    floatType:          jxParams.floatType,
+                    floatLocation:      jxParams.floatLocation,
+                    floatWidth:         jxParams.floatWidth,
+                    floatVMargin:       jxParams.floatVMargin,
+                    floatHMargin:       jxParams.floatHMargin,
+                    floatBackground:    jxParams.floatBackground,
+                };
+            }
         }
+
         let trusted = (c.adparameters && c.adparameters.trusted ? true: false);
             //Their common characteristics: all to be in iframe.
             //then need a jxOutstream injected into the iframe as well.    
@@ -1302,7 +1596,24 @@ const thresholdDiff_ = 120;
                 pdailymotion: 'https://universal.jixie.io/js/jxplayerdm.1.4.1.js?', 
                 pivs: 'https://universal.jixie.io/js/jxplayerivs.1.2.js?'
             };
+        let assumeHasAd = false;
 
+        /**
+         * Get ready for a new type
+         * Next time to develop a jixie script AND if it MUST be run as trusted
+         * (Coz that opens a lot of problems actually; if stick it in 
+         * 
+         * You need to develop it using the template/trustedscript.js as a model
+         * 
+         * Over here, in the handling case for this type, subtype
+         * 
+         * You need to set 
+         * out.crSig = '<signature of your creative script>' <-- this is needed.
+         * out.trusted = true;
+         * if got adparameters to pass this this script then just
+         * out.adparameters ...
+         * The renderer will be able to pass it then.
+         */
         switch (c.type) {
             case 'player': {
                 let surl;
@@ -1314,9 +1625,12 @@ const thresholdDiff_ = 120;
                         // the naked scripts all work in iframe only:
                         surl = playerUrls_[c.subtype];
                         out['iframe'] = { scripturl: surl, jxuni_p: JSON.parse(JSON.stringify(c)) };
-                        delete out.adparameters;
                         break;
                     case 'pscript':
+                        //But this thing is so funny.
+                        //If it is DIV, then it get from adparameters.
+                        //If it is IFRAME then it get from the jxuni_p...so funny.
+                        //This is just a big mess
                         surl = (!c.script ? c.url: c.script);
                         surl += (surl.indexOf('?') != -1 ? '&': '?') + 'trackers=' + btoa(JSON.stringify(c.trackers));
                         if (c.adparameters) surl += '&adparameters=' + btoa(JSON.stringify(c.adparameters));
@@ -1342,17 +1656,35 @@ const thresholdDiff_ = 120;
                         out[trusted? 'div':'iframe'] = { scripturl: surl };
                         out.json = JSON.parse(JSON.stringify(c));
                         break;
-                    default:
+                    default: //igeneric
                         //e.g. the famous cid=29
                         //srcUrl = o.bUrl.iother;
-                        let url = 'https://universal.jixie.io/iframe.1.1.html?'; //broker
-                        url += 'creative=' + btoa(JSON.stringify(c)) + '&trackers=' + btoa(JSON.stringify(c.trackers));
+                        //if it is SDK type, then need to talk to it.
+                        //and this type need to fire creative View also
+                        //and also need to self fire a hasad.
+                        let url ;
+                        if (c.adparameters.jxeventssdk) {
+                            c.noclickevents = true;
+                            url = c.url; //https://universal.jixie.io/iframe.1.1.html?'; //broker
+                            sendTrackerActions = { creativeView: 1 };
+                            assumeHasAd = true; //<== !!!
+                            out.adparameters = c.adparameters;
+                        }
+                        else {
+                            url = 'https://universal.jixie.io/iframe.1.1.html?'; //broker
+                            url += 'creative=' + btoa(JSON.stringify(c)) + '&trackers=' + btoa(JSON.stringify(c.trackers));
+                        }
                         out['iframe'] = { url: url };
                         break;
                 }
                 break;    
             case 'video': 
-                trusted = false; //our video sdk will operate in friendly iframe
+                trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
+                if (c.adparameters.trusted) {
+                    trusted = true;
+                    out.crSig = jxScriptUrls_.video.signature
+                }
+                //console.log(`CCC##### sucked out the signature ${c.crSig}`);
                 out.adparameters = c; //<--- this is a special behaviour for video sdk stuff.
                 //the videoadsdk needs more than the adparameters but 1 level up (still need generate vast)
                 //this c blob contains a property adparameters                 
@@ -1362,16 +1694,20 @@ const thresholdDiff_ = 120;
                 }
                 //only those that are managed by us have this property
                 delete out.adparameters.trackers;
-                out['iframe'] = { 
+                
+                out[trusted ? 'div': 'iframe'] = { 
                     scripturl: jxScriptUrls_.video.url
                 };
+                //for this type we will use postMessage to post the adparameters.
                 break;
             case 'display':
                 switch (c.subtype) {
-                    case 'video+banner':
+                    //case 'video+banner':
                         //now from adserver it is already morphed into video vvpaid
-                        break;
+                        //break;
                     case 'script':
+                        //this can be all kinds of things that are not integrated with jixie.
+                        //so they don't know to fire jxhasad and what not.
                         let sbody = null;
                         try {
                             //example is the amazon display ad.
@@ -1380,24 +1716,35 @@ const thresholdDiff_ = 120;
                         catch (err) {
                             //need to handle properly.
                         } //TODO
+                        //GAM type is able to detect no ad.
                         let sbody1 = addGAMNoAdNotifyMaybe(sbody);
                         if (sbody1) {
                             sbody = sbody1;
                         }
-                        doBasicTrackers = true; //totally managed by us in fact.
+                        assumeHasAd = true; //<== !!!
                         out[trusted? 'div':'iframe'] = { scriptbody: sbody };
-                        delete out.adparameters;//nothing to tell to the creative
+                        if (c.adparameters && c.adparameters.jxeventssdk) {
+                            //THIS STUFF NOT YET TESTED....
+                            //We also announced this only supported for trusted case.
+                            c.noclickevents = true;
+                            sendTrackerActions = { creativeView: 1 };
+                            out.adparameters = c.adparameters;
+                        }
+                        else {
+                            sendTrackerActions = { creativeView: 1, impression: 1};
+                       }
                         break;
                     default: //can be either simple image or DPA (html). Still have to figure out...
                         let psr = document.createElement('a');
                         psr.href = c.url;
                         if (psr.pathname.indexOf('.htm') === -1 && psr.pathname.indexOf('.html') === -1) {
-                            doBasicTrackers = true; //totally managed by us in fact.
+                            sendTrackerActions = {creativeView: 1, impression: 1};
                             c.noclickevents = true; //so below we force it to not do click events
                             out['div'] = { image: { url: c.url, clickurl: c.clickurl, trackers: c.trackers }};
-                            delete out.adparameters;
                         }
                         else {
+                            //DPA
+                            out.adparameters = c.adparameters;
                             if (c.url.indexOf('amazonaws.com') == -1) {
                                 c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
                                 c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
@@ -1415,8 +1762,10 @@ const thresholdDiff_ = 120;
                 break;
         }//switch
         //console.log(JSON.stringify(out, null, 2));
-        if (doBasicTrackers) {
-            trackers.actions = { creativeView: 1, impression: 1, creativeHide: 1};
+        if (sendTrackerActions && trackers) {
+            //tracker local var set earlier in the function
+            trackers = JSON.parse(JSON.stringify(trackers));
+            trackers.actions = sendTrackerActions; 
             if (!c.noclickevents) {
                 //some of those there is our click proxy integrated into the tag so for those
                 //we no need use such mechanism to approximate clicks
@@ -1424,6 +1773,8 @@ const thresholdDiff_ = 120;
             }
             out.trackers = trackers;
         }
+        if (c.adparameters && c.adparameters.jxeventssdk)
+            out.jxeventssdk = 1;
         if (out.fixedHeight > 0) {
             //if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
             //this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
@@ -1432,18 +1783,123 @@ const thresholdDiff_ = 120;
         if (c.universal) {
             out.universal = c.universal;//??
         }
+        out.assumeHasAd = assumeHasAd;
         return out;
     }
 
     //===============================================
 
+    /**
+     * Use this so that our startP function can be cleaner and
+     * easily to see as a procedural flow (vs all kinds of callback
+     * so one cannot really see the order of things happening)
+     * This HooksMgr will "bind" functions to handle resize, blue, scroll
+     * etc.
+     * I did it this way so that those functions can be independently outside
+     * this "object" ('class') so that this "class"-like thing (HooksMgr) can 
+     * be small and what's going on is clearer
+     * 
+     * Coz those functions that do all the handling of stuff are long.
+     * @param {*} container 
+     * @param {*} normCrParams 
+     * @param {*} divObjs 
+     * @param {*} cxtFcns 
+     */    
+    function HooksMgr(container, normCrParams, divObjs, cxtFcns) {
+        this.cxtFcns = cxtFcns;
+        this.c = normCrParams;
+        this.divObjs = divObjs;
+        this.trackers = normCrParams.trackers; //not nec present
+        this.ctr = container;
+        //this.excludedH = normCrParams.excludedHeight;
+
+        if (normCrParams.crSig && normCrParams.div) { 
+            //
+            normCrParams.token = divObjs.jxCoreElt.id;
+        }
+        this.allhooks = [];
+        this.msghandlers = {};
+
+        this.bf_cleanup = __cleanup.bind({divObjs:this.divObjs, c: this.c });
+        this.bf_heightchange = __handleCreativeHeightChange.bind({divObjs:this.divObjs, c: this.c});
+        this.bf_resize = __handleResize.bind({divObjs:this.divObjs, c: this.c });
+        this.bf_scroll = __handleScrollEvent.bind({
+            savedoffset:    0,
+            //creativeH : normCrParams.height,
+            //containerH : normCrParams.fixedHeight,
+            containerElt:   this.ctr,
+            //excludedH:      normCrParams.excludedHeight,
+            divObjs:        this.divObjs,
+            c:              this.c
+        }); 
+        this.msghandlers['jxadended'] = this.bf_cleanup;
+        this.msghandlers['jxchangeheight'] =  this.bf_heightchange;
+        this.msghandlers['resize'] = this.bf_resize;
+        this.bf_processCrEvtsMgs = __handleCrEvtsMsgs.bind({ 
+            divObjs: this.divObjs, c: this.c, handlers: this.msghandlers });
+      }
+      HooksMgr.prototype.getPM2CreativeFcn = function(mode) {
+        if (mode == 'jxeventssdk') return __pm2JxEvtsSDKWithMsgs.bind({divObjs:this.divObjs, c: this.c});
+        if (mode == 'self') return __pm2Self.bind({divObjs:this.divObjs, c: this.c});
+        //We don't have direct type yet.
+        ///direct also do what is below lah: if (mode == 'direct') return __pm2CrDirectCall.bind({divObjs:this.divObjs, c: this.c});
+        return __pm2CrWithMsgsEvts.bind({divObjs:this.divObjs, c: this.c });
+      }
+      HooksMgr.prototype.overrideHandler = function(e, cb) {
+          this.msghandlers[e] = cb;
+      }
+      HooksMgr.prototype.hookBlur = function() {
+        let bf = __handleBlur.bind({divObjs:this.divObjs, trackers: this.trackers });
+        this.cxtFcns.addListener(this.allhooks, window, "blur", bf);
+      } 
+
+      HooksMgr.prototype.hookDifferentialScroll = function() {
+        this.cxtFcns.addListener(this.allhooks, null, "scroll", this.bf_scroll);
+      }
+      HooksMgr.prototype.hookResize = function() {
+        this.cxtFcns.addListener(this.allhooks, window, "resize", this.bf_resize);
+      }
+      HooksMgr.prototype.hookVisChangeNotifiers = function(notifyFcn) {
+        let o = {
+            amp: (this.c.fixedHeight && this.cxtFcns.getType() == 'amp' ? 
+                { boundScrollEvent: this.bf_scroll } : null),
+            lastVisVal: -1,
+            lastPgVis: -1,
+            lastFired: -1,
+            firstViewed: false,
+            notifyFcn: notifyFcn
+        };   
+        let bf = __combiVisibilityChange.bind(o);
+        this.cxtFcns.setupVisChangeNotifiers(this.allhooks, this.ctr, bf); 
+      }
+      HooksMgr.prototype.hookEvts = function() {
+        //trusted creative (in DIV could talk to us via events)
+        this.cxtFcns.addListener(this.allhooks, this.divObjs.jxCoreElt, "jxhasad", this.bf_processCrEvtsMgs);
+        this.cxtFcns.addListener(this.allhooks, this.divObjs.jxCoreElt, "jxnoad", this.bf_processCrEvtsMgs);
+      }
+      HooksMgr.prototype.hookMsgs = function() {
+        this.cxtFcns.addListener(this.allhooks, window, "message", this.bf_processCrEvtsMgs);
+     }
+     HooksMgr.prototype.hookGeneric = function(target, event, boundFcn) {
+        this.cxtFcns.addListener(this.allhooks, target, event, boundFcn);
+      },
+      HooksMgr.prototype.teardown = function() {
+         delete this.c.trackers; //if there is any impression event not fired yet
+         //(waiting for timer) then when the timer is up, it will not be fired.
+         this.cxtFcns.teardown(this.allhooks);
+         let bf = __cleanup.bind({divObjs:this.divObjs, c: this.c });
+         bf();
+      }
+
     var makeAdRenderer = function(params) {
         var _jxParams = null;
         var _jxContainer = null;
-        //not sure if we need to put this here at this level or just functional scope enough.
         
-        //we just bound this to the createOuterContainer, createMainContainer, cleanupContainers
-        //to avoid unnecessary having all those div variables at this level.
+        var _floatInst = null; //in the build that does not build in the float code, this will
+                               //always be null.
+                               //in the build that has float capability, this may be non-null
+                               //If the configuration says that they want float mode,
+                               //then there will be a _floatInst != null then.
        
         /**
          * Main function : to kick off the ad call and render the ad etc
@@ -1451,207 +1907,195 @@ const thresholdDiff_ = 120;
          *  handles 1 level of the waterfall                     
          */
         var _startP = function(jxContainer, remainingCreativesArr, next) {
+
             let univmgr = MakeOneUniversalMgr();
             let instId = "jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
         
-            let divObjs = {}; //this will get filled in (all the outer div, inner div, master div,...
-            //several functions have AMP and non-amp versions. Make sure we use the correct one
-            
-            let cxtFcnsVector = fcnVectorsByContext_[_jxParams.context];
-            if (!cxtFcnsVector) {
-                cxtFcnsVector = fcnVectorsByContext_.default;
+            let cxtFcns = fcnVectorsByContext_[_jxParams.context];
+            if (!cxtFcns) {
+                cxtFcns = fcnVectorsByContext_.default;
             }
-            //we will be saving the bound functions we set to listen on various window/document
-            //events into here. This is to facilitate un-listening and unobserving:
-            let unhook = {
-                unlisten: cxtFcnsVector.unlisten,
-                unobserve: cxtFcnsVector.unobserve,
-                listeners: {} //<-- function "pointers" will get filled in
-            };
-            let boundHandleResize               = null;
-            let boundHandleBlur                 = null;
-            let boundHandleCreativeHeightChange = null;
-            let boundPM2Creative                = null; 
-            let boundScrollEvent                = null; //wait but this is only for non-AMP and certain scenarios.  TODO
-            let boundCleanupThisCreative        = null;
-            let normCrParams                    = null;
-            //some stuff about the creative, may still change during runtime.
-            //let sharedCreativeRTObj;
-            let creativeObj = remainingCreativesArr.shift();
+            let cr = remainingCreativesArr.shift();
+            fireOSMResponseMaybe(cr);
 
             // MOST IMPORTANT CALL. THE NORMALIZED PARAMS OF THE CREATIVE: 
-            normCrParams = getNormalizedCreativeParams(_jxParams, creativeObj);
+            let normCrParams = getNormalizedCreativeParams(_jxParams, cr);
 
-            //these 2 will create the outer and inner div
-            divObjs = createOuterContainer(instId, jxContainer, normCrParams);
-
-
-            //these 2 will create master, fixed div dadada. Basically everything
-            //and the script (if any) would be planted at this stage. 
-            //Wah then the function name is very bad leh.
-            boundCleanupThisCreative        = __cleanup.bind({divObjs: divObjs, unhook:unhook});
-
-            //reminder: adparameters is what to commuicate to creative
-            //it is different from those you plant in the jxuni_p
-            let crReady2HearAdParamsResolve = null;
-            let crHasAdResolve = null;
-            let crHasAdProm =  normCrParams.trackers ? Promise.resolve(): new Promise(function(resolve) {crHasAdResolve = resolve;});
-            //who will not say has ad?
-            //third party stuff , our own processed ones.
             
-            let crInIframe = normCrParams.iframe;
-            //IF we do not need to communicate any adparameters to the creative, then nothing to wait on:
-            let crReady2HearAdParamsProm =  ( crInIframe && normCrParams.adparameters ? 
-                new Promise(function(resolve) {crReady2HearAdParamsResolve = resolve;}) : 
-                Promise.resolve());
-            //that of the creative script we are dealing with now.
 
-            //<-- at first we must at least listen to the loaded event from the creative
-            //Once we call createMainContainer, the creative will run and the jxloaded may be called 
-            //anytime. So start listening:
-            let msghandlers = {};
-            let token = destContainerPrefix_ + instId; 
-            msghandlers['jxloaded'] = crReady2HearAdParamsResolve;
-            boundHandleCreativeMsgs = __handleCreativeMsgs.bind({ 
-                divObjs: divObjs, token: token, handlers: msghandlers });
-            common.addListener(window, "message", boundHandleCreativeMsgs);
-            unhook.listeners.message = boundHandleCreativeMsgs; 
-            //-->
+            // This will create all the needed DIVs. And we are going to insert the
+            // creative in a bit. but before that , set up the needed listens first
+            let divObjs = createOuterContainer(instId, jxContainer, normCrParams);
+            createMainContainer(divObjs, normCrParams);//these can be called earlier too
+
+            let hooksMgr = new HooksMgr(jxContainer, normCrParams, divObjs, cxtFcns);
+
+            //
+            //STEPS:
+            //  1) [WAIT on prom1_stdCrHandshake]: if needed, WAIT for word that creative to 
+            //        communicate to us that it is jxloaded
+            //  2)      if needed, use messages to pass adparameters to creative (needed for e.g. DPA)
+            //  3) [WAIT on prom2_crHasAd]: WAIT for creative to tell us jxhasad 
+            //  4)      start visibility tracking (firing jxvisible, jxnotvisible as needed to creative)
+            //  5) [WAIT on prom3_evtSDKHandshake]: (only applies to creatives using the jx events sdk; else
+            //     this is just a resolved promise): if needed, WAIT for the creative (well, the jx events 
+            //     sdk the the creative loads) to tell us it has been loaded
+
+            let prom1_stdCrHandshake  = null;
+            let prom3_evtSDKHandshake = null;
+
+            let handshakenResolveFcn  = null; //called by standard creative, 
+                                             //or the JX events sdk (which is loaded by creative
+            let crHasAdResolveFcn     = null;
+            let prom2_crHasAd  =  normCrParams.assumeHasAd ? 
+                                Promise.resolve('jxhasad'):
+                                new Promise(function(resolve) { crHasAdResolveFcn = resolve; });
+            if (normCrParams.jxeventssdk) {
+                //for events sdk integration (typically used with HTML type creatives), 
+                //prom1 we just 'pass' immediately
+                //So that immediately we can hook up the visibility hook so that we
+                //can fire the CV. after that then we really wait for the jx events sdk (loaded
+                //by the creative) to handshake with us . then we can tell to it the adparameters 
+                prom1_stdCrHandshake = Promise.resolve();
+                prom3_evtSDKHandshake = new Promise(function(resolve) {handshakenResolveFcn = resolve;});
+            }
+            else {
+                prom1_stdCrHandshake =  ( normCrParams.iframe && normCrParams.adparameters ? 
+                    new Promise(function(resolve) {handshakenResolveFcn = resolve;}) : 
+                    Promise.resolve());
+                    // This is the case whereby we need to wait until the creative is "ready" 
+                    // (script loaded and run)
+                    // then & only then, fire the info of adparameters
+                    // In those cases where this is not needed (e.g. the parameters passed thru object in the
+                    // injected fragments, then this is resolved here.)
+                prom3_evtSDKHandshake = Promise.resolve();                    
+            }
+            hooksMgr.overrideHandler('jxloaded', handshakenResolveFcn);
+            hooksMgr.hookMsgs();
+            if (!normCrParams.iframe) 
+                hooksMgr.hookEvts(); //the creative may use events to talk to us
+  
+            let talkMode = normCrParams.trackers ? 'self': (normCrParams.crSig ? 'direct': 'other');
+            if (normCrParams.jxeventssdk) talkMode = 'jxeventssdk';
+            let boundPM2Creative = hooksMgr.getPM2CreativeFcn(talkMode);    
+            //for the case of the sdk stuff then we will talk later.
+            //ah I know what to do!
             
-            normCrParams.token = token;
-            // IMPORTANT 
-            // IIMPORTANT: within here the creative is INSERTED into the DOM
-            // That's why above, we already started listening to the loaded event.
-            let destElt = createMainContainer(divObjs, normCrParams);
-            //  
-
-            //Coz there can be multiple instances of universal lite on the page
-            //we must be sure we are talking/listening to the right party: coz there will be all sorts
-            //of messages from different creatives being postMessaged-ed and we will get all of them.
-            //But we only want to process the ones from the creative associated with THIS instance of the
-            //universal
-
-            //we use the token to help us. (commObj stands for "communications object")
-            normCrParams.token = token;
-
-            //This is very important
-            //if there are trackers means are managing everything, there is no creative to talk to
-            //iframe is iframe (postmessage),
-            //direct2Creative (we dun have it yet.... not working yet need to fix for some of those player scripts)
-            boundPM2Creative = (
-                normCrParams.trackers ? 
-                    __pm2Self.bind({divObjs:divObjs, c: normCrParams}): 
-                    (normCrParams.iframe ?
-                        __pm2Creative.bind({divObjs:divObjs, c: normCrParams}) :
-                        __direct2Creative.bind({divObjs:divObjs, c: normCrParams}))
-                );
-                
-            normCrParams.creativeH  = normCrParams.height;
-            normCrParams.containerH = normCrParams.fixedHeight;
-            boundHandleResize               = __handleResize.bind({divObjs:divObjs, c: normCrParams});
-            boundHandleCreativeHeightChange = __handleCreativeHeightChange.bind({divObjs:divObjs, c: normCrParams});
-
             /**
              * SETTING UP OUR RESPONDING TO ANY COMMUNICATIONS FROM CREATIVE 
+             * 3 things to do:
+             * allhooks, all divs floating
+             * 
              */
-            msghandlers['jxadended'] = boundCleanupThisCreative;
-            msghandlers['jxnoad'] = function() {
-                boundCleanupThisCreative();
+            hooksMgr.overrideHandler('jxhasad', function() { if (crHasAdResolveFcn) crHasAdResolveFcn('jxhasad');});
+            hooksMgr.overrideHandler('jxnoad', function() { if (crHasAdResolveFcn) crHasAdResolveFcn('jxnoad');});
+            hooksMgr.overrideHandler('jxadended', function() {
+                hooksMgr.teardown();
+                if (_floatInst) _floatInst.cleanup();
                 if (remainingCreativesArr.length > 0){
                     //waterfall to next layer
                     next(jxContainer, remainingCreativesArr, next);
                 }
-            };
-            msghandlers['jxchangeheight'] =  boundHandleCreativeHeightChange;
-            msghandlers['resize'] = boundHandleResize;
-            msghandlers['jxhasad'] = crHasAdResolve; //boundHandleResize;
-            //save the bound function "pointers" so we can unlisten later
+            });
 
-            
+            // FINALLY , WE INJECT THE CREATIVE'S NEEDED SCRIPTS AND STUFF!!!!
+            // THEN WE WAIT ON THE PROMISE THAT IT IS READY TO RECEIVE INSTRUCTIONS
+            // FROM US    
+            insertCreative(divObjs, normCrParams);
 
-            
-            crReady2HearAdParamsProm.then(function() {
+            prom1_stdCrHandshake.then(function() {
                 /**
                  * the creative (script, html ..or nothing) is loaded and ready to listen to our orders.
                  */
                 if (normCrParams.adparameters) {
-                    //whether iframe (messages) or direct call to the creative object, we are here:
+                    //Moving forward, for "trusted" type of script whereby we 
+                    //need to pass them the adparameters, we need to match signature already
+                    //But even signature is not fool proof...
+                    //
+                    //The older creatives definitely suffer a problem esp with the trusted type
+                    //The problem occurs when the trusted type communicate with renderer using
+                    //messages
+                    //They may receive message from another UNIT
+                    //Their messagse may go to renderer of another UNIT
+                    //also the change height, how?
                     boundPM2Creative('adparameters', normCrParams.adparameters);
                 }
 
                 /**
-                 * Set up on blur handler - but ONLY IF needed (if we are in charge of firing trackers for the creative)
+                 * Set up on blur handler - ONLY IF needed
                  */
                 if (normCrParams.trackers && normCrParams.trackers.actions.click) {
-                    boundHandleBlur = __handleBlur.bind({divObjs:divObjs, trackers: normCrParams.trackers });
-                    cxtFcnsVector.setupBlurHandler(boundHandleBlur);
-                    unhook.listeners.blur = boundHandleBlur;
+                    hooksMgr.hookBlur();
                 }
-
                 
                 /**
                  *  if we do differential scrolling, then set up the listener
                  */
                 if (normCrParams.doDiffScroll) {
-                    boundScrollEvent = __handleScrollEvent.bind({
-                        savedoffset:    0,
-                        containerElt:   jxContainer,
-                        excludedH:      normCrParams.excludedHeight,
-                        divObjs:        divObjs,
-                        c:              normCrParams
-                    });
-                    cxtFcnsVector.setupScrollEventHandler(boundScrollEvent);
-                    unhook.listeners.scroll = boundScrollEvent;
+                    hooksMgr.hookDifferentialScroll();
                 }
-                return crHasAdProm;
+                //OK, JUST WAIT FOR THE CREATIVE TO SAY HAS AD OR NO AD THEN!
+                return prom2_crHasAd; 
             })
-            .then(function() {
+            .then(function(resolveVal) {
+                if (resolveVal == 'jxnoad') {
+                    throw new Error('jxnoad');
+                }
 
                 /**
                  * Set up resize handlers
                  */
-                //if (normCrParams.scalable) 
-                {
-                    cxtFcnsVector.setupResizeHandler(boundHandleResize);
-                    //save the bound function "pointers" so we can unlisten later
-                    unhook.listeners.resize = boundHandleResize;
-                }
+                hooksMgr.hookResize();
                 
-                univmgr.init(divObjs.jxmasterDiv, _jxParams, normCrParams.universal, normCrParams.clickurl, normCrParams.clicktrackerurl);
+                univmgr.init(divObjs.jxmasterDiv, 
+                    _jxParams, 
+                    normCrParams.universal, 
+                    normCrParams.clickurl, 
+                    normCrParams.clicktrackerurl);
+                    //MIOW
 
-                cxtFcnsVector.handleHasAd(normCrParams.width, normCrParams.height, normCrParams.fixedHeight);
-                boundHandleResize();
+                cxtFcns.handleHasAd(normCrParams.width, normCrParams.height, normCrParams.fixedHeight);
+                
+                //?? ! boundHandleResize();
 
+                if (JX_FLOAT_COND_COMPILE) {
+                    if (normCrParams.floatParams) {
+                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative, univmgr);
+                    }
+                }
 
                 /**
                  * visibility detection (for AMP, the differential scrolling depends on same callback
                  * mechanism as the visibility stuff)
-                 * 
-                 * need to wait for the jxhasad ah only then can listen to this.
                  */
-                 let combiVisChangeHelper = {
-                    amp: (normCrParams.fixedHeight && _jxParams.context == 'amp' ? 
-                        { boundScrollEvent: boundScrollEvent } : null),
-                    lastVisVal: -1,
-                    lastPgVis: -1,
-                    lastFired: -1,
-                    notifyFcn: function(vis) { boundPM2Creative(vis ? 'jxvisible': 'jxnotvisible'); }
-                };   
-                let boundCombiVisChange = __combiVisibilityChange.bind(combiVisChangeHelper);
-                observer = cxtFcnsVector.setupVisChangeNotifiers(boundCombiVisChange, jxContainer); 
-                unhook.observer = observer;
-                unhook.container = jxContainer;
-                unhook.listeners.visibilitychange = boundCombiVisChange;
+                let notifyFcn = function(vis) {
+                    if (_floatInst) { 
+                        if (vis) {
+                            _floatInst.stopFloat();
+                            boundPM2Creative('jxvisible');
+                        } else {
+                            if (!_floatInst.shouldFloat(this.firstViewed, vis) || !this.lastPgVis) boundPM2Creative('jxnotvisible');
+                            else _floatInst.startFloat(this.firstViewed);
+                        }
+                    } else {
+                        boundPM2Creative(vis ? 'jxvisible': 'jxnotvisible');
+                    }
+                };
+                hooksMgr.hookVisChangeNotifiers(notifyFcn);
+                return prom3_evtSDKHandshake; 
             })
-            .catch(function(err) {
-                boundCleanupThisCreative();
-                console.error(err);
-                if (remainingCreativesArr.length > 0) {
+            .then(function() {
+                boundPM2Creative('openshop');
+            })
+            .catch(function() {
+                hooksMgr.teardown();
+                if (_floatInst) _floatInst.cleanup();
+                if (remainingCreativesArr.length > 0){
+                    //waterfall to next layer
                     next(jxContainer, remainingCreativesArr, next);
                 }
             })
             .finally(function() {
-                //current nothing to do yet.
             });
         }
 
@@ -1688,10 +2132,25 @@ const thresholdDiff_ = 120;
                 //_jxParams.height = parseInt(_jxParams.height) || 360;
                 _jxParams.campaignid = parseInt(_jxParams.campaignid) || null;
 
-                let isFloat = false;
                 let ctr = null;
+
+                if (JX_FLOAT_COND_COMPILE) {
+                    _jxParams.doFloat = params.float || false;
+                    _jxParams.floatType = "view";
+                    _jxParams.floatLocation = "bottom right";
+    
+                    if (_jxParams.doFloat) {
+                        if (params.floatType && ["view","always"].includes(params.floatType)) _jxParams.floatType = params.floatType;
+                        if (params.floatLocation && ["top","bottom","top right","top left","bottom right","bottom left"].includes(params.floatLocation)) _jxParams.floatLocation = params.floatLocation;
+                        _jxParams.floatWidth = parseInt(params.floatWidth) || 300;
+                        _jxParams.floatVMargin = parseInt(params.floatVMargin) || 0;
+                        _jxParams.floatHMargin = parseInt(params.floatHMargin) || 10;
+                        _jxParams.floatBackground = params.floatBackground || "transparent";
+                    }
+                }
+
                 if (params.container) {
-                    if (gIsFifs && isFloat) { //<--?
+                    if (gIsFifs && _jxParams.doFloat) { //<--?
                         ctr = parent.document.getElementById(params.container);
                         if (!ctr) ctr = window.top.document.getElementById(params.container);
                     } else {
@@ -1813,3 +2272,15 @@ const thresholdDiff_ = 120;
     }
     module.exports.createInstance = createInstance_;
 
+/* 
+ ************** module: renderer/core **************************************************
+
+* module.exports:
+    - createInstance (function(params)
+        kick off an ad rendering activity based on the params
+        there is no object being returned.
+        this created thing has a life of its own (fetch ad, render ad)
+    
+* requires/dependencies:
+    - none
+*/

@@ -1191,6 +1191,7 @@ window.jxPromisePolyfill        = 'none';
         var _createAdObjMaybe = function(makeNew) {
             if (!_adObject) {
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
+                /////_adObject.setVpaidSecure(false);
             }
             return _adObject;
         };
@@ -1806,3 +1807,42 @@ window.jxPromisePolyfill        = 'none';
         return ret;
     };
     module.exports = MakePlayerWrapperObj_;
+
+
+/* 
+ ************** module: video/player-factory ******************************************
+
+* module.exports:
+    - function which will make one player wrapper object
+     The object has the following public functions:
+
+       - isConfigSet = function()
+       - setConfig = function(adsCfg, logoCfg, soundIndCfg)
+
+       set some callback to inform the calling party of events
+       - setReportCB function(fcn) 
+       - setGestureReportCB function(fcn) 
+       - setPlayheadCB function(fcn) 
+
+       - play = function() play video or ad (for when triggered by outside video sdk)
+       - playInt = function() play video or ad (for when triggered from within the video sdk)
+       - pause = function() 
+       - pauseInt = function() 
+       
+       - earlyBirdP = function() early init before we know about any video to play
+       - setV = function <-- IMPORTANT FUNCTION
+            delayPutSrcWaitProm, 
+                //wait until we are e.g. nearer to the video area then this will resolve
+                //prevent too much fetching of HLS segments.
+            videoID,
+            startModePW,
+            srcHLS, srcFallback, 
+            offset, 
+            thumbnailURL)
+
+  it is used by video/damplayer.js
+        
+
+* requires/dependencies:
+    - a lot
+*/

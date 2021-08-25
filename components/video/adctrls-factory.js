@@ -160,3 +160,25 @@
      return ret;
  };
  module.exports = MakeOneAdControlsObj_;
+
+ /* 
+ ************** module: video/adctrls-factory ******************************************
+
+* module.exports:
+    - function which will make one ad controls object
+     The made object will have the following functions:
+    
+     updatePlayState = function(isPlaying)
+     updateMutedState = function(isMuted) 
+     
+     hide = function() 
+     show = function() 
+
+     updateProgressBar= function(value, adData)
+     pauseProgressBar= function()
+     resetProgressBar= function()
+
+    
+* requires/dependencies:
+    a lot
+*/

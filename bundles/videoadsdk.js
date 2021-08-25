@@ -1,32 +1,25 @@
 /**
- * This is meant to take the place of jxvideo.1.3.min.js and jxvideo.1.4.min.js 
- * (removing also need for playerbridgeJS)
+ * Bundle built to make videoad player JS to be used by Jixie's own renderer
+ * (i.e. outstream, OSM)
+ * Vs the other one (for publisher to use standalone which is videoadsdk-standalone.js)
  * 
- * NOTE: 
- * The 1.3 is used by partners (standalone) in typically masterhead ads
- * The 1.4 is used with "playerbridge js" in the context of jxoutstream1.3.4.min.js
- * 
- *  Current design is, when used with universal (new) we will still be in an IFRAME
- *  but using adparameters
- * 
- 
- * Dependencies (not showing modulesmgr, cssmgr)
-   - the bundle (videoadsdk.js):
-        - video/adplayer
-            - video-styles/videoad
-            - video/spinner-factory
-            - video/replaybtn-factory
-            - video/horizbanner-factory
-            - video/admgr-factory (We will use video/admgr-factory-bc) <-- need to give it better name
-                - video/adctrls-factory
-                - video-styles/videoad
-            - video/vast
- *    
+ * Documentation: refer to videoadsdk.md file in this same dir
  */
-if (window.jxvideoadsdk) { //<--- NEW LEH
+
+if (window.jxvideoadsdk) { 
     return;
 }
+//console.log(`#### videoadsdk (first new lines. cannot set breakpoint?!)`);
+window.jxvideoadsdk = 1;
+const ourSig = 'jxvideoadsdk';
+const ourSigQ = 'jxvideoadsdkq';
 
+var trusted = false;
+if (window.jxrenderercore) {
+    //then we know we as a creative were created as trusted
+    //since we are in the same window as the renderer.
+    trusted = true;
+}
  
 const modulesmgr                       = require('../components/basic/modulesmgr');
 const cssmgr                           = require('../components/video/cssmgr');
@@ -78,6 +71,9 @@ const createObject                       = require('../components/video/adplayer
 var instMap = new Map(); //if we just always impose that if used from universal, then it's in
                          //iframe, then this Map is a bit stupid (only 1 item)  
 function makePlayer(containerId, adparameters, config = null, eventsVector = null) {
+    if (!containerId) {
+        containerId = 'default';
+    }
     let instMaybe = instMap.get(containerId);
     if (instMaybe) {
         return;
@@ -87,7 +83,7 @@ function makePlayer(containerId, adparameters, config = null, eventsVector = nul
     return playerInst;
 }
 
-window.jxvideoadsdk = 1;
+
 
 
 //<----- Only needed when univeral unit is outside our iframe
@@ -109,7 +105,9 @@ function listen(e) {
         catch(err) {}
     }
     if (!json) return; //unrelated to us, we dun bother.
-    json.token = 'hardcode';
+    if (!json.token) {
+        json.token = 'default';
+    }
     switch (json.type) {
         case "jxvisible":
         case "jxnotvisible":     
@@ -119,14 +117,17 @@ function listen(e) {
             }
             break;
         case "adparameters":
+            //console.log(`___ SUPER IMPORTANT IN VIDEOADSDK ###### we are receiging stuff ${json.token}`);
             makePlayer(json.token, json.data);
             break;                    
     }
 }//listen
 
-window.addEventListener('message', listen, false);
 
-notifyMaster('jxloaded', 'jx_video_ad');
+if (!trusted) {
+    window.addEventListener('message', listen, false);
+    notifyMaster('jxloaded', ourSig);
+}
 
 //height change
 function notifyMaster(type, token, data = null) { //todo DATA HOW
@@ -142,10 +143,43 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
         obj.data = data;
     }
     msgStr = "jxmsg::" + JSON.stringify(obj);
-    /* const exposedWinPropName_ = 'jxuniversallite';
-    if (window[exposedWinPropName_])
-        window.postMessage(msgStr, '*'); 
-    else */
-    parent.postMessage(msgStr, '*'); 
+    //console.log(`##### videoadsdk trusted=${trusted} ${msgStr}`);
+    if (trusted) { //it is just a function call then
+        jxrenderer.message(msgStr);
+    }
+    else {
+        parent.postMessage(msgStr, '*'); 
+    }
 }
 
+    var JxEventsQ = function () {
+        this.push = function () {
+            //console.log(`#### INSIDE THE NEW THIS.PUSH!!!`);
+            for (var i = 0; i < arguments.length; i++) try {
+                if (typeof arguments[i][0] === "string") {
+                    let fcnname = arguments[i][0];
+                    if (fcnname == 'message' && arguments[i].length >= 2) {
+                        //console.log(`##### videoadsdk calling listen with stuff`); //${arguments[i][1]}`);
+                        listen({
+                         data:   arguments[i][1]
+                        });
+                    }
+                    //else {
+                      //  console.log(`##### videoadsdk currently unable to handle this fcnname ${fcnname}`);
+                    //}
+                }
+                //else {
+                  //  console.log(`##### videoadsdk currently unable to handle type: ${typeof arguments[i]}`);
+                //}
+            } catch (e) {}
+        }
+    };
+    // get the existing queue array
+    var _old_eventsq = window[ourSigQ];
+    //console.log(`#### when videoadsdk comes the queue is like this: ${_old_eventsq.length}`);
+    // create a new  object
+    window[ourSigQ] = new JxEventsQ(); //actually no need object, just cloned from some website's snipplet .. :-)
+    // execute all of the queued up events - apply() turns the array entries into individual arguments
+    if (_old_eventsq)
+        window[ourSigQ].push.apply(window[ourSigQ], _old_eventsq);
+    //--->

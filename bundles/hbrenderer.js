@@ -1,16 +1,8 @@
 /**
- * Bundle built to make a simple rendering script
- * Main use is to replace the current hbrenderer.min.js
- * Can also be used for OSM
- * (though I suspect for OSM we just build the renderer into the OSM script)
+ * Bundle built to make HB winning creative renderer
  * 
- * Very simple the whole creative is already in base64 encoded string
- * No need fetch ad.
- * But we support more than 1 creative though
- * Means the script loaded once only but if within same window
- * there are multiple chances to do work, we will
+ * Documentation: refer to hbrenderer.md in this same dir
  */
-
  if (window.jxhbuniversal && window.jxhbuniversal.hbinit) {
     return;
 }
@@ -25,10 +17,18 @@ modulesmgr.set('renderer/univelements',         univelements);
 const mrenderer                     = require('../components/renderer/core');
 
 function start_(options) {
-    delete options.maxwidth;
+    //the adserver will put in the config object
+    //options.pgwidth (to equal the bidded slot's width)
+    //In the absense of options.maxwidth, the pgwidth will be assigned to maxwidth too.
+    //so all good.
+    delete options.maxwidth;//
+    
+    //no showing of those Learn More... etc
+    options.nested = -1; //<--- by default nested = -1 no need to say here ah
     //here we make no effort to get ids pageinfo coz they are not needed.
     var inst = mrenderer.createInstance(options);
     //no need lah instMap.set(hashStr, inst);
+    //
 }
 
 window.jxhbuniversal = {

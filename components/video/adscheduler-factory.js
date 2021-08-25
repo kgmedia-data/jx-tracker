@@ -135,35 +135,7 @@ let MakeOneAdScheduler_ = function(adscfg) {
 }
 module.exports = MakeOneAdScheduler_;
 
-/* 
- ************** module: basic/ids **************************************************
 
-* module.exports:
-  - A function which makes one adscheduler object (You have to call it)
-    Typically called like this
-    const MakeOneAdScheduler  = require('../components/video/adscheduler-factory');
-
-* requires/dependencies:
-  - none
-
-  var _adS = MakeOneAdScheduler(adsCfg);//done once. for all videos
-
-  when switching video, pls call _adS.reset() to reset the stats of adS.
-  Also pls do something like  
-      _nextAdSlot = _adS.getNext();
-  
-  Then in your content video's playhead update callback, you should do this:      
-
-  if (_nextAdSlot != -1 && _accumulatedTime > _nextAdSlot) {
-        if (adS.canPlayAd(currentTime, duration)) { 
-            //Why ? if remaining time is too short, we still may cancel the adslot
-            //if it is not a first ad.
-            _nextAdSlot = adS.useSlot(_accumulatedTime);
-            // then pls do whatever is necessary to trigger the midroll with countdown etc
-        }
-    }
-
-*/
 
 /**** OUR LITTLE TEST CODE
  * THIS IS ACTUALLY A VERY CUSTOM SCHEDULER. IT IS NOT GENERIC. THE MAIN GOAL IS TO
@@ -265,3 +237,33 @@ setTimeout(V1, 0);
 setTimeout(V2, 20000);
 setTimeout(V3, 50000);
     */
+
+/* 
+ ************** module: video/adscheduler-factory*******************************************
+
+* module.exports:
+  - A function which makes one adscheduler object (You have to call it)
+    Typically called like this
+    const MakeOneAdScheduler  = require('../components/video/adscheduler-factory');
+
+* requires/dependencies:
+  - none
+
+  var _adS = MakeOneAdScheduler(adsCfg);//done once. for all videos
+
+  when switching video, pls call _adS.reset() to reset the stats of adS.
+  Also pls do something like  
+      _nextAdSlot = _adS.getNext();
+  
+  Then in your content video's playhead update callback, you should do this:      
+
+  if (_nextAdSlot != -1 && _accumulatedTime > _nextAdSlot) {
+        if (adS.canPlayAd(currentTime, duration)) { 
+            //Why ? if remaining time is too short, we still may cancel the adslot
+            //if it is not a first ad.
+            _nextAdSlot = adS.useSlot(_accumulatedTime);
+            // then pls do whatever is necessary to trigger the midroll with countdown etc
+        }
+    }
+
+*/
