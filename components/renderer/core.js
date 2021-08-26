@@ -1692,6 +1692,10 @@ const thresholdDiff_ = 120;
                     //case of third party tag; for vast generation
                     c.adparameters = { trackers: JSON.parse(JSON.stringify(c.trackers)) };
                 }
+                if (jxParams.jxsimidurl) {
+                    //forcing to do SIMID
+                    out.adparameters.jxsimidurl = jxParams.jxsimidurl;
+                }
                 //only those that are managed by us have this property
                 delete out.adparameters.trackers;
                 
