@@ -1191,7 +1191,7 @@ window.jxPromisePolyfill        = 'none';
         var _createAdObjMaybe = function(makeNew) {
             if (!_adObject) {
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
-                /////_adObject.setVpaidSecure(false);
+                _adObject.setVpaidSecure(false);
             }
             return _adObject;
         };
