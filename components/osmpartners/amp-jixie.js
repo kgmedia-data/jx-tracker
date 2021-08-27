@@ -64,7 +64,7 @@ function makeNormalizedObj_(dbjson, p) {
         container: `c`,
         maxwidth: p.maxwidth,
         fixedheight: p.fixedheight,
-        excludedheight: 0,
+        excludedheight: p.excludedheight,
         jsoncreativeobj64: dbjson.adparameters.jsonbase64
     };
     rtjson.inject = inject_.bind(null, pp);

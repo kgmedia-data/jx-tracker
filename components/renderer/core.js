@@ -398,17 +398,22 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
         else { //is IR ratio change
             //for AMP we actually get an array of stuff every now and then. not sure what it is doing.
-            param.forEach(function(entry) {
+            if (param && Array.isArray(param) && param.length > 0) {
+                var latestChange = param[param.length - 1];
+                //param.forEach(function(entry) 
                 if (thisObj.amp) {
+                    console.log(`### thisObj.amp.boundScrollEvent ${latestChange.rootBounds.height} ${JSON.stringify(latestChange.boundingClientRect)}`);
                     thisObj.amp.boundScrollEvent(
                         null,//this is position of the event argument of the scollcallback
-                        entry.rootBounds.height,
-                        entry.boundingClientRect
+                        latestChange.rootBounds.height,
+                        latestChange.boundingClientRect
                     );
                 }
-                newVisVal = entry.intersectionRatio > visThreshold_ ? 1: 0;
+                console.log(`### latestChange.intersectionRatio ${latestChange.intersectionRatio}`);
+
+                newVisVal = latestChange.intersectionRatio > visThreshold_ ? 1: 0;
                 //console.log(`DEBUG new visiblity value ${newVisVal}`);
-            });
+            } 
         }
         
         //decision time:
@@ -928,6 +933,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
          */
         if (normCrParams.fixedHeight > 0) {
             jxContainer.style.height = normCrParams.fixedHeight + "px";
+            console.log(`##### name or id of container ${jxContainer.id}`);
             oDiv.style.height = "100%";
             iDiv.style.height = "100%";
         }
@@ -1543,7 +1549,7 @@ const thresholdDiff_ = 120;
      * @returns a normalized creative params object
      */
     function getNormalizedCreativeParams(jxParams, c) {
-        debugger;
+        //debugger;
         /** FANCYSCROLL:
          * if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
          * this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
@@ -1702,6 +1708,10 @@ const thresholdDiff_ = 120;
                 if (!c.adparameters) { 
                     //case of third party tag; for vast generation
                     c.adparameters = { trackers: JSON.parse(JSON.stringify(c.trackers)) };
+                }
+                if (jxParams.jxsimidurl) {
+                    //forcing to do SIMID
+                    out.adparameters.jxsimidurl = jxParams.jxsimidurl;
                 }
                 //only those that are managed by us have this property
                 delete out.adparameters.trackers;
@@ -2196,7 +2206,7 @@ const thresholdDiff_ = 120;
             if (!_jxContainer) {
                 return;
             }
-            debugger;
+            //debugger;
             let respBlob = null;
             if (_jxParams.jsoncreativeobj64) {
                 try {

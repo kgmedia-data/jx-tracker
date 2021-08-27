@@ -342,8 +342,8 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             let vastSrcBlob = crData;
             //For testing SIMID... Normally won't come here
             if (crData.jxsimidurl) {
-                _vastSrcBlob.subtype = 'vsimid';
-                _vastSrcBlob.url = 'https://creatives.b-cdn.net/jx/jxsimidhybrid.min.html'; //crData.jxsimidurl;
+                vastSrcBlob.subtype = 'vsimid';
+                vastSrcBlob.url = 'https://creatives.b-cdn.net/jx/jxsimidhybrid.min.html'; //crData.jxsimidurl;
             }
             // if isRepeat, then suppress the trackers: (second arg)
             let vast = buildVastXml([vastSrcBlob], isRepeat);
