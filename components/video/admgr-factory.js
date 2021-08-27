@@ -68,6 +68,8 @@
     var _adLoaderOutcome = 'jxnone';
     var _controlsObj = null;
 
+    var _vpaidSecure = true;
+
 
     /**
         this is the flag for us to not manipulating the DOM multiple times
@@ -596,7 +598,9 @@
         _doProgressBar = progressBar;
         _controlsObj = controlsObj ? JSON.parse(JSON.stringify(controlsObj)): null;
     }
-
+    FactoryOneAd.prototype.setVpaidSecure = function(flag) {
+        _vpaidSecure = flag;
+    }
     FactoryOneAd.prototype.forceDimensions = function(width, height) {
         _forceWidth = width;
         _forceHeight = height;
@@ -635,7 +639,7 @@
 
         return new Promise(function(resolve, reject) {
             common.loadIMAScriptP().then(function() {
-                google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
+                //////google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
                 google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
                 google.ima.settings.setNumRedirects(maxNumVastRedirects_);
 
@@ -663,6 +667,7 @@
                 
                 let adsRequest = new google.ima.AdsRequest();
                 adsRequest.forceNonLinearFullSlot = true;
+                //adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=937';
                 if (adURL) 
                     adsRequest.adTagUrl = adURL;
                 else if (adXML) {
@@ -676,6 +681,13 @@
                 adsRequest.setAdWillAutoPlay(autoplayFlag); 
                 adsRequest.setAdWillPlayMuted(mutedFlag);
 
+                //console.log(`__VPAID VPAID VPAID VPAID VPAID# # # # ##### ${_vpaidSecure ? 
+                  //  google.ima.ImaSdkSettings.VpaidMode.ENABLED:
+                    //google.ima.ImaSdkSettings.VpaidMode.INSECURE}`);
+                google.ima.settings.setVpaidMode(
+                    _vpaidSecure ? 
+                    google.ima.ImaSdkSettings.VpaidMode.ENABLED:
+                    google.ima.ImaSdkSettings.VpaidMode.INSECURE);
                 //console.log(`auto=${autoplayFlag} muted=${mutedFlag}`);
                 _pFcnVector.report('requested'); //FERY NOTE
                 _adsLoader.requestAds(adsRequest); // checking if we can get an ad
