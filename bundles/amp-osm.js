@@ -89,14 +89,37 @@ function start() {
             params[p] = qparams.get(p);
         });
     }
-    params.maxwidth = cxt.data.width;
-    params.fixedheight = cxt.data.height; 
+    let iLR = window.context.initialLayoutRect;
+    if (cxt.data.height == 1) {
+        //Since this one we start with nothing, then we will need to indicate to 
+        //AMP that we'd like to requestResize
+        params.maxwidth = iLR.width;
+        //then we do it abit like jixie friendly standard loh.
+    }
+    else {
+        if (iLR && iLR.width && iLR.height) {
+            params.maxwidth = iLR.width;
+            params.fixedheight = iLR.height;
+        }
+    }
     params.container = 'c'; //Yup, with amp 3p, the div is always called 'c'
+    //console.log(cxt.data);
+    //console.log("--- --- --- --- --- --- --- --- --- ---");
+    ['excludedheight'].forEach(function(p){
+        if (cxt.data[p]) {
+            params[p] = parseInt(cxt.data[p]);
+        }
+    });
     ['unit','cid','creativeid','creativeids'].forEach(function(p){
         if (cxt.data[p]) {
             params[p] = cxt.data[p];
         }
     });
+    params.data = JSON.parse(JSON.stringify(cxt.data));
+    params.data.rwidth = iLR.width; //actual width 
+    params.data.rheight = iLR.height; //actual height
+    //the data.width and data.height is the width and height specified in the amp-ad tag.
+    //console.log(`#### CREATEINST_${(new Date()).toUTCString()}`);
     var inst = mosm.createInstance(params, {
             jixie: mpjixie,
             teads: mpteads,
