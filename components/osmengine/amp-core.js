@@ -5,20 +5,19 @@
  */
 /**
  * OK not really using an OBJECT, but just using globals as I don't like to have too many
- * this.BLA.
+ * this.BLABLABLA
  * This code is in a closure and also this is running in its own iframe anyways.
  */
-var gOSMVisible         = 0; //current visibility state of our unit 
-var gOSMCVTrackers      = []; //trackers which still need to be fired once the unit gets inview (backlog)
+var gOSMVisible         = 0;     //current visibility state of our unit 
+var gOSMCVTrackers      = [];    //trackers which still need to be fired once the unit gets inview (backlog)
 var gImpFired           = false; //whether has an impression event been fired yet
-var gIntObsCBUnlisten   = null; //the function to call to unlisten on the intersection observation stuff
-var gCurrPartnerObj     = null; //the current partner obj
-var gFallbackCreative   = null; //there is a sure serve at in the waterfall
-var gMsgImp             = null; //global ...set to corr to whatever current partner's
-var gMsgNoAd            = null; //global ...
+var gIntObsCBUnlisten   = null;  //the function to call to unlisten on the intersection observation stuff
+var gCurrPartnerObj     = null;  //the current partner obj
+var gFallbackCreative   = null;  //there is a sure serve at in the waterfall
+var gMsgImp             = null;  //set to corr to whatever current partner's expected Imp msg string is
+var gMsgNoAd            = null;  //
 var gUnitNearViewport   = false;
 const visThreshold_ = 0.4;
-
 
 
 /**
@@ -42,32 +41,21 @@ const visThreshold_ = 0.4;
  * @param {*} entry (the latest 'change' object from the intersection obsv callback)
  * @returns true or false
  */
+/**
+ * Note: at first this is not quite accurate coz the ad areas will resize after a bit
+ * So it is possible that at first we are closer to the viewport and then later as ads get
+ * opened up, we are not so close after all.
+ */
 function isUnitClose2Viewport(entry) {
     let vpH = entry.rootBounds.height;
     let thresholdTop = vpH*(1+1);
     let unitTop = entry.boundingClientRect.y;
     //actually if already in viewport this also will return true
-    console.log(`#### isClose? ${unitTop} <? ${thresholdTop}`);
+    //console.log(`#### isClose? ${unitTop} <? ${thresholdTop}`);
     if (unitTop < thresholdTop) {
         return true;
     }
     return false;
-}
-
-/**
- * Check some conditions and if good then call the unlisten function to call listening
- * to intersection Observation.
- * The conditions are:
- *   impression event fired (some partner network) OR we already waterfalled down to "jixie" (sure got ad)
- *      AND
- *   There is no more outstanding creativeview trackers for the earlier partners that we still need to fire
- */
-function unlistenIntObsMaybe() {
-    //or we have reached the jixie layer.
-    if (gCBUnlisten && (gImpFired) && gOSMCVTrackers.length == 0) {
-        gCBUnlisten();
-        gCBUnlisten = null;
-    }
 }
 
 /**
@@ -86,19 +74,22 @@ function intObsCB(changes) {
     *      AND
     *   There is no more outstanding creativeview trackers for the earlier partners that we still need to fire
     */
-    if (gCBUnlisten && (gImpFired) && gOSMCVTrackers.length == 0) {
-        gCBUnlisten();
-        gCBUnlisten = null;
-        return; //we won't come here again. basically this thing can close shop.
-    }
+    //if (gIntObsCBUnlisten && (gImpFired) && gOSMCVTrackers.length == 0) {
+      //  gIntObsCBUnlisten();
+      //  gIntObsCBUnlisten = null;
+      //  return; //we won't come here again. basically this thing can close shop.
+    //}
 
     var entry = changes[changes.length - 1];
     gUnitNearViewport = isUnitClose2Viewport(entry);
-    if (!gImpFired && gFallbackCreative && gUnitNearViewport) {
-        if (gCurrPartnerObj && gCurrPartnerObj.customfcns.almostinview) {
+    if (!gImpFired && gUnitNearViewport && gFallbackCreative) {
+        if (gCurrPartnerObj && gCurrPartnerObj.customfcns && gCurrPartnerObj.customfcns.almostinview) {
             //those slow partners we will have this function
             //this could, e.g. trigger a no ad based on certain heuristics
-            gCurrPartnerObj.customfcns.almostinview();
+            if ((Date.now() - gCurrPartnerObj.injectts) > 5000) {
+                console.log(`#### ms elapsed: ${Date.now() - gCurrPartnerObj.injectts}`);
+                gCurrPartnerObj.customfcns.almostinview();
+            }
         }
     }
     //state keeping:
@@ -157,6 +148,7 @@ function ampOneOffInit_() {
     
     //we use this to intercept the partner's calls to the amp runtime!!
     window.context.requestResize = function(...args) {
+        /**********
         if (args && args.length >= 2) 
             console.log(`### requestResize ${args[0]}x${args[1]}`);
         else
@@ -166,45 +158,47 @@ function ampOneOffInit_() {
             if (args[0] <= gParams.data.rwidth && args[1] <= gParams.data.rheight) {
                 console.log(`### (init=${gParams.data.rwidth}x${gParams.data.rheight}) requestResize .. No need pass to amp runtime ${args[0]}x${args[1]}`);
                 //so just pass the current size .
-                return boundRealRequestResize(...args);
                 //give up the following idea. cannot work.
-                //return boundRealRequestResize(gParams.data.rwidth, gParams.data.rheight);
+                return boundRealRequestResize(gParams.data.rwidth, gParams.data.rheight);
             }
         }
         console.log(`### (init=${gParams.data.rwidth}x${gParams.data.rheight}) requestResize need pass to amp runtime`);
+        *********/
         return boundRealRequestResize(...args);
     }
     
     window.context.renderStart = function(...args) {
+        if (gMsgImp)
+            window.postMessage(gMsgImp, "*");    
+        /**********            
         if (args && args.length >= 1) 
             console.log(`### (init=${gParams.data.rwidth}x${gParams.data.rheight}) renderStart ${JSON.stringify(args[0])}`);
         else
             console.log(`### (init=${gParams.data.rwidth}x${gParams.data.rheight}) renderStart no enough arg`);
-        if (gMsgImp)
-            window.postMessage(gMsgImp, "*");    
         if (args && args.length >= 1) {
             let o = args[0];
             if (o && o.width && o.height) {
                 if (o.width <= gParams.data.rwidth && o.height <= gParams.data.rheight) {
                     console.log(`### (init=${gParams.data.rwidth}x${gParams.data.rheight}) renderStart we ate your arg`);
-                    return boundRealRenderStart(...args); // no need give arg then.
-                    //return boundRealRenderStart(); // no need give arg then.
+                    //cannot . does not work.
+                    return boundRealRenderStart(); // no need give arg then.
                 }   
             }
         }
         console.log(`### renderStart we passing your arg`);
+        **********/
         return boundRealRenderStart(...args);
     }
     window.context.noContentAvailable = function() {
         //we will not pass this on of course. else we will get collapsed!
-        console.log(`### noContentAvailable`);
+        //console.log(`### noContentAvailable`);
         if (gMsgNoAd)
             window.postMessage(gMsgNoAd, "*");    
     }
 }
 
 
-//    https://www.intertech.com/encapsulation-in-javascript/
+//https://www.intertech.com/encapsulation-in-javascript/
     
 /**
  * our bound listener to listen to window messages.
@@ -226,7 +220,7 @@ function ampOneOffInit_() {
  */
 function msgListener(e) {
     if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
-        console.log(`#### e.data=${e.data}`);
+        //console.log(`#### e.data=${e.data}`);
         let msgs = this.msgs;
 
         if (e.data == msgs.imp) { 
@@ -243,15 +237,15 @@ function msgListener(e) {
             gMsgImp = null;
             gMsgNoAd = null;
             trackerFirer.bind(this)('error', '303');
-            console.log(`### waterfalling down since you no ad`);
+            //console.log(`### waterfalling down since you no ad`);
             if (e.data == msgs.timeout || gUnitNearViewport) {
                 //gUnitNearViewport type: we let the partner come to its conclusion taking its own time (no ad)
                 //but then no time to entertain yet another partner.
-                console.log(`#### recvd ${e.data}->going direct to the last entry`);
+                //console.log(`#### recvd ${e.data}->going direct to the last entry`);
                 this.last();
             }
             else {
-                console.log(`#### recvd ${e.data}->going to next natural entry`);
+                //console.log(`#### recvd ${e.data}->going to next natural entry`);
                 this.next();
             }
         }
@@ -260,7 +254,7 @@ function msgListener(e) {
 
 /**
  * our bound function to fireTracker
- * Note we have mechanism so we will never fire the same action twice for a partner
+ * Note we have safety-mechanism so we will never fire the same action twice for a partner
  * 
  * There is the "this" which is like this:
  * {
@@ -300,15 +294,10 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
     let cr = remainingCreativesArr.shift();
     if (!cr) { return; }
     let subtype = cr.subtype;
-    //if (subtype == 'selectmedia') {
-        //we dun handle
-        //cr = remainingCreativesArr.shift();
-    //}
     let partner = partners[subtype];
     if (!partner) { return; }
 
-    console.log(`## VP ${cr.subtype} bolean of equality ${cr != gFallbackCreative}`);
-
+    //console.log(`## VP ${cr.subtype} bolean of equality ${cr != gFallbackCreative}`);
     let rtjson = partner.makeNormalizedObj(cr, gParams);
     gMsgImp = rtjson.msgs.imp;
     gMsgNoAd = rtjson.msgs.noad;
@@ -320,6 +309,7 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
             creativeView: 1
         },
         nextfcn: oneLayer.bind(null, jxContainer, remainingCreativesArr, partners, next),
+        //Then characteristic of the fallback creative is that fallbackfcn is null
         fallbackfcn: cr != gFallbackCreative ? oneLayer.bind(null, jxContainer, [ gFallbackCreative ], partners, next): null,
         msgs: rtjson.msgs,
         trackers: rtjson.trackers? rtjson.trackers.baseurl + '?' + rtjson.trackers.parameters: ''
@@ -332,11 +322,11 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
     }
     o.last = function() {
         window.removeEventListener('message', boundMsgListener);
-        this.fallbackfcn();
+        if (this.fallbackfcn)
+            this.fallbackfcn();
     }
-    window.addEventListener('message', boundMsgListener, false);
     gCurrPartnerObj = rtjson;
-
+    window.addEventListener('message', boundMsgListener, false);
     if (subtype !== 'jixie') {
         boundTrackerFirer('response');
         if (gOSMVisible) {
@@ -349,8 +339,10 @@ var oneLayer = function(jxContainer, remainingCreativesArr, partners, next) {
             gOSMCVTrackers.push(boundTrackerFirer);
         }
     }
+    rtjson.injectts = Date.now();
     rtjson.inject();
 }
+
 function fetchAdP(adTagUrl) {
     return fetch(adTagUrl, {
         method: 'GET',
@@ -358,27 +350,10 @@ function fetchAdP(adTagUrl) {
     }).then((response) => response.json());
 }
 
-//2 modes: fixed height mode
-//2 modes: unusable hiehgt mode
-//2 different modes for JIXIE ads and partner ads
-//try to ask for chance of our ads to increase in size.
-
-//what kind of ids do we get
-//my test page
-//then my latest OSM amp js file
-//then call is to the rc.
-//and the call is to a different endpoint
-//the only thing it does is to print out some stuff
-//
 function createInstance_(p, partners) {
     gParams = p;
-    console.log(gParams);
-    console.log("--- --- --- --- --- ");
     ampOneOffInit_();
     let url = `https://${p.debug?'ad-rc':'ad'}.jixie.io/v2/osm?source=osm`;
-    if (p.creativeid == '11111') {
-        url = `https://ad-rc.jixie.io/v2/osm?source=osm`;
-    }
     ['amp_client_id','client_id', 'unit', 'sid', 'creativeids', 'creativeid'].forEach(function(prop) {
         if (p[prop])
             url += '&' + prop + '=' + p[prop];

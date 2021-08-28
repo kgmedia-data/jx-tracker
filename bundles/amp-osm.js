@@ -103,8 +103,8 @@ function start() {
         }
     }
     params.container = 'c'; //Yup, with amp 3p, the div is always called 'c'
-    console.log(cxt.data);
-    console.log("--- --- --- --- --- --- --- --- --- ---");
+    //console.log(cxt.data);
+    //console.log("--- --- --- --- --- --- --- --- --- ---");
     ['excludedheight'].forEach(function(p){
         if (cxt.data[p]) {
             params[p] = parseInt(cxt.data[p]);
@@ -119,7 +119,7 @@ function start() {
     params.data.rwidth = iLR.width; //actual width 
     params.data.rheight = iLR.height; //actual height
     //the data.width and data.height is the width and height specified in the amp-ad tag.
-    console.log(`#### CREATEINST_${(new Date()).toUTCString()}`);
+    //console.log(`#### CREATEINST_${(new Date()).toUTCString()}`);
     var inst = mosm.createInstance(params, {
             jixie: mpjixie,
             teads: mpteads,

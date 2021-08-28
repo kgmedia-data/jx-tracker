@@ -81,7 +81,7 @@ function forceTriggerAdNoticeByHeuristic_(msgs, inview) {
     if (checkSomethingIsThere_()) {
         console.log(`#### forceTriggerAdNoticeByHeuristic_ yes inviewBool=${inview}`);
         if (inview)
-            window.postMessages(msgs.imp, "*");
+            window.postMessage(msgs.imp, "*");
     }
     else {
         console.log(`#### forceTriggerAdNoticeByHeuristic_ no sending timeout`);
