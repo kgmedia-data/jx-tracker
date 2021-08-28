@@ -454,7 +454,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
                         }   
                         if (_eventsVector.indexOf(jxname) > -1) {
                             window.dispatchEvent(new Event(jxname));
-                            console.log(`-FROM IMA CB--- adplayer.js ${jxname} ---- `);
+                            //console.log(`-FROM IMA CB--- adplayer.js ${jxname} ---- `);
                         }
                     }
                 ); //subscribe to events to admgr factory.
