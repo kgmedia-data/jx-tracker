@@ -35,7 +35,28 @@ DO_NOT_REMOVE_GULPBUILD_REPLACE_FLOAT_COND_COMPILE
 
     */
 
-window.jxrenderercore = 1;
+
+//for the new trusted creatives to talk to us.
+//currently this is how we (lazy) implement it (just past the message)
+//but good thing is the creative all it knows is to call this message function
+//What we do here underneath we can change anytime.
+window.jxrenderercore = {
+    dummy: 1,
+    notifyByStr: function(m) {
+        window.postMessage(m, "*");
+    },
+    notify: function(type, token, data) {
+        let obj = {
+            type: type,
+            token: token
+        };
+        if (data) {
+            obj.params = data;
+        }
+        let msgStr = "jxmsg::" + JSON.stringify(obj);
+        window.postMessage(msgStr, "*");
+    }
+};
 
 const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
@@ -264,13 +285,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             // to tell runtime to collapsee your slot
             window.context.noContentAvailable();
         },
-        handleHasAd: function(width, height, fixedHeight) { 
-            //console.log(`calling the render start .... ${width} ${height} ${fixedHeight}`);
-            window.context.renderStart({
-                width: width,
-                height: fixedHeight > 0 ? fixedHeight : height
-            });
-        },
         setupVisChangeNotifiers: function(allhooks, obsCtr, boundCB) {
             //dun care the container
             let unlisten = window.context.observeIntersection(boundCB);
@@ -331,8 +345,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             })
         },
         handleNoAd: function() {
-        },
-        handleHasAd: function(width, height, fixedHeight) {
         }
     }//end of 'default' group
     };
@@ -388,17 +400,22 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
         else { //is IR ratio change
             //for AMP we actually get an array of stuff every now and then. not sure what it is doing.
-            param.forEach(function(entry) {
+            if (param && Array.isArray(param) && param.length > 0) {
+                var latestChange = param[param.length - 1];
+                //param.forEach(function(entry) 
                 if (thisObj.amp) {
+                    //console.log(`### thisObj.amp.boundScrollEvent ${latestChange.rootBounds.height} ${JSON.stringify(latestChange.boundingClientRect)}`);
                     thisObj.amp.boundScrollEvent(
                         null,//this is position of the event argument of the scollcallback
-                        entry.rootBounds.height,
-                        entry.boundingClientRect
+                        latestChange.rootBounds.height,
+                        latestChange.boundingClientRect
                     );
                 }
-                newVisVal = entry.intersectionRatio > visThreshold_ ? 1: 0;
+                //console.log(`### latestChange.intersectionRatio ${latestChange.intersectionRatio}`);
+
+                newVisVal = latestChange.intersectionRatio > visThreshold_ ? 1: 0;
                 //console.log(`DEBUG new visiblity value ${newVisVal}`);
-            });
+            } 
         }
         
         //decision time:
@@ -515,6 +532,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
     }
 
+        
     function __handleCrEvtsMsgs(e) {
         if (this.divObjs.jxCoreElt && this.divObjs.jxCoreElt.contentWindow) {
             //creative is in iframe iframe situation:
@@ -551,7 +569,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         if (json) {
             type = json.type;
         }
-
         if (this.c.trusted && this.c.crSig) {
             //if the creative has a signature (new trusted script type) 
             //and it is trusted
@@ -587,8 +604,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                     //if we are not something that can change height, then ... well.
                     //if it is fixed height
                     //so this is working already.
-                    //console.log(`json.type: ${json.type}, data=${json.data}. ULITE: tk ${json.token} VS ${this.token}`);
-                    //not data ah!!!
+                    //console.log(`!!! json.type: ${json.type}, data=${json.params}. ULITE: tk ${json.token} VS ${this.token}`);
                     if (this.handlers.jxchangeheight) {
                         this.handlers.jxchangeheight(json.params.height, this.handlers.resize);
                     }
@@ -918,6 +934,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
          */
         if (normCrParams.fixedHeight > 0) {
             jxContainer.style.height = normCrParams.fixedHeight + "px";
+            //console.log(`##### name or id of container ${jxContainer.id}`);
             oDiv.style.height = "100%";
             iDiv.style.height = "100%";
         }
@@ -1499,7 +1516,7 @@ const thresholdDiff_ = 120;
         cr.maxwidth = mw_;
         cr.maxheight = mh_;
         cr.doDiffScroll = doDiffScroll;
-        //console.log(`${w_} ${h_} ${mw_} ${mh_}`);
+        //console.log(`#### # # # # # ${w_} ${h_} ${mw_} ${mh_}`);
         //console.log("^^ w h mw mh ^^");
     }
 
@@ -1533,6 +1550,7 @@ const thresholdDiff_ = 120;
      * @returns a normalized creative params object
      */
     function getNormalizedCreativeParams(jxParams, c) {
+        //debugger;
         /** FANCYSCROLL:
          * if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
          * this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
@@ -1692,6 +1710,10 @@ const thresholdDiff_ = 120;
                     //case of third party tag; for vast generation
                     c.adparameters = { trackers: JSON.parse(JSON.stringify(c.trackers)) };
                 }
+                if (jxParams.jxsimidurl) {
+                    //forcing to do SIMID
+                    out.adparameters.jxsimidurl = jxParams.jxsimidurl;
+                }
                 //only those that are managed by us have this property
                 delete out.adparameters.trackers;
                 
@@ -1754,6 +1776,7 @@ const thresholdDiff_ = 120;
                                 //that the widht and height has changed:
                                 //instruct the DPA to do so:
                                 out.adparameters.display_htmlsize = out.width+"x"+out.height;
+                                console.log(`### SCALING: out.adparameters.display_htmlsize=${out.adparameters.display_htmlsize}`);
                             }
                             out.iframe = { url: c.url };
                         }
@@ -1891,6 +1914,34 @@ const thresholdDiff_ = 120;
          bf();
       }
 
+      /**
+       * 2 outcomes in the resolved promise "full" or "fixedheight"
+       * @param {*} resolveFcn 
+       * @param {*} x 
+       * @param {*} y 
+       * @param {*} fixedheight 
+       * @returns 
+       */
+      function ampReqSize(resolveFcn, x,y, fixedheight) {
+          //here the fixedheight is our current height of the unit
+          if (y < fixedheight) {
+              //no need to request resize
+              //we have already enough real estate
+              resolveFcn("full");
+              return;
+          }
+          //this one is e.g. we have 300x600 then the slot is 400x300 (411x307)
+          //then hopefully we get more space lah:
+          return window.context.requestResize(x,y)
+          .then(function() {
+              resolveFcn("full");
+          })
+          .catch(function() {
+              resolveFcn("fixedheight");
+          });
+      }
+
+
     var makeAdRenderer = function(params) {
         var _jxParams = null;
         var _jxContainer = null;
@@ -1907,7 +1958,6 @@ const thresholdDiff_ = 120;
          *  handles 1 level of the waterfall                     
          */
         var _startP = function(jxContainer, remainingCreativesArr, next) {
-
             let univmgr = MakeOneUniversalMgr();
             let instId = "jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
         
@@ -1921,89 +1971,112 @@ const thresholdDiff_ = 120;
             // MOST IMPORTANT CALL. THE NORMALIZED PARAMS OF THE CREATIVE: 
             let normCrParams = getNormalizedCreativeParams(_jxParams, cr);
 
-            
+            let ampReqSizeAnsResolveFcn     = null;
+            let prom_ampReqSizeAns  = (_jxParams.context != 'amp' ?
+                        Promise.resolve(null):
+                        new Promise(function(resolve) { ampReqSizeAnsResolveFcn = resolve; }));
+            if (_jxParams.context == 'amp') {               
+                //with AMP we can actually request for more real estate (particularly vertical.)
+                //this one we will see the outcome, then we decide how to create the container
+                //Whether AMP grant us the request usu depeneds on where we are in the viewport
+                //if the resize request will cause a reflow right in front of the user's eyes
+                //then it will likely be denied.
+                //In that case (if we dun get the vertical height we desire), then we will do 
+                //fixedheight (differential scrolling)
+                ampReqSize(ampReqSizeAnsResolveFcn, _jxParams.pgwidth, normCrParams.height, normCrParams.fixedHeight);
+            }
 
-            // This will create all the needed DIVs. And we are going to insert the
-            // creative in a bit. but before that , set up the needed listens first
-            let divObjs = createOuterContainer(instId, jxContainer, normCrParams);
-            createMainContainer(divObjs, normCrParams);//these can be called earlier too
-
-            let hooksMgr = new HooksMgr(jxContainer, normCrParams, divObjs, cxtFcns);
-
-            //
-            //STEPS:
-            //  1) [WAIT on prom1_stdCrHandshake]: if needed, WAIT for word that creative to 
-            //        communicate to us that it is jxloaded
-            //  2)      if needed, use messages to pass adparameters to creative (needed for e.g. DPA)
-            //  3) [WAIT on prom2_crHasAd]: WAIT for creative to tell us jxhasad 
-            //  4)      start visibility tracking (firing jxvisible, jxnotvisible as needed to creative)
-            //  5) [WAIT on prom3_evtSDKHandshake]: (only applies to creatives using the jx events sdk; else
-            //     this is just a resolved promise): if needed, WAIT for the creative (well, the jx events 
-            //     sdk the the creative loads) to tell us it has been loaded
-
-            let prom1_stdCrHandshake  = null;
-            let prom3_evtSDKHandshake = null;
-
-            let handshakenResolveFcn  = null; //called by standard creative, 
+            let prom1_stdCrHandshake    = null;
+            let prom2_crHasAd           = null;
+            let prom3_evtSDKHandshake   = null;
+            let handshakenResolveFcn    = null; //called by standard creative, 
                                              //or the JX events sdk (which is loaded by creative
-            let crHasAdResolveFcn     = null;
-            let prom2_crHasAd  =  normCrParams.assumeHasAd ? 
+            let crHasAdResolveFcn       = null;
+            let hooksMgr                = null;
+            let boundPM2Creative        = null;
+            let divObjs                 = null;
+
+            prom_ampReqSizeAns.then(function(reqSizeAns) {
+                if (reqSizeAns == 'full') {
+                    //then we remove the fixed height stuff!
+                    delete normCrParams.fixedHeight;
+                }
+                // This will create all the needed DIVs. And we are going to insert the
+                // creative in a bit. but before that , set up the needed listens first
+                divObjs = createOuterContainer(instId, jxContainer, normCrParams);
+                createMainContainer(divObjs, normCrParams);//these can be called earlier too
+
+                hooksMgr = new HooksMgr(jxContainer, normCrParams, divObjs, cxtFcns);
+
+                //
+                //STEPS:
+                //  1) [WAIT on prom1_stdCrHandshake]: if needed, WAIT for word that creative to 
+                //        communicate to us that it is jxloaded
+                //  2)      if needed, use messages to pass adparameters to creative (needed for e.g. DPA)
+                //  3) [WAIT on prom2_crHasAd]: WAIT for creative to tell us jxhasad 
+                //  4)      start visibility tracking (firing jxvisible, jxnotvisible as needed to creative)
+                //  5) [WAIT on prom3_evtSDKHandshake]: (only applies to creatives using the jx events sdk; else
+                //     this is just a resolved promise): if needed, WAIT for the creative (well, the jx events 
+                //     sdk the the creative loads) to tell us it has been loaded
+
+                prom2_crHasAd  =  normCrParams.assumeHasAd ? 
                                 Promise.resolve('jxhasad'):
                                 new Promise(function(resolve) { crHasAdResolveFcn = resolve; });
-            if (normCrParams.jxeventssdk) {
-                //for events sdk integration (typically used with HTML type creatives), 
-                //prom1 we just 'pass' immediately
-                //So that immediately we can hook up the visibility hook so that we
-                //can fire the CV. after that then we really wait for the jx events sdk (loaded
-                //by the creative) to handshake with us . then we can tell to it the adparameters 
-                prom1_stdCrHandshake = Promise.resolve();
-                prom3_evtSDKHandshake = new Promise(function(resolve) {handshakenResolveFcn = resolve;});
-            }
-            else {
-                prom1_stdCrHandshake =  ( normCrParams.iframe && normCrParams.adparameters ? 
-                    new Promise(function(resolve) {handshakenResolveFcn = resolve;}) : 
-                    Promise.resolve());
-                    // This is the case whereby we need to wait until the creative is "ready" 
-                    // (script loaded and run)
-                    // then & only then, fire the info of adparameters
-                    // In those cases where this is not needed (e.g. the parameters passed thru object in the
-                    // injected fragments, then this is resolved here.)
-                prom3_evtSDKHandshake = Promise.resolve();                    
-            }
-            hooksMgr.overrideHandler('jxloaded', handshakenResolveFcn);
-            hooksMgr.hookMsgs();
-            if (!normCrParams.iframe) 
-                hooksMgr.hookEvts(); //the creative may use events to talk to us
-  
-            let talkMode = normCrParams.trackers ? 'self': (normCrParams.crSig ? 'direct': 'other');
-            if (normCrParams.jxeventssdk) talkMode = 'jxeventssdk';
-            let boundPM2Creative = hooksMgr.getPM2CreativeFcn(talkMode);    
-            //for the case of the sdk stuff then we will talk later.
-            //ah I know what to do!
-            
-            /**
-             * SETTING UP OUR RESPONDING TO ANY COMMUNICATIONS FROM CREATIVE 
-             * 3 things to do:
-             * allhooks, all divs floating
-             * 
-             */
-            hooksMgr.overrideHandler('jxhasad', function() { if (crHasAdResolveFcn) crHasAdResolveFcn('jxhasad');});
-            hooksMgr.overrideHandler('jxnoad', function() { if (crHasAdResolveFcn) crHasAdResolveFcn('jxnoad');});
-            hooksMgr.overrideHandler('jxadended', function() {
-                hooksMgr.teardown();
-                if (_floatInst) _floatInst.cleanup();
-                if (remainingCreativesArr.length > 0){
-                    //waterfall to next layer
-                    next(jxContainer, remainingCreativesArr, next);
+                if (normCrParams.jxeventssdk) {
+                    //for events sdk integration (typically used with HTML type creatives), 
+                    //prom1 we just 'pass' immediately
+                    //So that immediately we can hook up the visibility hook so that we
+                    //can fire the CV. after that then we really wait for the jx events sdk (loaded
+                    //by the creative) to handshake with us . then we can tell to it the adparameters 
+                    prom1_stdCrHandshake = Promise.resolve();
+                    prom3_evtSDKHandshake = new Promise(function(resolve) {handshakenResolveFcn = resolve;});
                 }
-            });
+                else {
+                    prom1_stdCrHandshake =  ( normCrParams.iframe && normCrParams.adparameters ? 
+                        new Promise(function(resolve) {handshakenResolveFcn = resolve;}) : 
+                        Promise.resolve());
+                        // This is the case whereby we need to wait until the creative is "ready" 
+                        // (script loaded and run)
+                        // then & only then, fire the info of adparameters
+                        // In those cases where this is not needed (e.g. the parameters passed thru object in the
+                        // injected fragments, then this is resolved here.)
+                    prom3_evtSDKHandshake = Promise.resolve();                    
+                }
+                hooksMgr.overrideHandler('jxloaded', handshakenResolveFcn);
+                hooksMgr.hookMsgs();
+                if (!normCrParams.iframe) 
+                    hooksMgr.hookEvts(); //the creative may use events to talk to us
+  
+                let talkMode = normCrParams.trackers ? 'self': (normCrParams.crSig ? 'direct': 'other');
+                if (normCrParams.jxeventssdk) talkMode = 'jxeventssdk';
+                boundPM2Creative = hooksMgr.getPM2CreativeFcn(talkMode);    
+                //for the case of the sdk stuff then we will talk later.
+                //ah I know what to do!
+            
+                /**
+                * SETTING UP OUR RESPONDING TO ANY COMMUNICATIONS FROM CREATIVE 
+                * 3 things to do:
+                * allhooks, all divs floating
+                * 
+                */
+                hooksMgr.overrideHandler('jxhasad', function() { if (crHasAdResolveFcn) crHasAdResolveFcn('jxhasad');});
+                hooksMgr.overrideHandler('jxnoad', function() { if (crHasAdResolveFcn) crHasAdResolveFcn('jxnoad');});
+                hooksMgr.overrideHandler('jxadended', function() {
+                    hooksMgr.teardown();
+                    if (_floatInst) _floatInst.cleanup();
+                    if (remainingCreativesArr.length > 0){
+                        //waterfall to next layer
+                        next(jxContainer, remainingCreativesArr, next);
+                    }
+                });
 
-            // FINALLY , WE INJECT THE CREATIVE'S NEEDED SCRIPTS AND STUFF!!!!
-            // THEN WE WAIT ON THE PROMISE THAT IT IS READY TO RECEIVE INSTRUCTIONS
-            // FROM US    
-            insertCreative(divObjs, normCrParams);
-
-            prom1_stdCrHandshake.then(function() {
+                // FINALLY , WE INJECT THE CREATIVE'S NEEDED SCRIPTS AND STUFF!!!!
+                // THEN WE WAIT ON THE PROMISE THAT IT IS READY TO RECEIVE INSTRUCTIONS
+                // FROM US    
+                insertCreative(divObjs, normCrParams);
+                return prom1_stdCrHandshake;
+            })
+            .then(function() {
                 /**
                  * the creative (script, html ..or nothing) is loaded and ready to listen to our orders.
                  */
@@ -2052,9 +2125,7 @@ const thresholdDiff_ = 120;
                     normCrParams.universal, 
                     normCrParams.clickurl, 
                     normCrParams.clicktrackerurl);
-                    //MIOW
-
-                cxtFcns.handleHasAd(normCrParams.width, normCrParams.height, normCrParams.fixedHeight);
+                    
                 
                 //?? ! boundHandleResize();
 
@@ -2088,7 +2159,7 @@ const thresholdDiff_ = 120;
                 boundPM2Creative('openshop');
             })
             .catch(function() {
-                hooksMgr.teardown();
+                if (hooksMgr) hooksMgr.teardown();
                 if (_floatInst) _floatInst.cleanup();
                 if (remainingCreativesArr.length > 0){
                     //waterfall to next layer
@@ -2185,6 +2256,7 @@ const thresholdDiff_ = 120;
             if (!_jxContainer) {
                 return;
             }
+            //debugger;
             let respBlob = null;
             if (_jxParams.jsoncreativeobj64) {
                 try {

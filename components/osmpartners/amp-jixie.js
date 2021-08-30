@@ -31,6 +31,8 @@ function common_(rtjson) {
 function inject_(params) {
     if (window.jxrenderer) {
         //check the exact prop name. this is just the idea only
+        console.log(JSON.stringify(params, null));
+        console.log("----------#####-");
         return window.jxrenderer.init(params);
     }
 
@@ -62,7 +64,7 @@ function makeNormalizedObj_(dbjson, p) {
         container: `c`,
         maxwidth: p.maxwidth,
         fixedheight: p.fixedheight,
-        excludedheight: 0,
+        excludedheight: p.excludedheight,
         jsoncreativeobj64: dbjson.adparameters.jsonbase64
     };
     rtjson.inject = inject_.bind(null, pp);

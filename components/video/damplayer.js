@@ -38,7 +38,7 @@ const isMobileDevice_ = (function () {
 }());
 const maxVWidth_ = (isMobileDevice_ ? 641: 853);
 const maxVHeight_ = (isMobileDevice_ ? 361: 481);
-const DAMApiBase_ = 'https://jixie-dam-api.azurewebsites.net/api/stream?format=hls&metadata=basic';
+const DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
 
 const IRThreshold_ = 0.5;
 

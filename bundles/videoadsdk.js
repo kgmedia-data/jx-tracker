@@ -6,10 +6,19 @@
  * Documentation: refer to videoadsdk.md file in this same dir
  */
 
+/**
+ * 
+ * 
+ * START OF PART 1 of Standard template stuff for a new creative type 
+ * This thing can easily be trusted and non-trusted (depends on how renderer create us)
+ * 
+ * 
+ */
 if (window.jxvideoadsdk) { 
+    //something particular to this creative form.
+    //this signature is known to the renderer
     return;
 }
-//console.log(`#### videoadsdk (first new lines. cannot set breakpoint?!)`);
 window.jxvideoadsdk = 1;
 const ourSig = 'jxvideoadsdk';
 const ourSigQ = 'jxvideoadsdkq';
@@ -20,6 +29,15 @@ if (window.jxrenderercore) {
     //since we are in the same window as the renderer.
     trusted = true;
 }
+
+/**
+ * 
+ * 
+ * END OF PART 1 of Standard template stuff for a new creative type PART
+ * 
+ * 
+ */
+
  
 const modulesmgr                       = require('../components/basic/modulesmgr');
 const cssmgr                           = require('../components/video/cssmgr');
@@ -85,9 +103,15 @@ function makePlayer(containerId, adparameters, config = null, eventsVector = nul
 
 
 
+/**
+ * 
+ * 
+ * START OF PART 2 of Standard template stuff for a new creative type 
+ * This thing can easily be trusted and non-trusted (depends on how renderer create us)
+ * 
+ * 
+ */
 
-//<----- Only needed when univeral unit is outside our iframe
-//I am still considering..
 function listen(e) {
     let json = null;
     if (typeof e.data === 'string' && e.data.startsWith('jx')) 
@@ -117,20 +141,20 @@ function listen(e) {
             }
             break;
         case "adparameters":
-            //console.log(`___ SUPER IMPORTANT IN VIDEOADSDK ###### we are receiging stuff ${json.token}`);
             makePlayer(json.token, json.data);
             break;                    
     }
 }//listen
-
 
 if (!trusted) {
     window.addEventListener('message', listen, false);
     notifyMaster('jxloaded', ourSig);
 }
 
-//height change
-function notifyMaster(type, token, data = null) { //todo DATA HOW
+//NOTE: If want to resize can call this:
+//notifyMaster('size', ourSig, {height: 512});
+
+function notifyMaster(type, token, data = null) { 
     let msgStr = '';
     if (type == 'jxloaded') {
         token = window.name;
@@ -140,12 +164,13 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
         token: token
     };
     if (data) {
-        obj.data = data;
+        obj.params = data;
     }
     msgStr = "jxmsg::" + JSON.stringify(obj);
-    //console.log(`##### videoadsdk trusted=${trusted} ${msgStr}`);
     if (trusted) { //it is just a function call then
-        jxrenderer.message(msgStr);
+        window.jxrenderercore.notify(type, token, data);
+        //OR you can call like this:
+        //window.jxrenderercore.notifyByStr(msgStr);
     }
     else {
         parent.postMessage(msgStr, '*'); 
@@ -154,7 +179,6 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
 
     var JxEventsQ = function () {
         this.push = function () {
-            //console.log(`#### INSIDE THE NEW THIS.PUSH!!!`);
             for (var i = 0; i < arguments.length; i++) try {
                 if (typeof arguments[i][0] === "string") {
                     let fcnname = arguments[i][0];
@@ -164,13 +188,7 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
                          data:   arguments[i][1]
                         });
                     }
-                    //else {
-                      //  console.log(`##### videoadsdk currently unable to handle this fcnname ${fcnname}`);
-                    //}
                 }
-                //else {
-                  //  console.log(`##### videoadsdk currently unable to handle type: ${typeof arguments[i]}`);
-                //}
             } catch (e) {}
         }
     };
@@ -182,4 +200,11 @@ function notifyMaster(type, token, data = null) { //todo DATA HOW
     // execute all of the queued up events - apply() turns the array entries into individual arguments
     if (_old_eventsq)
         window[ourSigQ].push.apply(window[ourSigQ], _old_eventsq);
-    //--->
+/**
+ * 
+ * 
+ * END OF PART 2 of Standard template stuff for a new creative type 
+ * This thing can easily be trusted and non-trusted (depends on how renderer create us)
+ * 
+ * 
+ */

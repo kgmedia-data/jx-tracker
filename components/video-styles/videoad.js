@@ -14,7 +14,9 @@ const hideCls               = 'hideCls' + ran;
 const adHideCls             = 'adHideCls' + ran;
 const spinnerCls            = 'spinnerCls' + ran; 
 const comboDivCls           = 'comboDivCls' + ran;
-const replayBtnCls          = 'adReplayBtnCls' + ran;
+// const replayBtnCls          = 'adReplayBtnCls' + ran;
+const replayWrapperCls      = 'adReplayWrapperCls' + ran;
+const replayBtnContainerCls = 'replayBtnContainerCls' + ran;
 
 let spinnerColor = '#000000';
 var controlsColor = '%%color%%';
@@ -61,8 +63,12 @@ var stylesStrObj_ = {};
         '.' + adProgressBarCls + '> span:after {content: "";position: absolute;top: 0;left: 0;bottom: 0;right: 0;z-index: 1;-webkit-background-size: 50px 50px;-moz-background-size: 50px 50px;background-size: 50px 50px;-webkit-border-top-right-radius: 8px;-webkit-border-bottom-right-radius: 8px;-moz-border-radius-topright: 8px;-moz-border-radius-bottomright: 8px;' +
                 'border-top-right-radius: 8px;border-bottom-right-radius: 8px;-webkit-border-top-left-radius: 20px;-webkit-border-bottom-left-radius: 20px;-moz-border-radius-topleft: 20px;-moz-border-radius-bottomleft: 20px;border-top-left-radius: 20px;border-bottom-left-radius: 20px;overflow: hidden;}',
 
-        '.' + replayBtnCls + '{position: absolute;padding: 9px;bottom: 20px;padding-right: 30px;right: 0px;background: rgba(0, 0, 0, 0.74);z-index: 2;color: rgba(255, 255, 255, 0.8);cursor: pointer;border-radius: 4px;font-size: 14px;letter-spacing: 1px;font-family:"Open Sans",sans-serif,serif;}',
-        '.' + replayBtnCls + ' .material-icons {position: absolute;top:5px;}',
+        // '.' + replayBtnCls + '{position: absolute;padding: 9px;bottom: 20px;padding-right: 30px;right: 0px;background: rgba(0, 0, 0, 0.74);z-index: 2;color: rgba(255, 255, 255, 0.8);cursor: pointer;border-radius: 4px;font-size: 14px;letter-spacing: 1px;font-family:"Open Sans",sans-serif,serif;}',
+        // '.' + replayBtnCls + ' .material-icons {position: absolute;top:5px;}',
+        '.' + replayWrapperCls + '{opacity: 0.8;background-color: #ffffff;width: 100%;height: 100%;position: absolute;top: 0;display: flex;left: 0;justify-content: center;z-index: 9999;align-items: center;}',
+        '.' + replayBtnContainerCls + '{opacity:0.8;height:40px;display:flex;justify-content:center;align-items:center;cursor:pointer;transition:opacity 175ms ease;}',
+        '.' + replayBtnContainerCls + ' .replay-icon {color: #294355;border: 2px solid #294355;border-radius: 35px;padding: 7px;}',
+        '.' + replayBtnContainerCls + ' .replay-text {margin-left: 20px;font-size: 20px;line-height: 40px;height: 40px;color: #294355;}'
     ].join("\n");
 
    
@@ -93,22 +99,24 @@ var stylesStrObj_ = {};
 
 function getCls_() {
     return {
-    comboDivCls:        comboDivCls,
-    contentDivCls:      contentDivCls,
-    adDivCls:           adDivCls,
-    playerCls:          playerCls,
-    thumbnailCls:       thumbnailCls,
-    adControlsCls:      adControlsCls,
-    playerControlsCls:  playerControlsCls,
-    iconCls:            iconCls,
-    spinnerCls:         spinnerCls,
-    bigPlayBtnCls:      bigPlayBtnCls,
-    adPlayBtnCls:       adPlayBtnCls,
-    adMuteBtnCls:       adMuteBtnCls,
-    adProgressBarCls:   adProgressBarCls,
-    hideCls:            hideCls,
-    adHideCls:          adHideCls,
-    replayBtnCls:       replayBtnCls,
+    comboDivCls:            comboDivCls,
+    contentDivCls:          contentDivCls,
+    adDivCls:               adDivCls,
+    playerCls:              playerCls,
+    thumbnailCls:           thumbnailCls,
+    adControlsCls:          adControlsCls,
+    playerControlsCls:      playerControlsCls,
+    iconCls:                iconCls,
+    spinnerCls:             spinnerCls,
+    bigPlayBtnCls:          bigPlayBtnCls,
+    adPlayBtnCls:           adPlayBtnCls,
+    adMuteBtnCls:           adMuteBtnCls,
+    adProgressBarCls:       adProgressBarCls,
+    hideCls:                hideCls,
+    adHideCls:              adHideCls,
+    // replayBtnCls:           replayBtnCls,
+    replayWrapperCls:       replayWrapperCls,
+    replayBtnContainerCls:  replayBtnContainerCls
     };
 }
 function getStyles_() {
