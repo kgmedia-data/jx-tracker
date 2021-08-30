@@ -428,59 +428,92 @@ const supported_ = [
 
  
 const whoGoesWhere = [{   
+        title: "OSM non AMP",
+        signature: "window.jxoutstreammgr.init", //already live
+        queue: "window._jxoutstreammgrq",
         src: osmjsfile_, 
         livebase: "jxosm.1.0.min.js", 
         livefull: "https://scripts.jixie.io/jxosm.1.0.min.js"
     }, { 
         //eventually it should replace the friendly system lah.
+        title: "universal (new) floatable (replaces jxfriendly.1.3.flt.min.js)",
+        signature: "window.jxuniversal.init",
+        queue: "window._jxuniversalfltq",
         src: ulitejsfile_,
         floatable: true,
-        livebase: "jxfriendly.2.0.min.js",
-        livefull: "https://scripts.jixie.io/jxfriendly-flt.2.0.min.js"
+        livebase: "jxfriendly.2.0.flt.min.js",
+        livefull: "https://scripts.jixie.io/jxfriendly.2.0.flt.min.js"
     }, { 
         //eventually it should replace the friendly system lah.
+        title: "universal (new) not-floatable (replaces jxfriendly.1.3.min.js)",
+        signature: "window.jxuniversal.init",
+        queue: "window._jxuniversalq",
         src: ulitejsfile_,
         livebase: "jxfriendly.2.0.min.js",
         livefull: "https://scripts.jixie.io/jxfriendly.2.0.min.js"
     }, { 
+        title: "video ad sdk (to replace jxvideo.1.4.min.js)",
+        //this is used expressedly by the renderer and talk using
+        //adparameters etc.
+        //so this is custom.
+        signature: "window.jxvideoadsdk (flat)", //coz this one is not really "called from page"
+        queue: "_jxvideoadsdkq", 
         src: videoadsdkjsfile_,
         livebase: "jxvideocr.1.0.min.js",
         livefull: "https://scripts.jixie.io/jxvideocr.1.0.min.js",
     }, {
+        title: "OSM (AMP). Our JS for amp-ad jixie",
         src: amposmjsfile_,
+        //signature: "n/a",
+        //queue: "n/a",
         livebase: "jxamp.min.js",
         //cannot anyhow changed. Built into AMP runtime.
         livefull: "https://scripts.jixie.io/jxamp.min.js"
-    }, { 
+    }, {
+        title: "renderer to play HB ad",
         src: hbrendererjsfile_,
+        signature: "window.jxhbuniversal.hbinit",
+        queue: "jxhbrendererq", 
         livebase: "jxhbrenderer.1.1.min.js",
         livefull: "https://scripts.jixie.io/jxhbrenderer.1.1.min.js"
     }, { 
+        title: "renderer to play simple ad (from base64 blob)",
         //we should combine there 2.
         //this one is not officially used yet.
         src: jxrendererjsfile_,
+        signature: "window.jxrenderer.init",
         livebase: "",
         livefull: ""
     }, { 
+        title: "Jixie video SDK",
         src: videosdkjsfile_,
+        signature: "window.JX.player and window.JX.ampplayer",
+        //queue: not supported.
         livebase: "jxvideo2.1.min.js",
         livefull: "https://scripts.jixie.io/jxvideo2.1.min.js"
     }, { 
+        title: "Jixie video AD SDK (to replace jxvideo.1.3.min.js)",
         //not sure if it is working now.
         src: videoadsdkstandalonejsfile_,
-        livebase: "",
-        livefull: ""
+        signature: "window.jxvideoadsdksal (flat)",
+        //queue: not supported
+        livebase: "jxvideoad.1.0.min.js", //aiyo what to call it ah?
+        livefull: "https://scripts.jixie.io/jxvideoad.1.0.min.js"
     }
 ];       
 
 function printWhoGoesWhere() {
     whoGoesWhere.forEach(function(oneEntry) {
-        let localName = 'dist/bundles/jx-app-' + oneEntry.src + 
-            (oneEntry.floatable ? '-floatable': '')+
+        let floatSeg = (oneEntry.floatable ? '-floatable': '');
+        let devPath = `https://${config_aws.bucket}.s3-ap-southeast-1.amazonaws.com/${testFilesPath_}/${outputprefix_}${oneEntry.src}${floatSeg}.js`;
+        let localName = `dist/bundles/${outputprefix_}` + oneEntry.src + 
+            floatSeg + 
             '.min.js';
         console.log(`
+            ______${oneEntry.title}_______
             ${localName} -> 
-                ${oneEntry.livefull}
+                [${oneEntry.livefull}]
+                {${devPath}}
         `);
     
     });

@@ -35,7 +35,9 @@ const imaEventsSubset_ =[
     "jxadstart"
 ];
 
-function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
+function MakeOneInst_(containerId, data, config = null, eventsVector = null, notifyMaster = null) {
+    var _token              = null;
+    var _notifyMasterFcn    = null;
     var _unsentEvents       = { jxplayvideo: 1 };
     var _pDiv               = null;
     var _playerElt          = null;
@@ -157,7 +159,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             //This one is for the universal unit to get 
             //If player sdk (jxvideo1.3.min.js) then this
             //is just wasted 
-            parent.postMessage("jxadended", '*');
+            _notifyMaster("jxadended");
         }
     }
 
@@ -171,7 +173,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             _thumbnailDiv.classList.remove(hideCls);
         }
         else { //nothing to do to show. bye close shop
-            parent.postMessage("jxadended", '*');
+            _notifyMaster("jxadended");
         }
     }
 
@@ -303,7 +305,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
             //if used in the universal context this is the one
             //which is important: we are in an iframe
             if (msg) {
-                parent.postMessage(msg, '*'); 
+                _notifyMaster(msg);
             }
         })
         .catch(function(e){
@@ -333,7 +335,6 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         //we will need the "jxvisible", for the playerad sdk case we will need the caller to
         //call our play API. Hence autostart will be false
         let cb = isRepeat ? doNothing: adOutcomeCB;
-        //if in iframe, then true (must be secure)
         _adObj.setVpaidSecure(_containerId == 'default' ? true: false); //see what we are in now?
         // OK We are making the ad call now:
         if (crData) {
@@ -567,8 +568,9 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         }            
     }
     var DO_AUTOPLAY_TEST = false;
-    function OneAdInstance(containerId, crData, config = null, eventsVector = null) {
-        //_token = containerId;
+    function OneAdInstance(containerId, crData, config = null, eventsVector = null, notifyMaster = null) {
+        _notifyMasterFcn = notifyMaster;
+        _token = containerId;
         _containerId = containerId;
         
         _spinner = MakeOneSpinner(document.getElementById(_containerId) ? document.getElementById(_containerId) : document.body);
@@ -626,6 +628,12 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         _triggerAd(crData, config);
     }
 
+    
+    var _notifyMaster = function(type) {
+        if (_notifyMasterFcn)
+            _notifyMasterFcn(type, _token);
+    }
+    
     /**
      * Only the universal integration will trigger this
      * The ads sdk (aka jxvideo1.3.min.js will not have this)
@@ -638,7 +646,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null) {
         else if (action == 'jxnotvisible')
             this.visibilityChange(false);
     }
-    let ret = new OneAdInstance(containerId, data, config, eventsVector);
+    let ret = new OneAdInstance(containerId, data, config, eventsVector, notifyMaster);
     return ret;
 }
 

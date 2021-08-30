@@ -21,7 +21,8 @@ if (window.jxvideoadsdk) {
 }
 window.jxvideoadsdk = 1;
 const ourSig = 'jxvideoadsdk';
-const ourSigQ = 'jxvideoadsdkq';
+const ourSigQ = '_jxvideoadsdkq';
+                 
 
 var trusted = false;
 if (window.jxrenderercore) {
@@ -96,7 +97,7 @@ function makePlayer(containerId, adparameters, config = null, eventsVector = nul
     if (instMaybe) {
         return;
     }
-    let playerInst = createObject(containerId, adparameters, config, eventsVector);
+    let playerInst = createObject(containerId, adparameters, config, eventsVector, notifyMaster);
     instMap.set(containerId, playerInst);
     return playerInst;
 }
@@ -183,7 +184,6 @@ function notifyMaster(type, token, data = null) {
                 if (typeof arguments[i][0] === "string") {
                     let fcnname = arguments[i][0];
                     if (fcnname == 'message' && arguments[i].length >= 2) {
-                        //console.log(`##### videoadsdk calling listen with stuff`); //${arguments[i][1]}`);
                         listen({
                          data:   arguments[i][1]
                         });

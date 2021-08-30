@@ -37,9 +37,12 @@ DO_NOT_REMOVE_GULPBUILD_REPLACE_FLOAT_COND_COMPILE
 
 
 //for the new trusted creatives to talk to us.
-//currently this is how we (lazy) implement it (just past the message)
-//but good thing is the creative all it knows is to call this message function
-//What we do here underneath we can change anytime.
+//OK for now we shall keep this implementation which is using 
+//post messages
+//If on the page we have both e.g. OSM and ULITE JS running
+//then we use this which is a post message mechanism.
+//Bother renderers will get the messages but only those that spawned
+//the creative will handle it (token match)
 window.jxrenderercore = {
     dummy: 1,
     notifyByStr: function(m) {
@@ -263,10 +266,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
    
     const jxScriptUrls_ = {
         video: {
-            //signature: 'jx_video_ad',
             signature: "jxvideoadsdk",
+            //the queue name is '_' + signature + 'q';
+            //so here it is _jxvideoadsdkq
             url: 'https://scripts.jixie.io/jxvideocr.1.0.min.js'
-            //url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
         }
     };
     const visThreshold_ = 0.4;
@@ -544,6 +547,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
         let type = null;                    
         let json = null;
+        
         if (e && e.type && e.type.startsWith('jx')) {
             type = e.type;
         }
@@ -569,7 +573,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         if (json) {
             type = json.type;
         }
-        if (this.c.trusted && this.c.crSig) {
+        if (this.c.div && this.c.crSig) {
+            //trusted
             //if the creative has a signature (new trusted script type) 
             //and it is trusted
             //then we need to also do a token match check too (token
@@ -674,7 +679,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 //console.log(`CCC#### Simple type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
                 //not in iframe (trusted) so need more care:
                 if (crSig) {
-                    crSig += 'q';
+                    crSig = '_' + crSig + 'q';
                     //new type of creatives (using our creatives Template to develop) and running in trusted mode:
                     //we need that token else there will be problem if there are several instances
                     //of the thing flying in the same "window"
@@ -699,7 +704,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 let crSig = this.c.crSig;
                 //console.log(`CCC#### Complex type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
                 if (crSig) { //new way. then we only call a queue push 
-                    crSig += 'q';
+                    crSig = '_' + crSig + 'q';
                     window[crSig] = window[crSig] || [];
                     window[crSig].push(['message', 
                         "jxmsg::" + JSON.stringify({ type: msgtype, token: this.c.token, data: dataMaybe})]);
@@ -1837,7 +1842,7 @@ const thresholdDiff_ = 120;
                                 //that the widht and height has changed:
                                 //instruct the DPA to do so:
                                 out.adparameters.display_htmlsize = out.width+"x"+out.height;
-                                console.log(`### SCALING: out.adparameters.display_htmlsize=${out.adparameters.display_htmlsize}`);
+                                //console.log(`### SCALING: out.adparameters.display_htmlsize=${out.adparameters.display_htmlsize}`);
                             }
                             out.iframe = { url: c.url };
                         }
