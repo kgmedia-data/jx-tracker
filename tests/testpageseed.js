@@ -74,6 +74,7 @@ const demoCases_ = [
     },
     {
         name: 'Video ad recommendation',
+        renee: 'https://megapolitan.kompas.com/read/2021/05/28/05334261/update-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257?creativeids=530&jxadtagurl=https%3A%2F%2Fad.jixie.io%2Fv1%2Fvideo%3Fsource%3Dosm%26unit%3D1000008-iT3q5Ci4Ry%26client_id%3D52471830-e2f4-11ea-b5e9-f301ddda9414%26sid%3D1630122685-98eaca70-973f-11eb-bced-2faf96bca39d%26creativeids%3D530%26pageurl%3Dhttps%253A%252F%252Fmegapolitan.kompas.com%252Fread%252F2021%252F05%252F28%252F05334261%252Fupdate-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257%253Fcreativeid%253D530%26domain%3Dmegapolitan.kompas.com%26fixedheight%3D400%26maxwidth%3D546%0A',
         id: 1015,
         width: 640,
         height: 360,

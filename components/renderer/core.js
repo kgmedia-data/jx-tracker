@@ -1280,7 +1280,7 @@ const thresholdDiff_ = 120;
          if (cr.assets && cr.assets.universal) {
             scaling = cr.assets.universal.scaling;
          }
-         if (cr.universal) {
+         if (cr.universal && cr.universal.scaling) {
             scaling = cr.universal.scaling;
          }
          if (scaling != 'creative'  && scaling != 'renderer') {
@@ -1350,13 +1350,71 @@ const thresholdDiff_ = 120;
             h = 0;
         }
         // Reminder that so for video : w and h are both set to 0 at this stage:
+        /*
         let crMaxW = w;
         let crMinW = w;
         let crMaxH = h;
         let crMinH = h;
+        */
+        let crMaxW = 0;
+        let crMinW = 0;
+        let crMaxH = 0;
+        let crMinH = 0;
+
+        //<--- NEW CODE:
+        if (scaling == 'none') {
+            crMaxW = w;
+            crMinW = w;
+            crMaxH = h;
+            crMinH = h;
+        }
+        else {
+            let u = crDetails.universal; 
+            //init to 0 0 0 0
+            //do the max first:
+            if (u && !u.maxwidth && u.maxheight) {
+                u.maxwidth = Math.round(crAR*u.maxheight);
+            }
+            if (u && u.maxwidth) {
+                let tmp = Math.round(u.maxwidth/crAR);
+                if (!u.maxheight || tmp < u.maxheight) {
+                    //u.maxwidth make a more restricted thing:
+                    crMaxW = u.maxwidth;
+                    crMaxH = tmp;
+                }
+                else {
+                    crMaxH = u.maxheight;
+                    crMaxW = Math.round(crMaxH*crAR);
+                }
+            }
+            //do the min then:
+            if (u && !u.minwidth && u.minheight) {
+                u.minwidth = Math.round(crAR*u.minheight);
+            }
+            if (u && u.minwidth) {
+                let tmp = Math.round(u.minwidth/crAR);
+                if (!u.minheight || tmp < u.minheight) {
+                    //u.maxwidth make a more restricted thing:
+                    crMinW = u.minwidth;
+                    crMinH = tmp;
+                }
+                else {
+                    crMinH = u.minheight;
+                    crMinW = Math.round(crMinH*crAR);
+                }
+            }
+            if (!crMaxW) {
+                crMaxW = bigWidth_;
+                crMaxH = bigHeight_;
+            }
+        }
+        ////--- NEW CODE --->
+
+
+        
 
         //none renderer, creative
-
+        if (false) { //block it out:
         if (scaling != 'none') {
             // if it is not responsive, then crMaxW and crMinW = width of creative
             // ditto for height, nothing much to further calculate then:
@@ -1437,6 +1495,9 @@ const thresholdDiff_ = 120;
         //--->
         if (!crMaxW) crMaxW = bigWidth_;
         if (!crMaxH) crMaxH = bigHeight_;
+        }//if (false) block
+
+
         return {
             aspectratio:    crAR,
             width:          w, //for video will be 0
