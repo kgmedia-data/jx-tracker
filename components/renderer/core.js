@@ -451,6 +451,12 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 if (fire == 1) this.firstViewed = true;
             }
             this.notifyFcn(fire == 1 ? true: false);
+            if (fire == 1 && this.notifyFirstVisible) {
+                // console.log(`!!!!!! ####calling notifyFirstVisible NOW`);
+                this.notifyFirstVisible();
+                this.notifyFirstVisible = null;
+            }
+            
             this.lastFired = fire;
         }
     }
@@ -1090,10 +1096,21 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         } 
         else 
         {
-            //console.log(`##### xx ${jxbnDiv.offsetWidth/c.width}, yy ${jxbnDiv.offsetHeight / c.height}`);
             ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
         }
-
+        
+        if (ratio < 0.2) {
+            // console.log(`### ${jxbnDiv.id} bad ratio: realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} `);
+            // for amp we will have this. at least for the prebidserver one we could well have this
+            // problem (our winner ad is server in some GAM iframe)
+            // I see sometimes, that when this is called, the offsetWidth == 1.
+            // Then we get a ridiculously small ratio then.
+            // safety switch .
+            // console.log(`### ${jxbnDiv.id} bad ratio: __handleResize ridiculous width etc `);
+            return false; //this is likely those e.g. AMP cases, whereby this thing can happen when 
+            // the container for our stuff (may be some GAM slot of some amp-ad whatever) may not
+            // have the right size yet.
+        }
         let newH = ((c.height*ratio) + 5);
         //console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
 
@@ -1132,6 +1149,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 break;
             */                
         }
+        return true;
      }
 
     /**
@@ -1895,6 +1913,9 @@ const thresholdDiff_ = 120;
      * @param {*} cxtFcns 
      */    
     function HooksMgr(container, normCrParams, divObjs, cxtFcns) {
+        this.needcallresize = true; //typically we will have this called after the hasad signal
+        //but with amp, this might be too early and can cause problems.
+
         this.cxtFcns = cxtFcns;
         this.c = normCrParams;
         this.divObjs = divObjs;
@@ -1927,6 +1948,18 @@ const thresholdDiff_ = 120;
         this.bf_processCrEvtsMgs = __handleCrEvtsMsgs.bind({ 
             divObjs: this.divObjs, c: this.c, handlers: this.msghandlers });
       }
+      HooksMgr.prototype.callHandleResize = function(mode) {
+          let success = this.bf_resize();
+          if (success) {
+            this.needcallresize = false;
+            // the reason for failure could be -- esp for AMP Prebidserver case
+            // the container by the time of jxhasad could still be e.g. width = 1 or
+            // something. so not a good time to do __handleResize yet.
+          }
+          else {
+              // console.log(`!!!!!! ####need call resize is true`);
+          }
+      }
       HooksMgr.prototype.getPM2CreativeFcn = function(mode) {
         if (mode == 'jxeventssdk') return __pm2JxEvtsSDKWithMsgs.bind({divObjs:this.divObjs, c: this.c});
         if (mode == 'self') return __pm2Self.bind({divObjs:this.divObjs, c: this.c});
@@ -1958,6 +1991,13 @@ const thresholdDiff_ = 120;
             firstViewed: false,
             notifyFcn: notifyFcn
         };   
+        if (this.needcallresize) {
+            // console.log(`!!!!!! ####need call resize is true so wire up the notifyFirstVisible`);
+            // this may be the case for AMP prebidserver case
+            // as by the time of the jxhasad, the offsetWidth could very well be
+            // 1 and so we cannot transform properly.
+            o.notifyFirstVisible = this.bf_resize;
+        }
         let bf = __combiVisibilityChange.bind(o);
         this.cxtFcns.setupVisChangeNotifiers(this.allhooks, this.ctr, bf); 
       }
@@ -2193,7 +2233,7 @@ const thresholdDiff_ = 120;
                     normCrParams.clicktrackerurl);
                     
                 
-                //?? ! boundHandleResize();
+                hooksMgr.callHandleResize();
 
                 if (JX_FLOAT_COND_COMPILE) {
                     if (normCrParams.floatParams) {
