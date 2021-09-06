@@ -13,7 +13,7 @@ modulesmgr.set('video/cssmgr',         cssmgr);
 
 const stylesSet                        = require('../components/video-styles/default');//we choose this set of style
 cssmgr.init(stylesSet.getCls(), stylesSet.getStyles());
-//cssmgr.inject('adControls', { color: '#FF0000'});
+cssmgr.inject('newControls', { color: '#FF0000'});
 
 
 // these we only use within this file, so dun bother
@@ -45,6 +45,9 @@ modulesmgr.set('video/admgr-factory',   admgr_fact);
 
 const ctrls_fact                        = require('../components/video/ctrls-factory');
 modulesmgr.set('video/ctrls-factory',   ctrls_fact);
+
+const new_ctrls_fact                        = require('../components/video/new-ctrls-factory');
+modulesmgr.set('video/new-ctrls-factory',   new_ctrls_fact);
 
 const soundind_fact                     = require('../components/video/soundind-factory');
 modulesmgr.set('video/soundind-factory',soundind_fact);

@@ -4,7 +4,7 @@ const common                    = modulesmgr.get('basic/common');
 const jxvhelper                 = modulesmgr.get('video/jxvideo-helper');
 const consts                    = modulesmgr.get('video/consts');
 const MakeOneAdObj              = modulesmgr.get('video/admgr-factory');
-const MakeOnePlayerControlsObjD = modulesmgr.get('video/ctrls-factory');
+const MakeOnePlayerControlsObjD = modulesmgr.get('video/new-ctrls-factory');
 const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
@@ -195,7 +195,7 @@ window.jxPromisePolyfill        = 'none';
                     _contentDiv = common.newDiv(
                         _container,
                         "div",
-                        '<video class="' + playerCls + '" width="100%" height="100%" id="' + JXPlayerID + '-' + r + '" muted controls playsinline preload="' + preloadString + '"></video>',
+                        '<video class="' + playerCls + '" width="100%" height="100%" id="' + JXPlayerID + '-' + r + '" muted playsinline preload="' + preloadString + '"></video>',
                         contentDivCls
                     );
                     _vid = document.getElementById(JXPlayerID + '-' + r);
@@ -416,7 +416,6 @@ window.jxPromisePolyfill        = 'none';
         function _updatePlayState(isPlaying) {
             if (isPlaying) _cntVState = 'playing';
             else _cntVState = 'paused';
-            _ctrls.updatePlayState(isPlaying); //now is nothing
         }
         /**
          * This is for the caller function (JXPlayer) to set a report function
@@ -507,7 +506,7 @@ window.jxPromisePolyfill        = 'none';
                     _showSpinner();
                     if (_soundIndObj)
                         _soundIndObj.hideMaybe(); //if the sound indicator is there need to hide ah.
-                    _ctrls.hide();
+                    _ctrls.hideControls();
                 },
                 switch2Cnt: function() {
                     //_state = "content";
@@ -532,7 +531,7 @@ window.jxPromisePolyfill        = 'none';
                     if (_soundIndObj)
                         _soundIndObj.showMaybe();
                     //then the state will be set to content in the onPlayingCB....
-                    _ctrls.show();
+                    _ctrls.showControls();
                 },
                 onAdPlaying: function() {
                     _detectManualPlayOrPause('playing');
@@ -700,13 +699,9 @@ window.jxPromisePolyfill        = 'none';
                 },
                 mute: function() {
                     _vid.muted = true;
-                    _ctrls.setBtnMuteActive(true);
-                    _ctrls.updateMutedState(true);
                 },
                 unMute: function() {
                     _vid.muted = false;
-                    _ctrls.setBtnMuteActive(false);
-                    _ctrls.updateMutedState(false);
                 },
                 getDuration: function() {
                     return _vid.duration;
@@ -716,6 +711,21 @@ window.jxPromisePolyfill        = 'none';
                 },
                 setVideoPlayhead: function(time) {
                     _vid.currentTime = time;
+                },
+                isPaused: function() {
+                    return _vid.paused;
+                },
+                isMuted: function() {
+                    return _vid.muted;
+                },
+                setVolume: function(vol) {
+                    _vid.volume = vol;
+                },
+                getVolume: function() {
+                    return _vid.volume;
+                },
+                setPlaybackRate: function(speed) {
+                    _vid.playbackRate = speed;
                 }
             };
             return fcnVector;
@@ -724,7 +734,7 @@ window.jxPromisePolyfill        = 'none';
             if (!_ctrls) {
                 _ctrls = MakeOnePlayerControlsObjD(_contentDiv, _makeFcnVectorForUI()); 
             }
-            _ctrls.hide();
+            _ctrls.hideControls();
         };
         var _createStripMessage = function(remaining) {
             const stripStyle = "#JXMessage{position: absolute;padding: 9px;bottom: 20px;padding-right: 32px;right: 0px;background: rgba(0, 0, 0, 0.74);z-index: 2;color: rgba(255, 255, 255, 0.8);border-radius: 4px;font-size: 13px;letter-spacing: 1px;}";
@@ -746,11 +756,16 @@ window.jxPromisePolyfill        = 'none';
             if (state) {
                 _reportCB('video', 'fullscreen', _makeCurrInfoBlob(this.videoid));
             }
+            if (_ctrls) _ctrls.updateFullscreen();
         };
         
         function _onVolumeChangedCB() {
             _savedMuted = _vid.muted;
             _savedVolume = _vid.volume;
+
+            if (_ctrls) {
+                _ctrls.updateVolume(_vid.volume);
+            }
             
             /* if (_vid.muted) {
                 _savedMuted = true;
@@ -774,6 +789,9 @@ window.jxPromisePolyfill        = 'none';
             _reportCB('video', 'ended', _makeCurrInfoBlob(this.videoid));
         }
         var _onPausedCB = function(param) {
+            if (_ctrls) {
+                _ctrls.updatePlayBtn();
+            }
 
             if (param.type == 'pause') {
 
@@ -826,6 +844,11 @@ window.jxPromisePolyfill        = 'none';
             _manualPaused = false;//well it already is playing. erase history.
             _detectManualPlayOrPause('playing');
 
+            if (_ctrls) {
+                _ctrls.initializeVideoInfo(_vid);
+                _ctrls.updatePlayBtn();
+            }
+
             if (_state == 'ad') {
                 //then suppress any event sending.
                 //console.log("__debug_ Then suppress playing event sending (just back from ad lah)"); 
@@ -853,11 +876,10 @@ window.jxPromisePolyfill        = 'none';
             //if (_state == 'init') {
               //  _state = 'content';
             //}
-            /****
+            
              //Not used coz we just use native controls 
-            _ctrls.show();
-            _ctrls.showProgressBar();
-            ****/
+            _ctrls.showControls();
+            
             _updatePlayState(true);
   
             /* Not used coz we just use native controls
@@ -1001,6 +1023,10 @@ window.jxPromisePolyfill        = 'none';
             //<--- Do the video events (25%, 75% etc.)
             _doPlayedPctEvent(currentTime);
 
+            if (_ctrls) {
+                _ctrls.updateTimeElapsed(currentTime);
+            }
+
             if (!this.soundind) {
                 //dun want any sound:
                 //either it already made its appearance (and then went away after its 10 sec)
@@ -1133,7 +1159,7 @@ window.jxPromisePolyfill        = 'none';
             //NEED MAH if (_boundOnPausedCB) _vid.removeEventListener('waiting', _boundOnPausedCB);
             _boundOnPausedCB = null;
             if (_boundOnFullScreenCB) ["webkit", "moz", "ms"].forEach(function(prefix) {
-                _vid.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                _container.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
             });
             _boundOnFullScreenCB = null;
             if (_boundVolumeChangedCB) _vid.removeEventListener('volumechange', _boundVolumeChangedCB);
@@ -1162,7 +1188,7 @@ window.jxPromisePolyfill        = 'none';
             _vid.addEventListener('ended', _boundOnEndedCB, false);
             _vid.addEventListener('error', _boundOnErrorCB, false);
             ["webkit", "moz", "ms"].forEach(function(prefix) {
-                _vid.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                _container.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
             }); 
             
 
