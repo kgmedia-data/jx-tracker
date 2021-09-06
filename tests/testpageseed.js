@@ -25,6 +25,13 @@ const demoCases_ = [
         tests: []
     },
     {
+        name: 'Video ad (hybrid) 16:9 TRUSTED!!!',
+        types: [video],
+        id: 1166,
+        width: 640,
+        height: 360,
+        tests: []
+    }, {
         name: 'Video ad (pure) 16:9',
         types: [video],
         id: 1286,
