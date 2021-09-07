@@ -34,6 +34,35 @@ function start_(options) {
 window.jxhbuniversal = {
     hbinit: start_
 };
+
+//this is a now-common design-pattern so that the code calling us
+//can just call us without checking if our script is loaded yet.
+/*
+window.jxhbrendererq = window.jxhbrendererq || [];
+window.jxhbrendererq.push('init', p);
+*/
+var JxEventsQ = function () {
+    this.push = function () {
+        for (var i = 0; i < arguments.length; i++) try {
+            if (typeof arguments[i][0] === "string") {
+                let fcnname = arguments[i][0];
+                if (fcnname == 'init' && arguments[i].length >= 2) {
+                    start_(
+                     arguments[i][1]
+                    );
+                }
+            }
+        } catch (e) {}
+    }
+};
+
+const ourSigQ = '_jxhbrendererq';
+var _old_eventsq = window[ourSigQ];
+window[ourSigQ] = new JxEventsQ(); //actually no need object, just cloned from some website's snipplet .. :-)
+// execute all of the queued up events - apply() turns the array entries into individual arguments
+if (_old_eventsq)
+    window[ourSigQ].push.apply(window[ourSigQ], _old_eventsq);
+
 //Notes to self:
 /*
 To play video that's a different story for prebid if you answer VIDEO.

@@ -25,6 +25,13 @@ const demoCases_ = [
         tests: []
     },
     {
+        name: 'Video ad (hybrid) 16:9 TRUSTED!!!',
+        types: [video],
+        id: 1166,
+        width: 640,
+        height: 360,
+        tests: []
+    }, {
         name: 'Video ad (pure) 16:9',
         types: [video],
         id: 1286,
@@ -488,11 +495,11 @@ function makeTable(cases, flag) {
         let uUrl = `https://universal.jixie.io/demos/portal/hybrid.html?creativeid=${oneRow.id}`;
         let uliteUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_ulite_renee.html?creativeid=${oneRow.id}`;
         let osmUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_osm.html?creativeids=${oneRow.id}`;
-        let osmDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxdesktop&creativeids=${oneRow.id}`;
-        let osmMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxmobile&creativeids=${oneRow.id}`;
+        let osmDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxdesktop&creativeids=${oneRow.id}&myt=${Date.now()}000`;
+        let osmMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxmobile&creativeids=${oneRow.id}&myt=${Date.now()}000`;
         let hbDUrl = null;
         if (oneRow.adUnitCodeD) {
-            hbDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbdesktop&jxhbadunitcode=${oneRow.adUnitCodeD}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}`;
+            hbDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbdesktop&jxhbadunitcode=${oneRow.adUnitCodeD}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}&myt=${Date.now()}000`;
             console.log(`
                 \ndesktop ${oneRow.width}x${oneRow.height}
                 ${oneRow.adUnitCodeD}
@@ -503,19 +510,19 @@ function makeTable(cases, flag) {
 
         let hbMUrl = null;
         if (oneRow.adUnitCodeM) {
-            hbMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbmobile&jxhbadunitcode=${oneRow.adUnitCodeM}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}`;
+            hbMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbmobile&jxhbadunitcode=${oneRow.adUnitCodeM}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}&myt=${Date.now()}000`;
             console.log(`
                 \nmobile ${oneRow.width}x${oneRow.height}
                 ${oneRow.adUnitCodeM}
                 ${hbMUrl}
             `);
         }
-        let ampUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=ampad1&creativeid=${oneRow.id}`;
+        let ampUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=ampad1&creativeid=${oneRow.id}&myt=${Date.now()}000`;
 
         buf += trOpen_;
         let extra = (oneRow.extra ? "( " + oneRow.extra + " )" : "");
 
-        buf += tdOpen_ + `${oneRow.name}${extra}` + tdClose_;
+        buf += tdOpen_ + `cid=${oneRow.id}/${oneRow.name}${extra}` + tdClose_;
         buf += tdOpen_ + `${oneRow.width?oneRow.width:"?"}x${oneRow.height?oneRow.height:"?"}` + tdClose_;
 
         if (oneRow.types[0] == outstream) {
