@@ -37,9 +37,12 @@ DO_NOT_REMOVE_GULPBUILD_REPLACE_FLOAT_COND_COMPILE
 
 
 //for the new trusted creatives to talk to us.
-//currently this is how we (lazy) implement it (just past the message)
-//but good thing is the creative all it knows is to call this message function
-//What we do here underneath we can change anytime.
+//OK for now we shall keep this implementation which is using 
+//post messages
+//If on the page we have both e.g. OSM and ULITE JS running
+//then we use this which is a post message mechanism.
+//Bother renderers will get the messages but only those that spawned
+//the creative will handle it (token match)
 window.jxrenderercore = {
     dummy: 1,
     notifyByStr: function(m) {
@@ -263,10 +266,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
    
     const jxScriptUrls_ = {
         video: {
-            //signature: 'jx_video_ad',
             signature: "jxvideoadsdk",
+            //the queue name is '_' + signature + 'q';
+            //so here it is _jxvideoadsdkq
             url: 'https://scripts.jixie.io/jxvideocr.1.0.min.js'
-            //url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk.min.js'
         }
     };
     const visThreshold_ = 0.4;
@@ -448,6 +451,12 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 if (fire == 1) this.firstViewed = true;
             }
             this.notifyFcn(fire == 1 ? true: false);
+            if (fire == 1 && this.notifyFirstVisible) {
+                // console.log(`!!!!!! ####calling notifyFirstVisible NOW`);
+                this.notifyFirstVisible();
+                this.notifyFirstVisible = null;
+            }
+            
             this.lastFired = fire;
         }
     }
@@ -544,6 +553,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
         let type = null;                    
         let json = null;
+        
         if (e && e.type && e.type.startsWith('jx')) {
             type = e.type;
         }
@@ -569,7 +579,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         if (json) {
             type = json.type;
         }
-        if (this.c.trusted && this.c.crSig) {
+        if (this.c.div && this.c.crSig) {
+            //trusted
             //if the creative has a signature (new trusted script type) 
             //and it is trusted
             //then we need to also do a token match check too (token
@@ -674,7 +685,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 //console.log(`CCC#### Simple type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
                 //not in iframe (trusted) so need more care:
                 if (crSig) {
-                    crSig += 'q';
+                    crSig = '_' + crSig + 'q';
                     //new type of creatives (using our creatives Template to develop) and running in trusted mode:
                     //we need that token else there will be problem if there are several instances
                     //of the thing flying in the same "window"
@@ -699,7 +710,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 let crSig = this.c.crSig;
                 //console.log(`CCC#### Complex type: this is the crSig ${crSig} and this is the token ${this.c.token}`);
                 if (crSig) { //new way. then we only call a queue push 
-                    crSig += 'q';
+                    crSig = '_' + crSig + 'q';
                     window[crSig] = window[crSig] || [];
                     window[crSig].push(['message', 
                         "jxmsg::" + JSON.stringify({ type: msgtype, token: this.c.token, data: dataMaybe})]);
@@ -1085,10 +1096,21 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         } 
         else 
         {
-            //console.log(`##### xx ${jxbnDiv.offsetWidth/c.width}, yy ${jxbnDiv.offsetHeight / c.height}`);
             ratio = Math.min(jxbnDiv.offsetWidth/c.width, jxbnDiv.offsetHeight / c.height);
         }
-
+        
+        if (ratio < 0.2) {
+            // console.log(`### ${jxbnDiv.id} bad ratio: realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} `);
+            // for amp we will have this. at least for the prebidserver one we could well have this
+            // problem (our winner ad is server in some GAM iframe)
+            // I see sometimes, that when this is called, the offsetWidth == 1.
+            // Then we get a ridiculously small ratio then.
+            // safety switch .
+            // console.log(`### ${jxbnDiv.id} bad ratio: __handleResize ridiculous width etc `);
+            return false; //this is likely those e.g. AMP cases, whereby this thing can happen when 
+            // the container for our stuff (may be some GAM slot of some amp-ad whatever) may not
+            // have the right size yet.
+        }
         let newH = ((c.height*ratio) + 5);
         //console.log(`realW=${jxbnDiv.offsetWidth} realH=${jxbnDiv.offsetHeight} cWidth=${c.width} cHeight=${c.height} ==> newH ${newH}`);
 
@@ -1127,6 +1149,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 break;
             */                
         }
+        return true;
      }
 
     /**
@@ -1280,7 +1303,7 @@ const thresholdDiff_ = 120;
          if (cr.assets && cr.assets.universal) {
             scaling = cr.assets.universal.scaling;
          }
-         if (cr.universal) {
+         if (cr.universal && cr.universal.scaling) {
             scaling = cr.universal.scaling;
          }
          if (scaling != 'creative'  && scaling != 'renderer') {
@@ -1350,13 +1373,71 @@ const thresholdDiff_ = 120;
             h = 0;
         }
         // Reminder that so for video : w and h are both set to 0 at this stage:
+        /*
         let crMaxW = w;
         let crMinW = w;
         let crMaxH = h;
         let crMinH = h;
+        */
+        let crMaxW = 0;
+        let crMinW = 0;
+        let crMaxH = 0;
+        let crMinH = 0;
+
+        //<--- NEW CODE:
+        if (scaling == 'none') {
+            crMaxW = w;
+            crMinW = w;
+            crMaxH = h;
+            crMinH = h;
+        }
+        else {
+            let u = crDetails.universal; 
+            //init to 0 0 0 0
+            //do the max first:
+            if (u && !u.maxwidth && u.maxheight) {
+                u.maxwidth = Math.round(crAR*u.maxheight);
+            }
+            if (u && u.maxwidth) {
+                let tmp = Math.round(u.maxwidth/crAR);
+                if (!u.maxheight || tmp < u.maxheight) {
+                    //u.maxwidth make a more restricted thing:
+                    crMaxW = u.maxwidth;
+                    crMaxH = tmp;
+                }
+                else {
+                    crMaxH = u.maxheight;
+                    crMaxW = Math.round(crMaxH*crAR);
+                }
+            }
+            //do the min then:
+            if (u && !u.minwidth && u.minheight) {
+                u.minwidth = Math.round(crAR*u.minheight);
+            }
+            if (u && u.minwidth) {
+                let tmp = Math.round(u.minwidth/crAR);
+                if (!u.minheight || tmp < u.minheight) {
+                    //u.maxwidth make a more restricted thing:
+                    crMinW = u.minwidth;
+                    crMinH = tmp;
+                }
+                else {
+                    crMinH = u.minheight;
+                    crMinW = Math.round(crMinH*crAR);
+                }
+            }
+            if (!crMaxW) {
+                crMaxW = bigWidth_;
+                crMaxH = bigHeight_;
+            }
+        }
+        ////--- NEW CODE --->
+
+
+        
 
         //none renderer, creative
-
+        if (false) { //block it out:
         if (scaling != 'none') {
             // if it is not responsive, then crMaxW and crMinW = width of creative
             // ditto for height, nothing much to further calculate then:
@@ -1437,6 +1518,9 @@ const thresholdDiff_ = 120;
         //--->
         if (!crMaxW) crMaxW = bigWidth_;
         if (!crMaxH) crMaxH = bigHeight_;
+        }//if (false) block
+
+
         return {
             aspectratio:    crAR,
             width:          w, //for video will be 0
@@ -1776,7 +1860,7 @@ const thresholdDiff_ = 120;
                                 //that the widht and height has changed:
                                 //instruct the DPA to do so:
                                 out.adparameters.display_htmlsize = out.width+"x"+out.height;
-                                console.log(`### SCALING: out.adparameters.display_htmlsize=${out.adparameters.display_htmlsize}`);
+                                //console.log(`### SCALING: out.adparameters.display_htmlsize=${out.adparameters.display_htmlsize}`);
                             }
                             out.iframe = { url: c.url };
                         }
@@ -1829,6 +1913,9 @@ const thresholdDiff_ = 120;
      * @param {*} cxtFcns 
      */    
     function HooksMgr(container, normCrParams, divObjs, cxtFcns) {
+        this.needcallresize = true; //typically we will have this called after the hasad signal
+        //but with amp, this might be too early and can cause problems.
+
         this.cxtFcns = cxtFcns;
         this.c = normCrParams;
         this.divObjs = divObjs;
@@ -1861,6 +1948,18 @@ const thresholdDiff_ = 120;
         this.bf_processCrEvtsMgs = __handleCrEvtsMsgs.bind({ 
             divObjs: this.divObjs, c: this.c, handlers: this.msghandlers });
       }
+      HooksMgr.prototype.callHandleResize = function(mode) {
+          let success = this.bf_resize();
+          if (success) {
+            this.needcallresize = false;
+            // the reason for failure could be -- esp for AMP Prebidserver case
+            // the container by the time of jxhasad could still be e.g. width = 1 or
+            // something. so not a good time to do __handleResize yet.
+          }
+          else {
+              // console.log(`!!!!!! ####need call resize is true`);
+          }
+      }
       HooksMgr.prototype.getPM2CreativeFcn = function(mode) {
         if (mode == 'jxeventssdk') return __pm2JxEvtsSDKWithMsgs.bind({divObjs:this.divObjs, c: this.c});
         if (mode == 'self') return __pm2Self.bind({divObjs:this.divObjs, c: this.c});
@@ -1892,6 +1991,13 @@ const thresholdDiff_ = 120;
             firstViewed: false,
             notifyFcn: notifyFcn
         };   
+        if (this.needcallresize) {
+            // console.log(`!!!!!! ####need call resize is true so wire up the notifyFirstVisible`);
+            // this may be the case for AMP prebidserver case
+            // as by the time of the jxhasad, the offsetWidth could very well be
+            // 1 and so we cannot transform properly.
+            o.notifyFirstVisible = this.bf_resize;
+        }
         let bf = __combiVisibilityChange.bind(o);
         this.cxtFcns.setupVisChangeNotifiers(this.allhooks, this.ctr, bf); 
       }
@@ -2127,7 +2233,7 @@ const thresholdDiff_ = 120;
                     normCrParams.clicktrackerurl);
                     
                 
-                //?? ! boundHandleResize();
+                hooksMgr.callHandleResize();
 
                 if (JX_FLOAT_COND_COMPILE) {
                     if (normCrParams.floatParams) {

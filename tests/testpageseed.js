@@ -25,6 +25,13 @@ const demoCases_ = [
         tests: []
     },
     {
+        name: 'Video ad (hybrid) 16:9 TRUSTED!!!',
+        types: [video],
+        id: 1166,
+        width: 640,
+        height: 360,
+        tests: []
+    }, {
         name: 'Video ad (pure) 16:9',
         types: [video],
         id: 1286,
@@ -74,6 +81,7 @@ const demoCases_ = [
     },
     {
         name: 'Video ad recommendation',
+        renee: 'https://megapolitan.kompas.com/read/2021/05/28/05334261/update-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257?creativeids=530&jxadtagurl=https%3A%2F%2Fad.jixie.io%2Fv1%2Fvideo%3Fsource%3Dosm%26unit%3D1000008-iT3q5Ci4Ry%26client_id%3D52471830-e2f4-11ea-b5e9-f301ddda9414%26sid%3D1630122685-98eaca70-973f-11eb-bced-2faf96bca39d%26creativeids%3D530%26pageurl%3Dhttps%253A%252F%252Fmegapolitan.kompas.com%252Fread%252F2021%252F05%252F28%252F05334261%252Fupdate-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257%253Fcreativeid%253D530%26domain%3Dmegapolitan.kompas.com%26fixedheight%3D400%26maxwidth%3D546%0A',
         id: 1015,
         width: 640,
         height: 360,
@@ -487,11 +495,11 @@ function makeTable(cases, flag) {
         let uUrl = `https://universal.jixie.io/demos/portal/hybrid.html?creativeid=${oneRow.id}`;
         let uliteUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_ulite_renee.html?creativeid=${oneRow.id}`;
         let osmUrl = `https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/test_osm.html?creativeids=${oneRow.id}`;
-        let osmDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxdesktop&creativeids=${oneRow.id}`;
-        let osmMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxmobile&creativeids=${oneRow.id}`;
+        let osmDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxdesktop&creativeids=${oneRow.id}&myt=${Date.now()}000`;
+        let osmMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=osm400pxmobile&creativeids=${oneRow.id}&myt=${Date.now()}000`;
         let hbDUrl = null;
         if (oneRow.adUnitCodeD) {
-            hbDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbdesktop&jxhbadunitcode=${oneRow.adUnitCodeD}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}`;
+            hbDUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbdesktop&jxhbadunitcode=${oneRow.adUnitCodeD}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}&myt=${Date.now()}000`;
             console.log(`
                 \ndesktop ${oneRow.width}x${oneRow.height}
                 ${oneRow.adUnitCodeD}
@@ -502,19 +510,19 @@ function makeTable(cases, flag) {
 
         let hbMUrl = null;
         if (oneRow.adUnitCodeM) {
-            hbMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbmobile&jxhbadunitcode=${oneRow.adUnitCodeM}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}`;
+            hbMUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=kompashbmobile&jxhbadunitcode=${oneRow.adUnitCodeM}&jxhbcreativeid=${oneRow.id}&jxhbwidth=${oneRow.width}&jxhbheight=${oneRow.height}&myt=${Date.now()}000`;
             console.log(`
                 \nmobile ${oneRow.width}x${oneRow.height}
                 ${oneRow.adUnitCodeM}
                 ${hbMUrl}
             `);
         }
-        let ampUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=ampad1&creativeid=${oneRow.id}`;
+        let ampUrl = `https://jixieamptest.kompas.com/api/testpagegen?filename=ampad1&creativeid=${oneRow.id}&myt=${Date.now()}000`;
 
         buf += trOpen_;
         let extra = (oneRow.extra ? "( " + oneRow.extra + " )" : "");
 
-        buf += tdOpen_ + `${oneRow.name}${extra}` + tdClose_;
+        buf += tdOpen_ + `cid=${oneRow.id}/${oneRow.name}${extra}` + tdClose_;
         buf += tdOpen_ + `${oneRow.width?oneRow.width:"?"}x${oneRow.height?oneRow.height:"?"}` + tdClose_;
 
         if (oneRow.types[0] == outstream) {

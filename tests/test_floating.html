@@ -484,27 +484,20 @@
         container: "jxOutstreamContainer", // indicates where to create the iFrame, otherwise will be created as a child of the parent node
         creativeid: getParameterByName("creativeid"), //686 //724 //23 //686
         float: true, // indicates if float or not
-        floatType: "always", // indicates the floating mode (view is after the unit has been in the view port, always is... always)
-        floatLocation: "bottom", // location of the floating player
-        floatWidth: 350, // the width of the floating unit in pixels
-        floatVMargin: 30, // the distance in pixel from the top or the bottom (top if location is top something, bottom if location is bottom something)
-        floatHMargin: 5, // the distance in pixel from the side of the window
-        floatBackground: "transparent", // the background of the floating unit
+        xfloatType: "always", // indicates the floating mode (view is after the unit has been in the view port, always is... always)
+        xfloatLocation: "bottom", // location of the floating player
+        floatWidth: 200, // the width of the floating unit in pixels
+        xfloatVMargin: 30, // the distance in pixel from the top or the bottom (top if location is top something, bottom if location is bottom something)
+        xfloatHMargin: 5, // the distance in pixel from the side of the window
+        xfloatBackground: "transparent", // the background of the floating unit
       };
-      function jxdefer(p) {
-        if (window.jxuniversal) {
-          window.jxuniversal.init(p);
-        } else {
-          setTimeout(function () {
-            jxdefer(p);
-          }, 100);
-        }
-      }
-      jxdefer(p);
+
+      window._jxuniversalfltq = window._jxuniversalfltq || [];
+      window._jxuniversalfltq.push(['init', p]);
     </script>
     <script
       type="text/javascript"
-      src="https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/jx-app-ulite-floatable.min.js"
+      src="https://scripts.jixie.io/jxfriendly.2.0.flt.min.js"
       defer
     ></script>
 
@@ -794,7 +787,7 @@
           }, 100);
         }
       }
-      jxdefer(p);
+      //jxdefer(p);
     </script>
   </body>
 </html>

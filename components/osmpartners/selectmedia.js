@@ -1,3 +1,7 @@
+// under docs/selectmedia subfolder
+// There is some info and screenshots about the org
+// of the SelectMedia floating player in the DOM
+
 const defaultPTimeout_ = -1; //;
 
 var getAdSlotAttachNode_ = function(dbjson, getPageSelectorFcn) {
@@ -67,25 +71,6 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
 
     common_(rtjson);
     if (dbjson.adparameters.placing === 'fixed') {
-        //hack and test 1:
-        //dbjson.adparameters.script_id = 'AV61012c6aa4f8284ae05e4fe4';
-        //dbjson.adparameters.script_src = 'https://tg1.selectmedia.asia/api/adserver/spt?AV_TAGID=61012c6aa4f8284ae05e4fe4&AV_PUBLISHERID=59b23d43073ef46aa456f9a8';
-        //hack and test 2:
-        //dbjson.adparameters.script_id = 'AV61012d8067980e6640000849';
-        //dbjson.adparameters.script_src = 'https://tg1.selectmedia.asia/api/adserver/spt?AV_TAGID=61012d8067980e6640000849&AV_PUBLISHERID=59b23d43073ef46aa456f9a8';
-
-        //Renee: 20210330 note:
-        //apparently this got fixed sometime down the line. So this is no longer an issue.
-        //I keep the constructs here, though the code all commented out
-        //so really not doing anything.
-        //--end of 20210330 note.
-        //this is actually to get around an issue
-        //coz floating window even if no-ad they also still pop
-        //up the window (JXOSM quickly kills it - but still not nice)
-        //So my trick is the parent parent div is display: none
-        //Only when sure got ad (imp) then change display: block
-        //But this one only apply on "fixed".
-        //For inarticle cannot. Else the outstream will never OPEN!!
         rtjson.scriptdiv = {
             id: "scriptdiv" + rtjson.instID,
             style: "" //display: none; visibility: hidden; "
@@ -117,17 +102,32 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     //--------- The script/fragment to inject:
     rtjson.scriptb = `<script async id="${dbjson.adparameters.script_id}" src="${dbjson.adparameters.script_src}"></script>`;
 
+   /* up to 20210907, we were doing it like this:
+      But then I realized that the SM newer tag they name their div with some additional 
+      random string appened. 
 
+      like this aniplayer_AV61012c6aa4f8284ae05e4fe4-1630998559494
+      instead of aniplayer_selectJS417849795 (which is for the older tag)
+
+      so the below formula for selector does not work
+      So we say forget it. The logic in the visibility tracking has been changed
+      If floating, then we just fire the creativeView for this tag.
 
     rtjson.visibilityslot = {
         selector: `#aniplayer_${dbjson.adparameters.script_id}`,
         node: null
     };
+    */
+    rtjson.visibilityslot = {
+        select: "notused",
+        node: null
+    };
+   
     //HACK: some  wrong config on their side:
     let script_id = (dbjson.adparameters.msg_script_id ?
         dbjson.adparameters.msg_script_id : dbjson.adparameters.script_id);
     let sid = script_id.replace('select', ''); //selectJS417849795
-    sid = 'JS417849795'; //due to their problem, everything is this!!
+    sid = 'JS417849795'; //due to their problem, everything is this!!!
     rtjson.msgs = {
         noad: `jxosm_noad_selectmedia${sid}`,
         imp: `jxosm_imp_selectmedia${sid}`,
