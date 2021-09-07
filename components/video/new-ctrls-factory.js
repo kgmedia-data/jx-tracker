@@ -11,17 +11,17 @@ const cssmgr = modulesmgr.get("video/cssmgr");
 const thumbnailCls = cssmgr.getRealCls("thumbnailCls");
 const hideCls = cssmgr.getRealCls("hideCls");
 const hideOpacityCls = cssmgr.getRealCls("hideOpacityCls");
-const bigPlayBtnCls = cssmgr.getRealCls("bigPlayBtnCls");
 const playbackAnimationCls = cssmgr.getRealCls("playbackAnimationCls");
 const overlayBigPlayBtnCls = cssmgr.getRealCls("overlayBigPlayBtnCls");
 const overlayBigPauseBtnCls = cssmgr.getRealCls("overlayBigPauseBtnCls");
 
 const overlayControlCls = cssmgr.getRealCls("overlayControlCls");
 const overlayTitleCls = cssmgr.getRealCls("overlayTitleCls");
-const bottomControlCls = cssmgr.getRealCls("bottomControlsCls");
 const leftControlCls = cssmgr.getRealCls("leftControlsCls");
 const rightControlCls = cssmgr.getRealCls("rightControlsCls");
+const bottomControlCls = cssmgr.getRealCls("bottomControlCls");
 const volumeControlCls = cssmgr.getRealCls("volumeControlCls");
+const playbackRoundedCls = cssmgr.getRealCls("playbackRoundedCls");
 
 const pauseBtnCls = cssmgr.getRealCls("pauseBtnCls");
 const playBtnCls = cssmgr.getRealCls("playBtnCls");
@@ -33,11 +33,20 @@ const muteBtnCls = cssmgr.getRealCls("muteBtnCls");
 const fullscreenBtnCls = cssmgr.getRealCls("fullscreenBtnCls");
 const fullscreenExitBtnCls = cssmgr.getRealCls("fullscreenExitBtnCls");
 const speedContainerCls = cssmgr.getRealCls("speedContainerCls");
+const qualityContainerCls = cssmgr.getRealCls("qualityContainerCls");
+const fullScreenBtnContainer = cssmgr.getRealCls("fullScreenBtnContainer");
 const speedValueCls = cssmgr.getRealCls("speedValueCls");
 const speedSelectionCls = cssmgr.getRealCls("speedSelectionCls");
+const subtitleContainerCls = cssmgr.getRealCls("subtitleContainerCls");
+const subtitleSelectionCls = cssmgr.getRealCls("subtitleSelectionCls");
+const subtitleValueCls = cssmgr.getRealCls("subtitleValueCls");
 const settingBtnCls = cssmgr.getRealCls("settingBtnCls");
 const qualitySelectionCls = cssmgr.getRealCls("qualitySelectionCls");
 const qualityItemsCls = cssmgr.getRealCls("qualityItemsCls");
+const videoProgressCls = cssmgr.getRealCls("videoProgressCls");
+const videoProgressContainerCls = cssmgr.getRealCls("videoProgressContainerCls");
+const videoProgressInputCls = cssmgr.getRealCls("videoProgressInputCls");
+const videoProgressTooltipCls = cssmgr.getRealCls("videoProgressTooltipCls");
 
 const playBtnId = "playBtn";
 const volumeBtnId = "volumeBtn"
@@ -48,11 +57,19 @@ const vMidId = "volumeMid";
 const vHighId = "volumeHigh";
 const fullScreenBtnId = "fullScreenBtn";
 const speedBtnId = "speedBtn";
+const subtitleBtnId = "subtitleBtn";
 const qualityBtnId = "qualityBtn";
 // const speedValueId = "speedValue";
 
 const timeElapsedId = "time-elapsed";
 const durationId = "duration";
+
+const primaryColor = "#1B63D4";
+const buttonsColor = "#FFF";
+const randNumb = Math.floor(Math.random() * 1000);
+const playbackRateArr = [0.25, 0.5, 1, 1.5, 2];
+const qualityArr = [1080, 720, 480, 360];
+const subtitleArr = [{value: "ID", label: "Indonesia"}, {value: "EN", label: "English"}]
 
 function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function FactoryOneNewPlayerControls() {}
@@ -67,20 +84,28 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var resizeObserver = null;
 
   var _videoControls = null;
+  var _bottomControls = null;
   var _rightControls = null;
+  var _leftControls = null;
   var _videoTitle = null;
+
   var _overlayPlayBtn = null;
-  var _overlayBigPlayBtn = null;
   var _overlayVolumeBtn = null;
   var _overlayVolumeRange = null;
   var _overlayFScreenBtn = null;
   var _overlaySpeedBtn = null;
   var _overlayQualityBtn = null;
+  var _overlaySubtitleBtn = null;
 
-  var _speedItems = null;
-  var _qualityItems = null;
+  var _progressBar = null;
+  var _progressBarInput = null;
+  var _progressBarTooltip = null;
 
-  const randNumb = Math.floor(Math.random() * 1000);
+  var _speedItems = [];
+  var _qualityItems = [];
+  var _subtitleItems = [];
+
+  var _bigPlayBtnCls = playbackAnimationCls;
 
   //all the callback functions (these are promise resolvers) we record so
   //that we call them at one go when there is a click
@@ -93,115 +118,44 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _vectorFcn = vectorFcn;
     _container = container;
 
+    // rounded big play button
+    // if (true) _bigPlayBtnCls = playbackRoundedCls;
+
+    cssmgr.inject('newControls', { buttonsColor: buttonsColor, primaryColor: primaryColor });
+
     resizeObserver = new ResizeObserver(_onVideoResized);
     resizeObserver.observe(_container);
 
-    _videoControls = document.createElement("div");
-    _videoControls.className = overlayControlCls +' '+ hideOpacityCls;
-    _videoControls.innerHTML = _generateControls();
+    _videoControls = common.newDiv(_container, "div", null, overlayControlCls+' '+hideOpacityCls);
+    _videoTitle = common.newDiv(_container, "div", `<div>${'This is the title of video'}</div>`, overlayTitleCls +' '+ hideOpacityCls);
 
-    _videoTitle = document.createElement("div");
-    _videoTitle.className = overlayTitleCls +' '+ hideOpacityCls;
-    _videoTitle.innerHTML = "<div>This is the title of video</div>";
+    _bottomControls = common.newDiv(_videoControls, "div", null, bottomControlCls);
+    _leftControls = _createLeftControls();
+    _rightControls = _createRightControls();
+    _createProgressBar();
 
-    _overlayBigPlayBtn = document.createElement("div");
-    _overlayBigPlayBtn.className = playbackAnimationCls +' '+hideCls;
-    _overlayBigPlayBtn.innerHTML = `<span class="${overlayBigPlayBtnCls}"></span>
-                            <span class="${overlayBigPauseBtnCls} ${hideCls}"></span>`;
-
-    _container.appendChild(_videoTitle);
-    _container.appendChild(_videoControls);
-    _container.appendChild(_overlayBigPlayBtn);
-
-    _rightControls = document.querySelector(`.${rightControlCls}`);
-
-    _overlayPlayBtn = document.getElementById(`${playBtnId}-${randNumb}`);
-    _overlayPlayBtn.addEventListener('click', _togglePlay);
-    _overlayBigPlayBtn.addEventListener('click', _togglePlay);
-
-    _overlayVolumeBtn = document.getElementById(`${volumeBtnId}-${randNumb}`);
-    _overlayVolumeBtn.addEventListener('click', _toggleMute);
-
-    _overlayVolumeRange = document.getElementById(`${volumePanelId}-${randNumb}`);
-    _overlayVolumeRange.addEventListener('input', _updateVolume);
-
-    _overlayFScreenBtn = document.getElementById(`${fullScreenBtnId}-${randNumb}`);
-    _overlayFScreenBtn.addEventListener('click', _toggleFullScreen);
-
-    _overlaySpeedBtn = document.getElementById(`${speedBtnId}-${randNumb}`);
-    _overlaySpeedBtn.addEventListener('click', _toggleSpeedSelection);
-
-    _speedItems = document.querySelectorAll(`.${speedSelectionCls} div`);
-    _speedItems.forEach((x) => x.addEventListener('click', _selectSpeed));
-
-    _overlayQualityBtn = document.getElementById(`${qualityBtnId}-${randNumb}`);
-    _overlayQualityBtn.addEventListener('click', _toggleQualitySelection);
-
-    _qualityItems = document.querySelectorAll(`.${qualityItemsCls}`);
-    _qualityItems.forEach((x) => x.addEventListener('click', _selectQuality));
-
-    window.addEventListener('click', _onWindowClick);
+    common.addListener(window, "click", _onWindowClick);
   }
 
   FactoryOneNewPlayerControls.prototype.reset = function () {
-    if (_bigPlayBtn) {
-      _container.removeChild(_bigPlayBtn);
-      _bigPlayBtn = null;
-    }
-    if (_overlayBigPlayBtn) {
-      _container.removeChild(_overlayBigPlayBtn);
-      _overlayBigPlayBtn = null;
-    }
     if (_thumbnailImg) {
       _container.removeChild(_thumbnailImg);
       _thumbnailImg = null;
     }
-    if (resizeObserver) resizeObserver = null
-    if (_videoControls) {
-      _container.removeChild(_videoControls);
-      _videoControls = null;
-    }
-    if (_videoTitle) {
-      _container.removeChild(_videoTitle);
-      _videoTitle = null;
-    }
-    window.removeEventListener('click', _onWindowClick);
-    _container.removeEventListener('mouseover', _onVideoHovered);
-    _container.removeEventListener('mouseout', _onMouseOutVideo);
 
-    // dunno if we still need to do this after removing the video controls element from the DOM
-    // coz all of this below elements are the child of the video controls element
-    // if (_overlayPlayBtn) {
-    //   _overlayPlayBtn.removeEventListener('click', _togglePlay);
-    //   _overlayPlayBtn = null;
-    // }
-    // if (_overlayVolumeBtn) {
-    //   _overlayVolumeBtn.removeEventListener('click', _toggleMute);
-    //   _overlayVolumeBtn = null;
-    // }
-    // if (_overlayVolumeRange) {
-    //   _overlayVolumeRange.removeEventListener('input', _updateVolume);
-    //   _overlayVolumeRange = null;
-    // }
-    // if (_overlayFScreenBtn) {
-    //   _overlayFScreenBtn.removeEventListener('click', _toggleFullScreen);
-    //   _overlayFScreenBtn = null;
-    // }
-    // if (_overlaySpeedBtn) {
-    //   _overlaySpeedBtn.removeEventListener('click', _toggleSpeedSelection);
-    //   _overlaySpeedBtn = null;
-    // }
-    // if (_speedItems) {
-    //   _speedItems.forEach((x) => x.removeEventListener('click', _selectSpeed));
-    //   _speedItems = null;
-    // }
-    // if (_overlayQualityBtn) {
-    //   _overlayQualityBtn.removeEventListener('click', _toggleQualitySelection);
-    //   _overlayQualityBtn = null;
-    // }
-    // if (_qualityItems) {
-    //   _qualityItems.forEach((x) => x.removeEventListener('click', _selectQuality));
-    //   _qualityItems = null;
+    _initialized = false;
+
+    const speedContainer = document.querySelector(`.${speedContainerCls}`);
+    const qualityContainer = document.querySelector(`.${qualityContainerCls}`);
+    const subtitleContainer = document.querySelector(`.${subtitleContainerCls}`);
+    if (speedContainer) _rightControls.removeChild(speedContainer);
+    if (qualityContainer) _rightControls.removeChild(qualityContainer);
+    if (subtitleContainer) _rightControls.removeChild(subtitleContainer);
+    
+
+    // if (_videoTitle) {
+    //   _container.removeChild(_videoTitle);
+    //   _videoTitle = null;
     // }
   };
 
@@ -221,14 +175,13 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (evtObject && _vectorFcn.reportClickToStart) {
       _vectorFcn.reportClickToStart();
     }
-    if (_bigPlayBtn) {
-      _hideBigPlayBtn();
-    }
 
     if (_thumbnailImg) _thumbnailImg.classList.add(hideCls);
     if (_boundClickedCB) {
       common.removeListener(_bigPlayBtn, "click", _boundClickedCB);
       _boundClickedCB = null;
+
+      common.addListener(_bigPlayBtn, "click", _togglePlay);
     }
     for (var i = 0; i < _knownClickCBs.length; i++) {
       _knownClickCBs[i]();
@@ -241,29 +194,145 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _hideSpinner() {
     if (_vectorFcn.hideSpinner) vectorFcn.hideSpinner();
   }
-  function _showControls() {
-    _videoControls.classList.remove(hideOpacityCls);
+  function _showOpacityElement(elm) {
+    elm.classList.remove(hideOpacityCls);
   }
-  function _hideControls() {
-    _videoControls.classList.add(hideOpacityCls);
+  function _hideOpacityElement(elm) {
+    elm.classList.add(hideOpacityCls);
   }
-  function _hideVideoTitle() {
-    _videoTitle.classList.add(hideOpacityCls);
+  function _showAll() {
+    [_videoControls, _videoTitle, _bigPlayBtn].forEach(function(x) {
+      _showOpacityElement(x);
+    });
   }
-  function _showVideoTitle() {
-    _videoTitle.classList.remove(hideOpacityCls);
+  function _hideAll() {
+    [_videoControls, _videoTitle, _bigPlayBtn].forEach(function(x) {
+      _hideOpacityElement(x);
+    });
   }
-  function _hideBigPlayBtn() {
-    _bigPlayBtn.classList.add(hideCls);
+
+  function _createLeftControls() {
+    var iHTML = `<button data-title="Play" id="${playBtnId}-${randNumb}">
+                  <span class="${playBtnCls}"></span>
+                  <span class="${pauseBtnCls} ${hideCls}"></span>
+                </button>
+                <div class="${volumeControlCls}">
+                  <button data-title="Mute" id="${volumeBtnId}-${randNumb}">
+                    <span class="${muteBtnCls} ${hideCls}" id="${muteBtnId}-${randNumb}"></span>
+                    <span class="${volumeLowCls} ${hideCls}" id="${vLowId}-${randNumb}"></span>
+                    <span class="${volumeMidCls} ${hideCls}" id="${vMidId}-${randNumb}"></span>
+                    <span class="${volumeHighCls}" id="${vHighId}-${randNumb}"></span>
+                  </button>
+                  <input type="range" class="${volumePanelCls}" id="${volumePanelId}-${randNumb}" type="range" max="1" min="0" step="0.01" />
+                </div>
+                <div>
+                  <span id="${timeElapsedId}-${randNumb}">00:00</span>
+                  <span>&nbsp;/&nbsp;</span>
+                  <span id="${durationId}-${randNumb}">00:00</span>
+                </div>`;
+    var ctrl = common.newDiv(_bottomControls, "div", iHTML, leftControlCls);
+
+    _overlayPlayBtn = document.getElementById(`${playBtnId}-${randNumb}`);
+    common.addListener(_overlayPlayBtn, "click", _togglePlay);
+
+    _overlayVolumeBtn = document.getElementById(`${volumeBtnId}-${randNumb}`);
+    common.addListener(_overlayVolumeBtn, "click", _toggleMute);
+
+    _overlayVolumeRange = document.getElementById(`${volumePanelId}-${randNumb}`);
+    common.addListener(_overlayVolumeRange, "input", _updateVolume);
+
+    return ctrl;
   }
-  function _showBigPlayBtn() {
-    _bigPlayBtn.classList.remove(hideCls);
+
+  function _createRightControls() {
+    var iHTML = `<button data-title="Full screen" id="${fullScreenBtnId}-${randNumb}" class="${fullScreenBtnContainer}">
+                  <span class="${fullscreenBtnCls}"></span>
+                  <span class="${fullscreenExitBtnCls} ${hideCls}"></span>
+                </button>`;
+    var ctrl = common.newDiv(_bottomControls, "div", iHTML, rightControlCls);
+
+    _overlayFScreenBtn = document.getElementById(`${fullScreenBtnId}-${randNumb}`);
+    common.addListener(_overlayFScreenBtn, "click", _toggleFullScreen);
+
+    return ctrl;
   }
-  function _hideOverlayBigPlayBtn() {
-    _overlayBigPlayBtn.classList.add(hideCls);
+
+  function _createOverlaySpeedMenu() {
+    var speedContainer = common.newDiv(_rightControls, "div", null, speedContainerCls);
+    _overlaySpeedBtn = common.newDiv(speedContainer, "button", `<span class="${speedValueCls}">1x</span>`, null, `${speedBtnId}-${randNumb}`)
+    _overlaySpeedBtn.dataset.title = "Speed";
+    var speedSelection = common.newDiv(speedContainer, "div", null, speedSelectionCls+' '+hideCls);
+
+    playbackRateArr.forEach(function(x) {
+      var elm = common.newDiv(speedSelection, "div", x);
+      elm.dataset.title = x;
+      elm.dataset.playback = x;
+      common.addListener(elm, 'click', _selectSpeed);
+      _speedItems.push(elm);
+    });
+
+    common.addListener(_overlaySpeedBtn, "click", function() {
+      _toggleMenuSelection(speedSelectionCls);
+    });
   }
-  function _showOverlayBigPlayBtn() {
-    _overlayBigPlayBtn.classList.remove(hideCls);
+
+  function _createOverlayQualityMenu() {
+    var qualityContainer = common.newDiv(_rightControls, "div", null, qualityContainerCls);
+    _overlayQualityBtn = common.newDiv(qualityContainer, "button", `<span class="${settingBtnCls}"></span>`, null, `${qualityBtnId}-${randNumb}`)
+    _overlayQualityBtn.dataset.title = "Quality";
+    var qualitySelection = common.newDiv(qualityContainer, "div", "<div>Quality</div>", qualitySelectionCls+' '+hideCls);
+
+    qualityArr.forEach(function(x) {
+      var elm = common.newDiv(qualitySelection, "div", x+"p", qualityItemsCls);
+      elm.dataset.title = x+"p";
+      elm.dataset.quality = x;
+      common.addListener(elm, 'click', _selectQuality);
+      _qualityItems.push(elm);
+    });
+
+    common.addListener(_overlayQualityBtn, "click", function() {
+      _toggleMenuSelection(qualitySelectionCls);
+    });
+  }
+
+  function _createOverlaySubtitleMenu() {
+    var subtitleContainer = common.newDiv(_rightControls, "div", null, subtitleContainerCls);
+    _overlaySubtitleBtn = common.newDiv(subtitleContainer, "button", `<span class="${subtitleValueCls}">CC</span>`, null, `${subtitleBtnId}-${randNumb}`)
+    _overlaySubtitleBtn.dataset.title = "Subtitle";
+    var subtitleSelection = common.newDiv(subtitleContainer, "div", null, subtitleSelectionCls+' '+hideCls);
+
+    subtitleArr.forEach(function(x) {
+      var elm = common.newDiv(subtitleSelection, "div", x.label, qualityItemsCls);
+      elm.dataset.title = x.label;
+      elm.dataset.subtitle = x.value;
+      common.addListener(elm, 'click', _selectSubtitle);
+      _subtitleItems.push(elm);
+    });
+
+    common.addListener(_overlaySubtitleBtn, "click", function() {
+      _toggleMenuSelection(subtitleSelectionCls);
+    });
+  }
+
+  function _createProgressBar() {
+    const _progressBarWrapper = common.newDiv(_videoControls, "div", null, videoProgressContainerCls);
+    _progressBar = document.createElement("progress");
+    _progressBar.className = videoProgressCls;
+    _progressBar.value = 0;
+    _progressBar.min = 0;
+    _progressBarWrapper.appendChild(_progressBar);
+
+    _progressBarInput = document.createElement("input");
+    _progressBarInput.className = videoProgressInputCls;
+    _progressBarInput.type = "range";
+    _progressBarInput.value = 0;
+    _progressBarInput.min = 0;
+    _progressBarInput.step = 1;
+    _progressBarWrapper.appendChild(_progressBarInput);
+
+    _progressBarTooltip = common.newDiv(_progressBarWrapper, "div", "00:00", videoProgressTooltipCls);
+    common.addListener(_progressBarInput, "mousemove", _updateProgressBarTooltip);
+    common.addListener(_progressBarInput, "input", _skipAhead);
   }
 
   function _formatTime(timeInSeconds) {
@@ -284,83 +353,48 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _onWindowClick(e) {
-    if (!_overlayQualityBtn.contains(e.target)) {
+    if (_overlayQualityBtn && !_overlayQualityBtn.contains(e.target)) {
       const qualitySelection = document.querySelector(`.${qualitySelectionCls}`)
       qualitySelection.classList.add(hideCls);
     }
-    if (!_overlaySpeedBtn.contains(e.target)) {
+    if (_overlaySpeedBtn && !_overlaySpeedBtn.contains(e.target)) {
       const speedSelection = document.querySelector(`.${speedSelectionCls}`)
       speedSelection.classList.add(hideCls);
     }
+    if (_overlaySubtitleBtn && !_overlaySubtitleBtn.contains(e.target)) {
+      const subtitleSelection = document.querySelector(`.${subtitleSelectionCls}`)
+      subtitleSelection.classList.add(hideCls);
+    }
   }
 
-  function _onVideoHovered() {
-    _showControls();
-    _showVideoTitle();
-  }
-  function _onMouseOutVideo() {
-    _hideControls();
-    _hideVideoTitle();
+  function _onVideoAreaClicked(e) {
+    // WIP
+
+    // _showAll();
+    // setTimeout(function() {
+    //   _hideAll();
+    // }, 3000);
   }
 
-  function _generateControls() {
-    return `<div class="${bottomControlCls}">
-      <div class="${leftControlCls}">
-        <button data-title="Play" id="${playBtnId}-${randNumb}">
-          <span class="${playBtnCls}"></span>
-          <span class="${pauseBtnCls} ${hideCls}"></span>
-        </button>
-        <div class="${volumeControlCls}">
-          <button data-title="Mute" id="${volumeBtnId}-${randNumb}">
-            <span class="${muteBtnCls} ${hideCls}" id="${muteBtnId}-${randNumb}"></span>
-            <span class="${volumeLowCls} ${hideCls}" id="${vLowId}-${randNumb}"></span>
-            <span class="${volumeMidCls} ${hideCls}" id="${vMidId}-${randNumb}"></span>
-            <span class="${volumeHighCls}" id="${vHighId}-${randNumb}"></span>
-          </button>
-          <input type="range" class="${volumePanelCls}" id="${volumePanelId}-${randNumb}" type="range" max="1" min="0" step="0.01" />
-        </div>
-        <div>
-          <span id="${timeElapsedId}-${randNumb}">00:00</span>
-          <span>&nbsp;/&nbsp;</span>
-          <span id="${durationId}-${randNumb}">00:00</span>
-        </div>
-      </div>
-      <div class="${rightControlCls}">
-        <div class="${speedContainerCls}">
-          <button data-title="Speed" id="${speedBtnId}-${randNumb}">
-            <span class="${speedValueCls}">1x</span>
-          </button>
-          <div class="${speedSelectionCls} ${hideCls}">
-            <div data-title="0.25" data-playback="0.25">0.25</div>
-            <div data-title="0.5" data-playback="0.5">0.5</div>
-            <div data-title="1" data-playback="1">1</div>
-            <div data-title="1.5" data-playback="1.5">1.5</div>
-            <div data-title="2" data-playback="2">2</div>
-          </div>
-        </div>
-        <div style="position: relative;">
-          <button data-title="Quality" id="${qualityBtnId}-${randNumb}">
-            <span class="${settingBtnCls}"></span>
-          </button>
-          <div class="${qualitySelectionCls} ${hideCls}">
-            <div style="pointer-events:none; user-select:none;">Quality</div>
-            <div data-title="1080p" class="${qualityItemsCls}" data-quality="1080">1080p</div>
-            <div data-title="720p" class="${qualityItemsCls}" data-quality="720">720p</div>
-            <div data-title="480p" class="${qualityItemsCls}" data-quality="480">480p</div>
-            <div data-title="360p" class="${qualityItemsCls}" data-quality="360">360p</div>
-          </div>
-        </div>
-        <button data-title="Full screen" id="${fullScreenBtnId}-${randNumb}" style="margin-right:0;">
-          <span class="${fullscreenBtnCls}"></span>
-          <span class="${fullscreenExitBtnCls} ${hideCls}"></span>
-        </button>
-      </div>
-    </div>`
+  function _onMouseOutVideo(e) {
+    if (e !== undefined && e.type === "mouseleave") {
+      [subtitleSelectionCls, speedSelectionCls, qualitySelectionCls].forEach(function(x) {
+        const elm = document.querySelector(`.${x}`);
+        if (elm) elm.classList.add(hideCls);
+      });
+      _hideAll();
+    }
   }
 
   function _initVideoInfo(videoObj) {
     if (!_initialized) {
       _initialized = true;
+
+      // optional controls i.e playback rate, quality, subtitle. we show them based on what we got from video e.g subtitle, quality
+      // e.g if there is no subtitle then we don't show the CC button
+      if (true) _createOverlaySpeedMenu();
+      if (true) _createOverlayQualityMenu();
+      if (true) _createOverlaySubtitleMenu();
 
       const videoDuration = Math.round(videoObj.duration);
       const time = _formatTime(videoDuration);
@@ -372,17 +406,23 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       const selectedPlaybackValue = document.querySelectorAll(`.${speedSelectionCls} div[data-playback~="${speed}"]`);
   
       durationText.innerText = `${time.minutes}:${time.seconds}`;
+
+      _progressBarInput.setAttribute('max', videoDuration);
+      _progressBar.setAttribute('max', videoDuration);
   
       _overlayVolumeRange.value = volume;
       _updateVolume(true);
       _updateVolumeIcon(volume);
 
-      _speedItems.forEach((x) => x.classList.remove('active'));
-      selectedPlaybackValue[0].classList.add('active');
-      speedValue.innerText = speed + 'x';
+      if (_speedItems.length > 0) _speedItems.forEach((x) => x.classList.remove('active'));
+      if (selectedPlaybackValue.length > 0) {
+        selectedPlaybackValue[0].classList.add('active');
+        speedValue.innerText = speed + 'x';
+      }
 
-      _container.addEventListener('mouseover', _onVideoHovered);
-      _container.addEventListener('mouseout', _onMouseOutVideo);
+      common.addListener(_container, "mouseenter", _showAll);
+      common.addListener(_container, "mouseleave", _onMouseOutVideo);
+      common.addListener(_container, "click", _onVideoAreaClicked);
     }
   }
 
@@ -393,17 +433,19 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _updatePlayBtn() {
-    const playbackIcons = document.querySelectorAll(`#${playBtnId}-${randNumb} span`);
-    const playbackAnimationIcons = document.querySelectorAll(`.${playbackAnimationCls} span`);
     const playBtn = document.getElementById(`${playBtnId}-${randNumb}`);
 
-    playbackIcons.forEach((x) => x.classList.toggle(hideCls));
-    playbackAnimationIcons.forEach((x) => x.classList.toggle(hideCls));
-
-    _animatePlaybackBtn();
     if (!_vectorFcn.isPaused()) {
+      document.querySelector(`.${playBtnCls}`).classList.add(hideCls);
+      document.querySelector(`.${overlayBigPlayBtnCls}`).classList.add(hideCls);
+      document.querySelector(`.${pauseBtnCls}`).classList.remove(hideCls);
+      document.querySelector(`.${overlayBigPauseBtnCls}`).classList.remove(hideCls);
       playBtn.setAttribute('data-title', 'Pause');
     } else {
+      document.querySelector(`.${playBtnCls}`).classList.remove(hideCls);
+      document.querySelector(`.${overlayBigPlayBtnCls}`).classList.remove(hideCls);
+      document.querySelector(`.${pauseBtnCls}`).classList.add(hideCls);
+      document.querySelector(`.${overlayBigPauseBtnCls}`).classList.add(hideCls);
       playBtn.setAttribute('data-title', 'Play');
     }
   }
@@ -493,9 +535,16 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     }
   }
 
-  function _toggleSpeedSelection() {
-    const speedSelection = document.querySelector(`.${speedSelectionCls}`)
-    speedSelection.classList.toggle(hideCls);
+  function _selectSubtitle(e) {
+    const target = e.target;
+    const dataset = target.dataset;
+    const subtitleValue = document.querySelector(`.${subtitleValueCls}`);
+
+    _subtitleItems.forEach((x) => x.classList.remove('active'));
+    target.classList.add('active');
+    subtitleValue.innerText = dataset.subtitle;
+
+    console.log('subtitle selected is --->', dataset.subtitle)
   }
 
   function _selectSpeed(e) {
@@ -510,11 +559,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _vectorFcn.setPlaybackRate(Number(dataset.playback));
   }
 
-  function _toggleQualitySelection() {
-    const qualitySelection = document.querySelector(`.${qualitySelectionCls}`)
-    qualitySelection.classList.toggle(hideCls);
-  }
-
   function _selectQuality(e) {
     const target = e.target;
     const dataset = target.dataset;
@@ -525,17 +569,38 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     console.log('Selected Quality is -->', dataset.quality) ;
   }
 
-  function _animatePlaybackBtn() {
-    if (_overlayBigPlayBtn) {
-      if (_vectorFcn.isPaused()) {
-        _showOverlayBigPlayBtn();
-      } else {
-        setTimeout(() => {
-          _hideOverlayBigPlayBtn();
-        }, 500);
-      }
-    }
+  function _toggleMenuSelection(className) {
+    const menuSelection = document.querySelector(`.${className}`);
+    menuSelection.classList.toggle(hideCls);
   }
+
+  function _updateProgressBar(currentTime) {
+    _progressBarInput.value = Math.floor(currentTime);
+    _progressBar.value = Math.floor(currentTime);
+  }
+
+  function _updateProgressBarTooltip(event) {
+    const skipTo = Math.round(
+      (event.offsetX / event.target.clientWidth) *
+        parseInt(event.target.getAttribute('max'), 10)
+    );
+    _progressBarInput.setAttribute('data-seek', skipTo);
+    const t = _formatTime(skipTo);
+    _progressBarTooltip.textContent = `${t.minutes}:${t.seconds}`;
+    const rect = _container.getBoundingClientRect();
+    _progressBarTooltip.style.left = `${event.pageX - rect.left}px`;
+  }
+
+  function _skipAhead(event) {
+    const skipTo = event.target.dataset.seek
+      ? event.target.dataset.seek
+      : event.target.value;
+
+    if (_vectorFcn.setVideoPlayhead) _vectorFcn.setVideoPlayhead(skipTo);
+    _progressBar.value = skipTo;
+    _progressBarInput.value = skipTo;
+  }
+
   /**
    * If somehow somehow the play started then this should be called.
    * (play can start thru various channels ... See comment for _clickedCB function above.
@@ -562,9 +627,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (!_bigPlayBtn) {
       //for now should be spinner
       /**/
-      _bigPlayBtn = document.createElement("a");
-      _bigPlayBtn.href = "javascript:void(0)";
-      _bigPlayBtn.className = bigPlayBtnCls +' '+hideCls;
+      _bigPlayBtn = document.createElement("div");
+      _bigPlayBtn.className = _bigPlayBtnCls;
+      _bigPlayBtn.innerHTML = `<span class="${overlayBigPlayBtnCls}"></span>
+                              <span class="${overlayBigPauseBtnCls} ${hideCls}"></span>`;
 
       _container.appendChild(_bigPlayBtn);
     }
@@ -576,8 +642,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         common.addListener(_bigPlayBtn, "click", _boundClickedCB); //not sure about touch
       }
 
-      _showBigPlayBtn();
-      _showVideoTitle();
+      [_videoTitle, _bigPlayBtn].forEach(function(x) {
+        _showOpacityElement(x);
+      });
     }
   };
 
@@ -618,7 +685,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         img: _thumbnailImg,
         cb: imgLoadedCB,
       });
-      _thumbnailImg.addEventListener("load", _boundImgLoadedFcn);
+      common.addListener(_thumbnailImg, "load", _boundImgLoadedFcn);
       _thumbnailImg.src = thumbnailURL;
       if (_thumbnailImg.complete) {
         _boundImgLoadedFcn();
@@ -634,10 +701,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _hideSpinner();
   };
   FactoryOneNewPlayerControls.prototype.showControls = function () {
-    _showControls();
+    _showOpacityElement(_videoControls);
   };
   FactoryOneNewPlayerControls.prototype.hideControls = function () {
-    _hideControls();
+    _hideOpacityElement(_videoControls);
   };
   FactoryOneNewPlayerControls.prototype.updateTimeElapsed = function (currTime) {
     _updateTimeElapsed(currTime);
@@ -654,14 +721,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   FactoryOneNewPlayerControls.prototype.updateFullscreen = function () {
     _updateFullscreenButton();
   };
-  
-  FactoryOneNewPlayerControls.prototype.reset = function () {};
-  FactoryOneNewPlayerControls.prototype.togglePlay = function () {};
-  FactoryOneNewPlayerControls.prototype.updateProgressBar = function () {};
-  FactoryOneNewPlayerControls.prototype.showProgressBar = function () {};
-  FactoryOneNewPlayerControls.prototype.hideProgressBar = function () {};
-  FactoryOneNewPlayerControls.prototype.setTramsitionProgressBar =
-    function () {}; //SPELLING
+  FactoryOneNewPlayerControls.prototype.updateProgressBar = function (time) {
+    _updateProgressBar(time);
+  };
 
   let ret = new FactoryOneNewPlayerControls(container, vectorFcn);
   return ret;

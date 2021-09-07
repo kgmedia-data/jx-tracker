@@ -1091,6 +1091,7 @@ window.jxPromisePolyfill        = 'none';
                     _ctrls.setTramsitionProgressBar();
                     _ctrls.updateProgressBar(width);
                 }); */
+                _ctrls.updateProgressBar(_vid.currentTime);
                 let diff = currentTime- this.lastPlayhead;
                 if (diff < 0) diff = 0 - diff;
                 if(diff <= 2) {

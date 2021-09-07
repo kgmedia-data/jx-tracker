@@ -59,6 +59,12 @@ function inject_(name, styleObj) {
         if (styleName == 'color') {
             pattern = /%%color%%/g;
         }
+        if (styleName == 'primaryColor') {
+            pattern = /%%primaryColor%%/g;
+        }
+        if (styleName == 'buttonsColor') {
+            pattern = /%%buttonsColor%%/g;
+        }
         if (pattern) {
             stylesStr = stylesStr.replace(pattern, styleObj[styleName]);
         }
