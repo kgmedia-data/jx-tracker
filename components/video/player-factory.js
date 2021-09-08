@@ -4,7 +4,7 @@ const common                    = modulesmgr.get('basic/common');
 const jxvhelper                 = modulesmgr.get('video/jxvideo-helper');
 const consts                    = modulesmgr.get('video/consts');
 const MakeOneAdObj              = modulesmgr.get('video/admgr-factory');
-const MakeOnePlayerControlsObjD = modulesmgr.get('video/new-ctrls-factory');
+const MakeOnePlayerControlsObjD = modulesmgr.get('video/ctrls-factory');
 const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
@@ -733,6 +733,11 @@ window.jxPromisePolyfill        = 'none';
         var _createControlsMaybe = function() {
             if (!_ctrls) {
                 _ctrls = MakeOnePlayerControlsObjD(_contentDiv, _makeFcnVectorForUI()); 
+            }
+            if (_ctrls.showNativeControl()) {
+                _vid.controls = true;
+            } else {
+                _vid.controls = false;
             }
             _ctrls.hideControls();
         };

@@ -1,8 +1,8 @@
 /**
  * Bundle built for the jixie "player SDK"
  */
-if (window.JX) {
-    return;
+ if (window.JX) {
+  return;
 }
 
 
@@ -11,9 +11,9 @@ const modulesmgr                       = require('../components/basic/modulesmgr
 const cssmgr                           = require('../components/video/cssmgr');
 modulesmgr.set('video/cssmgr',         cssmgr);
 
-const stylesSet                        = require('../components/video-styles/default');//we choose this set of style
+const stylesSet                        = require('../components/video-styles/custom');//we choose this set of style
 cssmgr.init(stylesSet.getCls(), stylesSet.getStyles());
-cssmgr.inject('newControls', { color: '#FF0000'});
+cssmgr.inject('customControls', { color: '#FF0000'});
 
 
 // these we only use within this file, so dun bother
@@ -43,7 +43,7 @@ modulesmgr.set('video/adctrls-factory', adctrls_fact);
 const admgr_fact                        = require('../components/video/admgr-factory');
 modulesmgr.set('video/admgr-factory',   admgr_fact);
 
-const ctrls_fact                        = require('../components/video/ctrls-factory');
+const ctrls_fact                        = require('../components/video/custom-ctrls-factory');
 modulesmgr.set('video/ctrls-factory',   ctrls_fact);
 
 const soundind_fact                     = require('../components/video/soundind-factory');
@@ -68,36 +68,36 @@ pginfo.dbgVersion = dbgVersion;
 
 var instMap = new Map();   
 function makePlayer(options) {
-    let hashStr = btoa(JSON.stringify(options));
-    let instMaybe = instMap.get(hashStr);
-    if (instMaybe) {
-        return;
-    }
-    const ids = mids.get();
-    let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
-    let playerInst = createObject(merged);
-    instMap.set(hashStr, playerInst);
-    return playerInst;
+  let hashStr = btoa(JSON.stringify(options));
+  let instMaybe = instMap.get(hashStr);
+  if (instMaybe) {
+      return;
+  }
+  const ids = mids.get();
+  let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
+  let playerInst = createObject(merged);
+  instMap.set(hashStr, playerInst);
+  return playerInst;
 }
 
 window.JX = {
-    player :  function(options) {
-        return (makePlayer(options, null));
-    },
-    ampplayer : function(options, ampIntegration) {
-        options.amp = true;//augment
-        let metadata = ampIntegration.getMetadata();
-        let canonUrl = metadata.canonicalUrl;
-        options.pageurl = canonUrl;//augment
-        jxvhelper.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
-        return (makePlayer(options, ampIntegration));
-    }
+  player :  function(options) {
+      return (makePlayer(options, null));
+  },
+  ampplayer : function(options, ampIntegration) {
+      options.amp = true;//augment
+      let metadata = ampIntegration.getMetadata();
+      let canonUrl = metadata.canonicalUrl;
+      options.pageurl = canonUrl;//augment
+      jxvhelper.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
+      return (makePlayer(options, ampIntegration));
+  }
 };
 
 // The loaded event we need some minimal info about the page
 // Dun have ids etc ready yet, it is ok.
 if (!window.AmpVideoIframe) {
-    //get some basic info first
-    jxvhelper.sendScriptLoadedTracker(pginfo);
+  //get some basic info first
+  jxvhelper.sendScriptLoadedTracker(pginfo);
 }
 

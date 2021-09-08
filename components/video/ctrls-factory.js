@@ -164,20 +164,27 @@
     FactoryOnePlayerControlsD.prototype.videoVisualsRemoveSpinner= function(){
         _hideSpinner();
     }
+    FactoryOnePlayerControlsD.prototype.showNativeControl= function(){
+        return true;
+    };
     
     //all do nothing
     FactoryOnePlayerControlsD.prototype.reset= function(){};
     FactoryOnePlayerControlsD.prototype.updatePlayState= function(){};
     FactoryOnePlayerControlsD.prototype.updateMutedState= function(){};
-    FactoryOnePlayerControlsD.prototype.hide= function(){};
-    FactoryOnePlayerControlsD.prototype.show= function(){};
+    FactoryOnePlayerControlsD.prototype.hideControls= function(){};
+    FactoryOnePlayerControlsD.prototype.showControls= function(){};
     FactoryOnePlayerControlsD.prototype.setBtnMuteActive= function(){};
     FactoryOnePlayerControlsD.prototype.setBtnPlayActive= function(){};
     FactoryOnePlayerControlsD.prototype.togglePlay= function(){};
-    FactoryOnePlayerControlsD.prototype.updateProgressBar= function(){};
     FactoryOnePlayerControlsD.prototype.showProgressBar= function(){};
     FactoryOnePlayerControlsD.prototype.hideProgressBar= function(){};
     FactoryOnePlayerControlsD.prototype.setTramsitionProgressBar= function(){};//SPELLING
+    FactoryOnePlayerControlsD.prototype.updateVolume= function(){};
+    FactoryOnePlayerControlsD.prototype.updatePlayBtn= function(){};
+    FactoryOnePlayerControlsD.prototype.initializeVideoInfo= function(){};
+    FactoryOnePlayerControlsD.prototype.updateTimeElapsed= function(){};
+    FactoryOnePlayerControlsD.prototype.updateProgressBar= function(){};
     let ret = new FactoryOnePlayerControlsD(container, vectorFcn);
     return ret;
 }
