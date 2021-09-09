@@ -94,6 +94,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var _leftControls = null;
   var _centerControls = null;
   var _videoTitle = null;
+  var _videoTitleDiv = null;
 
   var _overlayPlayBtn = null;
   var _overlayVolumeBtn = null;
@@ -118,7 +119,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var _subtitleItems = [];
 
   var _touchTimeout = null;
-  var _hoverTimeout = null;
 
   var _bigPlayBtnCls = playbackAnimationCls;
 
@@ -141,8 +141,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     resizeObserver = new ResizeObserver(_onVideoResized);
     resizeObserver.observe(_container);
 
-    _videoControls = common.newDiv(_container, "div", null, overlayControlCls+' '+hideCls);
-    _videoTitle = common.newDiv(_container, "div", `<div>${'This is the title of video'}</div>`, overlayTitleCls+' '+hideCls);
+    _videoControls = common.newDiv(_container, "div", null, overlayControlCls);
+    _videoTitleDiv = common.newDiv(_container, "div", null, overlayTitleCls+' '+hideOpacityCls);
 
     _bottomControls = common.newDiv(_videoControls, "div", null, bottomControlCls);
     _leftControls = _createLeftControls();
@@ -155,6 +155,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _createProgressBar();
 
     common.addListener(window, "click", _onWindowClick);
+    common.addListener(_container, "click", _onTouch);
+    common.addListener(_container, "touchstart", _onTouch);
   }
 
   FactoryOneCustomControls.prototype.reset = function () {
@@ -170,10 +172,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_subtitleContainer) _rightControls.removeChild(_subtitleContainer);
     
 
-    // if (_videoTitle) {
-    //   _container.removeChild(_videoTitle);
-    //   _videoTitle = null;
-    // }
+    if (_videoTitle) {
+      _videoTitleDiv.removeChild(_videoTitle);
+      _videoTitle = null;
+    }
   };
 
   //this can be called in 2 situations:
@@ -219,13 +221,13 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if(elm) elm.style.visibility = "visible";
   }
   function _showAll() {
-    [_videoControls, _videoTitle, _bigPlayBtn, _overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
-      if (x) x.classList.remove(hideCls);
+    [_videoControls, _videoTitleDiv, _bigPlayBtn, _overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
+      if (x) x.classList.remove(hideOpacityCls);
     });
   }
   function _hideAll() {
-    [_videoControls, _videoTitle, _bigPlayBtn, _overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
-      if (x) x.classList.add(hideCls);
+    [_videoControls, _videoTitleDiv, _bigPlayBtn, _overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
+      if (x) x.classList.add(hideOpacityCls);
     });
   }
 
@@ -235,8 +237,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _bigPlayBtn.className = _bigPlayBtnCls;
       _bigPlayBtn.innerHTML = `<span class="${overlayBigPlayBtnCls}"></span>
                               <span class="${overlayBigPauseBtnCls} ${hideCls}"></span>`;
-
+      
       _centerControls.appendChild(_bigPlayBtn);
+      common.addListener(_bigPlayBtn, "click", _togglePlay);
     }
   }
 
@@ -466,6 +469,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         if (true) _createOverlaySubtitleMenu();
       }
 
+      _onTouch();
       _showVisibility(_overlayBackwardBtn);
       _showVisibility(_overlayFastForwardBtn);
 
@@ -484,8 +488,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _progressBar.setAttribute('max', videoDuration);
   
       _overlayVolumeRange.value = volume;
-      _updateVolume(true);
+      _overlayVolumeRange.setAttribute('data-volume', _overlayVolumeRange.value);
       _updateVolumeIcon(volume);
+      _updateVolume(true);
 
       if (_speedItems.length > 0) _speedItems.forEach((x) => x.classList.remove('active'));
       if (selectedPlaybackValue.length > 0) {
@@ -496,9 +501,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       
       common.addListener(_container, "mouseover", _onMouseIn);
       common.addListener(_container, "mouseleave", _onMouseOut);
-      common.addListener(_container, "click", _onTouch);
-      common.addListener(_container, "touchstart", _onTouch);
-      common.addListener(_container, "touchend", _onTouch);
     }
   }
 
@@ -681,6 +683,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _progressBarInput.value = skipTo;
   }
 
+  function _setVideoTitle(title) {
+    if (!_videoTitle) _videoTitle = common.newDiv(_videoTitleDiv, "div", title);
+  }
+
   /**
    * If somehow somehow the play started then this should be called.
    * (play can start thru various channels ... See comment for _clickedCB function above.
@@ -712,9 +718,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         common.addListener(_bigPlayBtn, "click", _boundClickedCB); //not sure about touch
       }
 
-      [_videoTitle, _bigPlayBtn].forEach(function(x) {
-        if (x) x.classList.remove(hideCls);
-      });
+      _bigPlayBtn.classList.remove(hideCls);
     }
   };
 
@@ -722,6 +726,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function imgLoadedFcn() {
     try {
       this.img.removeEventListener("load", _boundImgLoadedFcn);
+      if (_videoTitleDiv) _videoTitleDiv.classList.remove(hideOpacityCls);
     } catch (ee) {}
     _boundImgLoadedFcn = null;
     if (this.cb) {
@@ -793,6 +798,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   };
   FactoryOneCustomControls.prototype.updateProgressBar = function (time) {
     _updateProgressBar(time);
+  };
+  FactoryOneCustomControls.prototype.setVideoTitle = function (title) {
+    _setVideoTitle(title);
   };
   FactoryOneCustomControls.prototype.showNativeControl= function(){
     return false;

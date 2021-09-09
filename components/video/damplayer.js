@@ -1512,8 +1512,8 @@ function createObject_(options, ampIntegration) {
 
                 if (!thumbnailUrl && vData.metadata.thumbnail)
                     thumbnailUrl = vData.metadata.thumbnail;
-                if (vData.title)
-                    title = vData.title;
+                if (vData.metadata.title)
+                    title = vData.metadata.title;
             }
         }
         
@@ -1528,7 +1528,7 @@ function createObject_(options, ampIntegration) {
         _pInst.setV(
             _lazyStartProm,
             _currVid, _cfg.startModePW, (downgrade == fallbackTech_ ? null : srcHLS),
-            srcFallback, offset, thumbnailUrl);  
+            srcFallback, offset, thumbnailUrl, title);  
 
         //setV will kick off a whole "promise chain" thing waiting for one thing
         //after another one.

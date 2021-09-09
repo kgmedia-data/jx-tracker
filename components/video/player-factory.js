@@ -1573,7 +1573,7 @@ window.jxPromisePolyfill        = 'none';
             delayPutSrcWaitProm, //
             videoID,
             startModePW,
-            srcHLS, srcFallback, offset, thumbnailURL) {
+            srcHLS, srcFallback, offset, thumbnailURL, videoTitle) {
 
             let token = videoID +"-" + Date.now();                
             
@@ -1676,6 +1676,8 @@ window.jxPromisePolyfill        = 'none';
             let boundChainContextCheck  = _initChainContextCheck.bind({token: token});
             let boundSetupNewVP         = _initChainSetupNewVP.bind({token: token});
             
+            if (_ctrls) _ctrls.setVideoTitle(videoTitle);
+
             shakaDetachProm
             .then(function() { 
                 //we are waiting here.
