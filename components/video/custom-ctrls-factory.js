@@ -149,8 +149,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _rightControls = _createRightControls();
 
     _centerControls = common.newDiv(_container, "div", null, overlayCenterControlsCls);
-    _createSkipButtons();
 
+    _createBigPlayBtn();
+    _createSkipButtons();
     _createProgressBar();
 
     common.addListener(window, "click", _onWindowClick);
@@ -192,9 +193,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _vectorFcn.reportClickToStart();
     }
 
-    if(_overlayBackwardBtn) _showVisibility(_overlayBackwardBtn);
-    if(_overlayFastForwardBtn) _showVisibility(_overlayFastForwardBtn);
-
     [_overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
       if (x) x.classList.remove(hideCls)
     });
@@ -229,6 +227,17 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     [_videoControls, _videoTitle, _bigPlayBtn, _overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
       if (x) x.classList.add(hideCls);
     });
+  }
+
+  function _createBigPlayBtn() {
+    if (!_bigPlayBtn) {
+      _bigPlayBtn = document.createElement("div");
+      _bigPlayBtn.className = _bigPlayBtnCls;
+      _bigPlayBtn.innerHTML = `<span class="${overlayBigPlayBtnCls}"></span>
+                              <span class="${overlayBigPauseBtnCls} ${hideCls}"></span>`;
+
+      _centerControls.appendChild(_bigPlayBtn);
+    }
   }
 
   function _createLeftControls() {
@@ -456,6 +465,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         if (true) _createOverlayQualityMenu();
         if (true) _createOverlaySubtitleMenu();
       }
+
+      _showVisibility(_overlayBackwardBtn);
+      _showVisibility(_overlayFastForwardBtn);
 
       const videoDuration = Math.round(videoObj.duration);
       const time = _formatTime(videoDuration);
@@ -692,16 +704,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
    * @param {*} cb
    */
   FactoryOneCustomControls.prototype.showBigPlayBtn = function (cb) {
-    if (!_bigPlayBtn) {
-      //for now should be spinner
-      /**/
-      _bigPlayBtn = document.createElement("div");
-      _bigPlayBtn.className = _bigPlayBtnCls;
-      _bigPlayBtn.innerHTML = `<span class="${overlayBigPlayBtnCls}"></span>
-                              <span class="${overlayBigPauseBtnCls} ${hideCls}"></span>`;
-
-      _centerControls.appendChild(_bigPlayBtn);
-    }
     if (_bigPlayBtn) {
       if (cb) {
         _knownClickCBs.push(cb);
