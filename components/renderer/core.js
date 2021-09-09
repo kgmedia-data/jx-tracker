@@ -269,7 +269,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             signature: "jxvideoadsdk",
             //the queue name is '_' + signature + 'q';
             //so here it is _jxvideoadsdkq
-            url: 'https://scripts.jixie.io/jxvideocr.1.0.min.js'
+            url: 'https://scripts.jixie.media/jxvideocr.1.0.min.js'
         }
     };
     const visThreshold_ = 0.4;
@@ -1693,10 +1693,10 @@ const thresholdDiff_ = 120;
             //Their common characteristics: all to be in iframe.
             //then need a jxOutstream injected into the iframe as well.    
             const playerUrls_ = {
-                video: 'https://scripts.jixie.io/jxplayerbridge.1.1.min.js?', 
-                pyoutube: 'https://scripts.jixie.io/jxyoutubebridge.1.0.min.js', 
-                pdailymotion: 'https://universal.jixie.io/js/jxplayerdm.1.4.1.js?', 
-                pivs: 'https://universal.jixie.io/js/jxplayerivs.1.2.js?'
+                video: 'https://scripts.jixie.media/jxplayerbridge.1.1.min.js?', 
+                pyoutube: 'https://scripts.jixie.media/jxyoutubebridge.1.0.min.js', 
+                pdailymotion: 'https://scripts.jixie.media/jxplayerdm.1.4.1.js?', 
+                pivs: 'https://scripts.jixie.media/jxplayerivs.1.2.min.js?'
             };
         let assumeHasAd = false;
 
