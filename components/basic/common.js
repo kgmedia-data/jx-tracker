@@ -82,6 +82,9 @@ function MakeOneHelperObj_() {
             return false;
         }
     };
+    FactoryOneHelper.prototype.isIOS = function() {
+        return (/iPad|iPhone|iPod/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
+    }
 
     function _acss(stylesArr, id) {
         var head = document.getElementsByTagName('HEAD')[0];

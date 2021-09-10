@@ -122,6 +122,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   var _bigPlayBtnCls = playbackAnimationCls;
 
+  var _videoObj = null;
+
   //all the callback functions (these are promise resolvers) we record so
   //that we call them at one go when there is a click
   //to avoid dangling promise chains.
@@ -220,14 +222,14 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _showVisibility(elm) {
     if(elm) elm.style.visibility = "visible";
   }
-  function _showAll() {
+  function _showAll(className) {
     [_videoControls, _videoTitleDiv, _bigPlayBtn, _overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
-      if (x) x.classList.remove(hideOpacityCls);
+      if (x) x.classList.remove(className);
     });
   }
-  function _hideAll() {
+  function _hideAll(className) {
     [_videoControls, _videoTitleDiv, _bigPlayBtn, _overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
-      if (x) x.classList.add(hideOpacityCls);
+      if (x) x.classList.add(className);
     });
   }
 
@@ -255,7 +257,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
                     <span class="${volumeMidCls} ${hideCls}" id="${vMidId}-${randNumb}"></span>
                     <span class="${volumeHighCls}" id="${vHighId}-${randNumb}"></span>
                   </button>
-                  <input type="range" class="${volumePanelCls}" id="${volumePanelId}-${randNumb}" type="range" max="1" min="0" step="0.01" />
                 </div>
                 <div>
                   <span id="${timeElapsedId}-${randNumb}">00:00</span>
@@ -270,8 +271,18 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _overlayVolumeBtn = document.getElementById(`${volumeBtnId}-${randNumb}`);
     common.addListener(_overlayVolumeBtn, "click", _toggleMute);
 
-    _overlayVolumeRange = document.getElementById(`${volumePanelId}-${randNumb}`);
-    common.addListener(_overlayVolumeRange, "input", _updateVolume);
+    if (!common.isIOS()) {
+      const volumeControl = document.querySelector(`.${volumeControlCls}`);
+      _overlayVolumeRange = document.createElement("input");
+      _overlayVolumeRange.type = "range";
+      _overlayVolumeRange.className = volumePanelCls;
+      _overlayVolumeRange.id = `${volumePanelId}-${randNumb}`;
+      _overlayVolumeRange.max = "1";
+      _overlayVolumeRange.min = "0";
+      _overlayVolumeRange.step = "0.01";
+      volumeControl.appendChild(_overlayVolumeRange);
+      common.addListener(_overlayVolumeRange, "input", _updateVolume);
+    }
 
     return ctrl;
   }
@@ -436,11 +447,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       const elm = document.querySelector(`.${x}`);
       if (elm) elm.classList.add(hideCls);
     });
-    _hideAll();
+    _hideAll(hideOpacityCls);
   }
 
   function _onMouseIn() {
-    _showAll();
+    _showAll(hideOpacityCls);
   }
 
   function _onMouseOut() {
@@ -451,7 +462,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_touchTimeout) {
       window.clearTimeout(_touchTimeout);
     }
-    _showAll();
+    _showAll(hideOpacityCls);
     _touchTimeout = setTimeout(() => {
       _animateControls();
     }, 3e3);
@@ -460,7 +471,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _initVideoInfo(videoObj) {
     if (!_initialized) {
       _initialized = true;
-
+      
+      _videoObj = videoObj;
       // optional controls i.e playback rate, quality, subtitle. we show them based on what we got from video e.g subtitle, quality
       // e.g if there is no subtitle then we don't show the CC button
       if (!common.isMobile()) {
@@ -487,10 +499,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _progressBarInput.setAttribute('max', videoDuration);
       _progressBar.setAttribute('max', videoDuration);
   
-      _overlayVolumeRange.value = volume;
-      _overlayVolumeRange.setAttribute('data-volume', _overlayVolumeRange.value);
-      _updateVolumeIcon(volume);
-      _updateVolume(true);
+      if (_overlayVolumeRange) _overlayVolumeRange.setAttribute('data-volume', volume);
+      _updateVolumeIcon(true, volume);
 
       if (_speedItems.length > 0) _speedItems.forEach((x) => x.classList.remove('active'));
       if (selectedPlaybackValue.length > 0) {
@@ -501,6 +511,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       
       common.addListener(_container, "mouseover", _onMouseIn);
       common.addListener(_container, "mouseleave", _onMouseOut);
+      common.addListener(videoObj, "webkitendfullscreen", function() {
+        _showAll(hideCls);
+      });
     }
   }
 
@@ -542,28 +555,33 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _toggleMute() {
     if (_vectorFcn.isMuted()) {
       _vectorFcn.unMute();
-      _overlayVolumeRange.value = _overlayVolumeRange.dataset.volume;
+      if (_overlayVolumeRange) _overlayVolumeRange.value = _overlayVolumeRange.dataset.volume;
     } else {
       _vectorFcn.mute();
-      _overlayVolumeRange.setAttribute('data-volume', _overlayVolumeRange.value);
-      _overlayVolumeRange.value = 0;
-      _overlayVolumeRange.classList.add(hideCls);
+      if (_overlayVolumeRange) {
+        _overlayVolumeRange.setAttribute('data-volume', _overlayVolumeRange.value);
+        _overlayVolumeRange.value = 0;
+        _overlayVolumeRange.classList.add(hideCls);
+      }
     }
   }
 
-  function _updateVolume(isInit) {
+  function _updateVolume(isInit, volume) {
     const min = _overlayVolumeRange.min;
     const max = _overlayVolumeRange.max;
-    const val = _overlayVolumeRange.value;
+    const val = volume ? volume : _overlayVolumeRange.value;
     
     if (_vectorFcn.isMuted() && !isInit) {
       _vectorFcn.unMute();
     }
-    _overlayVolumeRange.style.backgroundSize = (val - min) * 100 / (max - min) + '% 100%';
-    _vectorFcn.setVolume(_overlayVolumeRange.value);
+    if (_overlayVolumeRange) {
+      _overlayVolumeRange.value = val;
+      _overlayVolumeRange.style.backgroundSize = (val - min) * 100 / (max - min) + '% 100%';
+    }
+    _vectorFcn.setVolume(val);
   }
 
-  function _updateVolumeIcon(volume) {
+  function _updateVolumeIcon(isInit, volume) {
     const volumeIcons = document.querySelectorAll(`#${volumeBtnId}-${randNumb} span`);
     const muteIcon = document.getElementById(`${muteBtnId}-${randNumb}`);
     const lowIcon = document.getElementById(`${vLowId}-${randNumb}`);
@@ -577,7 +595,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_vectorFcn.isMuted() || volume === 0) {
       muteIcon.classList.remove(hideCls);
       _overlayVolumeBtn.setAttribute('data-title', 'Unmute');
-      _overlayVolumeRange.classList.add(hideCls);
+      if (_overlayVolumeRange) _overlayVolumeRange.classList.add(hideCls);
 
       _vectorFcn.mute();
     } else {
@@ -588,21 +606,30 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       } else {
         highIcon.classList.remove(hideCls);
       }
-      _overlayVolumeRange.classList.remove(hideCls);
+
+      if (_overlayVolumeRange) _overlayVolumeRange.classList.remove(hideCls);
+      _updateVolume(isInit, volume);
     }
   }
 
   function _toggleFullScreen() {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (document.webkitFullscreenElement) {
-      // Need this to support Safari
-      document.webkitExitFullscreen();
-    } else if (_container.webkitRequestFullscreen) {
-      // Need this to support Safari
-      _container.webkitRequestFullscreen();
+    if (!common.isIOS()) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else if (document.webkitFullscreenElement) {
+        // Need this to support Safari
+        document.webkitExitFullscreen();
+      } else if (_container.webkitRequestFullscreen) {
+        // Need this to support Safari
+        _container.webkitRequestFullscreen();
+      } else {
+        _container.requestFullscreen();
+      }
     } else {
-      _container.requestFullscreen();
+      if (_videoObj.webkitSupportsFullscreen) {
+        _hideAll(hideCls);
+        _videoObj.webkitEnterFullscreen();
+      }
     }
   }
 
@@ -791,7 +818,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _updatePlayBtn();
   };
   FactoryOneCustomControls.prototype.updateVolume = function (vol) {
-    _updateVolumeIcon(vol);
+    _updateVolumeIcon(false, vol);
   };
   FactoryOneCustomControls.prototype.updateFullscreen = function () {
     _updateFullscreenButton();

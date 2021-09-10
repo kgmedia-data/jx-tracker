@@ -34,7 +34,6 @@ const remainSecEventsSeed_      = [15, 5, 2];
 
 const adCountdownSec_           = 3;
 const defaultCountDownToAdMsg   = "Ad starts in %%SECONDS%% s";
-const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
 const delayedSetOffsetPBMethods_ = [ fallbackTech_, "native"];
 
@@ -1165,7 +1164,8 @@ window.jxPromisePolyfill        = 'none';
             //NEED MAH if (_boundOnPausedCB) _vid.removeEventListener('waiting', _boundOnPausedCB);
             _boundOnPausedCB = null;
             if (_boundOnFullScreenCB) ["webkit", "moz", "ms"].forEach(function(prefix) {
-                _container.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                if (!common.isIOS()) _container.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                else _vid.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
             });
             _boundOnFullScreenCB = null;
             if (_boundVolumeChangedCB) _vid.removeEventListener('volumechange', _boundVolumeChangedCB);
@@ -1194,7 +1194,8 @@ window.jxPromisePolyfill        = 'none';
             _vid.addEventListener('ended', _boundOnEndedCB, false);
             _vid.addEventListener('error', _boundOnErrorCB, false);
             ["webkit", "moz", "ms"].forEach(function(prefix) {
-                _container.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                if (!common.isIOS()) _container.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                else _vid.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
             }); 
             
 
@@ -1779,7 +1780,7 @@ window.jxPromisePolyfill        = 'none';
          * @param {*} startAccuTime. When this function is called what is the accumulated play time.
          */
         function _fetchMidrollWithCountdownP(startAccuTime, adUrl) {
-            if (isIOS_ && !_vid.muted) {
+            if (common.isIOS() && !_vid.muted) {
                 console.log(`is IOS and the thing is not muted. so we dun want to play an ad.`);
                 //on iOS we are not able to start the ad with sound (will hang)
                 //so we dun ask for ads if at this juncture there is sound.
