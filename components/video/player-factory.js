@@ -165,6 +165,8 @@ window.jxPromisePolyfill        = 'none';
         var _boundShakaOnErrorCB = null;
         var _boundSizeManagerFcn = null;
         //----->
+
+        var _forcedResolution = -1;
         
         var _cfg = {
             
@@ -409,6 +411,7 @@ window.jxPromisePolyfill        = 'none';
             _msLastInternalCallPause = 0;
             _msLastInternalCallPlay = 0;
             _manualPaused = false;
+            _forcedResolution = -1;
 
             //we do not reset this, we keep what was there from the first video
         };
@@ -725,6 +728,39 @@ window.jxPromisePolyfill        = 'none';
                 },
                 setPlaybackRate: function(speed) {
                     _vid.playbackRate = speed;
+                },
+                //https://animoto.com/blog/news/hd-video-creation-sharing
+                setResolution: function(exactHeight) {
+                    if (!_shakaPlayer) return; 
+                    if (exactHeight == -1) {
+                        _forcedResolution = -1;
+                        return; //after a while (some time interval), then the code will be run
+                        // to settle on the best size 
+                    }
+                    // if exactHeight == -1 means we let the player do what is best (which is the default mode)
+                    _shakaPlayer.configure({
+                        abr: {
+                            restrictions: {
+                                maxHeight: exactHeight,
+                                minHeight: exactHeight
+                            }
+                        }
+                    });
+                },
+                getResolution: function() {
+                    // this stuff dun hardcode in the controls layer as it should be dumb in this
+                    // aspect. 
+                    return {
+                        current: _forcedResolution, //the current mode. -1 means our auto method
+                        // 
+                        // I suggest the menu also should have an entry "auto". So initially it is auto 
+                        // Coz we don't really know which one the shaka is using in our normal mode
+                        // So initially you display "auto" in the options.
+                        // This also means, if the user is tired of self-setting the resolution, he can
+                        // flip it back to auto...
+                        // NOTE: I also added _forcedResolution = -1 in the reset function for now.
+                        range: [240,360,480] //clean up later . Of course also should not hardcode here ;)
+                    };
                 }
             };
             return fcnVector;
@@ -756,7 +792,10 @@ window.jxPromisePolyfill        = 'none';
         //of the next when we are in switching situation
         function _onFullScreenChangeCB() {
             var state = document.fullscreenElement || document.mozFullScreenElement ||
-            document.webkitFullscreenElement || document.msFullscreenElement;
+                document.webkitFullscreenElement || document.msFullscreenElement;
+            if (this.isIOS) {
+                state = true;
+            }
             if (state) {
                 _reportCB('video', 'fullscreen', _makeCurrInfoBlob(this.videoid));
             }
@@ -1069,10 +1108,12 @@ window.jxPromisePolyfill        = 'none';
             
             
             this.spacer10++; 
-            if (this.spacer10 == 10 && _shakaPlayer) {
+            if (this.spacer10 == 10 && _shakaPlayer && _forcedResolution == -1) {
                 try {
                     let newDim = _boundSizeManagerFcn();
                     //the dim of the video area has changed since we last checked:
+                    var currentRes = 'Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height;
+                    console.log('current resolution', currentRes);
                     if (newDim) {
                         let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
                         _shakaPlayer.configure({
@@ -1163,10 +1204,15 @@ window.jxPromisePolyfill        = 'none';
             if (_boundOnPausedCB) _vid.removeEventListener('pause', _boundOnPausedCB);
             //NEED MAH if (_boundOnPausedCB) _vid.removeEventListener('waiting', _boundOnPausedCB);
             _boundOnPausedCB = null;
-            if (_boundOnFullScreenCB) ["webkit", "moz", "ms"].forEach(function(prefix) {
-                if (!common.isIOS()) _container.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
-                else _vid.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
-            });
+            if (_boundOnFullScreenCB) {
+                if (!common.isIOS()) {
+                    ["webkit", "moz", "ms"].forEach(function(prefix) {
+                        _container.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                    });
+                } else {
+                    _vid.removeEventListener("webkitbeginfullscreen", _boundOnFullScreenCB, false);
+                }
+            }
             _boundOnFullScreenCB = null;
             if (_boundVolumeChangedCB) _vid.removeEventListener('volumechange', _boundVolumeChangedCB);
             _boundVolumeChangedCB = null;
@@ -1193,11 +1239,14 @@ window.jxPromisePolyfill        = 'none';
             _vid.addEventListener('timeupdate', _boundOnPlayheadUpdateCB, false);
             _vid.addEventListener('ended', _boundOnEndedCB, false);
             _vid.addEventListener('error', _boundOnErrorCB, false);
-            ["webkit", "moz", "ms"].forEach(function(prefix) {
-                if (!common.isIOS()) _container.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
-                else _vid.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
-            }); 
-            
+            if (!common.isIOS()) {
+                ["webkit", "moz", "ms"].forEach(function(prefix) {
+                    _container.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                }); 
+            } else {
+                _boundOnFullScreenCB = _onFullScreenChangeCB.bind({isIOS: true});
+                _vid.addEventListener("webkitbeginfullscreen", _boundOnFullScreenCB, false);
+            }
 
         };
         var _createSoundIndMaybe = function() {

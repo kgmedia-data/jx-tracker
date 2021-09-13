@@ -72,7 +72,6 @@ const primaryColor = "#1B63D4";
 const buttonsColor = "#FFF";
 const randNumb = Math.floor(Math.random() * 1000);
 const playbackRateArr = [0.25, 0.5, 1, 1.5, 2];
-const qualityArr = [1080, 720, 480, 360];
 const subtitleArr = [{value: "ID", label: "Indonesia"}, {value: "EN", label: "English"}];
 const skipOffset = 15;
 
@@ -116,6 +115,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   var _speedItems = [];
   var _qualityItems = [];
+  var _qualityOptions = [];
   var _subtitleItems = [];
 
   var _touchTimeout = null;
@@ -140,8 +140,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
     cssmgr.inject('customControls', { buttonsColor: buttonsColor, primaryColor: primaryColor });
 
-    resizeObserver = new ResizeObserver(_onVideoResized);
-    resizeObserver.observe(_container);
+    // resizeObserver = new ResizeObserver(_onVideoResized);
+    // resizeObserver.observe(_container);
 
     _videoControls = common.newDiv(_container, "div", null, overlayControlCls);
     _videoTitleDiv = common.newDiv(_container, "div", null, overlayTitleCls+' '+hideOpacityCls);
@@ -178,6 +178,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _videoTitleDiv.removeChild(_videoTitle);
       _videoTitle = null;
     }
+
+    _qualityOptions = [];
   };
 
   //this can be called in 2 situations:
@@ -325,13 +327,15 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _overlayQualityBtn.dataset.title = "Quality";
     var qualitySelection = common.newDiv(_qualityContainer, "div", "<div>Quality</div>", qualitySelectionCls+' '+hideCls);
 
-    qualityArr.forEach(function(x) {
-      var elm = common.newDiv(qualitySelection, "div", x+"p", qualityItemsCls);
-      elm.dataset.title = x+"p";
-      elm.dataset.quality = x;
-      common.addListener(elm, 'click', _selectQuality);
-      _qualityItems.push(elm);
-    });
+    if (_qualityOptions.length > 0) {
+      _qualityOptions.forEach(function(x) {
+        var elm = common.newDiv(qualitySelection, "div", x+"p", qualityItemsCls);
+        elm.dataset.title = x+"p";
+        elm.dataset.quality = x;
+        common.addListener(elm, 'click', _selectQuality);
+        _qualityItems.push(elm);
+      });
+    }
 
     common.addListener(_overlayQualityBtn, "click", function() {
       _toggleMenuSelection(qualitySelectionCls);
@@ -415,17 +419,18 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     };
   }
 
-  function _onVideoResized() {
-    if (_container.offsetWidth <= 480) {
-      if(_qualityContainer) _qualityContainer.classList.add(hideCls);
-      if(_speedContainer) _speedContainer.classList.add(hideCls);
-      if(_subtitleContainer) _subtitleContainer.classList.add(hideCls);
-    } else {
-      if(_qualityContainer) _qualityContainer.classList.remove(hideCls);
-      if(_speedContainer) _speedContainer.classList.remove(hideCls);
-      if(_subtitleContainer) _subtitleContainer.classList.remove(hideCls);
-    }
-  }
+  // Right now we show all of the controls we have
+  // function _onVideoResized() {
+  //   if (_container.offsetWidth <= 480) {
+  //     if(_qualityContainer) _qualityContainer.classList.add(hideCls);
+  //     if(_speedContainer) _speedContainer.classList.add(hideCls);
+  //     if(_subtitleContainer) _subtitleContainer.classList.add(hideCls);
+  //   } else {
+  //     if(_qualityContainer) _qualityContainer.classList.remove(hideCls);
+  //     if(_speedContainer) _speedContainer.classList.remove(hideCls);
+  //     if(_subtitleContainer) _subtitleContainer.classList.remove(hideCls);
+  //   }
+  // }
 
   function _onWindowClick(e) {
     if (_overlayQualityBtn && !_overlayQualityBtn.contains(e.target)) {
@@ -471,8 +476,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _initVideoInfo(videoObj) {
     if (!_initialized) {
       _initialized = true;
-      
       _videoObj = videoObj;
+
+      var tempQuality = _vectorFcn.getResolution ? _vectorFcn.getResolution() : null;
+      if (tempQuality && tempQuality.range) _qualityOptions = tempQuality.range;
+      
       // optional controls i.e playback rate, quality, subtitle. we show them based on what we got from video e.g subtitle, quality
       // e.g if there is no subtitle then we don't show the CC button
       if (!common.isMobile()) {
@@ -507,12 +515,13 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         selectedPlaybackValue[0].classList.add('active');
         speedValue.innerText = speed + 'x';
       }
-
+      
       
       common.addListener(_container, "mouseover", _onMouseIn);
       common.addListener(_container, "mouseleave", _onMouseOut);
       common.addListener(videoObj, "webkitendfullscreen", function() {
         _showAll(hideCls);
+        _updateFullscreenButton();
       });
     }
   }
@@ -555,7 +564,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _toggleMute() {
     if (_vectorFcn.isMuted()) {
       _vectorFcn.unMute();
-      if (_overlayVolumeRange) _overlayVolumeRange.value = _overlayVolumeRange.dataset.volume;
+      _updateVolumeIcon(false, _overlayVolumeRange.dataset.volume);
     } else {
       _vectorFcn.mute();
       if (_overlayVolumeRange) {
@@ -596,7 +605,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       muteIcon.classList.remove(hideCls);
       _overlayVolumeBtn.setAttribute('data-title', 'Unmute');
       if (_overlayVolumeRange) _overlayVolumeRange.classList.add(hideCls);
-
+      
       _vectorFcn.mute();
     } else {
       if (volume > 0 && volume < 0.3) {
@@ -675,7 +684,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _qualityItems.forEach((x) => x.classList.remove('active'));
     target.classList.add('active');
 
-    console.log('Selected Quality is -->', dataset.quality) ;
+    console.log('Selected Quality is -->', Number(dataset.quality));
+    if (_vectorFcn.setResolution) _vectorFcn.setResolution(Number(dataset.quality));
+
   }
 
   function _toggleMenuSelection(className) {
