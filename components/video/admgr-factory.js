@@ -63,6 +63,7 @@
     var _adsLoader = null;
     var _adDisplayContainer = null;
     var _sizeCheckTimer = null;
+    var _resizeObserver = null;
 
     var _autoAdsManagerStart = false;
     var _adLoaderOutcome = 'jxnone';
@@ -216,14 +217,20 @@
         _pFcnVector.switch2Ad(hideContent); 
     }
     var _setupResizeListeners = function() {
-        _sizeCheckTimer = setInterval(_sizeCheck, 500);
+        // _sizeCheckTimer = setInterval(_sizeCheck, 500);
+        _resizeObserver = new ResizeObserver(_sizeCheck);
+        _resizeObserver.observe(_container);
         window.addEventListener('resize', _sizeCheck);
         window.addEventListener('jxintresize', _sizeCheck);
     }
     var _clearResizeListeners = function() {
-        if (_sizeCheckTimer) {
-            clearInterval(_sizeCheckTimer);
-            _sizeCheckTimer = null;
+        // if (_sizeCheckTimer) {
+        //     clearInterval(_sizeCheckTimer);
+        //     _sizeCheckTimer = null;
+        // }
+        if (_resizeObserver) {
+            _resizeObserver.unobserve(_container);
+            _resizeObserver = null;
         }
         window.removeEventListener('resize', _sizeCheck);
         window.removeEventListener('jxintresize', _sizeCheck);
@@ -566,7 +573,6 @@
         }
         
         if (_width != _container.offsetWidth || _height != _container.offsetHeight) { 
-            
             _width = _container.offsetWidth;
             _height = _container.offsetHeight;
             if (_adsManager) {
@@ -667,7 +673,7 @@
                 
                 let adsRequest = new google.ima.AdsRequest();
                 adsRequest.forceNonLinearFullSlot = true;
-                //adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=937';
+                adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=937';
                 if (adURL) 
                     adsRequest.adTagUrl = adURL;
                 else if (adXML) {

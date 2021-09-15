@@ -72,7 +72,6 @@ const primaryColor = "#1B63D4";
 const buttonsColor = "#FFF";
 const randNumb = Math.floor(Math.random() * 1000);
 const playbackRateArr = [0.25, 0.5, 1, 1.5, 2];
-const subtitleArr = [{value: "ID", label: "Indonesia"}, {value: "EN", label: "English"}];
 const skipOffset = 15;
 
 function MakeOneNewPlayerControlsObj(container, vectorFcn) {
