@@ -117,6 +117,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var _qualityItems = [];
   var _qualityOptions = [];
   var _subtitleItems = [];
+  var _subtitleOptions = [];
+
+  var _state = "none";
 
   var _touchTimeout = null;
 
@@ -169,9 +172,18 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
     _initialized = false;
 
-    if (_speedContainer) _rightControls.removeChild(_speedContainer);
-    if (_qualityContainer) _rightControls.removeChild(_qualityContainer);
-    if (_subtitleContainer) _rightControls.removeChild(_subtitleContainer);
+    if (_speedContainer) {
+      _rightControls.removeChild(_speedContainer);
+      _speedContainer = null;
+    }
+    if (_qualityContainer) {
+      _rightControls.removeChild(_qualityContainer);
+      _qualityContainer = null;
+    }
+    if (_subtitleContainer) {
+      _rightControls.removeChild(_subtitleContainer);
+      _subtitleContainer = null;
+    }
     
 
     if (_videoTitle) {
@@ -180,6 +192,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     }
 
     _qualityOptions = [];
+    _subtitleOptions = [];
   };
 
   //this can be called in 2 situations:
@@ -327,14 +340,19 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _overlayQualityBtn.dataset.title = "Quality";
     var qualitySelection = common.newDiv(_qualityContainer, "div", "<div>Quality</div>", qualitySelectionCls+' '+hideCls);
 
+    _qualityOptions.unshift({ height: "auto" });
     if (_qualityOptions.length > 0) {
-      _qualityOptions.forEach(function(x) {
-        var elm = common.newDiv(qualitySelection, "div", x+"p", qualityItemsCls);
-        elm.dataset.title = x+"p";
-        elm.dataset.quality = x;
-        common.addListener(elm, 'click', _selectQuality);
+      _qualityOptions.forEach((x) => {
+        x.label = x.height.toString().indexOf("auto") > -1 ? "Auto" : x.height+"p";
+        x.active = x.height.toString().indexOf("auto") > -1 ? true : false;
+
+        var elm = common.newDiv(qualitySelection, "div", x.label, qualityItemsCls);
+        if (x.active) elm.classList.add("active");
+        elm.dataset.title = x.label;
+        elm.dataset.quality = x.height;
+        common.addListener(elm, 'click', _selectQuality.bind({ track: x }));
         _qualityItems.push(elm);
-      });
+      })
     }
 
     common.addListener(_overlayQualityBtn, "click", function() {
@@ -348,13 +366,17 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _overlaySubtitleBtn.dataset.title = "Subtitle";
     var subtitleSelection = common.newDiv(_subtitleContainer, "div", null, subtitleSelectionCls+' '+hideCls);
 
-    subtitleArr.forEach(function(x) {
-      var elm = common.newDiv(subtitleSelection, "div", x.label, qualityItemsCls);
-      elm.dataset.title = x.label;
-      elm.dataset.subtitle = x.value;
-      common.addListener(elm, 'click', _selectSubtitle);
-      _subtitleItems.push(elm);
-    });
+    _subtitleOptions.push({ label: "Off", language: "off", active: true });
+    if (_subtitleOptions.length > 0) {
+      _subtitleOptions.forEach(function(x) {
+        var elm = common.newDiv(subtitleSelection, "div", x.label, qualityItemsCls);
+        if (x.active) elm.classList.add("active");
+        elm.dataset.title = x.label;
+        elm.dataset.subtitle = x.language;
+        common.addListener(elm, 'click', _selectSubtitle.bind({subtitle: x}));
+        _subtitleItems.push(elm);
+      });
+    }
 
     common.addListener(_overlaySubtitleBtn, "click", function() {
       _toggleMenuSelection(subtitleSelectionCls);
@@ -477,17 +499,21 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (!_initialized) {
       _initialized = true;
       _videoObj = videoObj;
-
       var tempQuality = _vectorFcn.getResolution ? _vectorFcn.getResolution() : null;
-      if (tempQuality && tempQuality.range) _qualityOptions = tempQuality.range;
+      
+      if (_vectorFcn.getSubtitles) _subtitleOptions = _vectorFcn.getSubtitles();
       
       // optional controls i.e playback rate, quality, subtitle. we show them based on what we got from video e.g subtitle, quality
       // e.g if there is no subtitle then we don't show the CC button
-      if (!common.isMobile()) {
+      // if (!common.isMobile()) {
         if (true) _createOverlaySpeedMenu();
-        if (true) _createOverlayQualityMenu();
-        if (true) _createOverlaySubtitleMenu();
-      }
+        if (tempQuality && tempQuality.tracks && tempQuality.tracks.length > 0) {
+          _qualityOptions = tempQuality.tracks;
+          _createOverlayQualityMenu();
+        }
+        console.log('_subtitleOptions', _subtitleOptions);
+        if (_subtitleOptions.length > 0) _createOverlaySubtitleMenu();
+      // }
 
       _onTouch();
       _showVisibility(_overlayBackwardBtn);
@@ -556,15 +582,17 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _togglePlay() {
     if (_vectorFcn.isPaused()) {
       _vectorFcn.play();
+      _state = "play";
     } else {
       _vectorFcn.pause();
+      _state = "pause";
     }
   }
 
   function _toggleMute() {
     if (_vectorFcn.isMuted()) {
       _vectorFcn.unMute();
-      _updateVolumeIcon(false, _overlayVolumeRange.dataset.volume);
+      if (_overlayVolumeRange) _updateVolumeIcon(false, _overlayVolumeRange.dataset.volume);
     } else {
       _vectorFcn.mute();
       if (_overlayVolumeRange) {
@@ -616,8 +644,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         highIcon.classList.remove(hideCls);
       }
 
-      if (_overlayVolumeRange) _overlayVolumeRange.classList.remove(hideCls);
-      _updateVolume(isInit, volume);
+      if (_overlayVolumeRange) {
+        _overlayVolumeRange.classList.remove(hideCls);
+        _updateVolume(isInit, volume);
+      }
     }
   }
 
@@ -660,9 +690,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
     _subtitleItems.forEach((x) => x.classList.remove('active'));
     target.classList.add('active');
-    subtitleValue.innerText = dataset.subtitle;
+    subtitleValue.innerText = dataset.subtitle.toUpperCase();
 
-    console.log('subtitle selected is --->', dataset.subtitle)
+    console.log('subtitle selected is --->', dataset.subtitle);
+    _vectorFcn.setSubtitle(this.subtitle);
   }
 
   function _selectSpeed(e) {
@@ -685,7 +716,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     target.classList.add('active');
 
     console.log('Selected Quality is -->', Number(dataset.quality));
-    if (_vectorFcn.setResolution) _vectorFcn.setResolution(Number(dataset.quality));
+    if (_vectorFcn.setResolution) _vectorFcn.setResolution(this.track);
 
   }
 
@@ -842,7 +873,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   };
   FactoryOneCustomControls.prototype.showNativeControl= function(){
     return false;
-};
+  };
+  FactoryOneCustomControls.prototype.lastPPGesture = function () {
+    return _state;
+  };
 
   let ret = new FactoryOneCustomControls(container, vectorFcn);
   return ret;

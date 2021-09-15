@@ -205,7 +205,7 @@ function MakeOneHelperObj_() {
                             resolve1(0);
                         }
                     };
-                    script.src = "https://ajax.googleapis.com/ajax/libs/shaka-player/3.0.10/shaka-player.compiled.js";
+                    script.src = "https://ajax.googleapis.com/ajax/libs/shaka-player/3.2.0/shaka-player.compiled.js";
                     document.getElementsByTagName('head')[0].appendChild(script);
                 }));
                 //without this mux JS script we cannot read our own generated HLS (Jixie DAM)

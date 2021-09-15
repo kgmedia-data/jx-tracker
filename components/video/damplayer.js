@@ -1473,6 +1473,7 @@ function createObject_(options, ampIntegration) {
         let srcFallback = null;
         let thumbnailUrl = null;
         let title = null;
+        let subtitles = [];
 
         if (vData.id) {
             //this is Jixie ID: real videos in our system
@@ -1514,6 +1515,21 @@ function createObject_(options, ampIntegration) {
                     thumbnailUrl = vData.metadata.thumbnail;
                 if (vData.metadata.title)
                     title = vData.metadata.title;
+
+                subtitles = [
+                    {
+                        "language": "en",
+                        "url": "https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/psdk/tests/test-encode-0605-v4-en.srt",
+                        "label": "English",
+                        "mime": "text/srt"
+                    },
+                    {
+                        "language": "fr",
+                        "url": "https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/psdk/tests/fr.srt",
+                        "label": "France",
+                        "mime": "text/srt"
+                    }
+                ]
             }
         }
         
@@ -1528,7 +1544,7 @@ function createObject_(options, ampIntegration) {
         _pInst.setV(
             _lazyStartProm,
             _currVid, _cfg.startModePW, (downgrade == fallbackTech_ ? null : srcHLS),
-            srcFallback, offset, thumbnailUrl, title);  
+            srcFallback, offset, thumbnailUrl, title, subtitles);  
 
         //setV will kick off a whole "promise chain" thing waiting for one thing
         //after another one.

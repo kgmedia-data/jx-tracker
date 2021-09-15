@@ -167,6 +167,9 @@
     FactoryOnePlayerControlsD.prototype.showNativeControl= function(){
         return true;
     };
+    FactoryOnePlayerControlsD.prototype.lastPPGesture = function () {
+        return "none";
+    };
     
     //all do nothing
     FactoryOnePlayerControlsD.prototype.reset= function(){};
@@ -185,6 +188,7 @@
     FactoryOnePlayerControlsD.prototype.initializeVideoInfo= function(){};
     FactoryOnePlayerControlsD.prototype.updateTimeElapsed= function(){};
     FactoryOnePlayerControlsD.prototype.updateProgressBar= function(){};
+    FactoryOnePlayerControlsD.prototype.setVideoTitle = function () {};
     let ret = new FactoryOnePlayerControlsD(container, vectorFcn);
     return ret;
 }
