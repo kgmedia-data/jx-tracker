@@ -85,6 +85,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   var _initialized = false;
   var resizeObserver = null;
+  var elmArr = [];
 
   var _videoControls = null;
   var _bottomControls = null;
@@ -157,6 +158,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _createBigPlayBtn();
     _createSkipButtons();
     _createProgressBar();
+
+    elmArr = [_bigPlayBtn, _overlayFastForwardBtn, _overlayBackwardBtn, _videoTitleDiv, _videoControls];
 
     common.addListener(window, "click", _onWindowClick);
     common.addListener(_container, "click", _onTouch);
@@ -237,12 +240,12 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if(elm) elm.style.visibility = "visible";
   }
   function _showAll(className) {
-    [_videoControls, _videoTitleDiv, _bigPlayBtn, _overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
+    elmArr.forEach(function(x) {
       if (x) x.classList.remove(className);
     });
   }
   function _hideAll(className) {
-    [_videoControls, _videoTitleDiv, _bigPlayBtn, _overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
+    elmArr.forEach(function(x) {
       if (x) x.classList.add(className);
     });
   }
@@ -587,9 +590,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_vectorFcn.isPaused()) {
       _vectorFcn.play();
       _state = "play";
+      if (elmArr.findIndex(x => x === _bigPlayBtn) === -1) elmArr.push(_bigPlayBtn);
     } else {
       _vectorFcn.pause();
       _state = "pause";
+      if (elmArr.findIndex(x => x === _bigPlayBtn) > -1) elmArr = elmArr.filter(x => x !== _bigPlayBtn);
     }
   }
 
