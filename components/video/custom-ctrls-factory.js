@@ -342,15 +342,18 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _qualityOptions.unshift({ height: "auto" });
     if (_qualityOptions.length > 0) {
       _qualityOptions.forEach((x) => {
-        x.label = x.height.toString().indexOf("auto") > -1 ? "Auto" : x.height+"p";
-        x.active = x.height.toString().indexOf("auto") > -1 ? true : false;
+        if (x.height) {
+          x.label = x.height.toString() === "auto" ? "Auto" : x.height+"p";
+          x.active = x.height.toString() === "auto" ? true : false;
 
-        var elm = common.newDiv(qualitySelection, "div", x.label, qualityItemsCls);
-        if (x.active) elm.classList.add("active");
-        elm.dataset.title = x.label;
-        elm.dataset.quality = x.height;
-        common.addListener(elm, 'click', _selectQuality.bind({ track: x }));
-        _qualityItems.push(elm);
+          var elm = common.newDiv(qualitySelection, "div", x.label, qualityItemsCls);
+          if (x.active) elm.classList.add("active");
+          elm.dataset.title = x.label;
+          elm.dataset.quality = x.height;
+          common.addListener(elm, 'click', _selectQuality.bind({ track: x }));
+          _qualityItems.push(elm);
+        }
+
       })
     }
 
@@ -363,17 +366,19 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _subtitleContainer = common.newDiv(_rightControls, "div", null, subtitleContainerCls);
     _overlaySubtitleBtn = common.newDiv(_subtitleContainer, "button", `<span class="${subtitleValueCls}">CC</span>`, null, `${subtitleBtnId}-${randNumb}`)
     _overlaySubtitleBtn.dataset.title = "Subtitle";
-    var subtitleSelection = common.newDiv(_subtitleContainer, "div", null, subtitleSelectionCls+' '+hideCls);
+    var subtitleSelection = common.newDiv(_subtitleContainer, "div", "<div>Subtitle</div>", subtitleSelectionCls+' '+hideCls);
 
-    _subtitleOptions.push({ label: "Off", language: "off", active: true });
+    _subtitleOptions.push({ label: "Off", language: "off", kind: "subtitle", active: true });
     if (_subtitleOptions.length > 0) {
       _subtitleOptions.forEach(function(x) {
-        var elm = common.newDiv(subtitleSelection, "div", x.label, qualityItemsCls);
-        if (x.active) elm.classList.add("active");
-        elm.dataset.title = x.label;
-        elm.dataset.subtitle = x.language;
-        common.addListener(elm, 'click', _selectSubtitle.bind({subtitle: x}));
-        _subtitleItems.push(elm);
+        if (x.kind === "subtitle") {
+          var elm = common.newDiv(subtitleSelection, "div", x.label, qualityItemsCls);
+          if (x.active) elm.classList.add("active");
+          elm.dataset.title = x.label;
+          elm.dataset.subtitle = x.language;
+          common.addListener(elm, 'click', _selectSubtitle.bind({subtitle: x}));
+          _subtitleItems.push(elm);
+        }
       });
     }
 
