@@ -193,7 +193,9 @@
             //the video is paused (failed to play), we need this gymnastics then at least the user
             //can start the play by clicking on the GUI buttons.
             if (!_reallyProgressed) {
-                _adsManager.pause();
+                //_adsManager.pause();
+                //cannot. oh dear it breaks the pure preroll... 
+                //commented out in emergency
             }
             _adsManager.resume();
         }
