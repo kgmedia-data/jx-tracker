@@ -1112,7 +1112,7 @@ window.jxPromisePolyfill        = 'none';
                 }
                 if (_accumulatedTime - this.lastReportAccTime > 10) {
                     this.lastReportAccTime = _accumulatedTime;
-                    _playheadCB(_accumulatedTime);
+                    _playheadCB(currentTime);
                 }
                 this.lastPlayhead = currentTime;
             }

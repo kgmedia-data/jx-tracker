@@ -259,7 +259,7 @@ function MakeOneHelperObj_() {
             return;
         }
         playhead = Math.round(playhead);
-        if (!(playhead > 0 && playhead < 7200)) {
+        if (!(playhead > 0 && playhead < 10800)) {
             return;
         }
         //console.log(`prototype.setVStoredPlayhead ${vid} after rounding ${playhead}`);
@@ -326,7 +326,7 @@ function MakeOneHelperObj_() {
         let corrupted = false;
         for (var i = 0; i < tmp.length; i++) {
             let o = tmp[i];
-            if (o.id  && typeof o.id === 'string' && o.hasOwnProperty('t') && typeof o.t === 'number') {
+            if (o.id  && typeof o.id === 'number' && o.hasOwnProperty('t') && typeof o.t === 'number') {
 
             }
             else {
