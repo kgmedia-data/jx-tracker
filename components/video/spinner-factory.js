@@ -2,24 +2,22 @@
 const modulesmgr                = require('../basic/modulesmgr');
 //Note used currently: const common                    = modulesmgr.get('basic/common');
 const cssmgr                    = modulesmgr.get('video/cssmgr');
-const spinnerCls                = cssmgr.getRealCls('spinnerCls');
-const hideCls                   = cssmgr.getRealCls('hideCls');
-      
+const styles                    = cssmgr.getRealCls();
 
 let MakeOneSpinner_ = function(container) {
     let _spinner = null;
     
     function FactoryOneSpinner(container) {
         _spinner = document.createElement("div");
-        _spinner.classList.add(spinnerCls);
-        _spinner.classList.add(hideCls);
+        _spinner.classList.add(styles.spinner);
+        _spinner.classList.add(styles.hide);
         container.appendChild(_spinner);
     }
     FactoryOneSpinner.prototype.show = function() {
-        if (_spinner) _spinner.classList.remove(hideCls);
+        if (_spinner) _spinner.classList.remove(styles.hide);
     };
     FactoryOneSpinner.prototype.hide = function() {
-        if (_spinner) _spinner.classList.add(hideCls);
+        if (_spinner) _spinner.classList.add(styles.hide);
     };        
     let ret = new FactoryOneSpinner(container);
     return ret;

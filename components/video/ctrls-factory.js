@@ -8,9 +8,7 @@
  const common                = modulesmgr.get('basic/common');
 
  const cssmgr                = modulesmgr.get('video/cssmgr');
- const thumbnailCls          = cssmgr.getRealCls('thumbnailCls');
- const hideCls               = cssmgr.getRealCls('hideCls');
- const bigPlayBtnCls         = cssmgr.getRealCls('bigPlayBtnCls');
+ const styles                = cssmgr.getRealCls();
  
  function MakeOnePlayerControlsObjD_(container, vectorFcn) {
     function FactoryOnePlayerControlsD() {}
@@ -56,9 +54,9 @@
             _vectorFcn.reportClickToStart();
         }
         if (_bigPlayBtn)
-            _bigPlayBtn.classList.add(hideCls);
+            _bigPlayBtn.classList.add(styles.hide);
         if (_thumbnailImg)                
-            _thumbnailImg.classList.add(hideCls);
+            _thumbnailImg.classList.add(styles.hide);
         if (_boundClickedCB)  {              
             common.removeListener(_bigPlayBtn, 'click', _boundClickedCB);
             _boundClickedCB = null;
@@ -87,7 +85,7 @@
         }
         else {
             if (_thumbnailImg) {               
-                _thumbnailImg.classList.add(hideCls);
+                _thumbnailImg.classList.add(styles.hide);
                 _thumbnailImg = null; //aiyo can we just get rid of it .
                 //we are not going to show this again, right?
             }
@@ -105,7 +103,7 @@
             /**/
             _bigPlayBtn = document.createElement("a");
             _bigPlayBtn.href = "javascript:void(0)";
-            _bigPlayBtn.className = bigPlayBtnCls;
+            _bigPlayBtn.className = styles.bigPlayBtn;
             ////if (isMobileDeviceBPB_) _bigPlayBtn.className = mobilePlayBtnCls;
             _container.appendChild(_bigPlayBtn);
         }
@@ -116,7 +114,7 @@
                 _boundClickedCB = _clickedCB.bind({ cb: cb });
                 common.addListener(_bigPlayBtn, 'click', _boundClickedCB);//not sure about touch
             }
-            _bigPlayBtn.classList.remove(hideCls)
+            _bigPlayBtn.classList.remove(styles.hide)
         }
     }
    
@@ -144,8 +142,8 @@
         _showSpinner();
         if (!_thumbnailImg) {
             let r = Math.floor(Math.random() * (2000) + 1);
-            let thumbnailID = thumbnailCls + '-' + r;//want ID for wat?
-            _thumbnailImg = common.newDiv(_container, "img", null, thumbnailCls, thumbnailID);
+            let thumbnailID = styles.thumbnail + '-' + r;//want ID for wat?
+            _thumbnailImg = common.newDiv(_container, "img", null, styles.thumbnail, thumbnailID);
         }
         if (thumbnailURL && thumbnailURL != _thumbnailImg.src) {
             _boundImgLoadedFcn = imgLoadedFcn.bind({ img: _thumbnailImg, cb: imgLoadedCB });

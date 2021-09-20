@@ -8,48 +8,7 @@ const modulesmgr = require("../basic/modulesmgr");
 const common = modulesmgr.get("basic/common");
 
 const cssmgr = modulesmgr.get("video/cssmgr");
-const thumbnailCls = cssmgr.getRealCls("thumbnailCls");
-const hideCls = cssmgr.getRealCls("hideCls");
-const hideOpacityCls = cssmgr.getRealCls("hideOpacityCls");
-const playbackAnimationCls = cssmgr.getRealCls("playbackAnimationCls");
-const overlayBigPlayBtnCls = cssmgr.getRealCls("overlayBigPlayBtnCls");
-const overlayBigPauseBtnCls = cssmgr.getRealCls("overlayBigPauseBtnCls");
-
-const overlayControlCls = cssmgr.getRealCls("overlayControlCls");
-const overlayCenterControlsCls = cssmgr.getRealCls("overlayCenterControlsCls");
-const overlayTitleCls = cssmgr.getRealCls("overlayTitleCls");
-const leftControlCls = cssmgr.getRealCls("leftControlsCls");
-const rightControlCls = cssmgr.getRealCls("rightControlsCls");
-const bottomControlCls = cssmgr.getRealCls("bottomControlCls");
-const volumeControlCls = cssmgr.getRealCls("volumeControlCls");
-const playbackRoundedCls = cssmgr.getRealCls("playbackRoundedCls");
-
-const pauseBtnCls = cssmgr.getRealCls("pauseBtnCls");
-const playBtnCls = cssmgr.getRealCls("playBtnCls");
-const volumeLowCls = cssmgr.getRealCls("volumeLowCls");
-const volumeMidCls = cssmgr.getRealCls("volumeMidCls");
-const volumeHighCls = cssmgr.getRealCls("volumeHighCls");
-const volumePanelCls = cssmgr.getRealCls("volumePanelCls");
-const muteBtnCls = cssmgr.getRealCls("muteBtnCls");
-const fullscreenBtnCls = cssmgr.getRealCls("fullscreenBtnCls");
-const fullscreenExitBtnCls = cssmgr.getRealCls("fullscreenExitBtnCls");
-const speedContainerCls = cssmgr.getRealCls("speedContainerCls");
-const qualityContainerCls = cssmgr.getRealCls("qualityContainerCls");
-const fullScreenBtnContainer = cssmgr.getRealCls("fullScreenBtnContainer");
-const speedValueCls = cssmgr.getRealCls("speedValueCls");
-const speedSelectionCls = cssmgr.getRealCls("speedSelectionCls");
-const subtitleContainerCls = cssmgr.getRealCls("subtitleContainerCls");
-const subtitleSelectionCls = cssmgr.getRealCls("subtitleSelectionCls");
-const subtitleValueCls = cssmgr.getRealCls("subtitleValueCls");
-const settingBtnCls = cssmgr.getRealCls("settingBtnCls");
-const qualitySelectionCls = cssmgr.getRealCls("qualitySelectionCls");
-const qualityItemsCls = cssmgr.getRealCls("qualityItemsCls");
-const videoProgressCls = cssmgr.getRealCls("videoProgressCls");
-const videoProgressContainerCls = cssmgr.getRealCls("videoProgressContainerCls");
-const videoProgressInputCls = cssmgr.getRealCls("videoProgressInputCls");
-const videoProgressTooltipCls = cssmgr.getRealCls("videoProgressTooltipCls");
-const fastForwardBtnContainerCls = cssmgr.getRealCls("fastForwardBtnContainerCls");
-const backwardBtnContainerCls = cssmgr.getRealCls("backwardBtnContainerCls");
+const styles = cssmgr.getRealCls();
 
 const playBtnId = "playBtn";
 const volumeBtnId = "volumeBtn"
@@ -122,8 +81,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var _state = "none";
 
   var _touchTimeout = null;
+  // var _btnTimeout = null;
 
-  var _bigPlayBtnCls = playbackAnimationCls;
+  var _bigPlayBtnCls = styles.custBigPlayBtnCtr;
 
   var _videoObj = null;
 
@@ -139,27 +99,28 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _container = container;
 
     // rounded big play button
-    // if (true) _bigPlayBtnCls = playbackRoundedCls;
+    // if (true) _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
 
     cssmgr.inject('customControls', { buttonsColor: buttonsColor, primaryColor: primaryColor });
 
     // resizeObserver = new ResizeObserver(_onVideoResized);
     // resizeObserver.observe(_container);
 
-    _videoControls = common.newDiv(_container, "div", null, overlayControlCls);
-    _videoTitleDiv = common.newDiv(_container, "div", null, overlayTitleCls+' '+hideOpacityCls);
+    _videoControls = common.newDiv(_container, "div", null, styles.oBotCtrl);
+    _videoTitleDiv = common.newDiv(_container, "div", null, styles.oTitle+' '+styles.hideOpacity);
 
-    _bottomControls = common.newDiv(_videoControls, "div", null, bottomControlCls);
+    _bottomControls = common.newDiv(_videoControls, "div", null, styles.botCtrl);
     _leftControls = _createLeftControls();
     _rightControls = _createRightControls();
 
-    _centerControls = common.newDiv(_container, "div", null, overlayCenterControlsCls);
+    _centerControls = common.newDiv(_container, "div", null, styles.oCenterCtrl);
 
     _createBigPlayBtn();
     _createSkipButtons();
     _createProgressBar();
 
-    elmArr = [_bigPlayBtn, _overlayFastForwardBtn, _overlayBackwardBtn, _videoTitleDiv, _videoControls];
+    // elmArr = [_overlayFastForwardBtn, _overlayBackwardBtn, _videoTitleDiv, _videoControls];
+    elmArr = [_centerControls, _videoTitleDiv, _videoControls];
 
     common.addListener(window, "click", _onWindowClick);
     common.addListener(_container, "click", _onTouch);
@@ -215,10 +176,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     }
 
     [_overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
-      if (x) x.classList.remove(hideCls)
+      if (x) x.classList.remove(styles.hide)
     });
 
-    if (_thumbnailImg) _thumbnailImg.classList.add(hideCls);
+    if (_thumbnailImg) _thumbnailImg.classList.add(styles.hide);
     if (_boundClickedCB) {
       common.removeListener(_bigPlayBtn, "click", _boundClickedCB);
       _boundClickedCB = null;
@@ -243,19 +204,25 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     elmArr.forEach(function(x) {
       if (x) x.classList.remove(className);
     });
+    // if (!_vectorFcn.isPaused()) {
+    //   _bigPlayBtn.classList.remove(className);
+    // }
   }
   function _hideAll(className) {
     elmArr.forEach(function(x) {
       if (x) x.classList.add(className);
     });
+    // if (!_vectorFcn.isPaused()) {
+    //   _bigPlayBtn.classList.add(className);
+    // }
   }
 
   function _createBigPlayBtn() {
     if (!_bigPlayBtn) {
       _bigPlayBtn = document.createElement("div");
       _bigPlayBtn.className = _bigPlayBtnCls;
-      _bigPlayBtn.innerHTML = `<span class="${overlayBigPlayBtnCls}"></span>
-                              <span class="${overlayBigPauseBtnCls} ${hideCls}"></span>`;
+      _bigPlayBtn.innerHTML = `<span class="${styles.custBigPlayBtn}"></span>
+                              <span class="${styles.custBigPauseBtn} ${styles.hide}"></span>`;
       
       _centerControls.appendChild(_bigPlayBtn);
       common.addListener(_bigPlayBtn, "click", _togglePlay);
@@ -264,15 +231,15 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   function _createLeftControls() {
     var iHTML = `<button data-title="Play" id="${playBtnId}-${randNumb}">
-                  <span class="${playBtnCls}"></span>
-                  <span class="${pauseBtnCls} ${hideCls}"></span>
+                  <span class="${styles.playBtn}"></span>
+                  <span class="${styles.pauseBtn} ${styles.hide}"></span>
                 </button>
-                <div class="${volumeControlCls}">
+                <div class="${styles.volCtrl}">
                   <button data-title="Mute" id="${volumeBtnId}-${randNumb}">
-                    <span class="${muteBtnCls} ${hideCls}" id="${muteBtnId}-${randNumb}"></span>
-                    <span class="${volumeLowCls} ${hideCls}" id="${vLowId}-${randNumb}"></span>
-                    <span class="${volumeMidCls} ${hideCls}" id="${vMidId}-${randNumb}"></span>
-                    <span class="${volumeHighCls}" id="${vHighId}-${randNumb}"></span>
+                    <span class="${styles.muteBtn} ${styles.hide}" id="${muteBtnId}-${randNumb}"></span>
+                    <span class="${styles.volLow} ${styles.hide}" id="${vLowId}-${randNumb}"></span>
+                    <span class="${styles.volMid} ${styles.hide}" id="${vMidId}-${randNumb}"></span>
+                    <span class="${styles.volHigh}" id="${vHighId}-${randNumb}"></span>
                   </button>
                 </div>
                 <div>
@@ -280,7 +247,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
                   <span>&nbsp;/&nbsp;</span>
                   <span id="${durationId}-${randNumb}">00:00</span>
                 </div>`;
-    var ctrl = common.newDiv(_bottomControls, "div", iHTML, leftControlCls);
+    var ctrl = common.newDiv(_bottomControls, "div", iHTML, styles.leftCtrl);
 
     _overlayPlayBtn = document.getElementById(`${playBtnId}-${randNumb}`);
     common.addListener(_overlayPlayBtn, "click", _togglePlay);
@@ -289,10 +256,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     common.addListener(_overlayVolumeBtn, "click", _toggleMute);
 
     if (!common.isIOS()) {
-      const volumeControl = document.querySelector(`.${volumeControlCls}`);
+      const volumeControl = document.querySelector(`.${styles.volCtrl}`);
       _overlayVolumeRange = document.createElement("input");
       _overlayVolumeRange.type = "range";
-      _overlayVolumeRange.className = volumePanelCls;
+      _overlayVolumeRange.className = styles.volPanel;
       _overlayVolumeRange.id = `${volumePanelId}-${randNumb}`;
       _overlayVolumeRange.max = "1";
       _overlayVolumeRange.min = "0";
@@ -305,11 +272,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _createRightControls() {
-    var iHTML = `<button data-title="Full screen" id="${fullScreenBtnId}-${randNumb}" class="${fullScreenBtnContainer}">
-                  <span class="${fullscreenBtnCls}"></span>
-                  <span class="${fullscreenExitBtnCls} ${hideCls}"></span>
+    var iHTML = `<button data-title="Full screen" id="${fullScreenBtnId}-${randNumb}" class="${styles.fsBtnCtr}">
+                  <span class="${styles.fsBtn}"></span>
+                  <span class="${styles.fsExitBtn} ${styles.hide}"></span>
                 </button>`;
-    var ctrl = common.newDiv(_bottomControls, "div", iHTML, rightControlCls);
+    var ctrl = common.newDiv(_bottomControls, "div", iHTML, styles.rightCtrl);
 
     _overlayFScreenBtn = document.getElementById(`${fullScreenBtnId}-${randNumb}`);
     common.addListener(_overlayFScreenBtn, "click", _toggleFullScreen);
@@ -318,10 +285,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _createOverlaySpeedMenu() {
-    _speedContainer = common.newDiv(_rightControls, "div", null, speedContainerCls);
-    _overlaySpeedBtn = common.newDiv(_speedContainer, "button", `<span class="${speedValueCls}">1x</span>`, null, `${speedBtnId}-${randNumb}`)
+    _speedContainer = common.newDiv(_rightControls, "div", null, styles.speedCtr);
+    _overlaySpeedBtn = common.newDiv(_speedContainer, "button", `<span class="${styles.speedVal}">1x</span>`, null, `${speedBtnId}-${randNumb}`)
     _overlaySpeedBtn.dataset.title = "Speed";
-    var speedSelection = common.newDiv(_speedContainer, "div", null, speedSelectionCls+' '+hideCls);
+    var speedSelection = common.newDiv(_speedContainer, "div", null, styles.speedMenu+' '+styles.hide);
 
     playbackRateArr.forEach(function(x) {
       var elm = common.newDiv(speedSelection, "div", x);
@@ -332,15 +299,15 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     });
 
     common.addListener(_overlaySpeedBtn, "click", function() {
-      _toggleMenuSelection(speedSelectionCls);
+      _toggleMenuSelection(styles.speedMenu);
     });
   }
 
   function _createOverlayQualityMenu() {
-    _qualityContainer = common.newDiv(_rightControls, "div", null, qualityContainerCls);
-    _overlayQualityBtn = common.newDiv(_qualityContainer, "button", `<span class="${settingBtnCls}"></span>`, null, `${qualityBtnId}-${randNumb}`)
+    _qualityContainer = common.newDiv(_rightControls, "div", null, styles.resBtnCtr);
+    _overlayQualityBtn = common.newDiv(_qualityContainer, "button", `<span class="${styles.resBtn}"></span>`, null, `${qualityBtnId}-${randNumb}`)
     _overlayQualityBtn.dataset.title = "Quality";
-    var qualitySelection = common.newDiv(_qualityContainer, "div", "<div>Quality</div>", qualitySelectionCls+' '+hideCls);
+    var qualitySelection = common.newDiv(_qualityContainer, "div", "<div style='cursor:default'>Quality</div>", styles.resMenu+' '+styles.hide);
 
     _qualityOptions.unshift({ height: "auto" });
     if (_qualityOptions.length > 0) {
@@ -349,7 +316,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
           x.label = x.height.toString() === "auto" ? "Auto" : x.height+"p";
           x.active = x.height.toString() === "auto" ? true : false;
 
-          var elm = common.newDiv(qualitySelection, "div", x.label, qualityItemsCls);
+          var elm = common.newDiv(qualitySelection, "div", x.label, styles.resItem);
           if (x.active) elm.classList.add("active");
           elm.dataset.title = x.label;
           elm.dataset.quality = x.height;
@@ -361,21 +328,21 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     }
 
     common.addListener(_overlayQualityBtn, "click", function() {
-      _toggleMenuSelection(qualitySelectionCls);
+      _toggleMenuSelection(styles.resMenu);
     });
   }
 
   function _createOverlaySubtitleMenu() {
-    _subtitleContainer = common.newDiv(_rightControls, "div", null, subtitleContainerCls);
-    _overlaySubtitleBtn = common.newDiv(_subtitleContainer, "button", `<span class="${subtitleValueCls}">CC</span>`, null, `${subtitleBtnId}-${randNumb}`)
+    _subtitleContainer = common.newDiv(_rightControls, "div", null, styles.capCtr);
+    _overlaySubtitleBtn = common.newDiv(_subtitleContainer, "button", `<span class="${styles.capVal}">CC</span>`, null, `${subtitleBtnId}-${randNumb}`)
     _overlaySubtitleBtn.dataset.title = "Subtitle";
-    var subtitleSelection = common.newDiv(_subtitleContainer, "div", "<div>Subtitle</div>", subtitleSelectionCls+' '+hideCls);
+    var subtitleSelection = common.newDiv(_subtitleContainer, "div", "<div style='cursor:default'>Subtitle</div>", styles.capMenu+' '+styles.hide);
 
     _subtitleOptions.push({ label: "Off", language: "off", kind: "subtitle", active: true });
     if (_subtitleOptions.length > 0) {
       _subtitleOptions.forEach(function(x) {
         if (x.kind === "subtitle") {
-          var elm = common.newDiv(subtitleSelection, "div", x.label, qualityItemsCls);
+          var elm = common.newDiv(subtitleSelection, "div", x.label, styles.resItem);
           if (x.active) elm.classList.add("active");
           elm.dataset.title = x.label;
           elm.dataset.subtitle = x.language;
@@ -386,27 +353,27 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     }
 
     common.addListener(_overlaySubtitleBtn, "click", function() {
-      _toggleMenuSelection(subtitleSelectionCls);
+      _toggleMenuSelection(styles.capMenu);
     });
   }
 
   function _createProgressBar() {
-    const _progressBarWrapper = common.newDiv(_videoControls, "div", null, videoProgressContainerCls);
+    const _progressBarWrapper = common.newDiv(_videoControls, "div", null, styles.vidProgCtr);
     _progressBar = document.createElement("progress");
-    _progressBar.className = videoProgressCls;
+    _progressBar.className = styles.vidProg;
     _progressBar.value = 0;
     _progressBar.min = 0;
     _progressBarWrapper.appendChild(_progressBar);
 
     _progressBarInput = document.createElement("input");
-    _progressBarInput.className = videoProgressInputCls;
+    _progressBarInput.className = styles.vidProgInput;
     _progressBarInput.type = "range";
     _progressBarInput.value = 0;
     _progressBarInput.min = 0;
     _progressBarInput.step = 1;
     _progressBarWrapper.appendChild(_progressBarInput);
 
-    _progressBarTooltip = common.newDiv(_progressBarWrapper, "div", "00:00", videoProgressTooltipCls);
+    _progressBarTooltip = common.newDiv(_progressBarWrapper, "div", "00:00", styles.vidProgTooltip);
     common.addListener(_progressBarInput, "mousemove", _updateProgressBarTooltip);
     common.addListener(_progressBarInput, "input", _skipAhead);
   }
@@ -414,8 +381,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _createSkipButtons() {
     const skipText = `<span>${skipOffset}</span>`;
 
-    _overlayBackwardBtn = common.newDiv(_centerControls, "div", _generateSVG(backwardBtnId), `${backwardBtnContainerCls}`);
-    _overlayFastForwardBtn = common.newDiv(_centerControls, "div", _generateSVG(fastForwardBtnId), `${fastForwardBtnContainerCls}`);
+    _overlayBackwardBtn = common.newDiv(_centerControls, "div", _generateSVG(backwardBtnId), `${styles.bwrdBtnCtr}`);
+    _overlayFastForwardBtn = common.newDiv(_centerControls, "div", _generateSVG(fastForwardBtnId), `${styles.ffwrdBtnCtr}`);
 
     _overlayFastForwardBtn.insertAdjacentHTML('beforeend', skipText);
     _overlayBackwardBtn.insertAdjacentHTML('beforeend', skipText);
@@ -451,41 +418,41 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   // Right now we show all of the controls we have
   // function _onVideoResized() {
   //   if (_container.offsetWidth <= 480) {
-  //     if(_qualityContainer) _qualityContainer.classList.add(hideCls);
-  //     if(_speedContainer) _speedContainer.classList.add(hideCls);
-  //     if(_subtitleContainer) _subtitleContainer.classList.add(hideCls);
+  //     if(_qualityContainer) _qualityContainer.classList.add(styles.hide);
+  //     if(_speedContainer) _speedContainer.classList.add(styles.hide);
+  //     if(_subtitleContainer) _subtitleContainer.classList.add(styles.hide);
   //   } else {
-  //     if(_qualityContainer) _qualityContainer.classList.remove(hideCls);
-  //     if(_speedContainer) _speedContainer.classList.remove(hideCls);
-  //     if(_subtitleContainer) _subtitleContainer.classList.remove(hideCls);
+  //     if(_qualityContainer) _qualityContainer.classList.remove(styles.hide);
+  //     if(_speedContainer) _speedContainer.classList.remove(styles.hide);
+  //     if(_subtitleContainer) _subtitleContainer.classList.remove(styles.hide);
   //   }
   // }
 
   function _onWindowClick(e) {
     if (_overlayQualityBtn && !_overlayQualityBtn.contains(e.target)) {
-      const qualitySelection = document.querySelector(`.${qualitySelectionCls}`)
-      qualitySelection.classList.add(hideCls);
+      const qualitySelection = document.querySelector(`.${styles.resMenu}`)
+      qualitySelection.classList.add(styles.hide);
     }
     if (_overlaySpeedBtn && !_overlaySpeedBtn.contains(e.target)) {
-      const speedSelection = document.querySelector(`.${speedSelectionCls}`)
-      speedSelection.classList.add(hideCls);
+      const speedSelection = document.querySelector(`.${styles.speedMenu}`)
+      speedSelection.classList.add(styles.hide);
     }
     if (_overlaySubtitleBtn && !_overlaySubtitleBtn.contains(e.target)) {
-      const subtitleSelection = document.querySelector(`.${subtitleSelectionCls}`)
-      subtitleSelection.classList.add(hideCls);
+      const subtitleSelection = document.querySelector(`.${styles.capMenu}`)
+      subtitleSelection.classList.add(styles.hide);
     }
   }
 
   function _animateControls() {
-    [subtitleSelectionCls, speedSelectionCls, qualitySelectionCls].forEach(function(x) {
+    [styles.capMenu, styles.speedMenu, styles.resMenu].forEach(function(x) {
       const elm = document.querySelector(`.${x}`);
-      if (elm) elm.classList.add(hideCls);
+      if (elm) elm.classList.add(styles.hide);
     });
-    _hideAll(hideOpacityCls);
+    _hideAll(styles.hideOpacity);
   }
 
   function _onMouseIn() {
-    _showAll(hideOpacityCls);
+    _showAll(styles.hideOpacity);
   }
 
   function _onMouseOut() {
@@ -496,7 +463,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_touchTimeout) {
       window.clearTimeout(_touchTimeout);
     }
-    _showAll(hideOpacityCls);
+    _showAll(styles.hideOpacity);
     _touchTimeout = setTimeout(() => {
       _animateControls();
     }, 3e3);
@@ -532,8 +499,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       const speed = videoObj.playbackRate;
       
       const durationText = document.getElementById(durationId + '-' + randNumb);
-      const speedValue = document.querySelector(`.${speedValueCls}`);
-      const selectedPlaybackValue = document.querySelectorAll(`.${speedSelectionCls} div[data-playback~="${speed}"]`);
+      const speedValue = document.querySelector(`.${styles.speedVal}`);
+      const selectedPlaybackValue = document.querySelectorAll(`.${styles.speedMenu} div[data-playback~="${speed}"]`);
   
       durationText.innerText = `${time.minutes}:${time.seconds}`;
 
@@ -553,7 +520,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       common.addListener(_container, "mouseover", _onMouseIn);
       common.addListener(_container, "mouseleave", _onMouseOut);
       common.addListener(videoObj, "webkitendfullscreen", function() {
-        _showAll(hideCls);
+        _showAll(styles.hide);
         _updateFullscreenButton();
       });
     }
@@ -565,24 +532,35 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     timeElapsedText.innerText = `${time.minutes}:${time.seconds}`;
   }
 
+  // function _animateBigPlayBtn() {
+  //   if (_btnTimeout) {
+  //     window.clearTimeout(_btnTimeout);
+  //   }
+  //   _btnTimeout = setTimeout(() => {
+  //     _bigPlayBtn.classList.add(styles.hideOpacity);
+  //   }, 3e3);
+  // }
+
   function _updatePlayBtn() {
     const playBtn = document.getElementById(`${playBtnId}-${randNumb}`);
-    const playIcon = document.querySelector(`.${playBtnCls}`);
-    const pauseIcon = document.querySelector(`.${pauseBtnCls}`);
-    const bigPlayIcon = document.querySelector(`.${overlayBigPlayBtnCls}`);
-    const bigPauseIcon = document.querySelector(`.${overlayBigPauseBtnCls}`);
+    const playIcon = document.querySelector(`.${styles.playBtn}`);
+    const pauseIcon = document.querySelector(`.${styles.pauseBtn}`);
+    const bigPlayIcon = document.querySelector(`.${styles.custBigPlayBtn}`);
+    const bigPauseIcon = document.querySelector(`.${styles.custBigPauseBtn}`);
     if (!_vectorFcn.isPaused()) {
-      if (playIcon) playIcon.classList.add(hideCls);
-      if (bigPlayIcon) bigPlayIcon.classList.add(hideCls);
-      if (pauseIcon) pauseIcon.classList.remove(hideCls);
-      if (bigPauseIcon) bigPauseIcon.classList.remove(hideCls);
+      if (playIcon) playIcon.classList.add(styles.hide);
+      if (bigPlayIcon) bigPlayIcon.classList.add(styles.hide);
+      if (pauseIcon) pauseIcon.classList.remove(styles.hide);
+      if (bigPauseIcon) bigPauseIcon.classList.remove(styles.hide);
       playBtn.setAttribute('data-title', 'Pause');
+      // _animateBigPlayBtn();
     } else {
-      if (playIcon) playIcon.classList.remove(hideCls);
-      if (bigPlayIcon) bigPlayIcon.classList.remove(hideCls);
-      if (pauseIcon) pauseIcon.classList.add(hideCls);
-      if (bigPauseIcon) bigPauseIcon.classList.add(hideCls);
+      if (playIcon) playIcon.classList.remove(styles.hide);
+      if (bigPlayIcon) bigPlayIcon.classList.remove(styles.hide);
+      if (pauseIcon) pauseIcon.classList.add(styles.hide);
+      if (bigPauseIcon) bigPauseIcon.classList.add(styles.hide);
       playBtn.setAttribute('data-title', 'Play');
+      // _bigPlayBtn.classList.remove(styles.hideOpacity);
     }
   }
 
@@ -590,11 +568,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_vectorFcn.isPaused()) {
       _vectorFcn.play();
       _state = "play";
-      if (elmArr.findIndex(x => x === _bigPlayBtn) === -1) elmArr.push(_bigPlayBtn);
     } else {
       _vectorFcn.pause();
       _state = "pause";
-      if (elmArr.findIndex(x => x === _bigPlayBtn) > -1) elmArr = elmArr.filter(x => x !== _bigPlayBtn);
     }
   }
 
@@ -607,7 +583,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       if (_overlayVolumeRange) {
         _overlayVolumeRange.setAttribute('data-volume', _overlayVolumeRange.value);
         _overlayVolumeRange.value = 0;
-        _overlayVolumeRange.classList.add(hideCls);
+        _overlayVolumeRange.classList.add(styles.hide);
       }
     }
   }
@@ -634,27 +610,27 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     const midIcon = document.getElementById(`${vMidId}-${randNumb}`);
     const highIcon = document.getElementById(`${vHighId}-${randNumb}`);
 
-    volumeIcons.forEach((x) => x.classList.add(hideCls));
+    volumeIcons.forEach((x) => x.classList.add(styles.hide));
 
     _overlayVolumeBtn.setAttribute('data-title', 'Mute');
     
     if (_vectorFcn.isMuted() || volume === 0) {
-      muteIcon.classList.remove(hideCls);
+      muteIcon.classList.remove(styles.hide);
       _overlayVolumeBtn.setAttribute('data-title', 'Unmute');
-      if (_overlayVolumeRange) _overlayVolumeRange.classList.add(hideCls);
+      if (_overlayVolumeRange) _overlayVolumeRange.classList.add(styles.hide);
       
       _vectorFcn.mute();
     } else {
       if (volume > 0 && volume < 0.3) {
-        lowIcon.classList.remove(hideCls);
+        lowIcon.classList.remove(styles.hide);
       } else if (volume > 0 && volume >= 0.3 && volume <= 0.5) {
-        midIcon.classList.remove(hideCls);
+        midIcon.classList.remove(styles.hide);
       } else {
-        highIcon.classList.remove(hideCls);
+        highIcon.classList.remove(styles.hide);
       }
 
       if (_overlayVolumeRange) {
-        _overlayVolumeRange.classList.remove(hideCls);
+        _overlayVolumeRange.classList.remove(styles.hide);
         _updateVolume(isInit, volume);
       }
     }
@@ -675,7 +651,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       }
     } else {
       if (_videoObj.webkitSupportsFullscreen) {
-        _hideAll(hideCls);
+        _hideAll(styles.hide);
         _videoObj.webkitEnterFullscreen();
       }
     }
@@ -683,7 +659,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   function _updateFullscreenButton() {
     const fullscreenIcons = document.querySelectorAll(`#${fullScreenBtnId}-${randNumb} span`);
-    fullscreenIcons.forEach((icon) => icon.classList.toggle(hideCls));
+    fullscreenIcons.forEach((icon) => icon.classList.toggle(styles.hide));
   
     if (document.fullscreenElement) {
       _overlayFScreenBtn.setAttribute('data-title', 'Exit full screen');
@@ -695,7 +671,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _selectSubtitle(e) {
     const target = e.target;
     const dataset = target.dataset;
-    const subtitleValue = document.querySelector(`.${subtitleValueCls}`);
+    const subtitleValue = document.querySelector(`.${styles.capVal}`);
 
     _subtitleItems.forEach((x) => x.classList.remove('active'));
     target.classList.add('active');
@@ -708,7 +684,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _selectSpeed(e) {
     const target = e.target;
     const dataset = target.dataset;
-    const speedValue = document.querySelector(`.${speedValueCls}`);
+    const speedValue = document.querySelector(`.${styles.speedVal}`);
 
     _speedItems.forEach((x) => x.classList.remove('active'));
     target.classList.add('active');
@@ -731,7 +707,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   function _toggleMenuSelection(className) {
     const menuSelection = document.querySelector(`.${className}`);
-    menuSelection.classList.toggle(hideCls);
+    menuSelection.classList.toggle(styles.hide);
   }
 
   function _updateProgressBar(currentTime) {
@@ -776,7 +752,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _boundClickedCB();
     } else {
       if (_thumbnailImg) {
-        _thumbnailImg.classList.add(hideCls);
+        _thumbnailImg.classList.add(styles.hide);
         _thumbnailImg = null; //aiyo can we just get rid of it .
         //we are not going to show this again, right?
       }
@@ -796,7 +772,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         common.addListener(_bigPlayBtn, "click", _boundClickedCB); //not sure about touch
       }
 
-      _bigPlayBtn.classList.remove(hideCls);
+      _bigPlayBtn.classList.remove(styles.hide);
     }
   };
 
@@ -804,7 +780,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function imgLoadedFcn() {
     try {
       this.img.removeEventListener("load", _boundImgLoadedFcn);
-      if (_videoTitleDiv) _videoTitleDiv.classList.remove(hideOpacityCls);
+      if (_videoTitleDiv) _videoTitleDiv.classList.remove(styles.hideOpacity);
     } catch (ee) {}
     _boundImgLoadedFcn = null;
     if (this.cb) {
@@ -824,12 +800,12 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _showSpinner();
     if (!_thumbnailImg) {
       let r = Math.floor(Math.random() * 2000 + 1);
-      let thumbnailID = thumbnailCls + "-" + r; //want ID for wat?
+      let thumbnailID = styles.thumbnail + "-" + r; //want ID for wat?
       _thumbnailImg = common.newDiv(
         _container,
         "img",
         null,
-        thumbnailCls,
+        styles.thumbnail,
         thumbnailID
       );
     }
@@ -854,10 +830,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _hideSpinner();
   };
   FactoryOneCustomControls.prototype.showControls = function () {
-    if (_videoControls) _videoControls.classList.remove(hideCls);
+    if (_videoControls) _videoControls.classList.remove(styles.hide);
   };
   FactoryOneCustomControls.prototype.hideControls = function () {
-    if (_videoControls) _videoControls.classList.add(hideCls);
+    if (_videoControls) _videoControls.classList.add(styles.hide);
   };
   FactoryOneCustomControls.prototype.updateTimeElapsed = function (currTime) {
     _updateTimeElapsed(currTime);

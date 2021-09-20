@@ -76,8 +76,8 @@ function inject_(name, styleObj) {
 
 }
 
-function getRealCls_(logicalClsName) {
-    return namesObj_[logicalClsName];
+function getRealCls_() {
+    return namesObj_;
 }
 
 module.exports.init = init_;

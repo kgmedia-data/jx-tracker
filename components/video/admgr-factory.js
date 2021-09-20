@@ -7,9 +7,7 @@
  const modulesmgr            = require('../basic/modulesmgr');
  const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
- const adDivCls              = cssmgr.getRealCls('adDivCls');
- const hideCls               = cssmgr.getRealCls('hideCls');
- const adHideCls             = cssmgr.getRealCls('adHideCls');
+ const styles                = cssmgr.getRealCls();
  
  const maxNumVastRedirects_ = 5; //testing only. for ads
 
@@ -241,7 +239,7 @@
             _adDisplayContainer = null;
         }
         _ctrls.hide();
-        _adDiv.classList.add(hideCls);
+        _adDiv.classList.add(styles.hide);
         // _adDiv.style.display = 'none'; //HACK w/o this after the ad i think the controls bars of content video still not working.
         _pFcnVector.switch2Cnt(); 
         _clearResizeListeners();
@@ -280,8 +278,8 @@
             console.log(`#$ no need show the ads controls then coz non linear`);
         }
 
-        _adDiv.classList.remove(adHideCls); //
-        _adDiv.classList.remove(hideCls); //
+        _adDiv.classList.remove(styles.adHide); //
+        _adDiv.classList.remove(styles.hide); //
 
         // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
         //pls fix this. the jxhide class does not work
@@ -588,8 +586,8 @@
         _ctrls.hide();
     };
     var _createUIElt = function() {
-        if (!_adDiv) _adDiv = common.newDiv(_container, "div", "", adDivCls);
-        _adDiv.classList.add(adHideCls);
+        if (!_adDiv) _adDiv = common.newDiv(_container, "div", "", styles.adDiv);
+        _adDiv.classList.add(styles.adHide);
         // _adDiv.style.display = 'none'; //HACK Renee put in this fix. Without this
         //during countdown the content controls are not showing
     };

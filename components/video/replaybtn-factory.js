@@ -2,10 +2,7 @@
 const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
 const cssmgr                    = modulesmgr.get('video/cssmgr');
-const hideCls                   = cssmgr.getRealCls('hideCls');
-// const replayBtnCls              = cssmgr.getRealCls('replayBtnCls');
-const replayWrapperCls          = cssmgr.getRealCls('replayWrapperCls');
-const replayBtnContainerCls     = cssmgr.getRealCls('replayBtnContainerCls');
+const styles                    = cssmgr.getRealCls();
 
 let MakeOneReplayButton_ = function(container, position, clickCB) {
     let _replayButton = null;
@@ -14,14 +11,14 @@ let MakeOneReplayButton_ = function(container, position, clickCB) {
     
     function FactoryOneReplayButton(container, position, clickCB) {
       _replayWrapper = document.createElement("div");
-      _replayWrapper.className = replayWrapperCls;
+      _replayWrapper.className = styles.replayCtr;
 
       var iHTML = `<div class="replay-icon">
                     <i class='material-icons'>&#xe042;</i>
                   </div>
                   <div class="replay-text">${_replayLabel}</div>`;
       _replayButton = document.createElement("div");
-      _replayButton.className = replayBtnContainerCls;
+      _replayButton.className = styles.replayBtnCtr;
       _replayButton.innerHTML = iHTML;
 
       if (clickCB) {

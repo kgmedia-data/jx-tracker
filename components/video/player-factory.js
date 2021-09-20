@@ -38,12 +38,7 @@ const defaultCountDownToAdMsg   = "Ad starts in %%SECONDS%% s";
 const delayedSetOffsetPBMethods_ = [ fallbackTech_, "native"];
 
 const cssmgr                 = modulesmgr.get('video/cssmgr');
-const hideCls                = cssmgr.getRealCls('hideCls');
-const iconCls                = cssmgr.getRealCls('iconCls');
-const contentDivCls          = cssmgr.getRealCls('contentDivCls');
-const playerCls              = cssmgr.getRealCls('playerCls');
-
-
+const styles                 = cssmgr.getRealCls();
 
 const JXPlayerID                = "JXPlayer"; //Is purely internal stuff no need 
 
@@ -196,8 +191,8 @@ window.jxPromisePolyfill        = 'none';
                     _contentDiv = common.newDiv(
                         _container,
                         "div",
-                        '<video class="' + playerCls + '" width="100%" height="100%" id="' + JXPlayerID + '-' + r + '" muted playsinline preload="' + preloadString + '"></video>',
-                        contentDivCls
+                        '<video class="' + styles.player + '" width="100%" height="100%" id="' + JXPlayerID + '-' + r + '" muted playsinline preload="' + preloadString + '"></video>',
+                        styles.cDiv
                     );
                     _vid = document.getElementById(JXPlayerID + '-' + r);
                 }
@@ -371,7 +366,7 @@ window.jxPromisePolyfill        = 'none';
             if (_ctrls)
                 _ctrls.reset();
             if (_stripMessageDiv)
-                _stripMessageDiv.classList.add(hideCls);
+                _stripMessageDiv.classList.add(styles.hide);
             if (_shakaPlayer && _boundShakaOnErrorCB) {
                 _shakaPlayer.removeEventListener('error', _boundShakaOnErrorCB);
                 _boundShakaOnErrorCB = null;
@@ -402,7 +397,7 @@ window.jxPromisePolyfill        = 'none';
             if (_adObject) {
                 _adObject.reset();
             }
-            _contentDiv.classList.remove(hideCls); //this is important. Coz if video is switched while ad is playing, 
+            _contentDiv.classList.remove(styles.hide); //this is important. Coz if video is switched while ad is playing, 
             //then the content div at that time would be hidden!
             
             _accumulatedTime = 0;
@@ -454,10 +449,10 @@ window.jxPromisePolyfill        = 'none';
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
         }
         var _hide = function() {
-            _contentDiv.classList.add(hideCls);
+            _contentDiv.classList.add(styles.hide);
         };
         var _show = function() {
-            _contentDiv.classList.remove(hideCls);
+            _contentDiv.classList.remove(styles.hide);
         };
         var _showSpinner = function() {
             if (_spinner) _spinner.show();
@@ -1039,7 +1034,7 @@ window.jxPromisePolyfill        = 'none';
             let remaining = Math.floor(adCountdownSec_ + this.addTime  + this.adReqTime - accuTime );
             if(remaining <= 0) {
                 _adCountdownMgrFcn = null; //self-removal so that the playhead update will not be calling it.
-                _stripMessageDiv.classList.add(hideCls);
+                _stripMessageDiv.classList.add(styles.hide);
                 this.resolveFcn('');
             }
             else {
@@ -1140,7 +1135,7 @@ window.jxPromisePolyfill        = 'none';
             }
             
             // FOR DEBUGGING ONLY
-            if (_shakaPlayer) console.log('Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height);
+            // if (_shakaPlayer) console.log('Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height);
 
             this.spacer10++; 
             if (this.spacer10 == 10 && _shakaPlayer && _forcedResolution == -1) {
@@ -1292,7 +1287,7 @@ window.jxPromisePolyfill        = 'none';
             let logoObj = _cfg.logo;
             if (logoObj && logoObj.url && !_logoDiv) {
                 _logoDiv = document.createElement("div");
-                _logoDiv.className = iconCls + ' ' + (logoObj.position? logoObj.position:'');
+                _logoDiv.className = styles.icon + ' ' + (logoObj.position? logoObj.position:'');
 
                 if(logoObj.link) {
                     common.addListener(_logoDiv, 'click', function() {
@@ -1748,10 +1743,8 @@ window.jxPromisePolyfill        = 'none';
             //you must wait until the promise has resolved before using the video element
             //(putting an fallbackTech_ to play in it, say). Else everything goes dead.
             let shakaDetachProm = null;
-            console.log('src HLS', srcHLS)
             if (!srcHLS) {
                 if (_shakaPlayer) {
-                    console.log('no HLS resource')
                     shakaDetachProm = _shakaPlayer.detach();
                     _shakaPlayer = null;
                 }
