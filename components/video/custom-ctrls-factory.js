@@ -207,6 +207,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     // if (!_vectorFcn.isPaused()) {
     //   _bigPlayBtn.classList.remove(className);
     // }
+    if (_vectorFcn.hideSoundInd) _vectorFcn.hideSoundInd();
   }
   function _hideAll(className) {
     elmArr.forEach(function(x) {
@@ -215,6 +216,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     // if (!_vectorFcn.isPaused()) {
     //   _bigPlayBtn.classList.add(className);
     // }
+    if (_vectorFcn.showSoundInd) _vectorFcn.showSoundInd();
   }
 
   function _createBigPlayBtn() {
@@ -240,7 +242,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
                     <span class="${styles.volHigh}" id="${vHighId}-${randNumb}"></span>
                   </button>
                 </div>
-                <div>
+                <div class="${styles.timeDispCtr}">
                   <span id="${timeElapsedId}-${randNumb}">00:00</span>
                   <span>&nbsp;/&nbsp;</span>
                   <span id="${durationId}-${randNumb}">00:00</span>

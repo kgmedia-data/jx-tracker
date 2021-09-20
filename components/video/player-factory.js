@@ -724,6 +724,12 @@ window.jxPromisePolyfill        = 'none';
                 setPlaybackRate: function(speed) {
                     _vid.playbackRate = speed;
                 },
+                hideSoundInd: function() {
+                    if (_soundIndObj && _cfg.soundind && _cfg.soundind.position.indexOf('bottom') > -1) _soundIndObj.hideMaybe();
+                },
+                showSoundInd: function() {
+                    if (_soundIndObj && _cfg.soundind && _cfg.soundind.position.indexOf('bottom') > -1) _soundIndObj.showMaybe();
+                },
                 //https://animoto.com/blog/news/hd-video-creation-sharing
                 setResolution: function(track) {
                     if (!_shakaPlayer) return; 
