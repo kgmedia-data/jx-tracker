@@ -13,8 +13,6 @@
 
  const MakeOneAdControlsObj  = modulesmgr.get('video/adctrls-factory');
 
- const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
-
  //These we need to listen to for basic functioning:
  const imaEventsSeed_ = [
     "LINEAR_CHANGED",
@@ -493,7 +491,7 @@
             //this setVolume(0) is needed for iOS at least, may be not all.
             //else if e.g. video autoplayed and then I turned on the sound
             //when the ad comes the ad will not be able to play.
-            if (isIOS_) {
+            if (common.isIOS()) {
                 //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 5 ${_adsManager.getVolume()}`);
                 _adsManager.setVolume(0);
                 //but then we should also change the volume of the underlying then

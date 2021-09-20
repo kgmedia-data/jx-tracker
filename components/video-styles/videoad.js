@@ -1,23 +1,4 @@
-const ran                   = Math.floor(Math.random() * (99999) + 1)
-const contentDivCls         = 'contentDivCls' + ran;
-const adDivCls              = 'adDivCls' + ran;
-const playerCls             = 'playerCls' + ran;
-const thumbnailCls          = 'thumbnailCls' + ran;
-const adControlsCls         = 'adControlsCls' + ran;
-const playerControlsCls     = 'playerControlsCls' + ran;
-const iconCls               = 'iconCls'  + ran;
-const bigPlayBtnCls         = 'bigPlayBtnCls' + ran;
-const adPlayBtnCls          = 'adPlayBtnCls' + ran;
-const adMuteBtnCls          = 'adMuteBtnCls' + ran;
-const adProgressBarCls      = 'adProgressBarCls' + ran;
-const hideCls               = 'hideCls' + ran;
-const adHideCls             = 'adHideCls' + ran;
-const spinnerCls            = 'spinnerCls' + ran; 
-const comboDivCls           = 'comboDivCls' + ran;
-// const replayBtnCls          = 'adReplayBtnCls' + ran;
-const replayWrapperCls      = 'adReplayWrapperCls' + ran;
-const replayBtnContainerCls = 'replayBtnContainerCls' + ran;
-
+const ran                   = Math.floor(Math.random() * (99999) + 1);
 const allClasses = [
     "cDiv",
     "adDiv",

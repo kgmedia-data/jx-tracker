@@ -11,21 +11,21 @@ const cssmgr = modulesmgr.get("video/cssmgr");
 const styles = cssmgr.getRealCls();
 
 const playBtnId = "playBtn";
-const volumeBtnId = "volumeBtn"
-const volumePanelId = "volumePanel"
+const volumeBtnId = "volBtn"
+const volumePanelId = "volPanel"
 const muteBtnId = "muteBtn";
-const vLowId = "volumeLow";
-const vMidId = "volumeMid";
-const vHighId = "volumeHigh";
-const fullScreenBtnId = "fullScreenBtn";
+const vLowId = "volLow";
+const vMidId = "volMid";
+const vHighId = "volHigh";
+const fullScreenBtnId = "fsBtn";
 const speedBtnId = "speedBtn";
-const subtitleBtnId = "subtitleBtn";
-const qualityBtnId = "qualityBtn";
+const subtitleBtnId = "capBtn";
+const qualityBtnId = "resBtn";
 
 const timeElapsedId = "time-elapsed";
 const durationId = "duration";
-const fastForwardBtnId = "fastForwardBtn";
-const backwardBtnId = "backwardBtn";
+const fastForwardBtnId = "ffwrdBtn";
+const backwardBtnId = "bwrdBtn";
 
 const primaryColor = "#1B63D4";
 const buttonsColor = "#FFF";
@@ -43,7 +43,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var _boundImgLoadedFcn = null;
 
   var _initialized = false;
-  var resizeObserver = null;
+  // var resizeObserver = null;
   var elmArr = [];
 
   var _videoControls = null;
@@ -219,12 +219,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   function _createBigPlayBtn() {
     if (!_bigPlayBtn) {
-      _bigPlayBtn = document.createElement("div");
-      _bigPlayBtn.className = _bigPlayBtnCls;
-      _bigPlayBtn.innerHTML = `<span class="${styles.custBigPlayBtn}"></span>
-                              <span class="${styles.custBigPauseBtn} ${styles.hide}"></span>`;
+      const iHTML = `<span class="${styles.custBigPlayBtn}"></span>
+                      <span class="${styles.custBigPauseBtn} ${styles.hide}"></span>`;
       
-      _centerControls.appendChild(_bigPlayBtn);
+      _bigPlayBtn = common.newDiv(_centerControls, "div", iHTML, _bigPlayBtnCls);
       common.addListener(_bigPlayBtn, "click", _togglePlay);
     }
   }
@@ -257,14 +255,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
     if (!common.isIOS()) {
       const volumeControl = document.querySelector(`.${styles.volCtrl}`);
-      _overlayVolumeRange = document.createElement("input");
+      _overlayVolumeRange = common.newDiv(volumeControl, "input", null, styles.volPanel, `${volumePanelId}-${randNumb}`);
       _overlayVolumeRange.type = "range";
-      _overlayVolumeRange.className = styles.volPanel;
-      _overlayVolumeRange.id = `${volumePanelId}-${randNumb}`;
       _overlayVolumeRange.max = "1";
       _overlayVolumeRange.min = "0";
       _overlayVolumeRange.step = "0.01";
-      volumeControl.appendChild(_overlayVolumeRange);
       common.addListener(_overlayVolumeRange, "input", _updateVolume);
     }
 
@@ -359,19 +354,15 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   function _createProgressBar() {
     const _progressBarWrapper = common.newDiv(_videoControls, "div", null, styles.vidProgCtr);
-    _progressBar = document.createElement("progress");
-    _progressBar.className = styles.vidProg;
+    _progressBar = common.newDiv(_progressBarWrapper, "progress", null, styles.vidProg);
     _progressBar.value = 0;
     _progressBar.min = 0;
-    _progressBarWrapper.appendChild(_progressBar);
 
-    _progressBarInput = document.createElement("input");
-    _progressBarInput.className = styles.vidProgInput;
+    _progressBarInput = common.newDiv(_progressBarWrapper, "input", null, styles.vidProgInput);
     _progressBarInput.type = "range";
     _progressBarInput.value = 0;
     _progressBarInput.min = 0;
     _progressBarInput.step = 1;
-    _progressBarWrapper.appendChild(_progressBarInput);
 
     _progressBarTooltip = common.newDiv(_progressBarWrapper, "div", "00:00", styles.vidProgTooltip);
     common.addListener(_progressBarInput, "mousemove", _updateProgressBarTooltip);
@@ -485,7 +476,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
           _qualityOptions = tempQuality.tracks;
           _createOverlayQualityMenu();
         }
-        console.log('_subtitleOptions', _subtitleOptions);
         if (_subtitleOptions.length > 0) _createOverlaySubtitleMenu();
       // }
 
@@ -676,8 +666,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _subtitleItems.forEach((x) => x.classList.remove('active'));
     target.classList.add('active');
     subtitleValue.innerText = dataset.subtitle.toUpperCase();
-
-    console.log('subtitle selected is --->', dataset.subtitle);
     _vectorFcn.setSubtitle(this.subtitle);
   }
 
@@ -699,8 +687,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
     _qualityItems.forEach((x) => x.classList.remove('active'));
     target.classList.add('active');
-
-    console.log('Selected Quality is -->', Number(dataset.quality));
     if (_vectorFcn.setResolution) _vectorFcn.setResolution(this.track);
 
   }
