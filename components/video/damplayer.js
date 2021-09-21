@@ -66,6 +66,7 @@ function createObject_(options, ampIntegration) {
     var _vidFetchAcctId = null;
     var _vidConfAcctId = null;
     var _forcePlatform = null;
+    var _startOffset = 0;
     var _regCBs = {
     };
 
@@ -665,6 +666,33 @@ function createObject_(options, ampIntegration) {
             _fetchNPlay1VP(vid2Fetch);
         }
     }
+    JXPlayerInt.prototype.loadVideoByPartnerId = function(videoId, startOffset, playEndCB, forcePlatform) {
+        //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
+        if (startOffset === undefined) {
+            startOffset = 0;
+        }
+        if (playEndCB === undefined) {
+            playEndCB = null;
+        }
+        if (forcePlatform === undefined) {
+            forcePlatform = null;
+        }
+        _load(false, [videoId], playEndCB, forcePlatform, startOffset);
+     }
+     JXPlayerInt.prototype.loadVideoById = function(videoId, startOffset, playEndCB, forcePlatform) {
+        //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
+        if (startOffset === undefined) {
+            startOffset = 0;
+        }
+        if (playEndCB === undefined) {
+            playEndCB = null;
+        }
+        if (forcePlatform === undefined) {
+            forcePlatform = null;
+        }
+        _load(true, [videoId], playEndCB, forcePlatform, startOffset);
+     }
+     
      JXPlayerInt.prototype.loadJx = function(param, playEndCB, forcePlatform) {
         //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
         slackItMaybe("[ loadJx.jixie.io : " + (param ? JSON.stringify(param): "") + "]");
@@ -674,7 +702,7 @@ function createObject_(options, ampIntegration) {
         if (forcePlatform === undefined) {
             forcePlatform = null;
         }
-        _load(true, param, playEndCB, forcePlatform);
+        _load(true, param, playEndCB, forcePlatform, 0);
      }
      JXPlayerInt.prototype.load = function(param, playEndCB, forcePlatform) {
         slackItMaybe("[ load.jixie.io : " + (param ? JSON.stringify(param): "") + "]");
@@ -684,7 +712,7 @@ function createObject_(options, ampIntegration) {
         if (forcePlatform === undefined) {
             forcePlatform = null;
         }
-        _load(false, param, playEndCB, forcePlatform);
+        _load(false, param, playEndCB, forcePlatform, 0);
      }
 
      /***
@@ -888,9 +916,7 @@ function createObject_(options, ampIntegration) {
      * playEndCB is optional: it is a function that we will call when the 1 video finished playing
      * (if invoked on a list of videoids, then it is only called when everything finished playing)
      */
-
-     
-     var _load = function(idsAreInternal, param, playEndCB, forcePlatform) {
+     var _load = function(idsAreInternal, param, playEndCB, forcePlatform, startOffset = 0) {
         if (!jxvhelper.isBrowserSupported()) { 
             //DO NOTHING.
             return; 
@@ -904,6 +930,8 @@ function createObject_(options, ampIntegration) {
         _vidFetchAcctId = idsAreInternal ? null : _options.accountid;
         _vidConfAcctId = _options.accountid;
         _forcePlatform = forcePlatform;
+        _startOffset = startOffset;
+        
         //_initEventsHelpers(); 
         //we might be currently playing some stuff.
         //What level of clean up is needed ? 
@@ -1520,8 +1548,17 @@ function createObject_(options, ampIntegration) {
                     title = vData.title;
             }
         }
-        
-       let offset = jxvhelper.getVStoredPlayhead(_currVid);
+        let offset = (_startOffset ? _startOffset: jxvhelper.getVStoredPlayhead(_currVid));
+        if (offset < 0) {
+            offset = 0;
+        }
+        else if (offset) {
+            if (vData.metadata && vData.metadata.duration && !isNaN(vData.metadata.duration)) {
+                if (_startOffset > vData.metadata.duration) {
+                    offset = 0;
+                }
+            }
+        }
         _workoutStartModeOnce(vData.network);
         /////EASIER TO SEE: thumbnailUrl = 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/dummythumbnails/tn_corsproblem.png'; //vData.metadata.thumbnail;
         //This will always stick the thumbnail first.
