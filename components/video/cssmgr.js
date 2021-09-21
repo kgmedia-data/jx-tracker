@@ -18,6 +18,9 @@ function init_(namesObj, stylesObj, container) {
         if (prop != 'default') {
             //console.log('adding to map not yet injected' + prop);
             //console.log(stylesObj[prop]);
+            //this is just a super super rough way to do it.
+            // best is not directly use the container id as string
+            // TODO tomorrow 
             theMap_.set(container+prop, stylesObj[prop]);
         }
     }
@@ -53,19 +56,17 @@ function inject_(container, name, styleObj) {
         }
     }
     //inject the style
-    //console.log(stylesStr);
-    //console.log(`###### ${name} ######`);
     acss_(stylesStr);
 
 }
 
+// need to beef this up too.
 function walkUp(node, array) {
     var parent = node;
     let times = 0;
     while(parent && times < 5) {
         times++;
         if( parent.nodeName === 'DIV' ) {
-            console.log(":::" + parent.id);
             if (namesObj_[parent.id]) {
                 return parent.id;
             }
