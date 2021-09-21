@@ -2,9 +2,9 @@
 const modulesmgr                = require('../basic/modulesmgr');
 //Note used currently: const common                    = modulesmgr.get('basic/common');
 const cssmgr                    = modulesmgr.get('video/cssmgr');
-const styles                    = cssmgr.getRealCls();
 
 let MakeOneSpinner_ = function(container) {
+    const styles                    = cssmgr.getRealCls(container);
     let _spinner = null;
     
     function FactoryOneSpinner(container) {

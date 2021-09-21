@@ -7,7 +7,6 @@
  const modulesmgr            = require('../basic/modulesmgr');
  const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
- const styles                = cssmgr.getRealCls();
  
  const maxNumVastRedirects_ = 5; //testing only. for ads
 
@@ -42,6 +41,8 @@
  ];
 
  function MakeOneAdObj_(container, vid, fcnVector, controlsObj, progressBar) {
+    const styles                = cssmgr.getRealCls(container);
+
     var _doProgressBar = true;
     var _forceWidth = 0;
     var _forceHeight = 0;

@@ -8,7 +8,6 @@ const modulesmgr = require("../basic/modulesmgr");
 const common = modulesmgr.get("basic/common");
 
 const cssmgr = modulesmgr.get("video/cssmgr");
-const styles = cssmgr.getRealCls();
 
 const playBtnId = "playBtn";
 const volumeBtnId = "volBtn"
@@ -34,6 +33,8 @@ const playbackRateArr = [0.25, 0.5, 1, 1.5, 2];
 const skipOffset = 15;
 
 function MakeOneNewPlayerControlsObj(container, vectorFcn) {
+  const styles = cssmgr.getRealCls(container);
+
   function FactoryOneCustomControls() {}
   var _vectorFcn = null;
   var _container = null;
@@ -99,7 +100,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _container = container;
 
     // rounded big play button
-    // if (true) _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
+    if (true) _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
 
     cssmgr.inject('customControls', { buttonsColor: buttonsColor, primaryColor: primaryColor });
 

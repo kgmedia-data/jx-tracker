@@ -2,9 +2,9 @@
 const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
 const cssmgr                    = modulesmgr.get('video/cssmgr');
-const styles                    = cssmgr.getRealCls();
 
 let MakeOneReplayButton_ = function(container, position, clickCB) {
+    const styles                    = cssmgr.getRealCls(container);
     let _replayButton = null;
     let _replayWrapper = null;
     let _replayLabel = "Replay";

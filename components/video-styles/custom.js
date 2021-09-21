@@ -58,18 +58,22 @@ const allClasses = [
   "timeDispCtr"
 ];
 
-var css_ = {};
-
-allClasses.forEach(function(name) {
-  css_[name] = "jx"+name+ran;
-});
+function makeCls_(container) {
+  var css_ = {};
+  allClasses.forEach(function(name) {
+    css_[name] = container+name+ran;
+  });
+  return css_;
+}
 
 let spinnerColor = '#000000';
 var controlsColor = '%%color%%';
-var stylesStrObj_ = {};
 
 var primaryColor = '%%primaryColor%%';
 var buttonsColor = '%%buttonsColor%%';
+
+function makeStyles_(css_) {
+  var stylesStrObj_ = {};
 
   stylesStrObj_.adControls = [
     //ad controls
@@ -215,13 +219,23 @@ var buttonsColor = '%%buttonsColor%%';
     '.'+css_.ffwrdBtnCtr+' span, .'+css_.bwrdBtnCtr+' span{position:absolute;color:'+buttonsColor+';font-size:14px;top:55%;left:50%;transform:translate(-50%, -50%)}',
     '.'+css_.timeDispCtr+'span{font-family:"Roboto", sans-serif;}'
   ].join("\n");
-
-function getCls_() {
-  return css_;
-}
-function getStyles_() {
   return stylesStrObj_;
 }
 
-module.exports.getCls = getCls_;
-module.exports.getStyles = getStyles_;
+
+/* remove them but remember the default.js also need to fix up TODO
+function getCls_() {
+  alert("NO CALL ME");
+  return null; //return css_;
+}
+function getStyles_() {
+  alert("NO CALL ME TOO");
+  return null;
+  //return stylesStrObj_;
+}
+*/
+
+// module.exports.getCls = getCls_;
+// module.exports.getStyles = getStyles_;
+module.exports.makeCls = makeCls_;
+module.exports.makeStyles = makeStyles_;

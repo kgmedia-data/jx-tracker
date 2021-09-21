@@ -1,28 +1,10 @@
-/*
-module.exports = {
-    getCss:             getCss_,
-    contentDivCls:      contentDivCls,
-    adDivCls:           adDivCls,
-    playerCls:          playerCls,
-    thumbnailCls:       thumbnailCls,
-    adControlsCls:      adControlsCls,
-    playerControlsCls:  playerControlsCls,
-    iconCls:            iconCls,
-    spinnerCls:         spinnerCls,
-    bigPlayBtnCls:      bigPlayBtnCls,
-    adPlayBtnCls:       adPlayBtnCls,
-    adMuteBtnCls:       adMuteBtnCls,
-    adProgressBarCls:   adProgressBarCls,
-    hideCls:            hideCls,
-    adHideCls:          adHideCls
-};
-*/
+
 var theMap_ = new Map();
 
 var namesObj_ = {};
 
-function init_(namesObj, stylesObj) {
-    namesObj_ = namesObj;
+function init_(namesObj, stylesObj, container) {
+    namesObj_[container] = namesObj;
 
     let s = stylesObj.default;
     //inject the css right away.
@@ -36,7 +18,7 @@ function init_(namesObj, stylesObj) {
         if (prop != 'default') {
             //console.log('adding to map not yet injected' + prop);
             //console.log(stylesObj[prop]);
-            theMap_.set(prop, stylesObj[prop]);
+            theMap_.set(container+prop, stylesObj[prop]);
         }
     }
 }
@@ -49,9 +31,10 @@ function acss_(stylesStr, stylesId = null) {
     head.appendChild(s);
 }
 
+//Once you inject then it matters.
 //resolution first hor.
-function inject_(name, styleObj) {
-    let stylesStr = theMap_.get(name);
+function inject_(container, name, styleObj) {
+    let stylesStr = theMap_.get(container+name);
     if (!stylesStr) return;
     for (var styleName in styleObj)  {
         let pattern = null;
@@ -76,10 +59,35 @@ function inject_(name, styleObj) {
 
 }
 
-function getRealCls_() {
-    return namesObj_;
+function walkUp(node, array) {
+    var parent = node;
+    let times = 0;
+    while(parent && times < 5) {
+        times++;
+        if( parent.nodeName === 'DIV' ) {
+            console.log(":::" + parent.id);
+            if (namesObj_[parent.id]) {
+                return parent.id;
+            }
+        }
+        parent = parent.parentNode;
+    }
+    return null;
+}
+
+function getRealCls_(container) {
+    if (typeof container == 'string')
+        return namesObj_[container];
+    let divId = walkUp(container);
+    if (divId)
+        return namesObj_[divId];
 }
 
 module.exports.init = init_;
 module.exports.inject = inject_;
 module.exports.getRealCls = getRealCls_;
+/*
+module.exports = {
+    TODO
+};
+*/

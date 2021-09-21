@@ -6,12 +6,12 @@
  const modulesmgr            = require('../basic/modulesmgr');
  const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
- const styles                = cssmgr.getRealCls();
  
  const btnPlayID = 'btnPlayID';
  const btnMuteID = 'btnMuteID';
  
   function MakeOneAdControlsObj_(container, vectorFcn, doProgressBar = true, controlsObj = null) {
+     const styles                = cssmgr.getRealCls(container);
      var _container = null;
      var _cDiv = null;
      var _vectorFcn = null;
@@ -67,7 +67,7 @@
          _vectorFcn = vectorFcn;
          
          let cColor = (controlsObj && controlsObj.color ? controlsObj.color: '#FF0000');
-         cssmgr.inject('adControls', { color: cColor });
+         cssmgr.inject(container, 'adControls', { color: cColor });
  
          let r = Math.floor(Math.random() * 1000);
          const innerElm = '<span style="width: 0px;"></span>'; // the child element of the progress bar

@@ -89,14 +89,23 @@
                   <p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.</p><p>The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested. Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced in their exact original form, accompanied by English versions from the 1914 translation by H. Rackham.</p>
                   <p>Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.</p><p>The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested. Sections 1.10.32 and 1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced in their exact original form, accompanied by English versions from the 1914 translation by H. Rackham.</p>
                   -->
+
+                  <div id="playerContainer" style="position:relative; display: block; width: 100%; padding-bottom:56%">
+                     <div id="jxOutstreamContainer0" style="position:absolute; top:0px; bottom:0px; left:0px; right:0px">    
+                     </div>
+                 </div>
+                 <div id="xplayerContainer" style="position:relative; display: block; width: 100%; padding-bottom:56%">
+                  <div id="jxOutstreamContainer2" style="position:absolute; top:0px; bottom:0px; left:0px; right:0px">    
+                  </div>
+              </div>
                <div style="text-align:center;width:100%;max-width:640px;position:relative;padding:1px;">
                   <!--  <div id="jxOutstreamContainer" style="position:relative;display:block;width:100%;height:auto;margin:auto;"> -->
-                  <div id="jxOutstreamContainer" style="position:relative;display:block;width:100%;padding-top:56%;">
-                     <!-- <div id="jxOutstreamContainer" style="position:relative;display:block;width:100%;">  --> 
+                  <div id="xjxOutstreamContainer0" style="position:relative;display:block;width:100%;padding-top:56%;">
+                     
                      <!-- <img src="https://ipsumimage.appspot.com/640x360" style="width:100%;height:100%;" /> -->
                   </div>
                   <hr>
-                  <div id="jxOutstreamContainer2" style="position:relative;display:block;width:100%;padding-top:56%;">
+                  <div id="xjxOutstreamContainer2" style="position:relative;display:block;width:100%;padding-top:56%;">
                     <!-- <div id="jxOutstreamContainer" style="position:relative;display:block;width:100%;">  --> 
                     <!-- <img src="https://ipsumimage.appspot.com/640x360" style="width:100%;height:100%;" /> -->
                  </div>
@@ -133,6 +142,7 @@
          <!-- Footer -->
       </div>
       <!-- Scripts -->
+      <script src = "https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videosdk-v2.min.js" ></script>
       <script>
    function getParameterByName(name, url = window.location.href) {
     name = name.replace(/[\[\]]/g, '\\$&');
@@ -143,7 +153,7 @@
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 var player = null;
-var container = document.getElementById("jxOutstreamContainer");
+var container = document.getElementById("jxOutstreamContainer0");
 var isFloating = false;
 var isFloatingShow = false;
 var s = container.style;
@@ -190,11 +200,11 @@ var jxPlayerCfg1 = {
     autoplay: "wifi", //none, wifi, may be we can do a "api" (i.e. fully triggered by API or user action?)
     //perhaps that the publisher widget is controlling the stuff.
     autopause: true,
-    container: 'jxOutstreamContainer',
+    container: 'jxOutstreamContainer0',
     creativeid: 23,
     ads: {
         unit: "23",
-        delay: 5
+        delay: 100000
     },
     logo: {
         url: "https://w7.pngwing.com/pngs/18/497/png-transparent-black-and-blue-atom-icon-screenshot-react-javascript-responsive-web-design-github-angularjs-github-logo-electric-blue-signage.png",
@@ -202,6 +212,17 @@ var jxPlayerCfg1 = {
         link: "https://reactjs.org/"
     }
 };
+var jxPlayerCfg1Prime = {
+    accountid: "Ko117LFQKx",
+    autoplay: "none",
+    autopause: true,
+    container: 'jxOutstreamContainer0',
+    creativeid: 946,
+    ads: {
+        unit: "106",
+        delay: 10000
+    },
+}; 
 
 var jxPlayerCfg2 = {
     accountid: "Ko117LFQKx",
@@ -211,12 +232,9 @@ var jxPlayerCfg2 = {
     creativeid: 946,
     ads: {
         unit: "106",
-        delay: 0
+        delay: 10000
     },
 }; 
-</script>
-<script src = "https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videosdk.min.js" ></script>
-    <script>
     var events_ = [
         "internal1",
         "start",
@@ -243,15 +261,20 @@ function allPurposeFcn(eName, vid = 'na', extraBlob = null) {
 function playEndedCB(vid) {
     console.log(`##### ${vid} just ended`);
 }
-player = JX.player(jxPlayerCfg1);
+
+player = JX.player(jxPlayerCfg1Prime);
 events_.forEach(function(eName) {
     player.addListener(eName, allPurposeFcn);
 });
 player.load([
-"58971621083272f5877489", //1428
-                "072b1621083573d27d2689", //1429
-                "97941621077750e48d9314" // 1412    
-]);
+"6c4d1621590191302a5853",
+				"a38416215889577344e849",
+				"54dc162158506241ac9880"]);
+            
+//"58971621083272f5877489", //1428
+  //              "072b1621083573d27d2689", //1429
+    //            "97941621077750e48d9314" // 1412    
+//]);
 
 
 player2 = JX.player(jxPlayerCfg2);
@@ -260,6 +283,7 @@ player2.load([
 				"a38416215889577344e849",
 				"54dc162158506241ac9880"
 ]);
+
 </script>
       
    </body>

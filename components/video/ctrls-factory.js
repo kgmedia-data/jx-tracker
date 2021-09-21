@@ -8,9 +8,9 @@
  const common                = modulesmgr.get('basic/common');
 
  const cssmgr                = modulesmgr.get('video/cssmgr');
- const styles                = cssmgr.getRealCls();
  
  function MakeOnePlayerControlsObjD_(container, vectorFcn) {
+    const styles                = cssmgr.getRealCls(container);
     function FactoryOnePlayerControlsD() {}
     var _vectorFcn = null;
     var _container = null;

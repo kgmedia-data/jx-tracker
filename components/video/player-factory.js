@@ -38,7 +38,6 @@ const defaultCountDownToAdMsg   = "Ad starts in %%SECONDS%% s";
 const delayedSetOffsetPBMethods_ = [ fallbackTech_, "native"];
 
 const cssmgr                 = modulesmgr.get('video/cssmgr');
-const styles                 = cssmgr.getRealCls();
 
 const JXPlayerID                = "JXPlayer"; //Is purely internal stuff no need 
 
@@ -61,6 +60,8 @@ window.jxPromisePolyfill        = 'none';
      * @returns 
      */
      function MakePlayerWrapperObj_(container) {
+        const styles                 = cssmgr.getRealCls(container);
+
         /**
          * "PRIVATE" variables :-) using closure.
          */

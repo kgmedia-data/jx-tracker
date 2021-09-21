@@ -12,8 +12,6 @@ const cssmgr                           = require('../components/video/cssmgr');
 modulesmgr.set('video/cssmgr',         cssmgr);
 
 const stylesSet                        = require('../components/video-styles/custom');//we choose this set of style
-cssmgr.init(stylesSet.getCls(), stylesSet.getStyles());
-cssmgr.inject('customControls', { color: '#FF0000'});
 
 
 // these we only use within this file, so dun bother
@@ -68,6 +66,7 @@ pginfo.dbgVersion = dbgVersion;
 
 var instMap = new Map();   
 function makePlayer(options) {
+  // dangerous!!
   let hashStr = btoa(JSON.stringify(options));
   let instMaybe = instMap.get(hashStr);
   if (instMaybe) {
@@ -75,7 +74,21 @@ function makePlayer(options) {
   }
   const ids = mids.get();
   let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
+  let tmp = stylesSet.makeCls(options.container);
+  cssmgr.init(tmp, stylesSet.makeStyles(tmp), options.container);
+  // just for testing. the real way is put the colors into the options
+  // and we extract from the options here
+  // TODO TOMORROW:
+  if (options.container == 'jxOutstreamContainer2') {
+  cssmgr.inject(options.container, 'customControls', { color: '#00FF00', buttonsColor: '#FFA500', primaryColor: '#FFC0CB' });
+  }
+  else {
+    //cssmgr.inject(options.container, 'customControls', { color: '#00FF00', buttonsColor: '#FFA500', primaryColor: '#FFC0CB' });
+    cssmgr.inject(options.container, 'customControls', { color: '#00FF00', buttonsColor: '#5dff6a', primaryColor: '#f2ff5d' });
+  }
+
   let playerInst = createObject(merged);
+
   instMap.set(hashStr, playerInst);
   return playerInst;
 }
