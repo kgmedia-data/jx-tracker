@@ -70,6 +70,7 @@ window.jxPromisePolyfill        = 'none';
         /**
          * "PRIVATE" variables :-) using closure.
          */
+        var _forceAutoplayWithSound = false; 
         var _nextAdSlotTime = 999999;
         var _currToken = null;
         var _isConfigSet = false;
@@ -443,7 +444,7 @@ window.jxPromisePolyfill        = 'none';
         }
         FactoryPlayerWrapper.prototype.setConfig = function(
             adsCfg, //the tags are also inside this obj: adtagurl and adtagurl2
-            logoCfg, soundIndCfg = null) {
+            logoCfg, soundIndCfg = null, mute = true) {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
             _adScheduler = MakeOneAdScheduler(_cfg.ads);
@@ -451,7 +452,10 @@ window.jxPromisePolyfill        = 'none';
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
-        }
+            if (!mute) {
+                _forceAutoplayWithSound = true;
+            }
+        }   
         var _hide = function() {
             _contentDiv.classList.add(hideCls);
         };
@@ -1348,25 +1352,61 @@ window.jxPromisePolyfill        = 'none';
                 return Promise.resolve(startModePWClick_);
             }
             return new Promise(function(resolve) {
+                // the _vid is actually following the whatever setting.
+                // whatever it was _vid.muted = false;
+                console.log(`attempt start play with video.muted=${_vid.muted}`);
                 let playInnerProm = _vid.play();
                 if (playInnerProm !== undefined) {
                     playInnerProm
                     .then(function(){
+                        console.log(`attempt start play succeeded with video.muted=${_vid.muted}`);
                         if (pauseForAd) {
                             _vid.pause();
                         }
                         resolve('apistarted'); //already started 
+                        return;
                     })
                     .catch(function(e) {
-                        console.log(e);
-                        resolve(startModePWClick_);
+                        console.log(`attempt start play failed with video.muted=${_vid.muted} (${e})`);
+                        if (_vid.muted) {
+                            // if just now that attempt was WITH sound, then now we can try 
+                            // without sound.
+                            // if already just now was without sound, then now we just stick
+                            // up the big play button.
+                            resolve(startModePWClick_);
+                            return;
+                        }
+                        // second attempt: sound off:
+                        _vid.muted = true;
+                        let playProm2 = _vid.play();
+                        if (playProm2 !== undefined) {
+                            playProm2.then(function() {
+                                console.log(`attempt start play succeeded with video.muted=${_vid.muted}`);
+                                if (pauseForAd) {
+                                    _vid.pause();
+                                }
+                                resolve('apistarted'); //already started 
+                                return;
+                            }).catch(function(ee) {
+                                console.log(`attempt start play failed with video.muted=${_vid.muted} ${ee}`);
+                                resolve(startModePWClick_);
+                                return;
+                            });
+                        }
+                        else {
+                            resolve(startModePWClick_);
+                            return;
+                        }
                     })
                 }
                 else {
                     resolve(startModePWClick_);
                 }    
             }); //promise
+            return;
         }
+
+       
 
         /**
          * Short function returning a promise used in the starting phase of a new content video
@@ -1678,6 +1718,12 @@ window.jxPromisePolyfill        = 'none';
                         _vid.muted = _savedMuted;     
                         _savedVolume = _vid.volume;
                     }
+                    if (_forceAutoplayWithSound && _startModePW != startModePWClick_) {
+                        // coz only applies to first video.
+                        _vid.muted = false;
+                        _vid.volume = 0.5;
+                    }
+                    _forceAutoplayWithSound = false;
                     //start vis setup. wait for the signal from intersection observation etc
                     return startSignalledProm; //not the global var one ah. THIS one
             })

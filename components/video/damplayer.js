@@ -373,6 +373,7 @@ function createObject_(options, ampIntegration) {
         //can be from widget or from intersectionObserver)
 
         //auto means playerWrapper object should just go ahead and call video.play()
+
         if (_options.autoplay == 'wifi' && hasWifi ) {
             //'justdoit' : this is our backdoor to force our player to try autoplay
             //coz somehow even at home sometimes the system (browser network connection api)
@@ -445,6 +446,9 @@ function createObject_(options, ampIntegration) {
         
     }
     function repairMissingOptions(options) {
+        if (!options.hasOwnProperty('muted')) {
+            options.muted = true;
+        }
         //This is only for crucial properties that cannot be missing
         //a final options object. 
         //use a JSON to do it. Merging of defaults and supplied options:
@@ -1493,7 +1497,7 @@ function createObject_(options, ampIntegration) {
             prepareAdsObj(_options);
             _pInst.setConfig(
                 _options.ads,
-                _options.logo, _options.soundindicator);
+                _options.logo, _options.soundindicator, _options.muted);
         }
             
         _dbgL1VP++;
@@ -1555,6 +1559,7 @@ function createObject_(options, ampIntegration) {
         else if (offset) {
             if (vData.metadata && vData.metadata.duration && !isNaN(vData.metadata.duration)) {
                 if (_startOffset > vData.metadata.duration) {
+                    console.log(`jxvideo : Start playhead offset (${_startOffset}) exceeds video duration (${vData.metadata.duration}). reset offset to 0`);
                     offset = 0;
                 }
             }

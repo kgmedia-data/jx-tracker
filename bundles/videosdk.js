@@ -63,7 +63,7 @@ const mids                              = require('../components/basic/ids');
 const createObject                      = require('../components/video/damplayer');
 
 const pginfo = mpginfo.get(); //basic pginfo we can get from the page.
-const dbgVersion = 'v54';
+const dbgVersion = 'v55';
 pginfo.dbgVersion = dbgVersion;
 
 var instMap = new Map();   
