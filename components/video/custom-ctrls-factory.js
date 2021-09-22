@@ -250,14 +250,14 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
                 </div>`;
     var ctrl = common.newDiv(_bottomControls, "div", iHTML, styles.leftCtrl);
 
-    _overlayPlayBtn = document.getElementById(`${playBtnId}-${randNumb}`);
+    _overlayPlayBtn = common.byId(`${playBtnId}-${randNumb}`);
     common.addListener(_overlayPlayBtn, "click", _togglePlay);
 
-    _overlayVolumeBtn = document.getElementById(`${volumeBtnId}-${randNumb}`);
+    _overlayVolumeBtn = common.byId(`${volumeBtnId}-${randNumb}`);
     common.addListener(_overlayVolumeBtn, "click", _toggleMute);
 
     if (!common.isIOS()) {
-      const volumeControl = document.querySelector(`.${styles.volCtrl}`);
+      const volumeControl = common.qs(`.${styles.volCtrl}`);
       _overlayVolumeRange = common.newDiv(volumeControl, "input", null, styles.volPanel, `${volumePanelId}-${randNumb}`);
       _overlayVolumeRange.type = "range";
       _overlayVolumeRange.max = "1";
@@ -276,7 +276,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
                 </button>`;
     var ctrl = common.newDiv(_bottomControls, "div", iHTML, styles.rightCtrl);
 
-    _overlayFScreenBtn = document.getElementById(`${fullScreenBtnId}-${randNumb}`);
+    _overlayFScreenBtn = common.byId(`${fullScreenBtnId}-${randNumb}`);
     common.addListener(_overlayFScreenBtn, "click", _toggleFullScreen);
 
     return ctrl;
@@ -424,22 +424,22 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   function _onWindowClick(e) {
     if (_overlayQualityBtn && !_overlayQualityBtn.contains(e.target)) {
-      const qualitySelection = document.querySelector(`.${styles.resMenu}`)
+      const qualitySelection = common.qs(`.${styles.resMenu}`);
       qualitySelection.classList.add(styles.hide);
     }
     if (_overlaySpeedBtn && !_overlaySpeedBtn.contains(e.target)) {
-      const speedSelection = document.querySelector(`.${styles.speedMenu}`)
+      const speedSelection = common.qs(`.${styles.speedMenu}`);
       speedSelection.classList.add(styles.hide);
     }
     if (_overlaySubtitleBtn && !_overlaySubtitleBtn.contains(e.target)) {
-      const subtitleSelection = document.querySelector(`.${styles.capMenu}`)
+      const subtitleSelection = common.qs(`.${styles.capMenu}`);
       subtitleSelection.classList.add(styles.hide);
     }
   }
 
   function _animateControls() {
     [styles.capMenu, styles.speedMenu, styles.resMenu].forEach(function(x) {
-      const elm = document.querySelector(`.${x}`);
+      const elm = common.qs(`.${x}`);
       if (elm) elm.classList.add(styles.hide);
     });
     _hideAll(styles.hideOpacity);
@@ -491,9 +491,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       const volume = _vectorFcn.getVolume();
       const speed = videoObj.playbackRate;
       
-      const durationText = document.getElementById(durationId + '-' + randNumb);
-      const speedValue = document.querySelector(`.${styles.speedVal}`);
-      const selectedPlaybackValue = document.querySelectorAll(`.${styles.speedMenu} div[data-playback~="${speed}"]`);
+      const durationText = common.byId(durationId + '-' + randNumb);
+      const speedValue = common.qs(`.${styles.speedVal}`);
+      const selectedPlaybackValue = common.qsa(`.${styles.speedMenu} div[data-playback~="${speed}"]`);
   
       durationText.innerText = `${time.minutes}:${time.seconds}`;
 
@@ -520,7 +520,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _updateTimeElapsed(currentTime) {
-    const timeElapsedText = document.getElementById(timeElapsedId + '-' + randNumb);
+    const timeElapsedText = common.byId(timeElapsedId + '-' + randNumb);
     const time = _formatTime(currentTime);
     timeElapsedText.innerText = `${time.minutes}:${time.seconds}`;
   }
@@ -535,11 +535,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   // }
 
   function _updatePlayBtn() {
-    const playBtn = document.getElementById(`${playBtnId}-${randNumb}`);
-    const playIcon = document.querySelector(`.${styles.playBtn}`);
-    const pauseIcon = document.querySelector(`.${styles.pauseBtn}`);
-    const bigPlayIcon = document.querySelector(`.${styles.custBigPlayBtn}`);
-    const bigPauseIcon = document.querySelector(`.${styles.custBigPauseBtn}`);
+    const playBtn = common.byId(`${playBtnId}-${randNumb}`);
+    const playIcon = common.qs(`.${styles.playBtn}`);
+    const pauseIcon = common.qs(`.${styles.pauseBtn}`);
+    const bigPlayIcon = common.qs(`.${styles.custBigPlayBtn}`);
+    const bigPauseIcon = common.qs(`.${styles.custBigPauseBtn}`);
     if (!_vectorFcn.isPaused()) {
       if (playIcon) playIcon.classList.add(styles.hide);
       if (bigPlayIcon) bigPlayIcon.classList.add(styles.hide);
@@ -597,11 +597,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _updateVolumeIcon(isInit, volume) {
-    const volumeIcons = document.querySelectorAll(`#${volumeBtnId}-${randNumb} span`);
-    const muteIcon = document.getElementById(`${muteBtnId}-${randNumb}`);
-    const lowIcon = document.getElementById(`${vLowId}-${randNumb}`);
-    const midIcon = document.getElementById(`${vMidId}-${randNumb}`);
-    const highIcon = document.getElementById(`${vHighId}-${randNumb}`);
+    const volumeIcons = common.qsa(`#${volumeBtnId}-${randNumb} span`);
+    const muteIcon = common.byId(`${muteBtnId}-${randNumb}`);
+    const lowIcon = common.byId(`${vLowId}-${randNumb}`);
+    const midIcon = common.byId(`${vMidId}-${randNumb}`);
+    const highIcon = common.byId(`${vHighId}-${randNumb}`);
 
     volumeIcons.forEach((x) => x.classList.add(styles.hide));
 
@@ -651,7 +651,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _updateFullscreenButton() {
-    const fullscreenIcons = document.querySelectorAll(`#${fullScreenBtnId}-${randNumb} span`);
+    const fullscreenIcons = common.qsa(`#${fullScreenBtnId}-${randNumb} span`);
     fullscreenIcons.forEach((icon) => icon.classList.toggle(styles.hide));
   
     if (document.fullscreenElement) {
@@ -662,40 +662,35 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _selectSubtitle(e) {
-    const target = e.target;
-    const dataset = target.dataset;
-    const subtitleValue = document.querySelector(`.${styles.capVal}`);
+    const dataset = e.target.dataset;
+    const subtitleValue = common.qs(`.${styles.capVal}`);
 
     _subtitleItems.forEach((x) => x.classList.remove('active'));
-    target.classList.add('active');
+    e.target.classList.add('active');
     subtitleValue.innerText = dataset.subtitle.toUpperCase();
     _vectorFcn.setSubtitle(this.subtitle);
   }
 
   function _selectSpeed(e) {
-    const target = e.target;
-    const dataset = target.dataset;
-    const speedValue = document.querySelector(`.${styles.speedVal}`);
+    const dataset = e.target.dataset;
+    const speedValue = common.qs(`.${styles.speedVal}`);
 
     _speedItems.forEach((x) => x.classList.remove('active'));
-    target.classList.add('active');
+    e.target.classList.add('active');
     speedValue.innerText = dataset.playback + 'x';
 
     _vectorFcn.setPlaybackRate(Number(dataset.playback));
   }
 
   function _selectQuality(e) {
-    const target = e.target;
-    const dataset = target.dataset;
-
     _qualityItems.forEach((x) => x.classList.remove('active'));
-    target.classList.add('active');
+    e.target.classList.add('active');
     if (_vectorFcn.setResolution) _vectorFcn.setResolution(this.track);
 
   }
 
   function _toggleMenuSelection(className) {
-    const menuSelection = document.querySelector(`.${className}`);
+    const menuSelection = common.qs(`.${className}`);
     menuSelection.classList.toggle(styles.hide);
   }
 

@@ -111,6 +111,7 @@ window.jxPromisePolyfill        = 'none';
          * GUI elements typically created once and just hidden when not needed:
          */
         var _logoDiv = null;
+        var _infoDiv = null;
         var _stripMessageDiv = null;
         var _stripMessage = defaultCountDownToAdMsg;
         //var _goOnModal = null;
@@ -1305,6 +1306,14 @@ window.jxPromisePolyfill        = 'none';
                 _contentDiv.appendChild(_logoDiv);
             }
         };
+        var _createInfoIcon = function() {
+            if (!_infoDiv) {
+                _infoDiv = common.newDiv(_contentDiv, "div", "<span>i</span>", styles.info);
+                common.addListener(_infoDiv, 'click', function() {
+                    window.open("https://www.jixie.io/", "_blank");
+                })
+            }
+        };
         var _createAdObjMaybe = function(makeNew) {
             if (!_adObject) {
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
@@ -1672,6 +1681,7 @@ window.jxPromisePolyfill        = 'none';
 
             _createControlsMaybe();
             _createLogoMaybe();
+            _createInfoIcon();
             _ctrls.videoVisualsInit(thumbnailURL, function() {
                 _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
             });

@@ -85,6 +85,15 @@ function MakeOneHelperObj_() {
     FactoryOneHelper.prototype.isIOS = function() {
         return (/iPad|iPhone|iPod/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
     }
+    FactoryOneHelper.prototype.qs = function(selector) {
+        return document.querySelector(selector);
+    }
+    FactoryOneHelper.prototype.qsa = function(selector) {
+        return document.querySelectorAll(selector);
+    }
+    FactoryOneHelper.prototype.byId = function(selector) {
+        return document.getElementById(selector);
+    }
 
     function _acss(stylesArr, id) {
         var head = document.getElementsByTagName('HEAD')[0];
