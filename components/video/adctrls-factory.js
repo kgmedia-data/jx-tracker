@@ -67,7 +67,7 @@
          _vectorFcn = vectorFcn;
          
          let cColor = (controlsObj && controlsObj.color ? controlsObj.color: '#FF0000');
-         cssmgr.inject(container, 'adControls', { color: cColor });
+         cssmgr.inject(container, 'adControls'); 
  
          let r = Math.floor(Math.random() * 1000);
          const innerElm = '<span style="width: 0px;"></span>'; // the child element of the progress bar

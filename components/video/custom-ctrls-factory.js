@@ -102,7 +102,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     // rounded big play button
     if (true) _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
 
-    cssmgr.inject('customControls', { buttonsColor: buttonsColor, primaryColor: primaryColor });
+    cssmgr.inject(container, 'customControls');
 
     // resizeObserver = new ResizeObserver(_onVideoResized);
     // resizeObserver.observe(_container);

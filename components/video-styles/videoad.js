@@ -19,16 +19,20 @@ const allClasses = [
     "replayBtnCtr"
 ];
 
-var css_ = {};
-
-allClasses.forEach(function(name) {
-  css_[name] = "jx"+name+ran;
-});
+function makeCls_(container) {
+    var css_ = {};
+    allClasses.forEach(function(name) {
+      css_[name] = container+name+ran;
+    });
+    return css_;
+}
 
 let spinnerColor = '#000000';
 var controlsColor = '%%color%%';
-var stylesStrObj_ = {};
 
+function makeStyles_(css_) {
+    var stylesStrObj_ = {};
+ 
     stylesStrObj_.adControls = [
         //ad controls
         ".controls{height:100px;width:66px;margin-left:3px;position: absolute;bottom: 20px;left:5px;z-index:999;}",
@@ -103,13 +107,8 @@ var stylesStrObj_ = {};
        '.' + css_.adCtrl + ',.' + css_.playerCtrl + '{height: 32px;width: 66px;margin-left: 3px;position: absolute;bottom: 20px;left: 5px;z-index: 999;}',
        '.' + css_.hide + '{display: none;}'
     ].join("\n");
-
-function getCls_() {
-    return css_;
-}
-function getStyles_() {
     return stylesStrObj_;
 }
 
-module.exports.getCls = getCls_;
-module.exports.getStyles = getStyles_;
+module.exports.makeCls = makeCls_;
+module.exports.makeStyles = makeStyles_;

@@ -1,11 +1,57 @@
 
+/**
+ * NOTE:
+ * it is a bit complex coz we are returning different stuff depending on 
+ * the container.
+ * it is all because of the ... COLOR
+ * Ideally, the color is like a class we can stick on the elements.
+ * But it cannot work like that.
+ * 
+ * Therefore, to accomodate the scenario that there are 2 instances of the player 
+ * in the same page each with a different color config... It is basically thru
+ * different css.
+ * 
+ * The code always work with the "logical" class names.
+ * e.g. controls factory code we have
+ * styles.volPanel, styles.leftCtrl
+ * 
+ * This styles object is retrieved from the cssmgr at the init of the controls object
+ *   const styles = cssmgr.getRealCls(container);
+ * i.e. styles.leftCtrl in one instance of the player on the page
+ * and styles.leftCtrl in another instance of the player on the page
+ * are potentially DIFFERENET classnames.
+ * 
+ * The cssmgr manages the mapping so that the users of the styles (i.e. controls obj code, 
+ * ads controls obj code etc) don't have to.
+ */
+/**
+ * DISCLAIMER!!!!!
+ * CURRENTLY ONLY A SIMPLE AND INEFFICIENT WAY 2021/09/22 that's all I have time for last night
+ * I will work on this in the evening.
+ */
 var theMap_ = new Map();
 
-var namesObj_ = {};
+var masterObj_ = {}; // properites will be names of containers (simple implementation...not safe)
 
-function init_(namesObj, stylesObj, container) {
-    namesObj_[container] = namesObj;
+function makeOptions(options) {
+    let o = {};
+    if (!options) {
+        options = {};
+    }
+    // the names of buttonsColor 
+    // primaryColor and "color" :-( should be changed.
+    // the 'color' is referring to the ads controls...
+    o.buttonsColor = options.color || "#C0C0C0"; //silver //just for test . easier to tell.
+    o.primaryColor = options.backgroundcolor || "#00FFFF"; //aqua     "#DFFF00"; // yellow
+    o.color = options.adcolor || "#FF0000"; //"#FFA07A"; //light salmon
+    return o;
+}
 
+function init_(container, namesObj, stylesObj, options) {
+    masterObj_[container] = {
+        namesObj: namesObj,
+        options: makeOptions(options)
+    };
     let s = stylesObj.default;
     //inject the css right away.
     if (s) {
@@ -36,9 +82,12 @@ function acss_(stylesStr, stylesId = null) {
 
 //Once you inject then it matters.
 //resolution first hor.
-function inject_(container, name, styleObj) {
+function inject_(container, name) {
+    container = getIdForContainer(container);
     let stylesStr = theMap_.get(container+name);
     if (!stylesStr) return;
+    let blob = getBlobForContainer(container);
+    let styleObj = blob.options;
     for (var styleName in styleObj)  {
         let pattern = null;
         // currently only one type
@@ -67,7 +116,7 @@ function walkUp(node, array) {
     while(parent && times < 5) {
         times++;
         if( parent.nodeName === 'DIV' ) {
-            if (namesObj_[parent.id]) {
+            if (masterObj_[parent.id]) {
                 return parent.id;
             }
         }
@@ -76,12 +125,31 @@ function walkUp(node, array) {
     return null;
 }
 
-function getRealCls_(container) {
+function getIdForContainer(container) {
+    let divId;
     if (typeof container == 'string')
-        return namesObj_[container];
-    let divId = walkUp(container);
-    if (divId)
-        return namesObj_[divId];
+        divId = container;
+    else 
+        divId = walkUp(container);
+    return divId;
+}
+
+function getBlobForContainer(container) {
+    let divId;
+    if (typeof container == 'string')
+        divId = container;
+    else 
+        divId = walkUp(container);
+    if (!divId) return; //
+    return masterObj_[divId];
+    
+}
+function getRealCls_(container) {
+    let blob = getBlobForContainer(container);
+    if (blob) {
+        return blob.namesObj;
+    }
+    return null;    
 }
 
 module.exports.init = init_;

@@ -98,12 +98,13 @@ var stylesStrObj_ = {};
         '.' + css_.icon + '.bottom-left {bottom:0;left:0;}',
     ].join("\n");
 
-function getCls_() {
+function makeCls_() {
     return css_;
 }
-function getStyles_() {
+function makeStyles_() {
     return stylesStrObj_;
 }
 
-module.exports.getCls = getCls_;
-module.exports.getStyles = getStyles_;
+
+module.exports.makeCls = makeCls_;
+module.exports.makeStyles = makeStyles_;

@@ -12,8 +12,6 @@ const cssmgr                           = require('../components/video/cssmgr');
 modulesmgr.set('video/cssmgr',         cssmgr);
 
 const stylesSet                        = require('../components/video-styles/default');//we choose this set of style
-cssmgr.init(stylesSet.getCls(), stylesSet.getStyles());
-cssmgr.inject('newControls', { color: '#FF0000'});
 
 
 // these we only use within this file, so dun bother
@@ -75,6 +73,10 @@ function makePlayer(options) {
     }
     const ids = mids.get();
     let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
+
+    let tmp = stylesSet.makeCls(options.container);
+    cssmgr.init(options.container, tmp, stylesSet.makeStyles(tmp));
+
     let playerInst = createObject(merged);
     instMap.set(hashStr, playerInst);
     return playerInst;

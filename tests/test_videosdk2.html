@@ -195,6 +195,7 @@ function toggleShow() {
     }
 }
 
+
 var jxPlayerCfg1 = {
     accountid: "9262bf2590d558736cac4fff7978fcb1",
     autoplay: "wifi", //none, wifi, may be we can do a "api" (i.e. fully triggered by API or user action?)
@@ -202,9 +203,13 @@ var jxPlayerCfg1 = {
     autopause: true,
     container: 'jxOutstreamContainer0',
     creativeid: 23,
+    controls: {
+      color: "#FFFFFF", //white 
+      backgroundcolor: "#0000FF" //blue
+    },
     ads: {
         unit: "23",
-        delay: 100000
+        delay: 5
     },
     logo: {
         url: "https://w7.pngwing.com/pngs/18/497/png-transparent-black-and-blue-atom-icon-screenshot-react-javascript-responsive-web-design-github-angularjs-github-logo-electric-blue-signage.png",
@@ -212,17 +217,7 @@ var jxPlayerCfg1 = {
         link: "https://reactjs.org/"
     }
 };
-var jxPlayerCfg1Prime = {
-    accountid: "Ko117LFQKx",
-    autoplay: "none",
-    autopause: true,
-    container: 'jxOutstreamContainer0',
-    creativeid: 946,
-    ads: {
-        unit: "106",
-        delay: 10000
-    },
-}; 
+
 
 var jxPlayerCfg2 = {
     accountid: "Ko117LFQKx",
@@ -230,6 +225,10 @@ var jxPlayerCfg2 = {
     autopause: true,
     container: 'jxOutstreamContainer2',
     creativeid: 946,
+    controls: {
+      color: "#FFFF00", //yellow
+      backgroundcolor: "#FF00FF" //pink
+    },
     ads: {
         unit: "106",
         delay: 10000
@@ -262,26 +261,22 @@ function playEndedCB(vid) {
     console.log(`##### ${vid} just ended`);
 }
 
-player = JX.player(jxPlayerCfg1Prime);
-events_.forEach(function(eName) {
-    player.addListener(eName, allPurposeFcn);
-});
+player = JX.player(jxPlayerCfg1);
+//events_.forEach(function(eName) {
+  //  player.addListener(eName, allPurposeFcn);
+//});
 player.load([
-"6c4d1621590191302a5853",
-				"a38416215889577344e849",
-				"54dc162158506241ac9880"]);
-            
-//"58971621083272f5877489", //1428
-  //              "072b1621083573d27d2689", //1429
-    //            "97941621077750e48d9314" // 1412    
-//]);
+   "58971621083272f5877489", //1428
+   "072b1621083573d27d2689", //1429
+   "97941621077750e48d9314" // 1412    
+]);
 
 
 player2 = JX.player(jxPlayerCfg2);
 player2.load([
-"6c4d1621590191302a5853",
-				"a38416215889577344e849",
-				"54dc162158506241ac9880"
+   "6c4d1621590191302a5853",
+	"a38416215889577344e849",
+	"54dc162158506241ac9880"
 ]);
 
 </script>

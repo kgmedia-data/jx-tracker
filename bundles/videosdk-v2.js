@@ -72,20 +72,13 @@ function makePlayer(options) {
   if (instMaybe) {
       return;
   }
+//  cssmgr.inject(container, 'adControls'); //, { color: cColor });
+
   const ids = mids.get();
   let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
   let tmp = stylesSet.makeCls(options.container);
-  cssmgr.init(tmp, stylesSet.makeStyles(tmp), options.container);
-  // just for testing. the real way is put the colors into the options
-  // and we extract from the options here
-  // TODO TOMORROW:
-  if (options.container == 'jxOutstreamContainer2') {
-  cssmgr.inject(options.container, 'customControls', { color: '#00FF00', buttonsColor: '#FFA500', primaryColor: '#FFC0CB' });
-  }
-  else {
-    //cssmgr.inject(options.container, 'customControls', { color: '#00FF00', buttonsColor: '#FFA500', primaryColor: '#FFC0CB' });
-    cssmgr.inject(options.container, 'customControls', { color: '#00FF00', buttonsColor: '#5dff6a', primaryColor: '#f2ff5d' });
-  }
+  
+   cssmgr.init(options.container, tmp, stylesSet.makeStyles(tmp), options.controls);
 
   let playerInst = createObject(merged);
 
