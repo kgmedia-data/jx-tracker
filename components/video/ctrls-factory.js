@@ -18,7 +18,7 @@
     var _container = null;
     var _thumbnailImg = null;
     var _bigPlayBtn = null;
-    var _boundClickedCB = null;
+    //var _boundClickedCB = null;
     var _boundImgLoadedFcn = null;
     //all the callback functions (these are promise resolvers) we record so 
     //that we call them at one go when there is a click
@@ -59,10 +59,11 @@
             _bigPlayBtn.classList.add(hideCls);
         if (_thumbnailImg)                
             _thumbnailImg.classList.add(hideCls);
-        if (_boundClickedCB)  {              
-            common.removeListener(_bigPlayBtn, 'click', _boundClickedCB);
-            _boundClickedCB = null;
-        }
+        //if (_boundClickedCB)  {              
+            //common.removeListener(_bigPlayBtn, 'click', _boundClickedCB);
+            //_boundClickedCB = null;
+            ////common.addListener(_bigPlayBtn, "click", _togglePlay);
+        //}
         for (var i = 0; i < _knownClickCBs.length; i++) {
             _knownClickCBs[i]();
         }               
@@ -75,6 +76,12 @@
     function _hideSpinner() {
         if (_vectorFcn.hideSpinner) vectorFcn.hideSpinner();
     }
+    // currently not used :
+    function _togglePlay() {
+        if (_vectorFcn.isPaused()) {
+            _vectorFcn.play();
+        }
+    }
     /**
      * If somehow somehow the play started then this should be called.
      * (play can start thru various channels ... See comment for _clickedCB function above.
@@ -82,8 +89,8 @@
      */
     FactoryOnePlayerControlsD.prototype.videoVisualsHide= function() {
         _hideSpinner();
-        if (_bigPlayBtn && _boundClickedCB) {
-            _boundClickedCB( );
+        if (_bigPlayBtn) {
+            _clickedCB();
         }
         else {
             if (_thumbnailImg) {               
@@ -99,6 +106,7 @@
      * Then this will be called.
      * @param {*} cb 
      */
+    
     FactoryOnePlayerControlsD.prototype.showBigPlayBtn= function(cb){
         if (!_bigPlayBtn) {               
             //for now should be spinner
@@ -113,8 +121,10 @@
             if (cb)  {
                 _knownClickCBs.push(cb);
                 //note: may be no need to bind already...
-                _boundClickedCB = _clickedCB.bind({ cb: cb });
-                common.addListener(_bigPlayBtn, 'click', _boundClickedCB);//not sure about touch
+                common.addListener(_bigPlayBtn, 'click', _clickedCB);
+            }
+            else {
+                common.addListener(_bigPlayBtn, 'click', _togglePlay);
             }
             _bigPlayBtn.classList.remove(hideCls)
         }
@@ -150,6 +160,14 @@
         if (thumbnailURL && thumbnailURL != _thumbnailImg.src) {
             _boundImgLoadedFcn = imgLoadedFcn.bind({ img: _thumbnailImg, cb: imgLoadedCB });
             _thumbnailImg.addEventListener('load', _boundImgLoadedFcn);
+            _thumbnailImg.addEventListener('click', function(){
+                if (_bigPlayBtn) {
+                    try {
+                        _bigPlayBtn.click();
+                    }
+                    catch(e) {}
+                }
+            });
             _thumbnailImg.src = thumbnailURL; 
             if (_thumbnailImg.complete) {
                 _boundImgLoadedFcn();

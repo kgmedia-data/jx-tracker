@@ -161,6 +161,7 @@ window.jxPromisePolyfill        = 'none';
         var _boundOnErrorCB = null;
         var _boundOnPlayheadUpdateCB = null;
         var _boundOnPlayingCB = null;
+        // var _boundOnClickCB = null;
         var _boundOnPausedCB = null;
         var _boundOnFullScreenCB = null;
         var _boundVolumeChangedCB = null;
@@ -720,7 +721,10 @@ window.jxPromisePolyfill        = 'none';
                 },
                 setVideoPlayhead: function(time) {
                     _vid.currentTime = time;
-                }
+                },
+                isPaused: function() {
+                    return _vid.paused;
+                },
             };
             return fcnVector;
         };
@@ -793,6 +797,7 @@ window.jxPromisePolyfill        = 'none';
                         _reportCB('toplayer', param.type, _makeCurrInfoBlob(this.videoid));
                 }
             }
+            //_ctrls.showBigPlayBtn();
 
             _updatePlayState(false);
         };
@@ -1135,6 +1140,8 @@ window.jxPromisePolyfill        = 'none';
             _boundOnPlayheadUpdateCB = null;
             if (_boundOnPlayingCB) _vid.removeEventListener('playing', _boundOnPlayingCB);
             _boundOnPlayingCB = null;
+            // if (_boundOnClickCB) _vid.removeEventListener('click', _boundOnClickCB);
+            // _boundOnClickCB = null;
             if (_boundOnPausedCB) _vid.removeEventListener('pause', _boundOnPausedCB);
             //NEED MAH if (_boundOnPausedCB) _vid.removeEventListener('waiting', _boundOnPausedCB);
             _boundOnPausedCB = null;
@@ -1150,6 +1157,7 @@ window.jxPromisePolyfill        = 'none';
             /////_unRegisterEventListener();
             let saved = _videoID;
             _boundOnPlayingCB = _onPlayingCB.bind({videoid: saved});
+            // _boundOnClickCB = _onVideoClickCB.bind({videoid: saved});
             _boundOnPausedCB = _onPausedCB.bind({videoid: saved});
             _boundOnPlayheadUpdateCB = _onPlayheadUpdateCB.bind({
                 soundind: _cfg.soundind? 'before': null,
@@ -1161,6 +1169,7 @@ window.jxPromisePolyfill        = 'none';
             //_onVolumeChangedCB is now done only after the play has started.
             //to avoid any setting of volume by the SDK triggering any volume tracker event
 
+            // if (common.isMobile()) _vid.addEventListener('touchstart', _boundOnClickCB, false);
             _vid.addEventListener('playing', _boundOnPlayingCB, false);
             _vid.addEventListener('pause', _boundOnPausedCB, false);
             //NEED MAH ? _vid.addEventListener('waiting', _boundOnPausedCB, false);
@@ -1173,6 +1182,13 @@ window.jxPromisePolyfill        = 'none';
             
 
         };
+        // function _onVideoClickCB() {
+        //     if (_vid.paused) {
+        //         _playVideo();
+        //     } else {
+        //         _pauseVideo();
+        //     }
+        // }
         var _createSoundIndMaybe = function() {
             //a configuration exists
             if (!_soundIndObj) {
@@ -1438,6 +1454,8 @@ window.jxPromisePolyfill        = 'none';
                 //then just kan ta killed . i.e. switch to a new video
                 //then the promise chain how?
                 //then it will never resolve loh then just a dangling thing.
+                //it will need to call a resolve ah.
+                // to continue the promise chain ah.
                 _ctrls.showBigPlayBtn(resolve.bind(null, startModePWClick_), _thumbnailURL); 
             });
         }
