@@ -62,6 +62,8 @@
         if (_boundClickedCB)  {              
             common.removeListener(_bigPlayBtn, 'click', _boundClickedCB);
             _boundClickedCB = null;
+
+            common.addListener(_bigPlayBtn, "click", _togglePlay);
         }
         for (var i = 0; i < _knownClickCBs.length; i++) {
             _knownClickCBs[i]();
@@ -75,6 +77,12 @@
     function _hideSpinner() {
         if (_vectorFcn.hideSpinner) vectorFcn.hideSpinner();
     }
+
+    function _togglePlay() {
+        if (_vectorFcn.isPaused()) {
+            _vectorFcn.play();
+        }
+    }
     /**
      * If somehow somehow the play started then this should be called.
      * (play can start thru various channels ... See comment for _clickedCB function above.
@@ -82,8 +90,8 @@
      */
     FactoryOnePlayerControlsD.prototype.videoVisualsHide= function() {
         _hideSpinner();
-        if (_bigPlayBtn && _boundClickedCB) {
-            _boundClickedCB( );
+        if (_bigPlayBtn) {
+            _clickedCB();
         }
         else {
             if (_thumbnailImg) {               
@@ -115,6 +123,8 @@
                 //note: may be no need to bind already...
                 _boundClickedCB = _clickedCB.bind({ cb: cb });
                 common.addListener(_bigPlayBtn, 'click', _boundClickedCB);//not sure about touch
+            } else {
+                common.addListener(_bigPlayBtn, 'click', _togglePlay);
             }
             _bigPlayBtn.classList.remove(hideCls)
         }
@@ -150,6 +160,7 @@
         if (thumbnailURL && thumbnailURL != _thumbnailImg.src) {
             _boundImgLoadedFcn = imgLoadedFcn.bind({ img: _thumbnailImg, cb: imgLoadedCB });
             _thumbnailImg.addEventListener('load', _boundImgLoadedFcn);
+            _thumbnailImg.addEventListener('click', _togglePlay);
             _thumbnailImg.src = thumbnailURL; 
             if (_thumbnailImg.complete) {
                 _boundImgLoadedFcn();
