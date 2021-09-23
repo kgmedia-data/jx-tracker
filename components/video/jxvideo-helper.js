@@ -1,7 +1,7 @@
 const modulesmgr            = require('../basic/modulesmgr');
 
-const hlsAvailHeightsArr_ = [240,360,480,720];
-const hlsAvailHeightsMax_ = 720;
+const hlsAvailHeightsArr_ = [240,360,480,720,1080];
+const hlsAvailHeightsMax_ = 1080;
 
 function MakeOneHelperObj_() {
     var _unsent = {
