@@ -11,8 +11,21 @@ function MakeOneHelperObj_() {
     let _loadShakaProm = null; //these are promises
     let _scriptLoadedTime = 0;
 
+    let _maxOut = false;
+    if (window.location && window.location.hostname) {
+        if (window.location.hostname.indexOf(".jixie.io") > -1) {
+            console.log(`## this is jixie.io so no video height restrictions given to shaka`);
+            _maxOut = true;
+            
+        }
+    }
+
+
     function FactoryOneHelper() {}
     FactoryOneHelper.prototype.getClosestDamHLSHeight = function(width, height) {
+        if (_maxOut) {
+            return -1;
+        }
         for (var i = 0; i < hlsAvailHeightsArr_.length; i++) {
             if (height <= hlsAvailHeightsArr_[i]) {
                 return hlsAvailHeightsArr_[i];

@@ -1049,13 +1049,15 @@ window.jxPromisePolyfill        = 'none';
                     //the dim of the video area has changed since we last checked:
                     if (newDim) {
                         let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-                        _shakaPlayer.configure({
-                            abr: {
-                                restrictions: {
-                                    maxHeight: maxH
+                        if (maxH > 0) {
+                            _shakaPlayer.configure({
+                                abr: {
+                                    restrictions: {
+                                        maxHeight: maxH
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                 }
                 catch(ee){}
@@ -1204,19 +1206,22 @@ window.jxPromisePolyfill        = 'none';
             shakaPlayer = new shaka.Player(video);
             let newDim = sizeMgrFcn(true);//true means force return an object whether there was a change or not
             let maxHeight2Req = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-            shakaPlayer.configure({
+            let o = {
                 streaming: {
                     useNativeHlsOnSafari: false,
                     bufferingGoal: 5
                 },
                 abr: {
-                    defaultBandwidthEstimate: 200000,
-                    switchInterval: 5,
-                    restrictions: {
-                        maxHeight: maxHeight2Req
-                    }
+                    switchInterval: 5
                 }
-            });
+            };
+            if (maxHeight2Req > 0) {
+                o.abr.defaultBandwidthEstimate = 200000;
+                o.abr.restrictions = {
+                    maxHeight: maxHeight2Req
+                }
+            }
+            shakaPlayer.configure(o);
             return shakaPlayer;       
         }                  
         /**
