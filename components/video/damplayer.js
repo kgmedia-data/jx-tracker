@@ -66,7 +66,7 @@ function createObject_(options, ampIntegration) {
     var _vidFetchAcctId = null;
     var _vidConfAcctId = null;
     var _forcePlatform = null;
-    var _startOffset = 0;
+    var _startOffset = -1; //nothing specially forced. will try from cookie
     var _regCBs = {
     };
 
@@ -706,7 +706,7 @@ function createObject_(options, ampIntegration) {
         if (forcePlatform === undefined) {
             forcePlatform = null;
         }
-        _load(true, param, playEndCB, forcePlatform, 0);
+        _load(true, param, playEndCB, forcePlatform);
      }
      JXPlayerInt.prototype.load = function(param, playEndCB, forcePlatform) {
         slackItMaybe("[ load.jixie.io : " + (param ? JSON.stringify(param): "") + "]");
@@ -716,7 +716,7 @@ function createObject_(options, ampIntegration) {
         if (forcePlatform === undefined) {
             forcePlatform = null;
         }
-        _load(false, param, playEndCB, forcePlatform, 0);
+        _load(false, param, playEndCB, forcePlatform);
      }
 
      /***
@@ -920,7 +920,7 @@ function createObject_(options, ampIntegration) {
      * playEndCB is optional: it is a function that we will call when the 1 video finished playing
      * (if invoked on a list of videoids, then it is only called when everything finished playing)
      */
-     var _load = function(idsAreInternal, param, playEndCB, forcePlatform, startOffset = 0) {
+     var _load = function(idsAreInternal, param, playEndCB, forcePlatform, startOffset = -1) {
         if (!jxvhelper.isBrowserSupported()) { 
             //DO NOTHING.
             return; 
@@ -1552,7 +1552,8 @@ function createObject_(options, ampIntegration) {
                     title = vData.title;
             }
         }
-        let offset = (_startOffset ? _startOffset: jxvhelper.getVStoredPlayhead(_currVid));
+        // if -1 means nothing fed from upstairs
+        let offset = (_startOffset == -1 ? jxvhelper.getVStoredPlayhead(_currVid): _startOffset);
         if (offset < 0) {
             offset = 0;
         }
