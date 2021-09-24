@@ -719,7 +719,6 @@ window.jxPromisePolyfill        = 'none';
                 isPaused: function() {
                     return _vid.paused;
                 },
-<<<<<<< HEAD
                 isMuted: function() {
                     return _vid.muted;
                 },
@@ -739,6 +738,8 @@ window.jxPromisePolyfill        = 'none';
                     if (_soundIndObj && _cfg.soundind && _cfg.soundind.position.indexOf('bottom') > -1) _soundIndObj.showMaybe();
                 },
                 //https://animoto.com/blog/news/hd-video-creation-sharing
+                //TODO: Renee: how to harmonize with our new stuff (no force of resolution)
+                // just added to production sdk?
                 setResolution: function(track) {
                     if (!_shakaPlayer) return; 
                     if (track.height === "auto") {
@@ -788,8 +789,6 @@ window.jxPromisePolyfill        = 'none';
                     if (_shakaPlayer) tmp = _shakaPlayer.getTextTracks();
                     return tmp;
                 },
-=======
->>>>>>> master
             };
             return fcnVector;
         };
