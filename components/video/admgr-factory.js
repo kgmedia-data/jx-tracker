@@ -186,8 +186,14 @@
         //or due to the playerWrapper calling
 
         if (_adsManager) {
+            //for the case of those play that actually did not start (due to e.g. browser settings
+            //) then we can still be revived thru this. But since the ima3 sdk might not even know
+            //the video is paused (failed to play), we need this gymnastics then at least the user
+            //can start the play by clicking on the GUI buttons.
             if (!_reallyProgressed) {
-                _adsManager.pause();
+                //_adsManager.pause();
+                //cannot. oh dear it breaks the pure preroll... 
+                //commented out in emergency
             }
             _adsManager.resume();
         }
@@ -253,7 +259,7 @@
         } 
     }
 
-    var fcnCallOnceUponStarted= function(ad) {
+    var fcnCallOnceUponStarted= function(ad, resolveFcn) {
         _callOnceUponStarted = null;
 
         _isAdStarted = true; // set the value to be true as we know that now the ad has really started
@@ -282,10 +288,10 @@
 
         // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
         //pls fix this. the jxhide class does not work
-        if (this.resolveFcn) {
+        if (resolveFcn) {
             let nonlinear = (ad && !ad.isLinear());
             //then if the play (start) has been held back then we signal the thing to start the content video
-            this.resolveFcn(nonlinear ? "jxnonlinearadstarted": "jxadstarted");
+            resolveFcn(nonlinear ? "jxnonlinearadstarted": "jxadstarted");
         }
         
         //---->
@@ -398,7 +404,7 @@
                 break;
             case google.ima.AdEvent.Type.STARTED:
                 if (_callOnceUponStarted) {
-                    _callOnceUponStarted(ad);
+                    _callOnceUponStarted(ad, this.resolveFcn);
                 }
                 break;
             case google.ima.AdEvent.Type.COMPLETE:
@@ -474,12 +480,11 @@
         });
         //bind the res function to it
         
-        /*
+        
         _adsManager.addEventListener(
             google.ima.AdErrorEvent.Type.AD_ERROR,
             _onAdError.bind({resolveFcn: resolveFcn}));
-        */
-
+        
         if(_adsManager) {
             try {
             _createControls();
@@ -642,7 +647,6 @@
 
         return new Promise(function(resolve, reject) {
             common.loadIMAScriptP().then(function() {
-                //////google.ima.settings.setVpaidMode(google.ima.ImaSdkSettings.VpaidMode.INSECURE);
                 google.ima.settings.setDisableCustomPlaybackForIOS10Plus(true);
                 google.ima.settings.setNumRedirects(maxNumVastRedirects_);
 
@@ -670,7 +674,12 @@
                 
                 let adsRequest = new google.ima.AdsRequest();
                 adsRequest.forceNonLinearFullSlot = true;
+<<<<<<< HEAD
                 // adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=937';
+=======
+                //adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=1120';
+                //adURL = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=' + Date.now();
+>>>>>>> master
                 if (adURL) 
                     adsRequest.adTagUrl = adURL;
                 else if (adXML) {
@@ -684,9 +693,6 @@
                 adsRequest.setAdWillAutoPlay(autoplayFlag); 
                 adsRequest.setAdWillPlayMuted(mutedFlag);
 
-                //console.log(`__VPAID VPAID VPAID VPAID VPAID# # # # ##### ${_vpaidSecure ? 
-                  //  google.ima.ImaSdkSettings.VpaidMode.ENABLED:
-                    //google.ima.ImaSdkSettings.VpaidMode.INSECURE}`);
                 google.ima.settings.setVpaidMode(
                     _vpaidSecure ? 
                     google.ima.ImaSdkSettings.VpaidMode.ENABLED:
@@ -715,6 +721,7 @@
         _playAd();
     };
     FactoryOneAd.prototype.pauseAd = function() {
+        console.log("#### pauseAd is called");
         _pauseAd();
     };
     FactoryOneAd.prototype.subscribeToEvents = function(eventsArr, callback) {

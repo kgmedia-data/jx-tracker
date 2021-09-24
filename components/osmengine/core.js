@@ -575,6 +575,34 @@
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_startVisibilityTrack');
             }
+            /****
+             * < Handling for FLOATING :
+             */
+            if (_jsonObj.floating) {
+                _fireTrackingEvent('creativeView');
+                //this is the supplementary only needed for SM:
+                //FES-122: need to fire CV for the previous layers
+                if (_inArticleAdSlotNode) {
+                    _observedNode2 = _inArticleAdSlotNode;
+                    _observer2 = new IntersectionObserver(function(entries) {
+                        if(entries[0]['isIntersecting'] === true) {
+                            _fireMakeupTrackingEvent(_syntheticCVList);
+                            //we can unobserve already if CV is fired:
+                            _observer2.unobserve(_observedNode2);
+                            //by right set to null better lah.
+                        } 
+                    }, {
+                        threshold: [0.2]
+                    });
+                    _observer2.observe(_observedNode2);
+                }//floating:
+                return;
+            }
+            /**
+             * END OF FLOATING HANDLING >
+             */
+
+            
             if (!_jsonObj.visibilityslot) return;
             let node = getAnElt(_jsonObj.visibilityslot.selector); //NOTE: was getUniqElt
             if(!node) {
@@ -594,6 +622,7 @@
                 }
             }
             _jsonObj.visibilityslot.node = node;
+            //For floating we just fire creativeView:
             //this is for the real slot for this layer:
             _observer = new IntersectionObserver(function(entries) {
                 if(entries[0]['isIntersecting'] === true) {
@@ -621,23 +650,6 @@
                 threshold: [0.2]
             });
             _observer.observe(_jsonObj.visibilityslot.node);
-
-
-            //this is the supplementary only needed for SM:
-            if (_jsonObj.floating && _inArticleAdSlotNode) {
-                _observedNode2 = _inArticleAdSlotNode;
-                _observer2 = new IntersectionObserver(function(entries) {
-                    if(entries[0]['isIntersecting'] === true) {
-                        _fireMakeupTrackingEvent(_syntheticCVList);
-                        //we can unobserve already if CV is fired:
-                        _observer2.unobserve(_observedNode2);
-                        //by right set to null better lah.
-                    } 
-                }, {
-                    threshold: [0.2]
-                });
-                _observer2.observe(_observedNode2);
-            }//floating:
         };
 
 

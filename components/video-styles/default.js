@@ -88,6 +88,7 @@ var stylesStrObj_ = {};
     
         '.' + css_.cDiv + ',.' + css_.adDiv + ',.' + css_.player + ',.' + css_.thumbnail + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: 1;}',
         '.' + css_.adCtrl + ',.' + css_.playerCtrl + '{height: 32px;width: 66px;margin-left: 3px;position: absolute;bottom: 20px;left: 5px;z-index: 999;}',
+        '.' + css_.thumbnail + '{cursor: pointer;}',
         '.' + css_.hide + '{display: none;}',
         '.' + css_.adHide + '{visibility: hidden;}',
         //////// We are showing the fullscreen button after all 'video::-webkit-media-controls-fullscreen-button{display: none !important;}',
