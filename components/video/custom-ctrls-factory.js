@@ -26,8 +26,6 @@ const durationId = "duration";
 const fastForwardBtnId = "ffwrdBtn";
 const backwardBtnId = "bwrdBtn";
 
-const primaryColor = "#1B63D4";
-const buttonsColor = "#FFF";
 const randNumb = Math.floor(Math.random() * 1000);
 const playbackRateArr = [0.25, 0.5, 1, 1.5, 2];
 const skipOffset = 15;
@@ -343,7 +341,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
           var elm = common.newDiv(subtitleSelection, "div", x.label, styles.resItem);
           if (x.active) elm.classList.add("active");
           elm.dataset.title = x.label;
-          elm.dataset.subtitle = x.language;
+          elm.dataset.subtitle = x.language === "off" ? "CC" : x.language;
           common.addListener(elm, 'click', _selectSubtitle.bind({subtitle: x}));
           _subtitleItems.push(elm);
         }
@@ -730,7 +728,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
    * (play can start thru various channels ... See comment for _clickedCB function above.
    * actually I am thinking, once the play starts, we can just remove the thumbnail??
    */
-  FactoryOneCustomControls.prototype.videoVisualsHide = function () {
+  FactoryOneCustomControls.prototype.hideVVisual = function () {
     _hideSpinner();
     if (_bigPlayBtn && _boundClickedCB) {
       _boundClickedCB();
@@ -780,7 +778,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
    * Then
    * @param {*} thumbnailURL
    */
-  FactoryOneCustomControls.prototype.videoVisualsInit = function (thumbnailURL,imgLoadedCB) {
+  FactoryOneCustomControls.prototype.initVVisual = function (thumbnailURL,imgLoadedCB) {
     _showSpinner();
     if (!_thumbnailImg) {
       let r = Math.floor(Math.random() * 2000 + 1);
@@ -810,37 +808,37 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
    * So now can remove the loading spinner then
    * @param {*} thumbnailURL
    */
-  FactoryOneCustomControls.prototype.videoVisualsRemoveSpinner = function () {
+  FactoryOneCustomControls.prototype.hideSpinner = function () {
     _hideSpinner();
   };
-  FactoryOneCustomControls.prototype.showControls = function () {
+  FactoryOneCustomControls.prototype.showCtrl = function () {
     if (_videoControls) _videoControls.classList.remove(styles.hide);
   };
-  FactoryOneCustomControls.prototype.hideControls = function () {
+  FactoryOneCustomControls.prototype.hideCtrl = function () {
     if (_videoControls) _videoControls.classList.add(styles.hide);
   };
-  FactoryOneCustomControls.prototype.updateTimeElapsed = function (currTime) {
+  FactoryOneCustomControls.prototype.setTimer = function (currTime) {
     _updateTimeElapsed(currTime);
   };
-  FactoryOneCustomControls.prototype.initializeVideoInfo = function (videoObj) {
+  FactoryOneCustomControls.prototype.setVInfo = function (videoObj) {
     _initVideoInfo(videoObj);
   };
-  FactoryOneCustomControls.prototype.updatePlayBtn = function () {
+  FactoryOneCustomControls.prototype.setPlayBtn = function () {
     _updatePlayBtn();
   };
-  FactoryOneCustomControls.prototype.updateVolume = function (vol) {
+  FactoryOneCustomControls.prototype.setVolIcon = function (vol) {
     _updateVolumeIcon(false, vol);
   };
-  FactoryOneCustomControls.prototype.updateFullscreen = function () {
+  FactoryOneCustomControls.prototype.updateFsIcon = function () {
     _updateFullscreenButton();
   };
-  FactoryOneCustomControls.prototype.updateProgressBar = function (time) {
+  FactoryOneCustomControls.prototype.setProg = function (time) {
     _updateProgressBar(time);
   };
-  FactoryOneCustomControls.prototype.setVideoTitle = function (title) {
+  FactoryOneCustomControls.prototype.setVTitle = function (title) {
     _setVideoTitle(title);
   };
-  FactoryOneCustomControls.prototype.showNativeControl= function(){
+  FactoryOneCustomControls.prototype.showNativeCtrl= function(){
     return false;
   };
   FactoryOneCustomControls.prototype.lastPPGesture = function () {
