@@ -799,6 +799,14 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         cb: imgLoadedCB,
       });
       common.addListener(_thumbnailImg, "load", _boundImgLoadedFcn);
+      common.addListener(_thumbnailImg, 'click', function(){
+        if (_bigPlayBtn) {
+            try {
+                _bigPlayBtn.click();
+            }
+            catch(e) {}
+        }
+    });
       _thumbnailImg.src = thumbnailURL;
       if (_thumbnailImg.complete) {
         _boundImgLoadedFcn();
