@@ -510,7 +510,7 @@ window.jxPromisePolyfill        = 'none';
                     _showSpinner();
                     if (_soundIndObj)
                         _soundIndObj.hideMaybe(); //if the sound indicator is there need to hide ah.
-                    _ctrls.hideControls();
+                    _ctrls.hideCtrl();
                 },
                 switch2Cnt: function() {
                     //_state = "content";
@@ -535,7 +535,7 @@ window.jxPromisePolyfill        = 'none';
                     if (_soundIndObj)
                         _soundIndObj.showMaybe();
                     //then the state will be set to content in the onPlayingCB....
-                    _ctrls.showControls();
+                    _ctrls.showCtrl();
                 },
                 onAdPlaying: function() {
                     _detectManualPlayOrPause('playing');
@@ -812,12 +812,12 @@ window.jxPromisePolyfill        = 'none';
             if (!_ctrls) {
                 _ctrls = MakeOnePlayerControlsObjD(_contentDiv, _makeFcnVectorForUI()); 
             }
-            if (_ctrls.showNativeControl()) {
+            if (_ctrls.showNativeCtrl()) {
                 _vid.controls = true;
             } else {
                 _vid.controls = false;
             }
-            _ctrls.hideControls();
+            _ctrls.hideCtrl();
         };
         var _createStripMessage = function(remaining) {
             const stripStyle = "#JXMessage{position: absolute;padding: 9px;bottom: 20px;padding-right: 32px;right: 0px;background: rgba(0, 0, 0, 0.74);z-index: 2;color: rgba(255, 255, 255, 0.8);border-radius: 4px;font-size: 13px;letter-spacing: 1px;}";
@@ -842,7 +842,7 @@ window.jxPromisePolyfill        = 'none';
             if (state) {
                 _reportCB('video', 'fullscreen', _makeCurrInfoBlob(this.videoid));
             }
-            if (_ctrls) _ctrls.updateFullscreen();
+            if (_ctrls) _ctrls.updateFsIcon();
         };
         
         function _onVolumeChangedCB() {
@@ -850,7 +850,7 @@ window.jxPromisePolyfill        = 'none';
             _savedVolume = _vid.volume;
 
             if (_ctrls) {
-                _ctrls.updateVolume(_vid.volume);
+                _ctrls.setVolIcon(_vid.volume);
             }
             
             /* if (_vid.muted) {
@@ -876,7 +876,7 @@ window.jxPromisePolyfill        = 'none';
         }
         var _onPausedCB = function(param) {
             if (_ctrls) {
-                _ctrls.updatePlayBtn();
+                _ctrls.setPlayBtn();
             }
 
             if (param.type == 'pause') {
@@ -932,8 +932,8 @@ window.jxPromisePolyfill        = 'none';
             _detectManualPlayOrPause('playing');
 
             if (_ctrls) {
-                _ctrls.initializeVideoInfo(_vid);
-                _ctrls.updatePlayBtn();
+                _ctrls.setVInfo(_vid);
+                _ctrls.setPlayBtn();
             }
 
             if (_state == 'ad') {
@@ -949,7 +949,7 @@ window.jxPromisePolyfill        = 'none';
             //That might succeed, leading to this callback being triggered.
             //In that case we want this call hideBigPlayBtn - for the Promise to
             //be resolved so that the ads-init promise chain and run on:
-            _ctrls.videoVisualsHide();//this is needed. Do not remove 
+            _ctrls.hideVVisual();//this is needed. Do not remove 
 
             //Special eventlistener: volumechange we only hook up after play really started
             //if we do that earlier it is possible the player-triggered volume change
@@ -965,7 +965,7 @@ window.jxPromisePolyfill        = 'none';
             //}
             
              //Not used coz we just use native controls 
-            _ctrls.showControls();
+            _ctrls.showCtrl();
             
             _updatePlayState(true);
   
@@ -1111,7 +1111,7 @@ window.jxPromisePolyfill        = 'none';
             _doPlayedPctEvent(currentTime);
 
             if (_ctrls) {
-                _ctrls.updateTimeElapsed(currentTime);
+                _ctrls.setTimer(currentTime);
             }
 
             if (!this.soundind) {
@@ -1182,7 +1182,7 @@ window.jxPromisePolyfill        = 'none';
                     _ctrls.setTramsitionProgressBar();
                     _ctrls.updateProgressBar(width);
                 }); */
-                _ctrls.updateProgressBar(_vid.currentTime);
+                _ctrls.setProg(_vid.currentTime);
                 let diff = currentTime- this.lastPlayhead;
                 if (diff < 0) diff = 0 - diff;
                 if(diff <= 2) {
@@ -1682,7 +1682,7 @@ window.jxPromisePolyfill        = 'none';
             if (res == 'jxnonlinearadstarted' || res == 'timeout' || res == 'jxaderrored' || res == 'jxnoad' || res == 'jxnoadbreak') {
                 //THUMBNAIL_FERY : dun bother about this one first. For ads stuff _spinner.hide();
                 //_hideSpinner();
-                _ctrls.videoVisualsHide(); 
+                _ctrls.hideVVisual(); 
                 _playVideo();
             }
             //the other type I believe (need to check) the state is already content?
@@ -1744,7 +1744,7 @@ window.jxPromisePolyfill        = 'none';
             _createControlsMaybe();
             _createLogoMaybe();
             _createInfoIcon();
-            _ctrls.videoVisualsInit(thumbnailURL, function() {
+            _ctrls.initVVisual(thumbnailURL, function() {
                 _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
             });
             
@@ -1838,7 +1838,7 @@ window.jxPromisePolyfill        = 'none';
             let boundChainContextCheck  = _initChainContextCheck.bind({token: token});
             let boundSetupNewVP         = _initChainSetupNewVP.bind({token: token});
             
-            if (_ctrls) _ctrls.setVideoTitle(videoTitle);
+            if (_ctrls) _ctrls.setVTitle(videoTitle);
 
             shakaDetachProm
             .then(function() { 
@@ -1863,7 +1863,7 @@ window.jxPromisePolyfill        = 'none';
                     //in case there is no thumbnail we also can have the ready ah!!!
                     //or something screwed up.
                     _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
-                    _ctrls.videoVisualsRemoveSpinner();
+                    _ctrls.hideSpinner();
                     if(getAdMode == 'prefetch') {
                         adPromise = _adObject.makeAdRequestP(_cfg.ads.adtagurl, 
                             _startModePW == startModePWClick_? false: true, //autoplay Flag (best effort lah)

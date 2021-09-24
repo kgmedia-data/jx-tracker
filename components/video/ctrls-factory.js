@@ -85,7 +85,7 @@
      * (play can start thru various channels ... See comment for _clickedCB function above.
      * actually I am thinking, once the play starts, we can just remove the thumbnail??
      */
-    FactoryOnePlayerControlsD.prototype.videoVisualsHide= function() {
+    FactoryOnePlayerControlsD.prototype.hideVVisual= function() {
         _hideSpinner();
         if (_bigPlayBtn) {
             _clickedCB();
@@ -148,7 +148,7 @@
      * Then 
      * @param {*} thumbnailURL 
      */
-    FactoryOnePlayerControlsD.prototype.videoVisualsInit= function(thumbnailURL, imgLoadedCB){
+    FactoryOnePlayerControlsD.prototype.initVVisual= function(thumbnailURL, imgLoadedCB){
         _showSpinner();
         if (!_thumbnailImg) {
             let r = Math.floor(Math.random() * (2000) + 1);
@@ -177,10 +177,10 @@
      * So now can remove the loading spinner then
      * @param {*} thumbnailURL 
      */
-    FactoryOnePlayerControlsD.prototype.videoVisualsRemoveSpinner= function(){
+    FactoryOnePlayerControlsD.prototype.hideSpinner= function(){
         _hideSpinner();
     }
-    FactoryOnePlayerControlsD.prototype.showNativeControl= function(){
+    FactoryOnePlayerControlsD.prototype.showNativeCtrl= function(){
         return true;
     };
     FactoryOnePlayerControlsD.prototype.lastPPGesture = function () {
@@ -191,20 +191,21 @@
     FactoryOnePlayerControlsD.prototype.reset= function(){};
     FactoryOnePlayerControlsD.prototype.updatePlayState= function(){};
     FactoryOnePlayerControlsD.prototype.updateMutedState= function(){};
-    FactoryOnePlayerControlsD.prototype.hideControls= function(){};
-    FactoryOnePlayerControlsD.prototype.showControls= function(){};
+    FactoryOnePlayerControlsD.prototype.hideCtrl= function(){};
+    FactoryOnePlayerControlsD.prototype.showCtrl= function(){};
     FactoryOnePlayerControlsD.prototype.setBtnMuteActive= function(){};
     FactoryOnePlayerControlsD.prototype.setBtnPlayActive= function(){};
     FactoryOnePlayerControlsD.prototype.togglePlay= function(){};
     FactoryOnePlayerControlsD.prototype.showProgressBar= function(){};
     FactoryOnePlayerControlsD.prototype.hideProgressBar= function(){};
     FactoryOnePlayerControlsD.prototype.setTramsitionProgressBar= function(){};//SPELLING
-    FactoryOnePlayerControlsD.prototype.updateVolume= function(){};
-    FactoryOnePlayerControlsD.prototype.updatePlayBtn= function(){};
-    FactoryOnePlayerControlsD.prototype.initializeVideoInfo= function(){};
-    FactoryOnePlayerControlsD.prototype.updateTimeElapsed= function(){};
-    FactoryOnePlayerControlsD.prototype.updateProgressBar= function(){};
-    FactoryOnePlayerControlsD.prototype.setVideoTitle = function () {};
+    FactoryOnePlayerControlsD.prototype.setVolIcon= function(){};
+    FactoryOnePlayerControlsD.prototype.setPlayBtn= function(){};
+    FactoryOnePlayerControlsD.prototype.setVInfo= function(){};
+    FactoryOnePlayerControlsD.prototype.setTimer= function(){};
+    FactoryOnePlayerControlsD.prototype.setProg= function(){};
+    FactoryOnePlayerControlsD.prototype.setVTitle = function () {};
+    FactoryOnePlayerControlsD.prototype.updateFsIcon = function () {};
     let ret = new FactoryOnePlayerControlsD(container, vectorFcn);
     return ret;
 }
