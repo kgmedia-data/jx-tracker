@@ -673,7 +673,7 @@ function createObject_(options, ampIntegration) {
     JXPlayerInt.prototype.loadVideoByPartnerId = function(videoId, startOffset, playEndCB, forcePlatform) {
         //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
         if (startOffset === undefined) {
-            startOffset = 0;
+            startOffset = -1; // by the normal way which is cookie
         }
         if (playEndCB === undefined) {
             playEndCB = null;
@@ -686,7 +686,7 @@ function createObject_(options, ampIntegration) {
      JXPlayerInt.prototype.loadVideoById = function(videoId, startOffset, playEndCB, forcePlatform) {
         //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
         if (startOffset === undefined) {
-            startOffset = 0;
+            startOffset = -1; //by the normal way which is cookie
         }
         if (playEndCB === undefined) {
             playEndCB = null;
