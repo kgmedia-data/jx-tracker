@@ -1,7 +1,7 @@
 const modulesmgr            = require('../basic/modulesmgr');
 
-const hlsAvailHeightsArr_ = [240,360,480]; //,720];
-const hlsAvailHeightsMax_ = 480;
+const hlsAvailHeightsArr_ = [240,360,480,720,1080];
+const hlsAvailHeightsMax_ = 1080;
 
 function MakeOneHelperObj_() {
     var _unsent = {
@@ -11,8 +11,21 @@ function MakeOneHelperObj_() {
     let _loadShakaProm = null; //these are promises
     let _scriptLoadedTime = 0;
 
+    let _maxOut = false;
+    if (window.location && window.location.hostname) {
+        if (window.location.hostname.indexOf(".jixie.io") > -1) {
+            console.log(`## this is jixie.io so no video height restrictions given to shaka`);
+            _maxOut = true;
+            
+        }
+    }
+
+
     function FactoryOneHelper() {}
     FactoryOneHelper.prototype.getClosestDamHLSHeight = function(width, height) {
+        if (_maxOut) {
+            return -1;
+        }
         for (var i = 0; i < hlsAvailHeightsArr_.length; i++) {
             if (height <= hlsAvailHeightsArr_[i]) {
                 return hlsAvailHeightsArr_[i];
@@ -259,7 +272,7 @@ function MakeOneHelperObj_() {
             return;
         }
         playhead = Math.round(playhead);
-        if (!(playhead > 0 && playhead < 7200)) {
+        if (!(playhead > 0 && playhead < 10800)) {
             return;
         }
         //console.log(`prototype.setVStoredPlayhead ${vid} after rounding ${playhead}`);
@@ -326,7 +339,7 @@ function MakeOneHelperObj_() {
         let corrupted = false;
         for (var i = 0; i < tmp.length; i++) {
             let o = tmp[i];
-            if (o.id  && typeof o.id === 'string' && o.hasOwnProperty('t') && typeof o.t === 'number') {
+            if (o.id  && typeof o.id === 'number' && o.hasOwnProperty('t') && typeof o.t === 'number') {
 
             }
             else {
