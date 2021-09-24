@@ -11,9 +11,7 @@ const MakeOneSpinner        = modulesmgr.get('video/spinner-factory');
 const MakeOneReplayBtn      = modulesmgr.get('video/replaybtn-factory');
 const MakeOneHorizBanner    = modulesmgr.get('video/horizbanner-factory');
 const buildVastXml          = modulesmgr.get('video/vast').buildVastXml;
-
 const cssmgr                = modulesmgr.get('video/cssmgr');
-const styles                = cssmgr.getRealCls();
  
 //of all the subscribable stuff for jxvideo1.3.min.js, this subset 
 //we need from the admgr layer (IMA based)
@@ -30,6 +28,7 @@ const imaEventsSubset_ =[
 ];
 
 function MakeOneInst_(containerId, data, config = null, eventsVector = null, notifyMaster = null) {
+    const styles                = cssmgr.getRealCls(containerId);
     var _token              = null;
     var _notifyMasterFcn    = null;
     var _unsentEvents       = { jxplayvideo: 1 };
