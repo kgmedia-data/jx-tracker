@@ -814,6 +814,7 @@ window.jxPromisePolyfill        = 'none';
             };
             return fcnVector;
         };
+        /*
         var _makeBlob = function(periodic) {
             //get the current dimenions.
             //scali no stream left.MIOW
@@ -835,6 +836,7 @@ window.jxPromisePolyfill        = 'none';
                 }
             }
         }
+        */
         var _getAvailableResolutions = function() {
             var tracks = [];
             if (_shakaPlayer) {
