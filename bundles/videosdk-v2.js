@@ -64,6 +64,8 @@ const pginfo = mpginfo.get(); //basic pginfo we can get from the page.
 const dbgVersion = 'v46';
 pginfo.dbgVersion = dbgVersion;
 
+const optionsObjNames_ = ['ads', 'controls', 'soundindicator', 'restrictions'];
+
 var instMap = new Map();   
 function makePlayer(options) {
   // dangerous!!
@@ -72,13 +74,11 @@ function makePlayer(options) {
   if (instMaybe) {
       return;
   }
-//  cssmgr.inject(container, 'adControls'); //, { color: cColor });
 
   const ids = mids.get();
   let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
-  let tmp = stylesSet.makeCls(options.container);
-  
-   cssmgr.init(options.container, tmp, stylesSet.makeStyles(tmp), options.controls);
+  /// TODO jxhelper.registerOptions(options.container, options, optionsObjNames_);
+  cssmgr.init(options.container, stylesSet, options.controls, ['customControls']);
 
   let playerInst = createObject(merged);
 

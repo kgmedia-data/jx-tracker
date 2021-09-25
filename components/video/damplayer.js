@@ -1555,7 +1555,7 @@ function createObject_(options, ampIntegration) {
                     {
                         "language": "fr",
                         "url": "https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/psdk/tests/fr.srt",
-                        "label": "France",
+                        "label": "Francois",
                         "mime": "text/srt"
                     }
                 ]

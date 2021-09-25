@@ -85,15 +85,26 @@ function MakeOneHelperObj_() {
     FactoryOneHelper.prototype.isIOS = function() {
         return (/iPad|iPhone|iPod/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
     }
-    FactoryOneHelper.prototype.qs = function(selector) {
-        return document.querySelector(selector);
+    /*
+    FactoryOneHelper.prototype.qs = function(selector, container = null) {
+        if (!container) {
+            container = document;
+        }
+        return container.querySelector(selector);
     }
-    FactoryOneHelper.prototype.qsa = function(selector) {
-        return document.querySelectorAll(selector);
+    FactoryOneHelper.prototype.qsa = function(selector, container = null) {
+        if (!container) {
+            container = document;
+        }
+        return container.querySelectorAll(selector);
     }
-    FactoryOneHelper.prototype.byId = function(selector) {
-        return document.getElementById(selector);
+    FactoryOneHelper.prototype.byId = function(selector, container = null) {
+        if (!container) {
+            container = document;
+        }
+        return container.getElementById(selector);
     }
+    */
 
     function _acss(stylesArr, id) {
         var head = document.getElementsByTagName('HEAD')[0];
@@ -102,6 +113,7 @@ function MakeOneHelperObj_() {
         s.innerHTML = stylesArr;
         head.appendChild(s);
     };
+
     let ret = new FactoryOneHelper();
     return ret;
 };

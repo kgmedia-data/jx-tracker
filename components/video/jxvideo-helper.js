@@ -3,7 +3,47 @@ const modulesmgr            = require('../basic/modulesmgr');
 const hlsAvailHeightsArr_ = [240,360,480,720,1080];
 const hlsAvailHeightsMax_ = 1080;
 
+
+
 function MakeOneHelperObj_() {
+    var divId2Options_ = {};
+
+    function walkUp_(node) {
+        var parent = node;
+        let times = 0;
+        while(parent && times < 5) {
+            times++;
+            if( parent.nodeName === 'DIV' ) {
+                if (divId2Options_[parent.id]) {
+                    return parent.id;
+                }
+            }
+            parent = parent.parentNode;
+        }
+        return null;
+    }
+    
+    FactoryOneHelper.prototype.retrieveOptions = function(container) {
+        let divId = (typeof container == 'string' ? container: walkUp_(container));
+        divId2Options_[divId];
+    }
+    FactoryOneHelper.prototype.registerOptions = function(container, options, oArray) {
+        let copyIt = JSON.parse(JSON.stringify(options, function(key, value) {
+            // 
+            if (value instanceof Object) {
+                if (oArray.indexOf(key) > -1) {
+                    return value;
+                }
+                return null;
+            }
+            else {
+                return value;
+            }
+        }));
+        divId2Options_[container] = copyIt;
+    }
+
+
     var _unsent = {
         loaded: 1
     }

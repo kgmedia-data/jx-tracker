@@ -608,7 +608,7 @@ window.jxPromisePolyfill        = 'none';
             if (!externalCall && _manualPaused) {
                 //console.log(`Debug Even though playInt is called but it seems we were manuallyPaused earlier so better not.`);
                 
-                //externalCall means this is triggered from intersectionOb etc by player SDK
+                //!externalCall means this is triggered from intersectionOb etc by player SDK
                 //This condition says: 
                 //if this is an internally triggered play (probably due to visiblity) and our video
                 //was paused by user earlier on (intentionally), then do not execute the play.
@@ -686,19 +686,31 @@ window.jxPromisePolyfill        = 'none';
         //of HTML5 <video>
         var _makeFcnVectorForUI = function() {
             let fcnVector = {
+                // "callbacks":
+                reportClickToStart: function() {
+                    _gestureReportCB(startModeSDKClick_, _defaultReportInfoBlob);
+                },
+                cbHoverControls: function(visible) {
+                    if (_soundIndObj && _cfg.soundind && _cfg.soundind.position.indexOf('bottom') > -1) {
+                        if (visible) _soundIndObj.hideMaybe(); else _soundIndObj.showMaybe();
+                    } 
+                },
+                // functions to carry out imperative commands:
                 showSpinner: function() {
                     _showSpinner();
                 },
                 hideSpinner: function() {
                     _hideSpinner();
                 },
-                reportClickToStart: function() {
-                    _gestureReportCB(startModeSDKClick_, _defaultReportInfoBlob);
-                },
+                
                 play: function() {
+                    _manualPaused = false;
+                    //trying something new ....
+                    if (_vid.muted) _vid.muted = false; // if the video is muted, then we need to make it play unmuted
                     _playVideo();
                 },
                 pause: function() {
+                    _manualPaused = true;
                     _pauseVideo();
                 },
                 mute: function() {
@@ -731,22 +743,34 @@ window.jxPromisePolyfill        = 'none';
                 setPlaybackRate: function(speed) {
                     _vid.playbackRate = speed;
                 },
-                hideSoundInd: function() {
-                    if (_soundIndObj && _cfg.soundind && _cfg.soundind.position.indexOf('bottom') > -1) _soundIndObj.hideMaybe();
-                },
-                showSoundInd: function() {
-                    if (_soundIndObj && _cfg.soundind && _cfg.soundind.position.indexOf('bottom') > -1) _soundIndObj.showMaybe();
-                },
                 //https://animoto.com/blog/news/hd-video-creation-sharing
                 //TODO: Renee: how to harmonize with our new stuff (no force of resolution)
                 // just added to production sdk?
+
+
+                /*
+                let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
+                        if (maxH > 0) {
+                            _shakaPlayer.configure({
+                                abr: {
+                                    restrictions: {
+                                        maxHeight: maxH
+                                    }
+                                }
+                            });
+                        }
+                        */
                 setResolution: function(track) {
                     if (!_shakaPlayer) return; 
                     if (track.height === "auto") {
                         _forcedResolution = -1;
+                        let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
                         _shakaPlayer.configure({
                             abr: {
-                                enabled: true
+                                enabled: true,
+                                restrictions: {
+                                    maxHeight: maxH
+                                }
                             }
                         });
                     } else {
@@ -785,13 +809,32 @@ window.jxPromisePolyfill        = 'none';
                     }
                 },
                 getSubtitles: function() {
-                    var tmp = []
-                    if (_shakaPlayer) tmp = _shakaPlayer.getTextTracks();
-                    return tmp;
+                    return (_shakaPlayer ? _shakaPlayer.getTextTracks() : []);
                 },
             };
             return fcnVector;
         };
+        var _makeBlob = function(periodic) {
+            //get the current dimenions.
+            //scali no stream left.MIOW
+            let dim = _boundSizeManagerFcn(periodic ? false: true);
+            //the dim of the video area has changed since we last checked:
+            //just resolved it into 1 , either width or height.
+
+            if (dim) {
+                if (dim.height > r.maxheight) {
+                    dim.height = r.maxheight;
+                }
+                //then cannot be too small ah.
+                if (dim.height < r.minheight) {
+                    dim.height = r.minheight;
+                }
+
+                let abr = {
+                    maxHeight: dim.height
+                }
+            }
+        }
         var _getAvailableResolutions = function() {
             var tracks = [];
             if (_shakaPlayer) {
@@ -804,8 +847,16 @@ window.jxPromisePolyfill        = 'none';
                         const otherIdx = tracks.findIndex((t) => t.height == track.height);
                         return otherIdx == idx;
                     });
+                    // the options object.
+                    /* TODO
+                    tracks = trackers.filter((track) => (
+                        track.height <= r.maxheight && track.height >= r.minheight &&
+                        track.width <= r.maxwidth && track.width >= r.minwidth)
+                    );*/
                 }
+
             }
+
             return tracks;
         };
         var _createControlsMaybe = function() {

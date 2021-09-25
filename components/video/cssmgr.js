@@ -11,65 +11,111 @@
  * in the same page each with a different color config... It is basically thru
  * different css.
  * 
- * The code always work with the "logical" class names.
+ * The player CODE always work with the "logical" class names.
  * e.g. controls factory code we have
  * styles.volPanel, styles.leftCtrl
  * 
- * This styles object is retrieved from the cssmgr at the init of the controls object
- *   const styles = cssmgr.getRealCls(container);
- * i.e. styles.leftCtrl in one instance of the player on the page
- * and styles.leftCtrl in another instance of the player on the page
- * are potentially DIFFERENET classnames.
+ * when a player is instantiated we have (container (id of the div) and the options)
  * 
- * The cssmgr manages the mapping so that the users of the styles (i.e. controls obj code, 
- * ads controls obj code etc) don't have to.
+ * div-id-of-player-instance
+ *   divnameA |--> hashvaluexyz (corr to options=bgcolor=blue,color=white) 
+ *                     ||==> objectP (has the classids which will give you the right colors) 
+ * 
+ *   divnameB |--> hashvaluexyz (corr to options=bgcolor=blue,color=white) 
+ *                     ||==> objectP (has the classids which will give you the right colors) 
+ * 
+ *   divnameC |--> hashvaluexxxyz (corr to options=bgcolor=red,color=yellow) 
+ *                     ||==> objectQ (has the classids which will give you the right colors) 
+ *
+ *   divnameD |--> hashvalueyyyz (corr to options=bgcolor=red,color=yellow) 
+ *                     ||==> objectR (has the classids which will give you the right colors) 
+ * 
+ *  In this example, if 4 instances of the player on the page)
+ * 
+ * divId2HashCode_ look like this
+ *  (if 4 instances of the player on the page)
+ *  divA B they have the same options settings
+ *  which is diff from divC and diff from  divD 
+ * {
+ *    divnameA : xyz (hashvalue)
+ *    divnameB :  xyz
+ *    divnameC : xxxyz
+ *    divnameD : yyyz
+ * }
+ * 
+ * theMap_ {
+ *   xyz: objectP
+ *   xxxyz: objectQ
+ *   yyyz: objectR
+ * }
+ * 
  */
-/**
- * DISCLAIMER!!!!!
- * CURRENTLY ONLY A SIMPLE AND INEFFICIENT WAY 2021/09/22 that's all I have time for last night
- * I will work on this in the evening.
- */
+
+var divId2HashCode_ = {};
 var theMap_ = new Map();
 
-var masterObj_ = {}; // properites will be names of containers (simple implementation...not safe)
-
-function makeOptions(options) {
+// internal helper function:
+// basically just to repair and make sure all properties are filled in
+// at least with a default.
+function makeOptions_(options) {
     let o = {};
     if (!options) {
         options = {};
     }
     // the names of buttonsColor 
-    // primaryColor and "color" :-( should be changed.
+    // backgroundColor and "color" :-( should be changed.
     // the 'color' is referring to the ads controls...
     o.buttonsColor = options.color || "#C0C0C0"; //silver //just for test . easier to tell.
-    o.primaryColor = options.backgroundcolor || "#00FFFF"; //aqua     "#DFFF00"; // yellow
-    o.color = options.adcolor || "#FF0000"; //"#FFA07A"; //light salmon
+    o.backgroundColor = options.backgroundcolor || "#00FFFF"; //aqua     "#DFFF00"; // yellow
+    o.adsButtonsColor = options.adcolor || "#FF0000"; //"#FFA07A"; //light salmon
+    o.font = options.font || 'Orbitron:400,500,700,900'; //'Quicksand:400,700,300'; //Roboto:400;500;700
     return o;
 }
 
-function init_(container, namesObj, stylesObj, options) {
-    masterObj_[container] = {
-        namesObj: namesObj,
-        options: makeOptions(options)
-    };
-    let s = stylesObj.default;
-    //inject the css right away.
-    if (s) {
-        //console.log("first we inject this lah. " + 'default');
-        //console.log(s);
-        acss_(s);
+// internal function: convert a string (a concatenation of some css properties to do with color (so far))
+function makeHashCode_(str) {
+    var hash = 0, i, chr;
+    if (str.length === 0) return hash;
+    for (i = 0; i < str.length; i++) {
+      chr   = str.charCodeAt(i);
+      hash  = ((hash << 5) - hash) + chr;
+      hash |= 0; // Convert to 32bit integer
     }
-    //for delayed injection
-    for (var prop in stylesObj) {
-        if (prop != 'default') {
-            //console.log('adding to map not yet injected' + prop);
-            //console.log(stylesObj[prop]);
-            //this is just a super super rough way to do it.
-            // best is not directly use the container id as string
-            // TODO tomorrow 
-            theMap_.set(container+prop, stylesObj[prop]);
-        }
+    // console.log(hash);
+    return hash;
+};
+
+// every player INSTANCE will call this at their start. 
+// container is the divId of the player container (options.container property)
+// the styles set object is read from the desired video-styles/*.js file. depending
+// on what style is desired. 
+function init_(container, stylesSetObj, options, injectSSNow = []) {
+    // get a hash value
+    if (divId2HashCode_[container]) {
+        // do nothing.
+        // already init before. what are you trying to do again?!
+        return;
     }
+    let o = makeOptions_(options);
+    // the hash code is derived from the actual options settings.
+    // so 2 containers with the exact same options color settings will map to the same hash.
+    let str = ['buttonsColor','backgroundColor','adsButtonsColor','font'].map((e) => o[e]).join("|");
+    let hash = makeHashCode_(str);
+
+    let storedObj = theMap_.get(hash);
+    if (!storedObj) {
+        storedObj = {
+            stylesSet: stylesSetObj,
+            cssClsnames: stylesSetObj.makeCssClsnames(hash),
+            options: o,
+            injected: []
+        };
+        theMap_.set(hash, storedObj);
+    }
+    ['default'].concat(injectSSNow).forEach(function(stylesSetName) {
+        inject_(null, stylesSetName, storedObj);
+    });
+    divId2HashCode_[container] = hash;
 }
 
 function acss_(stylesStr, stylesId = null) {
@@ -80,43 +126,32 @@ function acss_(stylesStr, stylesId = null) {
     head.appendChild(s);
 }
 
-//Once you inject then it matters.
-//resolution first hor.
-function inject_(container, name) {
-    container = getIdForContainer(container);
-    let stylesStr = theMap_.get(container+name);
-    if (!stylesStr) return;
-    let blob = getBlobForContainer(container);
-    let styleObj = blob.options;
-    for (var styleName in styleObj)  {
-        let pattern = null;
-        // currently only one type
-        if (styleName == 'color') {
-            pattern = /%%color%%/g;
-        }
-        if (styleName == 'primaryColor') {
-            pattern = /%%primaryColor%%/g;
-        }
-        if (styleName == 'buttonsColor') {
-            pattern = /%%buttonsColor%%/g;
-        }
-        if (pattern) {
-            stylesStr = stylesStr.replace(pattern, styleObj[styleName]);
-        }
+// either container must be specified, or storedObj must be specified.
+// we have an internal call inject_ that one will have storedObj != null already
+// so save a lookup
+function inject_(container, stylesSetName, storedObj = null) {
+    if (!storedObj) {
+        storedObj = getStoredObj_(container);
     }
-    //inject the style
-    acss_(stylesStr);
-
+    if (storedObj.injected.indexOf(stylesSetName) == -1) {
+        //make the whatever.
+        console.log(`the ${stylesSetName} not yet injected_ now then do`);
+        let sstr = storedObj.stylesSet.makeCssString(storedObj.cssClsnames, stylesSetName, storedObj.options);
+        acss_(sstr);
+        storedObj.injected.push(stylesSetName);
+    }
+    else {
+        console.log(`the ${stylesSetName} already injected liao ah`);
+    }
 }
 
-// need to beef this up too.
-function walkUp(node, array) {
+function walkUp_(node) {
     var parent = node;
     let times = 0;
     while(parent && times < 5) {
         times++;
         if( parent.nodeName === 'DIV' ) {
-            if (masterObj_[parent.id]) {
+            if (divId2HashCode_[parent.id]) {
                 return parent.id;
             }
         }
@@ -125,38 +160,24 @@ function walkUp(node, array) {
     return null;
 }
 
-function getIdForContainer(container) {
+function getStoredObj_(container) {
     let divId;
     if (typeof container == 'string')
         divId = container;
     else 
-        divId = walkUp(container);
-    return divId;
+        divId = walkUp_(container);
+    if (!divId) return; //
+    return theMap_.get(divId2HashCode_[divId]);
 }
 
-function getBlobForContainer(container) {
-    let divId;
-    if (typeof container == 'string')
-        divId = container;
-    else 
-        divId = walkUp(container);
-    if (!divId) return; //
-    return masterObj_[divId];
-    
-}
 function getRealCls_(container) {
-    let blob = getBlobForContainer(container);
-    if (blob) {
-        return blob.namesObj;
+    let storedObj = getStoredObj_(container);
+    if (storedObj) {
+        return storedObj.cssClsnames;
     }
-    return null;    
+    return {};
 }
 
 module.exports.init = init_;
 module.exports.inject = inject_;
 module.exports.getRealCls = getRealCls_;
-/*
-module.exports = {
-    TODO
-};
-*/
