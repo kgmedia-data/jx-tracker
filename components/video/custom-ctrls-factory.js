@@ -15,7 +15,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   const durationId = 'durationId' + randNumb;
   
   const styles = cssmgr.getRealCls(container);
-  let cOptions = cssmgr.getOptions();
+  let cOptions = cssmgr.getOptions(container);
   if (cOptions && cOptions.controls) {
     cOptions = cOptions.controls;
   }
