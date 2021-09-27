@@ -25,3 +25,5 @@ subtitles is from the dam side PLUMBING
 --
 expose a easy way to get the options obj
 
+--
+if cannot get the duration then how?

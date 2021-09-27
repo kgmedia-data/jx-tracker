@@ -11,11 +11,13 @@ const playbackRateArr = [0.25, 0.5, 1, 1.5, 2];
 const skipOffset = 15;
 
 function MakeOneNewPlayerControlsObj(container, vectorFcn) {
+  function FactoryOneCustomControls() {}
+  
   const randNumb = Math.floor(Math.random() * 1000); //when we need to make some ids of controls
   const durationId = 'durationId' + randNumb;
   
   const styles = cssmgr.getRealCls(container);
-  let cOptions = cssmgr.getOptions(container);
+  var cOptions = cssmgr.getOptions(container);
   if (cOptions && cOptions.controls) {
     cOptions = cOptions.controls;
   }
@@ -23,7 +25,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     cOptions = {};
   }
 
-  function FactoryOneCustomControls() {}
   var _vectorFcn = null;
   var _container = null;
   var _thumbnailImg = null;
@@ -120,8 +121,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _vectorFcn = vectorFcn;
     _container = container;
 
-    // 'round' or 'plain' ('2color')
-    if (cOptions.playBtnStyle != 'plain') _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
+    // choices are: simple or 2color (may need to change the names)
+    if (cOptions.bigplaybutton != 'simple') _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
 
     cssmgr.inject(container, 'customControls');
 

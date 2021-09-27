@@ -78,7 +78,7 @@ function makePlayer(options) {
   const ids = mids.get();
   let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
   /// TODO jxhelper.registerOptions(options.container, options, optionsObjNames_);
-  cssmgr.init(options.container, stylesSet, options.controls, ['customControls']);
+  cssmgr.init(options.container, stylesSet, options, ['customControls']);
 
   let playerInst = createObject(merged);
 

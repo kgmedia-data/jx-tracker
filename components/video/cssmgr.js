@@ -63,6 +63,8 @@ var divId2Options_ = {};
 // basically just to repair and make sure all properties are filled in
 // at least with a default.
 function makeOptions_(options) {
+    // currently this options is actually just options.controls
+    // TODO
     let o = {};
     if (!options) {
         options = {};
@@ -101,7 +103,7 @@ function init_(container, stylesSetObj, options, injectSSNow = []) {
         // already init before. what are you trying to do again?!
         return;
     }
-    let o = makeOptions_(options);
+    let o = makeOptions_(options.controls);
     // the hash code is derived from the actual options settings.
     // so 2 containers with the exact same options color settings will map to the same hash.
     let str = ['buttonsColor','backgroundColor','adsButtonsColor','font'].map((e) => o[e]).join("|");
