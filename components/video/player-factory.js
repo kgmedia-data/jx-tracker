@@ -1639,7 +1639,7 @@ window.jxPromisePolyfill        = 'none';
                 //then it will never resolve loh then just a dangling thing.
                 //it will need to call a resolve ah.
                 // to continue the promise chain ah.
-                _ctrls.showBigPlayBtn(resolve.bind(null, startModePWClick_), _thumbnailURL); 
+                _ctrls.showStarterPlayBtn(resolve.bind(null, startModePWClick_), _thumbnailURL); 
             });
         }
 

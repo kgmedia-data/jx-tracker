@@ -105,7 +105,7 @@
      * @param {*} cb 
      */
     
-    FactoryOnePlayerControlsD.prototype.showBigPlayBtn= function(cb){
+    FactoryOnePlayerControlsD.prototype.showStarterPlayBtn= function(cb){
         if (!_bigPlayBtn) {               
             //for now should be spinner
             /**/
@@ -218,7 +218,7 @@ module.exports = MakeOnePlayerControlsObjD_;
     - function which will make one player controls object
      The made object will have the following functions:
     
-    - showBigPlayBtn function(cb)
+    - showStarterBigPlayBtn function(cb)
     - videoVisualsInit function(thumbnailURL, imgLoadedCB)
         every video starts like this: stick the thumbnail there on top first
         then put the loading spinner

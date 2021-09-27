@@ -15,6 +15,13 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   const durationId = 'durationId' + randNumb;
   
   const styles = cssmgr.getRealCls(container);
+  let cOptions = cssmgr.getOptions();
+  if (cOptions && cOptions.controls) {
+    cOptions = cOptions.controls;
+  }
+  else {
+    cOptions = {};
+  }
 
   function FactoryOneCustomControls() {}
   var _vectorFcn = null;
@@ -76,6 +83,17 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   var _videoObj = null;
 
+  // Big play button:
+  // at the start, if it is click-to-play, or autoplay was not successful, the
+  // bigplay button will be shown there (without all the other little ding-dong
+  // controls). 
+  // At that special stage, if the bigPlayBtn is pressed, then it should do a bunch of
+  // extra stuff (trigger events, call all the callback - which actually are important in
+  // initial promise-chain progression - esp important if there is pure-preroll)
+  // Whereas, for the subsequent appearances of it while the started video is being
+  // playd/ paused, there is no such extra steps to do.  i.e. just to the _togglePlay stuff
+  
+  // these are the clickCB registered with our showbigPLayButtons.
   //all the callback functions (these are promise resolvers) we record so
   //that we call them at one go when there is a click
   //to avoid dangling promise chains.
@@ -86,6 +104,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   // 
   var _knownClickCBs = [];
 
+  // <-- utilities (DOM query)
   function _byClass(classname) {
     return _container.querySelector("."+classname);
   }
@@ -95,14 +114,14 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   function _byId(id) {
     return document.getElementById(id);
   }
+  // -->
 
   function FactoryOneCustomControls(container, vectorFcn) {
     _vectorFcn = vectorFcn;
     _container = container;
 
-    // rounded big play button
-    // rounded or plain
-    //if (ocontrols.playBtnStyle == 'rounded') _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
+    // 'round' or 'plain' ('2color')
+    if (cOptions.playBtnStyle != 'plain') _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
 
     cssmgr.inject(container, 'customControls');
 
@@ -132,6 +151,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   // these concerns those items which will be recreated for each video as video changes
   // in the player instance:
   FactoryOneCustomControls.prototype.reset = function () {
+    _waitingOnBigPlayBtnStart = false;
     if (_thumbnailImg) {
       _container.removeChild(_thumbnailImg);
       _thumbnailImg = null;
@@ -171,20 +191,20 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   //   the big play button.
   //Note: if it is not a real click, then evtObject will be null
   //      And we also dun report the click to start
-  function _clickedCB(evtObject) {
+
+  function _bigPlayB4StartClickCB(evtObject) {
+    // if this is called from the context of a real click event handler,
+    // then evtObject will not be undefined.
+    _waitingOnBigPlayBtnStart = false;
     //this can come from hideBigPlayBtn
     //yes we report before we really do the resolve.
     if (evtObject && _vectorFcn.reportClickToStart) {
       _vectorFcn.reportClickToStart();
     }
-
     [_overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
       if (x) x.classList.remove(styles.hide)
     });
-
     if (_thumbnailImg) _thumbnailImg.classList.add(styles.hide);
-    //TODO REVISIT
-    common.addListener(_bigPlayBtn, "click", _togglePlay);
 
     for (var i = 0; i < _knownClickCBs.length; i++) {
       _knownClickCBs[i]();
@@ -220,15 +240,23 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_vectorFcn.cbHoverControls) _vectorFcn.cbHoverControls(true);
   }
   
-  //TODO HUH????
+  function _bigPlayClickCB(evtOjectMaybe) {
+    if (_waitingOnBigPlayBtnStart) {
+      // we cannot use if (bigPlayBtn)  as a criteria anymore.
+      //the big play button is always created ahead of time nowadays
+      _bigPlayB4StartClickCB(evtOjectMaybe);
+    }
+    else {
+      _togglePlay();
+    }
+  }
+
   function _createBigPlayBtn(playIconsSet, pauseIconsSet) {
     if (!_bigPlayBtn) {
       const iHTML = `<span class="${styles.custBigPlayBtn} "></span>
                       <span class="${styles.custBigPauseBtn} ${styles.hide}"></span>`;
-      
       _bigPlayBtn = common.newDiv(_centerControls, "div", iHTML, _bigPlayBtnCls);
-      //TODO: could be wrong.
-      common.addListener(_bigPlayBtn, "click", _togglePlay); //<--- I am not sure about this....
+      common.addListener(_bigPlayBtn, "click", _bigPlayClickCB);
       playIconsSet.push(_byClass(styles.custBigPlayBtn));
       pauseIconsSet.push(_byClass(styles.custBigPauseBtn));
    }
@@ -482,6 +510,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _initVideoInfo(videoObj) {
+    // TODO (RENEE) anyhow do first. need properly integrate to get the real options.
     let ocontrols = {
       speed: 1,
       quality: 1,
@@ -748,8 +777,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
    */
   FactoryOneCustomControls.prototype.hideVVisual = function () {
     _hideSpinner();
-    if (_bigPlayBtn) {
-      _clickedCB();
+    // if the big play button was shown (but somehow somehow the play still managed ... strangely, to start)
+    // then we should still call ths _bigPlayB4StartClickCB
+    if (_bigPlayBtn && _waitingOnBigPlayBtnStart) {
+      _bigPlayB4StartClickCB();
     } else {
       if (_thumbnailImg) {
         _thumbnailImg.classList.add(styles.hide);
@@ -763,23 +794,12 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
    * Then this will be called.
    * @param {*} cb
    */
-  //TODO need to think about it. the "first" big play button does have to trigger a cb.
-  //(some event firing and promise chain stuff)
-  //but the subsequent things , no.
-  //TODO TODO TODO
-  //
-   FactoryOneCustomControls.prototype.showBigPlayBtn = function (cb) {
-    if (_bigPlayBtn) {
+   FactoryOneCustomControls.prototype.showStarterPlayBtn = function (cb) {
+    if (_bigPlayBtn) { // it should now always be non null then
       if (cb) {
         _knownClickCBs.push(cb);
-        common.addListener(_bigPlayBtn, "click", _clickedCB);
       }
-      else {
-        //this path is commented out in the player-factory layer. not sure if this
-        //is right to do.
-        common.addListener(_bigPlayBtn, 'click', _togglePlay);
-      }
-      _bigPlayBtn.classList.remove(styles.hide);
+      _waitingOnBigPlayBtnStart = true;
     }
   };
 

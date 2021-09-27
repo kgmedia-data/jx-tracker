@@ -54,6 +54,11 @@
 var divId2HashCode_ = {};
 var theMap_ = new Map();
 
+// tmporary 20210927. We also need something for any module to easily pull out
+// their options object. This may not be the best place (or need to change name of
+// this module from cssmgr...)
+var divId2Options_ = {}; 
+
 // internal helper function:
 // basically just to repair and make sure all properties are filled in
 // at least with a default.
@@ -116,6 +121,7 @@ function init_(container, stylesSetObj, options, injectSSNow = []) {
         inject_(null, stylesSetName, storedObj);
     });
     divId2HashCode_[container] = hash;
+    divId2Options_[container] = options;
 }
 
 function acss_(stylesStr, stylesId = null) {
@@ -178,6 +184,31 @@ function getRealCls_(container) {
     return {};
 }
 
+function getOptions_(container) {
+    let divId;
+    if (typeof container == 'string')
+        divId = container;
+    else 
+        divId = walkUp_(container);
+    if (!divId) return {}; //
+    return (divId2Options_[divId]);
+}
+
+function updateOptions_(container, newObj) {
+    let divId;
+    if (typeof container == 'string')
+        divId = container;
+    else 
+        divId = walkUp_(container);
+    if (!divId) return {}; //
+    divId2Options_[divId] = newObj;
+}
+
+
 module.exports.init = init_;
 module.exports.inject = inject_;
 module.exports.getRealCls = getRealCls_;
+// temporary: see comments on declaration of divId2Options_ above.
+module.exports.getOptions = getOptions_;
+// temporary: see comments on declaration of divId2Options_ above.
+module.exports.updateOptions = updateOptions_;
