@@ -988,7 +988,6 @@ window.jxPromisePolyfill        = 'none';
             _detectManualPlayOrPause('playing');
 
             if (_ctrls) {
-                _ctrls.setVInfo(_vid);
                 _ctrls.setPlayBtn();
             }
 
@@ -1790,7 +1789,7 @@ window.jxPromisePolyfill        = 'none';
             delayPutSrcWaitProm, //
             videoID,
             startModePW,
-            srcHLS, srcFallback, offset, thumbnailURL, videoTitle, subTitles) {
+            srcHLS, srcFallback, offset, thumbnailURL, videoTitle, subTitles, duration) {
 
             let token = videoID +"-" + Date.now();                
             
@@ -1894,7 +1893,9 @@ window.jxPromisePolyfill        = 'none';
             let boundChainContextCheck  = _initChainContextCheck.bind({token: token});
             let boundSetupNewVP         = _initChainSetupNewVP.bind({token: token});
             
-            if (_ctrls) _ctrls.setVTitle(videoTitle);
+            if (_ctrls) {
+                _ctrls.setVInfo(_vid, videoTitle, duration);
+            }
 
             shakaDetachProm
             .then(function() { 

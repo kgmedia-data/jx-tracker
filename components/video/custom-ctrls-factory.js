@@ -83,6 +83,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var _bigPlayBtnCls = styles.custBigPlayBtnCtr;
 
   var _videoObj = null;
+  var _waitingOnBigPlayBtnStart = false;
 
   // Big play button:
   // at the start, if it is click-to-play, or autoplay was not successful, the
@@ -510,7 +511,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     }, 3e3);
   }
 
-  function _initVideoInfo(videoObj) {
+  function _initVideoInfo(videoObj, title, duration) {
     // TODO (RENEE) anyhow do first. need properly integrate to get the real options.
     let ocontrols = {
       speed: 1,
@@ -520,6 +521,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (!_initialized) {
       _initialized = true;
       _videoObj = videoObj;
+      _setVideoTitle(title);
+
       var tempQuality = _vectorFcn.getResolution ? _vectorFcn.getResolution() : null;
       if (_vectorFcn.getSubtitles) _subtitleOptions = _vectorFcn.getSubtitles();
       
@@ -546,7 +549,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _showVisibility(_overlayBackwardBtn);
       _showVisibility(_overlayFastForwardBtn);
 
-      const videoDuration = Math.round(videoObj.duration);
+      const videoDuration = Math.round(duration);
       const time = _formatTime(videoDuration);
       const volume = _vectorFcn.getVolume();
       const speed = videoObj.playbackRate;
@@ -874,8 +877,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   FactoryOneCustomControls.prototype.setTimer = function (currTime) {
     _updateTimeElapsed(currTime);
   };
-  FactoryOneCustomControls.prototype.setVInfo = function (videoObj) {
-    _initVideoInfo(videoObj);
+  FactoryOneCustomControls.prototype.setVInfo = function (videoObj, title, duration) {
+    _initVideoInfo(videoObj, title, duration);
   };
   FactoryOneCustomControls.prototype.setPlayBtn = function () {
     _updatePlayBtn();
@@ -888,9 +891,6 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   };
   FactoryOneCustomControls.prototype.setProg = function (time) {
     _updateProgressBar(time);
-  };
-  FactoryOneCustomControls.prototype.setVTitle = function (title) {
-    _setVideoTitle(title);
   };
   FactoryOneCustomControls.prototype.showNativeCtrl= function(){
     return false;

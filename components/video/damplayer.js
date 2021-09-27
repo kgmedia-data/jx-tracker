@@ -1506,6 +1506,7 @@ function createObject_(options, ampIntegration) {
         let thumbnailUrl = null;
         let title = null;
         let subtitles = [];
+        let duration = 0;
 
         if (vData.id) {
             //this is Jixie ID: real videos in our system
@@ -1561,7 +1562,8 @@ function createObject_(options, ampIntegration) {
                         "label": "Francois",
                         "mime": "text/srt"
                     }
-                ]
+                ];
+                duration = vData.metadata.duration;
             }
         }
         // if -1 means nothing fed from upstairs
@@ -1587,7 +1589,7 @@ function createObject_(options, ampIntegration) {
         _pInst.setV(
             _lazyStartProm,
             _currVid, _cfg.startModePW, (downgrade == fallbackTech_ ? null : srcHLS),
-            srcFallback, offset, thumbnailUrl, title, subtitles);  
+            srcFallback, offset, thumbnailUrl, title, subtitles, duration);  
 
         //setV will kick off a whole "promise chain" thing waiting for one thing
         //after another one.
