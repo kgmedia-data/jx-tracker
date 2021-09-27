@@ -306,7 +306,10 @@ function createObject_(options, ampIntegration) {
             (action != 'hlserror' ? '&debug=' + dbgProp: '');
             if (v.adslotduration) {
                 url += '&adduration=' + v.adslotduration;
-            }       
+            } 
+            if (v.w > 0 && v.h > 0) {
+                url += '&rendition=' + v.w + 'x' + v.h;
+            }
         }    
         else {
             url = _evtsHelperBlock.trackerBase + 

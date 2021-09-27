@@ -218,7 +218,10 @@ window.jxPromisePolyfill        = 'none';
             if (videoid && videoid != _videoID) { 
                 return null; 
             }
+            //It is coming from the properties videoWidth and videoHeight from the HTML5 player (the video part)
             return {
+                w: _vid.videoWidth,
+                h: _vid.videoHeight,
                 accutime: _accumulatedTime,
                 origtech: _pbMethod,
                 realtech: _pbMethodReal,
