@@ -537,7 +537,20 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
         catch(e) {}
         if (node && node == this.divObjs.jxCoreElt) {
-            fireTracker(this.trackers, 'click'); 
+            let fire = false;
+            let tsNow = Date.now();
+            if (this.lastFired) {
+                //else sometimes there will be 2:
+                if (tsNow - this.lastFired > 3000) {
+                    fire = true;
+                }
+            }
+            else {
+                fire = true;
+            }
+            if (fire) {
+                this.lastFired = tsNow;
+            }
         }
     }
 
