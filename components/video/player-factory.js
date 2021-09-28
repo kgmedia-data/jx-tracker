@@ -1192,12 +1192,10 @@ window.jxPromisePolyfill        = 'none';
                     _soundIndObj.setRemainingTime(_vid.duration - currentTime);
                 }
             }
-            
             // FOR DEBUGGING ONLY
             // if (_shakaPlayer) console.log('Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height);
             this.spacer10++; 
             if (this.spacer10 == 10 && _shakaPlayer) {
-                // 
                 let cfg = _playerCfgMgr.getNewCfgMaybe();
                 if (cfg) {
                     _shakaPlayer.configure(cfg);
@@ -1376,23 +1374,6 @@ window.jxPromisePolyfill        = 'none';
         function _newAShakaPlayer(video, sizeMgrFcn) {
             shakaPlayer = new shaka.Player(video);
             let o = _playerCfgMgr.getNewCfgMaybe(0, true); //true as this is for init phase
-            /* let newDim = sizeMgrFcn(true);//true means force return an object whether there was a change or not
-            let maxHeight2Req = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-            let o = {
-                streaming: {
-                    useNativeHlsOnSafari: false,
-                    bufferingGoal: 5
-                },
-                abr: {
-                    switchInterval: 5
-                }
-            };
-            if (maxHeight2Req > 0) {
-                o.abr.defaultBandwidthEstimate = 200000;
-                o.abr.restrictions = {
-                    maxHeight: maxHeight2Req
-                }
-            } */
             shakaPlayer.configure(o);
             return shakaPlayer;       
         }                  

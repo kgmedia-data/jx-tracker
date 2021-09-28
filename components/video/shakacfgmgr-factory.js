@@ -2,23 +2,10 @@
 const modulesmgr            = require('../basic/modulesmgr');
 const cssmgr                = modulesmgr.get("video/cssmgr");
 
-// Also cover choice of thumbnail too?
-//getSelections
-//change select (verb imperative) --METHOD, RENDITION this will trigger the needed.
-
-// initialize is only with 
 function MakeOnePlayerCfgMgr_(container) {
     var _container = container;
-    // there is the options object.
-    // container
-    // options <-- restrictions.
-    // available (FROM DAM)
-    // renditions helper.
-    // selection array (after applying the restrictions from publisher)
-    // constructor (container, options) this will not change from video to video
-    // reset or update 
-  
-    const hugeLength_ = 2000;
+    const hugeLength_ = 10000;
+
     //considering current video's aspect ratio and combining the options.restrictions's
     //maxheight, maxwidth, minheight,minwidth, we work out everything in terms of
     //height.
@@ -26,8 +13,7 @@ function MakeOnePlayerCfgMgr_(container) {
     var _vmaxheight = 0; //considering current video's aspect ratio
     var _vminheight = 0;
     var _scheme = 'auto'; //
-    //var _AR = 1; //video AR
-
+    
     var _lastwidth = -1;
     var _lastheight = -1;
     var _heightsArr = [ 240, 360, 480, 720, 1280]; //default. Later will be changed by
@@ -119,8 +105,6 @@ function MakeOnePlayerCfgMgr_(container) {
             };
             if (_scheme == 'auto')
                 skrobj.abr.defaultBandwidthEstimate = 200000;
-            //if (_scheme == 'user')
-              //  skrobj.abr = 0; //????? 
         }
         else {
             skrobj = { abr: {}};
@@ -128,10 +112,10 @@ function MakeOnePlayerCfgMgr_(container) {
         skrobj.abr.enabled = _scheme == 'user' ? false: true; 
         if (_scheme == 'auto' && !forInit) {
             //at init we do not restrict them
-            skrobj.restrictions = {
+            skrobj.abr.restrictions = {
                 maxHeight : _getClosestDamHLSHeight(dim.height)
             };
-            if (_vminheight) skrobj.restrictions.minHeight = _vminheight;
+            if (_vminheight) skrobj.abr.restrictions.minHeight = _vminheight;
         }
         return skrobj;
     }
@@ -153,7 +137,7 @@ module.exports = MakeOnePlayerCfgMgr_;
 
 /* 
  ************** module: video/jxvideo-helper ******************************************
-
+THIS IS NOT YET WRITTEN !!!
 * module.exports:
     - returns a helper object
      The object has the following public functions:
