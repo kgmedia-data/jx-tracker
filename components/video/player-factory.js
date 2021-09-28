@@ -8,6 +8,7 @@ const MakeOnePlayerControlsObjD = modulesmgr.get('video/ctrls-factory');
 const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
+const MakeOneShakaCfgMgr        = modulesmgr.get('video/shakacfgmgr-factory');
      
 const msPlayAttributeThreshold_     = 1000;
 const msPauseAttributeThreshold_    = 1000;
@@ -65,6 +66,8 @@ window.jxPromisePolyfill        = 'none';
         /**
          * "PRIVATE" variables :-) using closure.
          */
+        var _shakaCfgMgr = MakeOneShakaCfgMgr(container);
+        var _videoMeta = {};
         var _forceAutoplayWithSound = false; 
         var _nextAdSlotTime = 999999;
         var _currToken = null;
@@ -705,7 +708,6 @@ window.jxPromisePolyfill        = 'none';
                 hideSpinner: function() {
                     _hideSpinner();
                 },
-                
                 play: function() {
                     _manualPaused = false;
                     //trying something new ....
@@ -743,9 +745,9 @@ window.jxPromisePolyfill        = 'none';
                 getVolume: function() {
                     return _vid.volume;
                 },
-                setPlaybackRate: function(speed) {
-                    _vid.playbackRate = speed;
-                },
+                //setPlaybackRate: function(speed) {
+                  //  _vid.playbackRate = speed;
+                //},
                 //https://animoto.com/blog/news/hd-video-creation-sharing
                 //TODO: Renee: how to harmonize with our new stuff (no force of resolution)
                 // just added to production sdk?
@@ -763,8 +765,16 @@ window.jxPromisePolyfill        = 'none';
                             });
                         }
                         */
-                setResolution: function(track) {
+                setResolution: function(res) {
                     if (!_shakaPlayer) return; 
+                    // track can be -1. means nothing chosen
+                    _shakaCfgMgr.setSelectedRes(res); 
+                    _shakaCfgMgr.execCfgOnPlayer(_shakaPlayer);
+                    //_shakaPlayer.configure(_shakaCfgMgr.makeShakaConfigObj());
+                    //if (track) {
+                        //_shakaPlayer.selectVariantTrack(track, true);
+                    //}
+                    /*****
                     if (track.height === "auto") {
                         _forcedResolution = -1;
                         let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
@@ -784,9 +794,14 @@ window.jxPromisePolyfill        = 'none';
                         });
                         _shakaPlayer.selectVariantTrack(track, true);
                         _forcedResolution = track.height;
-                    }
+                    }*****/
                 },
+
+                //why the controls mess with the tracks?
+                //should be just some numbers
                 getResolution: function() {
+                    return _shakaCfgMgr.getSelectedRes(_shakaPlayer); 
+                    /*
                     // this stuff dun hardcode in the controls layer as it should be dumb in this
                     // aspect. 
                     return {
@@ -800,6 +815,7 @@ window.jxPromisePolyfill        = 'none';
                         // NOTE: I also added _forcedResolution = -1 in the reset function for now.
                         tracks: _getAvailableResolutions() //clean up later . Of course also should not hardcode here ;)
                     };
+                    */
                 },
                 setSubtitle: function(sub) {
                     if (_shakaPlayer) {
@@ -1401,7 +1417,8 @@ window.jxPromisePolyfill        = 'none';
   
         function _newAShakaPlayer(video, sizeMgrFcn) {
             shakaPlayer = new shaka.Player(video);
-            let newDim = sizeMgrFcn(true);//true means force return an object whether there was a change or not
+            _shakaCfgMgr.makeCfgObject(true); //true as this is for init phase
+            /* let newDim = sizeMgrFcn(true);//true means force return an object whether there was a change or not
             let maxHeight2Req = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
             let o = {
                 streaming: {
@@ -1417,7 +1434,7 @@ window.jxPromisePolyfill        = 'none';
                 o.abr.restrictions = {
                     maxHeight: maxHeight2Req
                 }
-            }
+            } */
             shakaPlayer.configure(o);
             return shakaPlayer;       
         }                  
@@ -1470,7 +1487,8 @@ window.jxPromisePolyfill        = 'none';
          * @param {*} playbackMethod 
          * @returns a promise
          */
-        function _initChainSetupNewVP(playbackMethod, srcHLS, srcFallback, offset, subTitles) {
+        
+        function _initChainSetupNewVP(playbackMethod, srcHLS, srcFallback) { //}, offset, subTitles) {
             if (this.token != _currToken) {
                 //console.log(`_S_S_S_S_S_S _setupNewVP mismatch token ${this.token} ${_currToken}`);
                 return Promise.reject("shortcircuit");
@@ -1496,10 +1514,10 @@ window.jxPromisePolyfill        = 'none';
                         _boundMetadataLoadedCB();
                     }, 1000);
                 }
-                if (offset > 0) { 
+                if (_videoMeta.offset > 0) { 
                     //we are only bothered if offset > 0
                     _boundCanPlayThroughCB = _canPlayThroughCB.bind({
-                        offset: offset
+                        offset: _videoMeta.offset
                     });
                     _vid.addEventListener('canplay', _boundCanPlayThroughCB);
                 }
@@ -1535,9 +1553,11 @@ window.jxPromisePolyfill        = 'none';
                     // DO listen for errors from the Player.
                     _boundShakaOnErrorCB = _shakaOnErrorCB.bind({videoid: _videoID});
                     _shakaPlayer.addEventListener('error', _boundShakaOnErrorCB);
+                    //TODO: does that not affect the promise???....
+                    //May be put to later.
                     return Promise.all([
                         p1, 
-                        _shakaPlayer.load(srcHLS, offset).then(() => {
+                        _shakaPlayer.load(srcHLS, _videoMeta.offset).then(() => {
                             if (_shakaPlayer) {
                                 if (subTitles.length > 0) subTitles.forEach((x) => _shakaPlayer.addTextTrackAsync(x.url, x.language, 'subtitle', x.mime, '', x.label));
                                 _shakaPlayer.setTextTrackVisibility(false);
@@ -1786,12 +1806,25 @@ window.jxPromisePolyfill        = 'none';
          * @param {*} title 
          * @param {*} offset 
          */
+        /*
+          {
+                offset: offset,
+                title: vData.metadata.title,
+                subtitles : [],
+                renditions: [240,360,480,720],
+                thumbnails: [],
+                thumbnail: ""
+            });*/
         FactoryPlayerWrapper.prototype.setV = function(
             delayPutSrcWaitProm, //
             videoID,
             startModePW,
-            srcHLS, srcFallback, offset, thumbnailURL, videoTitle, subTitles) {
+            srcHLS, srcFallback, //offset, thumbnailURL, videoTitle, subTitles) {
+            videoMeta) {    
 
+            _videoMeta = videoMeta;
+            _shakaCfgMgr.changeVideo(_videoMeta.AR, _videoMeta.renditions); //, _boundSizeManagerFcn);
+            
             let token = videoID +"-" + Date.now();                
             
             _currToken = token;
@@ -1800,7 +1833,7 @@ window.jxPromisePolyfill        = 'none';
             _createControlsMaybe();
             _createLogoMaybe();
             _createInfoIcon();
-            _ctrls.initVVisual(thumbnailURL, function() {
+            _ctrls.initVVisual(_videoMeta.thumbnail, function() {
                 _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
             });
             
@@ -1894,7 +1927,7 @@ window.jxPromisePolyfill        = 'none';
             let boundChainContextCheck  = _initChainContextCheck.bind({token: token});
             let boundSetupNewVP         = _initChainSetupNewVP.bind({token: token});
             
-            if (_ctrls) _ctrls.setVTitle(videoTitle);
+            if (_ctrls) _ctrls.setVTitle(_videoMeta.title);
 
             shakaDetachProm
             .then(function() { 
@@ -1910,7 +1943,7 @@ window.jxPromisePolyfill        = 'none';
             }).then(function(playbackMethod){
                 //video readiness
                 //this will set video.src = <THE STREAM URL>
-                return boundSetupNewVP(playbackMethod, srcHLS, srcFallback, offset, subTitles);
+                return boundSetupNewVP(playbackMethod, srcHLS, srcFallback); //, offset, subTitles);
             }).then(function() {
                     //Video is ready (metadataloaded) to be played so remove the loading spinner
                     if (!boundChainContextCheck()) {

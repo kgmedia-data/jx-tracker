@@ -32,15 +32,20 @@ const startModePWApi_       = consts.startModePWApi;
 const startModeSDKApi_      = consts.startModeSDKApi;
 const startModeSDKClick_    = consts.startModeSDKClick;
 
-const maxVWidth_ = (common.isMobile() ? 641: 1281);
-const maxVHeight_ = (common.isMobile() ? 361: 721);
-
 const DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
 
 const IRThreshold_ = 0.5;
 
 
 function createObject_(options, ampIntegration) {
+    var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
+    if (options.restrictions) {
+        if (options.restrictions.maxheight > 0) 
+            DAMApiBase_ += '&max-height=' + options.restrictions.maxheight;
+        if (options.restrictions.maxwidth > 0) 
+            DAMApiBase_ += '&max-width=' + options.restrictions.maxwidth;
+    }
+
     var _dbgCountOOS = 0;
     var _dbgCountLoad = 0;
     var _dbgL1VP = 0;
@@ -1587,7 +1592,15 @@ function createObject_(options, ampIntegration) {
         _pInst.setV(
             _lazyStartProm,
             _currVid, _cfg.startModePW, (downgrade == fallbackTech_ ? null : srcHLS),
-            srcFallback, offset, thumbnailUrl, title, subtitles);  
+            srcFallback, //offset, thumbnailUrl, title, subtitles);  
+            {
+                offset: offset,
+                title: vData.metadata.title,
+                subtitles : [],
+                renditions: [240,360,480,720],
+                thumbnails: [],
+                thumbnail: ""
+            });
 
         //setV will kick off a whole "promise chain" thing waiting for one thing
         //after another one.
@@ -1818,14 +1831,10 @@ function createObject_(options, ampIntegration) {
         let url = DAMApiBase_;
         if (_vidFetchAcctId) {
             url += '&partner_id=' + vId +
-            '&account_id=' + _vidFetchAcctId +
-            '&max-width=' + maxVWidth_ +
-            '&max-height=' +maxVHeight_;
+            '&account_id=' + _vidFetchAcctId;
         }
         else {
-            url += '&video_id=' + vId +
-            '&max-width=' + maxVWidth_ +
-            '&max-height=' +maxVHeight_;
+            url += '&video_id=' + vId;
         }
         if (_forcePlatform) {
             url += '&platform='+_forcePlatform;
