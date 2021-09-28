@@ -1004,7 +1004,6 @@ window.jxPromisePolyfill        = 'none';
             _detectManualPlayOrPause('playing');
 
             if (_ctrls) {
-                _ctrls.setVInfo(_vid);
                 _ctrls.setPlayBtn();
             }
 
@@ -1819,8 +1818,12 @@ window.jxPromisePolyfill        = 'none';
             delayPutSrcWaitProm, //
             videoID,
             startModePW,
+<<<<<<< HEAD
             srcHLS, srcFallback, //offset, thumbnailURL, videoTitle, subTitles) {
             videoMeta) {    
+=======
+            srcHLS, srcFallback, offset, thumbnailURL, videoTitle, subTitles, duration) {
+>>>>>>> feat/new-video-controls
 
             _videoMeta = videoMeta;
             _shakaCfgMgr.changeVideo(_videoMeta.AR, _videoMeta.renditions); //, _boundSizeManagerFcn);
@@ -1927,7 +1930,13 @@ window.jxPromisePolyfill        = 'none';
             let boundChainContextCheck  = _initChainContextCheck.bind({token: token});
             let boundSetupNewVP         = _initChainSetupNewVP.bind({token: token});
             
+<<<<<<< HEAD
             if (_ctrls) _ctrls.setVTitle(_videoMeta.title);
+=======
+            if (_ctrls) {
+                _ctrls.setVInfo(_vid, videoTitle, duration);
+            }
+>>>>>>> feat/new-video-controls
 
             shakaDetachProm
             .then(function() { 
