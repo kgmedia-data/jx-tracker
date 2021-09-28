@@ -94,8 +94,17 @@ function MakeOnePlayerCfgMgr_(container) {
     FactoryOneHelper.prototype.getNewCfgMaybe = function(forceHeightMaybe, forInit = false) {
         // write the answer into out.
         // will be based on everything.
-        let dim = _getChangedSize(forInit || forceHeightMaybe == undefined);
-        if (!dim) return null; //no change then nothing to do.
+        if (forceHeightMaybe > 0) {
+            _scheme = 'user';
+        }
+        if (forceHeightMaybe == 0) {
+            _scheme = 'auto';
+        }
+        let dim = _getChangedSize(forInit || forceHeightMaybe == undefined || forceHeightMaybe == 0);
+        if (!dim) {
+            if (forceHeightMaybe == undefined) 
+                return null; //no change then nothing to do.
+        }
         let skrobj = null;
         // the vheight should also take into account the strips (black strips)    
         if (forInit) {
@@ -110,8 +119,8 @@ function MakeOnePlayerCfgMgr_(container) {
             };
             if (_scheme == 'auto')
                 skrobj.abr.defaultBandwidthEstimate = 200000;
-            if (_scheme == 'user')
-                skrobj.abr = 0; //????? 
+            //if (_scheme == 'user')
+              //  skrobj.abr = 0; //????? 
         }
         else {
             skrobj = { abr: {}};
