@@ -27,6 +27,9 @@ function MakeOneRenditionsHelperObj_() {
     var _sizeGetterFcn = null;
     var _AR = 1; //video AR
 
+    var _lastwidth = -1;
+    var _lastheight = -1;
+
     function _getChangedSize(mustReturnObj = false) {
         if (mustReturnObj || (_container.offsetWidth != _lastwidth)) {
             _lastwidth = _container.offsetWidth;
@@ -36,12 +39,8 @@ function MakeOneRenditionsHelperObj_() {
         return null;
 
     }
-    _shakaCfgMgr.changeVideo(_videoMeta.AR, _videoMeta.renditions); //, _boundSizeManagerFcn);
-
-    function changeVideo(vwidth, vheight, renditions, sizeGetterFcn) {
+    function changeVideo(AR, renditions, sizeGetterFcn) {
         // follow previous _scheme = 'auto';
-        _sizeGetterFcn = sizeGetterFcn;
-        _AR = vwidth/vheight;
         // let's translate everything to height then.
         let tmp = Math.min(
             _r.maxheight > 0 ? _r.maxheight: hugeLength_,
@@ -58,7 +57,9 @@ function MakeOneRenditionsHelperObj_() {
     // something to set the scheme.
     // TODO
     //if we can combine the 2 into 1 then better
-    function getSelections() {
+    // a bandwidth or 
+    function getSelections(shakaPlayer) {
+
         return _renditions;
     }       
     function getSelected() {
