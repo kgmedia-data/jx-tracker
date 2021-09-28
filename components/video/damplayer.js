@@ -1594,12 +1594,13 @@ function createObject_(options, ampIntegration) {
             _currVid, _cfg.startModePW, (downgrade == fallbackTech_ ? null : srcHLS),
             srcFallback, //offset, thumbnailUrl, title, subtitles);  
             {
+                AR: 1.78,
+                duration: vData.metadata.duration,
                 offset: offset,
                 title: vData.metadata.title,
                 subtitles : [],
-                renditions: [240,360,480,720],
-                thumbnails: [],
-                thumbnail: ""
+                thumbnails: [thumbnailUrl], //todo
+                thumbnail: thumbnailUrl //todo
             });
 
         //setV will kick off a whole "promise chain" thing waiting for one thing

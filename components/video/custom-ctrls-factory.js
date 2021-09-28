@@ -377,6 +377,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _overlaySubtitleBtn.dataset.title = "Subtitle";
     _subtitleSelection = common.newDiv(_subtitleContainer, "div", "<div style='cursor:default'>Subtitle</div>", styles.capMenu+' '+styles.hide);
 
+    //kind === subtitle, x.active, x.label
     _subtitleOptions.push({ label: "Off", language: "off", kind: "subtitle", active: true });
     if (_subtitleOptions.length > 0) {
       _subtitleOptions.forEach(function(x) {
@@ -511,7 +512,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     }, 3e3);
   }
 
-  function _initVideoInfo(videoObj, title, duration) {
+  function _initVideoInfo(videoObj) {
     // TODO (RENEE) anyhow do first. need properly integrate to get the real options.
     let ocontrols = {
       speed: 1,
@@ -520,10 +521,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     };
     if (!_initialized) {
       _initialized = true;
-      _videoObj = videoObj;
-      _setVideoTitle(title);
+      _videoObj = videoObj; //for fullscreenstuff ah.... 
+      let meta = vectorFcn.getMeta();
+      _setVideoTitle(meta.title); //why need a new func?
 
-      var tempQuality = _vectorFcn.getResolution ? _vectorFcn.getResolution() : null;
+      var tempQuality = _vectorFcn.getResolutions ? _vectorFcn.getResolutions() : null;
       if (_vectorFcn.getSubtitles) _subtitleOptions = _vectorFcn.getSubtitles();
       
       // optional controls i.e playback rate, quality, subtitle. we show them based on what we got from video e.g subtitle, quality
@@ -533,8 +535,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
           _createOverlaySpeedMenu();
         }
         if (ocontrols.quality) {
-          if (tempQuality && tempQuality.tracks && tempQuality.tracks.length > 0) {
-            _qualityOptions = tempQuality.tracks;
+          //if (tempQuality && tempQuality.tracks && tempQuality.tracks.length > 0) {
+          if (tempQuality && tempQuality.length > 0) {
+            _qualityOptions = tempQuality; //.tracks;
             _createOverlayQualityMenu();
           }
         }
@@ -549,7 +552,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _showVisibility(_overlayBackwardBtn);
       _showVisibility(_overlayFastForwardBtn);
 
-      const videoDuration = Math.round(duration);
+      const videoDuration = Math.round(meta.duration);
       const time = _formatTime(videoDuration);
       const volume = _vectorFcn.getVolume();
       const speed = videoObj.playbackRate;
@@ -877,8 +880,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   FactoryOneCustomControls.prototype.setTimer = function (currTime) {
     _updateTimeElapsed(currTime);
   };
-  FactoryOneCustomControls.prototype.setVInfo = function (videoObj, title, duration) {
-    _initVideoInfo(videoObj, title, duration);
+  FactoryOneCustomControls.prototype.videoMetaReady = function (videoObj) {
+    _initVideoInfo(videoObj);
   };
   FactoryOneCustomControls.prototype.setPlayBtn = function () {
     _updatePlayBtn();

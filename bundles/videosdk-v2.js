@@ -35,6 +35,9 @@ modulesmgr.set('video/jxvideo-helper', jxvhelper);
 const consts                            = require('../components/video/consts'); 
 modulesmgr.set('video/consts',          consts);
 
+const playercfgmgr_fact                 = modulesmgr.get('video/shakacfgmgr-factory');
+modulesmgr.set('video/playercfgmgr-factory', playercfgmgr_fact);
+
 const adctrls_fact                      = require('../components/video/adctrls-factory');
 modulesmgr.set('video/adctrls-factory', adctrls_fact);
 

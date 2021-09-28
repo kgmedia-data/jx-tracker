@@ -8,7 +8,7 @@ const MakeOnePlayerControlsObjD = modulesmgr.get('video/ctrls-factory');
 const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
-const MakeOneShakaCfgMgr        = modulesmgr.get('video/shakacfgmgr-factory');
+const MakeOnePlayerCfgMgr       = modulesmgr.get('video/playercfgmgr-factory');
      
 const msPlayAttributeThreshold_     = 1000;
 const msPauseAttributeThreshold_    = 1000;
@@ -66,7 +66,7 @@ window.jxPromisePolyfill        = 'none';
         /**
          * "PRIVATE" variables :-) using closure.
          */
-        var _shakaCfgMgr = MakeOneShakaCfgMgr(container);
+        var _playerCfgMgr = MakeOnePlayerCfgMgr(container);
         var _videoMeta = {};
         var _forceAutoplayWithSound = false; 
         var _nextAdSlotTime = 999999;
@@ -168,7 +168,6 @@ window.jxPromisePolyfill        = 'none';
         var _boundSizeManagerFcn = null;
         //----->
 
-        var _forcedResolution = -1;
         
         var _cfg = {
             
@@ -416,7 +415,7 @@ window.jxPromisePolyfill        = 'none';
             _msLastInternalCallPause = 0;
             _msLastInternalCallPlay = 0;
             _manualPaused = false;
-            _forcedResolution = -1;
+            
 
             //we do not reset this, we keep what was there from the first video
         };
@@ -745,82 +744,50 @@ window.jxPromisePolyfill        = 'none';
                 getVolume: function() {
                     return _vid.volume;
                 },
-                //setPlaybackRate: function(speed) {
-                  //  _vid.playbackRate = speed;
-                //},
+                setPlaybackRate: function(speed) {
+                    _vid.playbackRate = speed;
+                },
+                getMeta: function() {
+                    return _videoMeta;
+                },
                 //https://animoto.com/blog/news/hd-video-creation-sharing
                 //TODO: Renee: how to harmonize with our new stuff (no force of resolution)
                 // just added to production sdk?
-
-
-                /*
-                let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-                        if (maxH > 0) {
-                            _shakaPlayer.configure({
-                                abr: {
-                                    restrictions: {
-                                        maxHeight: maxH
-                                    }
-                                }
-                            });
-                        }
-                        */
-                setResolution: function(res) {
+                setResolution: function(track) {
                     if (!_shakaPlayer) return; 
-                    // track can be -1. means nothing chosen
-                    _shakaCfgMgr.setSelectedRes(res); 
-                    _shakaCfgMgr.execCfgOnPlayer(_shakaPlayer);
-                    //_shakaPlayer.configure(_shakaCfgMgr.makeShakaConfigObj());
-                    //if (track) {
-                        //_shakaPlayer.selectVariantTrack(track, true);
-                    //}
-                    /*****
-                    if (track.height === "auto") {
-                        _forcedResolution = -1;
-                        let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-                        _shakaPlayer.configure({
-                            abr: {
-                                enabled: true,
-                                restrictions: {
-                                    maxHeight: maxH
-                                }
-                            }
-                        });
-                    } else {
-                        _shakaPlayer.configure({
-                            abr: {
-                                enabled: false
-                            }
-                        });
+                    // track could be null, in that case we still need
+                    // to do the config object
+                    // but that's not what they return leh.
+                    if (track.height == 'auto') track = null;
+                    // also setting memory in player Cfg Mgr !! BAD BAD
+                    let cfg = _playerCfgMgr.getNewCfgMaybe(track ? track.height: 0);
+                    _shakaPlayer.configure(cfg);
+                    if (track) {
                         _shakaPlayer.selectVariantTrack(track, true);
-                        _forcedResolution = track.height;
-                    }*****/
+                    }
                 },
-
-                //why the controls mess with the tracks?
-                //should be just some numbers
-                getResolution: function() {
-                    return _shakaCfgMgr.getSelectedRes(_shakaPlayer); 
-                    /*
-                    // this stuff dun hardcode in the controls layer as it should be dumb in this
-                    // aspect. 
-                    return {
-                        current: _forcedResolution, //the current mode. -1 means our auto method
-                        // 
-                        // I suggest the menu also should have an entry "auto". So initially it is auto 
-                        // Coz we don't really know which one the shaka is using in our normal mode
-                        // So initially you display "auto" in the options.
-                        // This also means, if the user is tired of self-setting the resolution, he can
-                        // flip it back to auto...
-                        // NOTE: I also added _forcedResolution = -1 in the reset function for now.
-                        tracks: _getAvailableResolutions() //clean up later . Of course also should not hardcode here ;)
-                    };
-                    */
+                getResolutions: function() {
+                    // the active state is implicit
+                    let arr = _shakaPlayer.getVariantTracks();
+                    if (arr) {
+                        // a shaka thing:
+                        // Remove duplicate entries with the same height.  This can happen if
+                        // we have multiple resolutions of audio.  Pick an arbitrary one.
+                        // Hmmm. it is not right to just pick arbitrary one...
+                        arr = arr.filter((track, idx) => {
+                            // Keep the first one with the same height.
+                            const otherIdx = arr.findIndex((t) => t.height == track.height);
+                            return otherIdx == idx;
+                        });
+                        return _playerCfgMgr.filterTracks(arr); //other criteria to apply.
+                    }
+                    return null;
                 },
                 setSubtitle: function(sub) {
                     if (_shakaPlayer) {
-                        console.log('selected subtitle', sub)
-                        if (sub.language === "off") _shakaPlayer.setTextTrackVisibility(false);
+                        if (!sub) {
+                            _shakaPlayer.setTextTrackVisibility(false);
+                        }
                         else {
                             _shakaPlayer.selectTextTrack(sub);
                             _shakaPlayer.setTextTrackVisibility(true);
@@ -828,7 +795,12 @@ window.jxPromisePolyfill        = 'none';
                     }
                 },
                 getSubtitles: function() {
-                    return (_shakaPlayer ? _shakaPlayer.getTextTracks() : []);
+                    if (!_shakaPlayer) return null;
+                    let arr = _shakaPlayer.getTextTracks();
+                    if (arr) {
+                        arr = arr.filter((t) => t.kind == 'subtitle');
+                    }
+                    return arr;
                 },
             };
             return fcnVector;
@@ -1223,26 +1195,13 @@ window.jxPromisePolyfill        = 'none';
             
             // FOR DEBUGGING ONLY
             // if (_shakaPlayer) console.log('Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height);
-
             this.spacer10++; 
-            if (this.spacer10 == 10 && _shakaPlayer && _forcedResolution == -1) {
-                try {
-                    let newDim = _boundSizeManagerFcn();
-                    //the dim of the video area has changed since we last checked:
-                    if (newDim) {
-                        let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-                        if (maxH > 0) {
-                            _shakaPlayer.configure({
-                                abr: {
-                                    restrictions: {
-                                        maxHeight: maxH
-                                    }
-                                }
-                            });
-                        }
-                    }
+            if (this.spacer10 == 10 && _shakaPlayer) {
+                // 
+                let cfg = _playerCfgMgr.getNewCfgMaybe();
+                if (cfg) {
+                    _shakaPlayer.configure(cfg);
                 }
-                catch(ee){}
                 this.spacer10 = 0;
             }
 
@@ -1416,7 +1375,7 @@ window.jxPromisePolyfill        = 'none';
   
         function _newAShakaPlayer(video, sizeMgrFcn) {
             shakaPlayer = new shaka.Player(video);
-            _shakaCfgMgr.makeCfgObject(true); //true as this is for init phase
+            let o = _playerCfgMgr.getNewCfgMaybe(0, true); //true as this is for init phase
             /* let newDim = sizeMgrFcn(true);//true means force return an object whether there was a change or not
             let maxHeight2Req = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
             let o = {
@@ -1554,7 +1513,7 @@ window.jxPromisePolyfill        = 'none';
                     _shakaPlayer.addEventListener('error', _boundShakaOnErrorCB);
                     //TODO: does that not affect the promise???....
                     //May be put to later.
-                    return Promise.all([
+                    /* return Promise.all([
                         p1, 
                         _shakaPlayer.load(srcHLS, _videoMeta.offset).then(() => {
                             if (_shakaPlayer) {
@@ -1562,6 +1521,10 @@ window.jxPromisePolyfill        = 'none';
                                 _shakaPlayer.setTextTrackVisibility(false);
                             }
                         })
+                    ]);*/
+                    return Promise.all([
+                        p1, 
+                        _shakaPlayer.load(srcHLS, _videoMeta.offset)
                     ]);
                     break;
             }//switch
@@ -1807,6 +1770,7 @@ window.jxPromisePolyfill        = 'none';
          */
         /*
           {
+                duration: 
                 offset: offset,
                 title: vData.metadata.title,
                 subtitles : [],
@@ -1818,15 +1782,11 @@ window.jxPromisePolyfill        = 'none';
             delayPutSrcWaitProm, //
             videoID,
             startModePW,
-<<<<<<< HEAD
             srcHLS, srcFallback, //offset, thumbnailURL, videoTitle, subTitles) {
             videoMeta) {    
-=======
-            srcHLS, srcFallback, offset, thumbnailURL, videoTitle, subTitles, duration) {
->>>>>>> feat/new-video-controls
 
             _videoMeta = videoMeta;
-            _shakaCfgMgr.changeVideo(_videoMeta.AR, _videoMeta.renditions); //, _boundSizeManagerFcn);
+            //_playerCfgMgr.changeVideo(_videoMeta.AR);
             
             let token = videoID +"-" + Date.now();                
             
@@ -1893,7 +1853,7 @@ window.jxPromisePolyfill        = 'none';
                 genInitP = Promise.resolve(_pbMethod);//gen init considered done. Hence resolve
             } 
             _videoID = videoID;
-            _thumbnailURL = thumbnailURL;
+            _thumbnailURL = _videoMeta;
             if(_cfg.ads.delay == 0) {
                 //pure preroll.
                 _createAdObjMaybe();
@@ -1930,13 +1890,9 @@ window.jxPromisePolyfill        = 'none';
             let boundChainContextCheck  = _initChainContextCheck.bind({token: token});
             let boundSetupNewVP         = _initChainSetupNewVP.bind({token: token});
             
-<<<<<<< HEAD
-            if (_ctrls) _ctrls.setVTitle(_videoMeta.title);
-=======
-            if (_ctrls) {
-                _ctrls.setVInfo(_vid, videoTitle, duration);
-            }
->>>>>>> feat/new-video-controls
+            //if (_ctrls) {
+              //  _ctrls.setVInfo(_vid, videoTitle, duration);
+            //}
 
             shakaDetachProm
             .then(function() { 
@@ -1954,6 +1910,10 @@ window.jxPromisePolyfill        = 'none';
                 //this will set video.src = <THE STREAM URL>
                 return boundSetupNewVP(playbackMethod, srcHLS, srcFallback); //, offset, subTitles);
             }).then(function() {
+                    _playerCfgMgr.changeVideo(_videoMeta.AR, _shakaPlayer);
+                    if (_ctrls) {
+                        _ctrls.videoMetaReady(_vid);
+                    }
                     //Video is ready (metadataloaded) to be played so remove the loading spinner
                     if (!boundChainContextCheck()) {
                         throw new Error("shortcircuit");
