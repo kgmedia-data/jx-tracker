@@ -154,10 +154,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   // in the player instance:
   FactoryOneCustomControls.prototype.reset = function () {
     _waitingOnBigPlayBtnStart = false;
-    if (_thumbnailImg) {
+    // then the thing is gone then
+    /* if (_thumbnailImg) {
       _container.removeChild(_thumbnailImg);
       _thumbnailImg = null;
-    }
+    }*/
     _initialized = false;
     if (_speedContainer) {
       _rightControls.removeChild(_speedContainer);
@@ -212,6 +213,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _knownClickCBs[i]();
     }
     _knownClickCBs.length = 0;
+    setTimeout(function(){
+      _updateVolumeIcon(false, _vectorFcn.getVolume());
+    },0);
   }
   function _showSpinner() {
     if (_vectorFcn.showSpinner) vectorFcn.showSpinner();
@@ -377,6 +381,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _overlaySubtitleBtn.dataset.title = "Subtitle";
     _subtitleSelection = common.newDiv(_subtitleContainer, "div", "<div style='cursor:default'>Subtitle</div>", styles.capMenu+' '+styles.hide);
 
+    //kind === subtitle, x.active, x.label
     _subtitleOptions.push({ label: "Off", language: "off", kind: "subtitle", active: true });
     if (_subtitleOptions.length > 0) {
       _subtitleOptions.forEach(function(x) {
@@ -511,45 +516,39 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     }, 3e3);
   }
 
-  function _initVideoInfo(videoObj, title, duration) {
-    // TODO (RENEE) anyhow do first. need properly integrate to get the real options.
-    let ocontrols = {
-      speed: 1,
-      quality: 1,
-      subtitles: 1
-    };
+  function _initVideoInfo(videoObj) {
     if (!_initialized) {
       _initialized = true;
-      _videoObj = videoObj;
-      _setVideoTitle(title);
+      _videoObj = videoObj; //for fullscreenstuff ah.... 
+      let meta = vectorFcn.getMeta();
+      _setVideoTitle(meta.title); //why need a new func?
 
-      var tempQuality = _vectorFcn.getResolution ? _vectorFcn.getResolution() : null;
-      if (_vectorFcn.getSubtitles) _subtitleOptions = _vectorFcn.getSubtitles();
-      
       // optional controls i.e playback rate, quality, subtitle. we show them based on what we got from video e.g subtitle, quality
       // e.g if there is no subtitle then we don't show the CC button
       // if (!common.isMobile()) {
-        if (ocontrols.speed) {
+        if (!(cOptions.speed === 0 || cOptions.speed === false)) {
           _createOverlaySpeedMenu();
         }
-        if (ocontrols.quality) {
-          if (tempQuality && tempQuality.tracks && tempQuality.tracks.length > 0) {
-            _qualityOptions = tempQuality.tracks;
+        if (!(cOptions.quality === 0 || cOptions.quality === false)) {
+          let tempQuality = _vectorFcn.getResolutions ? _vectorFcn.getResolutions() : null;
+          if (tempQuality && tempQuality.length > 0) {
+            _qualityOptions = tempQuality; //.tracks;
             _createOverlayQualityMenu();
           }
         }
         //if (_subtitleOptions.length > 0) _createOverlaySubtitleMenu();
-        if (ocontrols.subtitles) {
+        if (!(cOptions.subtitles === 0 || cOptions.subtitles === false)) {
           if (_vectorFcn.getSubtitles) _subtitleOptions = _vectorFcn.getSubtitles();
             _createOverlaySubtitleMenu();
         }
       // }
 
       _onTouch();
-      _showVisibility(_overlayBackwardBtn);
-      _showVisibility(_overlayFastForwardBtn);
+      //cannot show visibility yet right?
+      //_showVisibility(_overlayBackwardBtn);
+      //_showVisibility(_overlayFastForwardBtn);
 
-      const videoDuration = Math.round(duration);
+      const videoDuration = Math.round(meta.duration);
       const time = _formatTime(videoDuration);
       const volume = _vectorFcn.getVolume();
       const speed = videoObj.playbackRate;
@@ -664,7 +663,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _muteIcon.classList.remove(styles.hide);
       _overlayVolumeBtn.setAttribute('data-title', 'Unmute');
       if (_overlayVolumeRange) _overlayVolumeRange.classList.add(styles.hide);
-      _vectorFcn.mute();
+      _vectorFcn.mute(); //??
     } else {
       if (volume > 0 && volume < 0.3) {
         _lowIcon.classList.remove(styles.hide);
@@ -786,6 +785,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_bigPlayBtn && _waitingOnBigPlayBtnStart) {
       _bigPlayB4StartClickCB();
     } else {
+      _showVisibility(_overlayBackwardBtn);
+      _showVisibility(_overlayFastForwardBtn);
       if (_thumbnailImg) {
         _thumbnailImg.classList.add(styles.hide);
         _thumbnailImg = null; //aiyo can we just get rid of it .
@@ -830,14 +831,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   FactoryOneCustomControls.prototype.initVVisual = function (thumbnailURL,imgLoadedCB) {
     _showSpinner();
     if (!_thumbnailImg) {
-      //let r = Math.floor(Math.random() * 2000 + 1);
-      //let thumbnailID = styles.thumbnail + "-" + r; //want ID for wat?
       _thumbnailImg = common.newDiv(
         _container,
         "img",
         null,
-        styles.thumbnailCls
-        //thumbnailID
+        styles.thumbnail
       );
     }
     if (thumbnailURL && thumbnailURL != _thumbnailImg.src) {
@@ -877,8 +875,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   FactoryOneCustomControls.prototype.setTimer = function (currTime) {
     _updateTimeElapsed(currTime);
   };
-  FactoryOneCustomControls.prototype.setVInfo = function (videoObj, title, duration) {
-    _initVideoInfo(videoObj, title, duration);
+  FactoryOneCustomControls.prototype.videoMetaReady = function (videoObj) {
+    _initVideoInfo(videoObj);
   };
   FactoryOneCustomControls.prototype.setPlayBtn = function () {
     _updatePlayBtn();

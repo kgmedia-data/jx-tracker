@@ -8,6 +8,7 @@ const MakeOnePlayerControlsObjD = modulesmgr.get('video/ctrls-factory');
 const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
+const MakeOnePlayerCfgMgr       = modulesmgr.get('video/playercfgmgr-factory');
      
 const msPlayAttributeThreshold_     = 1000;
 const msPauseAttributeThreshold_    = 1000;
@@ -65,7 +66,12 @@ window.jxPromisePolyfill        = 'none';
         /**
          * "PRIVATE" variables :-) using closure.
          */
+        var _playerCfgMgr = MakeOnePlayerCfgMgr(container);
+        var _videoMeta = {};
+        // these are for autoplay:
+        var _soundFallback = false;
         var _forceAutoplayWithSound = false; 
+        
         var _nextAdSlotTime = 999999;
         var _currToken = null;
         var _isConfigSet = false;
@@ -165,7 +171,6 @@ window.jxPromisePolyfill        = 'none';
         var _boundSizeManagerFcn = null;
         //----->
 
-        var _forcedResolution = -1;
         
         var _cfg = {
             
@@ -413,7 +418,7 @@ window.jxPromisePolyfill        = 'none';
             _msLastInternalCallPause = 0;
             _msLastInternalCallPlay = 0;
             _manualPaused = false;
-            _forcedResolution = -1;
+            
 
             //we do not reset this, we keep what was there from the first video
         };
@@ -446,7 +451,7 @@ window.jxPromisePolyfill        = 'none';
         }
         FactoryPlayerWrapper.prototype.setConfig = function(
             adsCfg, //the tags are also inside this obj: adtagurl and adtagurl2
-            logoCfg, soundIndCfg = null, mute = true) {
+            logoCfg, soundIndCfg = null, sound = "off") {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
             _adScheduler = MakeOneAdScheduler(_cfg.ads);
@@ -454,9 +459,13 @@ window.jxPromisePolyfill        = 'none';
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
-            if (!mute) {
-                _forceAutoplayWithSound = true;
-            }
+            //if (!mute) {
+                //this is regarding autoplay:
+              //  _forceAutoplayWithSound = true;
+            //}
+            //only for the first video
+            _forceAutoplayWithSound = sound == 'on' ? true: false;
+            _soundFallback = sound == 'fallback' ? true: false;
         }   
         var _hide = function() {
             _contentDiv.classList.add(styles.hide);
@@ -705,7 +714,6 @@ window.jxPromisePolyfill        = 'none';
                 hideSpinner: function() {
                     _hideSpinner();
                 },
-                
                 play: function() {
                     _manualPaused = false;
                     //trying something new ....
@@ -746,65 +754,47 @@ window.jxPromisePolyfill        = 'none';
                 setPlaybackRate: function(speed) {
                     _vid.playbackRate = speed;
                 },
+                getMeta: function() {
+                    return _videoMeta;
+                },
                 //https://animoto.com/blog/news/hd-video-creation-sharing
                 //TODO: Renee: how to harmonize with our new stuff (no force of resolution)
                 // just added to production sdk?
-
-
-                /*
-                let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-                        if (maxH > 0) {
-                            _shakaPlayer.configure({
-                                abr: {
-                                    restrictions: {
-                                        maxHeight: maxH
-                                    }
-                                }
-                            });
-                        }
-                        */
                 setResolution: function(track) {
                     if (!_shakaPlayer) return; 
-                    if (track.height === "auto") {
-                        _forcedResolution = -1;
-                        let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-                        _shakaPlayer.configure({
-                            abr: {
-                                enabled: true,
-                                restrictions: {
-                                    maxHeight: maxH
-                                }
-                            }
-                        });
-                    } else {
-                        _shakaPlayer.configure({
-                            abr: {
-                                enabled: false
-                            }
-                        });
+                    // track could be null, in that case we still need
+                    // to do the config object
+                    // but that's not what they return leh.
+                    if (track.height == 'auto') track = null;
+                    // also setting memory in player Cfg Mgr !! BAD BAD
+                    let cfg = _playerCfgMgr.getNewCfgMaybe(track ? track.height: 0);
+                    _shakaPlayer.configure(cfg);
+                    if (track) {
                         _shakaPlayer.selectVariantTrack(track, true);
-                        _forcedResolution = track.height;
                     }
                 },
-                getResolution: function() {
-                    // this stuff dun hardcode in the controls layer as it should be dumb in this
-                    // aspect. 
-                    return {
-                        current: _forcedResolution, //the current mode. -1 means our auto method
-                        // 
-                        // I suggest the menu also should have an entry "auto". So initially it is auto 
-                        // Coz we don't really know which one the shaka is using in our normal mode
-                        // So initially you display "auto" in the options.
-                        // This also means, if the user is tired of self-setting the resolution, he can
-                        // flip it back to auto...
-                        // NOTE: I also added _forcedResolution = -1 in the reset function for now.
-                        tracks: _getAvailableResolutions() //clean up later . Of course also should not hardcode here ;)
-                    };
+                getResolutions: function() {
+                    // the active state is implicit
+                    let arr = _shakaPlayer.getVariantTracks();
+                    if (arr) {
+                        // a shaka thing:
+                        // Remove duplicate entries with the same height.  This can happen if
+                        // we have multiple resolutions of audio.  Pick an arbitrary one.
+                        // Hmmm. it is not right to just pick arbitrary one...
+                        arr = arr.filter((track, idx) => {
+                            // Keep the first one with the same height.
+                            const otherIdx = arr.findIndex((t) => t.height == track.height);
+                            return otherIdx == idx;
+                        });
+                        return _playerCfgMgr.filterTracks(arr); //other criteria to apply.
+                    }
+                    return null;
                 },
                 setSubtitle: function(sub) {
                     if (_shakaPlayer) {
-                        console.log('selected subtitle', sub)
-                        if (sub.language === "off") _shakaPlayer.setTextTrackVisibility(false);
+                        if (!sub) {
+                            _shakaPlayer.setTextTrackVisibility(false);
+                        }
                         else {
                             _shakaPlayer.selectTextTrack(sub);
                             _shakaPlayer.setTextTrackVisibility(true);
@@ -812,67 +802,21 @@ window.jxPromisePolyfill        = 'none';
                     }
                 },
                 getSubtitles: function() {
-                    return (_shakaPlayer ? _shakaPlayer.getTextTracks() : []);
+                    if (!_shakaPlayer) return null;
+                    let arr = _shakaPlayer.getTextTracks();
+                    if (arr) {
+                        arr = arr.filter((t) => t.kind == 'subtitle');
+                    }
+                    return arr;
                 },
             };
             return fcnVector;
-        };
-        /*
-        var _makeBlob = function(periodic) {
-            //get the current dimenions.
-            //scali no stream left.MIOW
-            let dim = _boundSizeManagerFcn(periodic ? false: true);
-            //the dim of the video area has changed since we last checked:
-            //just resolved it into 1 , either width or height.
-
-            if (dim) {
-                if (dim.height > r.maxheight) {
-                    dim.height = r.maxheight;
-                }
-                //then cannot be too small ah.
-                if (dim.height < r.minheight) {
-                    dim.height = r.minheight;
-                }
-
-                let abr = {
-                    maxHeight: dim.height
-                }
-            }
-        }
-        */
-        var _getAvailableResolutions = function() {
-            var tracks = [];
-            if (_shakaPlayer) {
-                tracks = _shakaPlayer.getVariantTracks();
-                if (tracks.length > 0) {
-                    // Remove duplicate entries with the same height.  This can happen if
-                    // we have multiple resolutions of audio.  Pick an arbitrary one.
-                    tracks = tracks.filter((track, idx) => {
-                        // Keep the first one with the same height.
-                        const otherIdx = tracks.findIndex((t) => t.height == track.height);
-                        return otherIdx == idx;
-                    });
-                    // the options object.
-                    /* TODO
-                    tracks = trackers.filter((track) => (
-                        track.height <= r.maxheight && track.height >= r.minheight &&
-                        track.width <= r.maxwidth && track.width >= r.minwidth)
-                    );*/
-                }
-
-            }
-
-            return tracks;
         };
         var _createControlsMaybe = function() {
             if (!_ctrls) {
                 _ctrls = MakeOnePlayerControlsObjD(_contentDiv, _makeFcnVectorForUI()); 
             }
-            if (_ctrls.showNativeCtrl()) {
-                _vid.controls = true;
-            } else {
-                _vid.controls = false;
-            }
+            _vid.controls = (_ctrls.showNativeCtrl() ? true: false);
             _ctrls.hideCtrl();
         };
         var _createStripMessage = function(remaining) {
@@ -1204,29 +1148,14 @@ window.jxPromisePolyfill        = 'none';
                     _soundIndObj.setRemainingTime(_vid.duration - currentTime);
                 }
             }
-            
             // FOR DEBUGGING ONLY
             // if (_shakaPlayer) console.log('Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height);
-
             this.spacer10++; 
-            if (this.spacer10 == 10 && _shakaPlayer && _forcedResolution == -1) {
-                try {
-                    let newDim = _boundSizeManagerFcn();
-                    //the dim of the video area has changed since we last checked:
-                    if (newDim) {
-                        let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-                        if (maxH > 0) {
-                            _shakaPlayer.configure({
-                                abr: {
-                                    restrictions: {
-                                        maxHeight: maxH
-                                    }
-                                }
-                            });
-                        }
-                    }
+            if (this.spacer10 == 10 && _shakaPlayer) {
+                let cfg = _playerCfgMgr.getNewCfgMaybe();
+                if (cfg) {
+                    _shakaPlayer.configure(cfg);
                 }
-                catch(ee){}
                 this.spacer10 = 0;
             }
 
@@ -1400,26 +1329,17 @@ window.jxPromisePolyfill        = 'none';
   
         function _newAShakaPlayer(video, sizeMgrFcn) {
             shakaPlayer = new shaka.Player(video);
-            let newDim = sizeMgrFcn(true);//true means force return an object whether there was a change or not
-            let maxHeight2Req = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-            let o = {
-                streaming: {
-                    useNativeHlsOnSafari: false,
-                    bufferingGoal: 5
-                },
-                abr: {
-                    switchInterval: 5
-                }
-            };
-            if (maxHeight2Req > 0) {
-                o.abr.defaultBandwidthEstimate = 200000;
-                o.abr.restrictions = {
-                    maxHeight: maxHeight2Req
-                }
-            }
+            let o = _playerCfgMgr.getNewCfgMaybe(0, true); //true as this is for init phase
             shakaPlayer.configure(o);
             return shakaPlayer;       
-        }                  
+        }   
+
+        function _injectSubtitles() {
+            if (_shakaPlayer) {
+                if (_videoMeta.subtitles.length > 0) _videoMeta.subtitles.forEach((x) => _shakaPlayer.addTextTrackAsync(x.url, x.language, 'subtitle', x.mime, '', x.label));
+                _shakaPlayer.setTextTrackVisibility(false);
+            }
+        }               
         /**
          * One-off init of this playerwrapper object.
          * Note: when switching video src no need call this again.
@@ -1469,7 +1389,8 @@ window.jxPromisePolyfill        = 'none';
          * @param {*} playbackMethod 
          * @returns a promise
          */
-        function _initChainSetupNewVP(playbackMethod, srcHLS, srcFallback, offset, subTitles) {
+        
+        function _initChainSetupNewVP(playbackMethod, srcHLS, srcFallback) { //}, offset, subTitles) {
             if (this.token != _currToken) {
                 //console.log(`_S_S_S_S_S_S _setupNewVP mismatch token ${this.token} ${_currToken}`);
                 return Promise.reject("shortcircuit");
@@ -1495,10 +1416,10 @@ window.jxPromisePolyfill        = 'none';
                         _boundMetadataLoadedCB();
                     }, 1000);
                 }
-                if (offset > 0) { 
+                if (_videoMeta.offset > 0) { 
                     //we are only bothered if offset > 0
                     _boundCanPlayThroughCB = _canPlayThroughCB.bind({
-                        offset: offset
+                        offset: _videoMeta.offset
                     });
                     _vid.addEventListener('canplay', _boundCanPlayThroughCB);
                 }
@@ -1536,12 +1457,7 @@ window.jxPromisePolyfill        = 'none';
                     _shakaPlayer.addEventListener('error', _boundShakaOnErrorCB);
                     return Promise.all([
                         p1, 
-                        _shakaPlayer.load(srcHLS, offset).then(() => {
-                            if (_shakaPlayer) {
-                                if (subTitles.length > 0) subTitles.forEach((x) => _shakaPlayer.addTextTrackAsync(x.url, x.language, 'subtitle', x.mime, '', x.label));
-                                _shakaPlayer.setTextTrackVisibility(false);
-                            }
-                        })
+                        _shakaPlayer.load(srcHLS, _videoMeta.offset)
                     ]);
                     break;
             }//switch
@@ -1573,8 +1489,10 @@ window.jxPromisePolyfill        = 'none';
                         return;
                     })
                     .catch(function(e) {
+                        // FAILED. Nothing to fall back
                         console.log(`attempt start play failed with video.muted=${_vid.muted} (${e})`);
-                        if (_vid.muted) {
+                        //_forceAutoplayWithSound 
+                        if (_vid.muted || !_soundFallback ) {
                             // if just now that attempt was WITH sound, then now we can try 
                             // without sound.
                             // if already just now was without sound, then now we just stick
@@ -1782,24 +1700,25 @@ window.jxPromisePolyfill        = 'none';
          * @param {*} srcHLS <--- if this is not provided, meaning we just want do fallbackTech_
          *                   <--- this would be a retry after an error then 
          * @param {*} srcFallback
-         * @param {*} title 
-         * @param {*} offset 
+         * @param {*} videoMeta < - an object of video meta info
+         * (duration, offset, title, subtitles, thumbnail, thumbnails)
          */
         FactoryPlayerWrapper.prototype.setV = function(
             delayPutSrcWaitProm, //
             videoID,
             startModePW,
-            srcHLS, srcFallback, offset, thumbnailURL, videoTitle, subTitles, duration) {
+            srcHLS, srcFallback,
+            videoMeta) {    
 
+            _videoMeta = videoMeta;
             let token = videoID +"-" + Date.now();                
-            
             _currToken = token;
             _startModePW = startModePW; 
 
             _createControlsMaybe();
             _createLogoMaybe();
             _createInfoIcon();
-            _ctrls.initVVisual(thumbnailURL, function() {
+            _ctrls.initVVisual(_videoMeta.thumbnail, function() {
                 _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
             });
             
@@ -1856,7 +1775,7 @@ window.jxPromisePolyfill        = 'none';
                 genInitP = Promise.resolve(_pbMethod);//gen init considered done. Hence resolve
             } 
             _videoID = videoID;
-            _thumbnailURL = thumbnailURL;
+            _thumbnailURL = _videoMeta.thumbnail;
             if(_cfg.ads.delay == 0) {
                 //pure preroll.
                 _createAdObjMaybe();
@@ -1893,9 +1812,9 @@ window.jxPromisePolyfill        = 'none';
             let boundChainContextCheck  = _initChainContextCheck.bind({token: token});
             let boundSetupNewVP         = _initChainSetupNewVP.bind({token: token});
             
-            if (_ctrls) {
-                _ctrls.setVInfo(_vid, videoTitle, duration);
-            }
+            //if (_ctrls) {
+              //  _ctrls.setVInfo(_vid, videoTitle, duration);
+            //}
 
             shakaDetachProm
             .then(function() { 
@@ -1911,8 +1830,14 @@ window.jxPromisePolyfill        = 'none';
             }).then(function(playbackMethod){
                 //video readiness
                 //this will set video.src = <THE STREAM URL>
-                return boundSetupNewVP(playbackMethod, srcHLS, srcFallback, offset, subTitles);
+                return boundSetupNewVP(playbackMethod, srcHLS, srcFallback); //, offset, subTitles);
             }).then(function() {
+                console.log(`### STILL RESOLVED!!`);
+                    _injectSubtitles();
+                    _playerCfgMgr.changeVideo(_videoMeta.AR, _shakaPlayer);
+                    if (_ctrls) {
+                        _ctrls.videoMetaReady(_vid);
+                    }
                     //Video is ready (metadataloaded) to be played so remove the loading spinner
                     if (!boundChainContextCheck()) {
                         throw new Error("shortcircuit");

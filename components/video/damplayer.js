@@ -32,15 +32,20 @@ const startModePWApi_       = consts.startModePWApi;
 const startModeSDKApi_      = consts.startModeSDKApi;
 const startModeSDKClick_    = consts.startModeSDKClick;
 
-const maxVWidth_ = (common.isMobile() ? 641: 1281);
-const maxVHeight_ = (common.isMobile() ? 361: 721);
-
 const DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
 
 const IRThreshold_ = 0.5;
 
 
 function createObject_(options, ampIntegration) {
+    var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
+    if (options.restrictions) {
+        if (options.restrictions.maxheight > 0) 
+            DAMApiBase_ += '&max-height=' + options.restrictions.maxheight;
+        if (options.restrictions.maxwidth > 0) 
+            DAMApiBase_ += '&max-width=' + options.restrictions.maxwidth;
+    }
+
     var _dbgCountOOS = 0;
     var _dbgCountLoad = 0;
     var _dbgL1VP = 0;
@@ -370,7 +375,7 @@ function createObject_(options, ampIntegration) {
 
         //auto means playerWrapper object should just go ahead and call video.play()
 
-        if (_options.autoplay == 'wifi' && hasWifi ) {
+        if (_options.autoplay == 'wifi' && hasWifi || _options.autoplay == 'always') {
             //'justdoit' : this is our backdoor to force our player to try autoplay
             //coz somehow even at home sometimes the system (browser network connection api)
             //will detect my wifi as 4g!!
@@ -442,9 +447,14 @@ function createObject_(options, ampIntegration) {
         
     }
     function repairMissingOptions(options) {
-        if (!options.hasOwnProperty('muted')) {
-            options.muted = true;
+        if (!options.hasOwnProperty('muted') && !options.hasOwnProperty('sound')) {
+            options.sound = 'off';
         }
+        if (options.hasOwnProperty('muted')) {
+            // backward compatiability
+            options.sound = options.muted ? "off": "fallback";
+        }
+
         //This is only for crucial properties that cannot be missing
         //a final options object. 
         //use a JSON to do it. Merging of defaults and supplied options:
@@ -666,53 +676,27 @@ function createObject_(options, ampIntegration) {
             _fetchNPlay1VP(vid2Fetch);
         }
     }
-    JXPlayerInt.prototype.loadVideoByPartnerId = function(videoId, startOffset, playEndCB, forcePlatform) {
-        //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
-        if (startOffset === undefined) {
-            startOffset = -1; // by the normal way which is cookie
-        }
-        if (playEndCB === undefined) {
-            playEndCB = null;
-        }
-        if (forcePlatform === undefined) {
-            forcePlatform = null;
-        }
-        _load(false, [videoId], playEndCB, forcePlatform, startOffset);
-     }
      JXPlayerInt.prototype.loadVideoById = function(videoId, startOffset, playEndCB, forcePlatform) {
-        //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
-        if (startOffset === undefined) {
-            startOffset = -1; //by the normal way which is cookie
-        }
-        if (playEndCB === undefined) {
-            playEndCB = null;
-        }
-        if (forcePlatform === undefined) {
-            forcePlatform = null;
-        }
-        _load(true, [videoId], playEndCB, forcePlatform, startOffset);
+        _load(true, [videoId], (playEndCB === undefined ? null: playEndCB), 
+            (forcePlatform === undefined? null:forcePlatform), 
+            (startOffset === undefined? -1: startOffset));
      }
-     
+     JXPlayerInt.prototype.loadVideoByPartnerId = function(videoId, startOffset, playEndCB, forcePlatform) {
+        _load(false, [videoId], (playEndCB === undefined ? null: playEndCB), 
+            (forcePlatform === undefined? null:forcePlatform), 
+            (startOffset === undefined? -1: startOffset));
+     }
      JXPlayerInt.prototype.loadJx = function(param, playEndCB, forcePlatform) {
-        //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
-        slackItMaybe("[ loadJx.jixie.io : " + (param ? JSON.stringify(param): "") + "]");
-        if (playEndCB === undefined) {
-            playEndCB = null;
-        }
-        if (forcePlatform === undefined) {
-            forcePlatform = null;
-        }
-        _load(true, param, playEndCB, forcePlatform);
+        _load(true, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
      }
      JXPlayerInt.prototype.load = function(param, playEndCB, forcePlatform) {
-        slackItMaybe("[ load.jixie.io : " + (param ? JSON.stringify(param): "") + "]");
-        if (playEndCB === undefined) {
-            playEndCB = null;
-        }
-        if (forcePlatform === undefined) {
-            forcePlatform = null;
-        }
-        _load(false, param, playEndCB, forcePlatform);
+        _load(false, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
+     }
+     JXPlayerInt.prototype.loadPlaylistById = function(param, playEndCB, forcePlatform) {
+        _load(true, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
+     }
+     JXPlayerInt.prototype.loadPlaylistByPartnerId = function(param, playEndCB, forcePlatform) {
+        _load(false, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
      }
 
      /***
@@ -1493,7 +1477,7 @@ function createObject_(options, ampIntegration) {
             prepareAdsObj(_options);
             _pInst.setConfig(
                 _options.ads,
-                _options.logo, _options.soundindicator, _options.muted);
+                _options.logo, _options.soundindicator, _options.sound); //_options.sound (on, off, fallback)
         }
             
         _dbgL1VP++;
@@ -1504,20 +1488,24 @@ function createObject_(options, ampIntegration) {
         let srcHLS = null;
         let srcFallback = null;
         let thumbnailUrl = null;
-        let title = null;
-        let subtitles = [];
-        let duration = 0;
-
+        
         if (vData.id) {
             //this is Jixie ID: real videos in our system
             srcHLS = vData.hls;
             srcFallback = vData.fallback;
             if (vData.metadata) {
                 if (vData.metadata.thumbnails && vData.metadata.thumbnails.length > 0) {
-                    //choose most suitable one:
                     let currIdx = -1;
                     let currWidth = 999999;
-                    let wThreshold = (common.isMobile() ? 640: 854);  //or based off something else
+                    //it should come from the restrictions in options also
+                    //here we might not have a size yet!!
+                    let wThreshold = _container.offsetWidth;
+                    // TODO SO SO SO SO STUPID. REWRITE IT AH
+                    //choose most suitable one:
+                    //it should come from the restrictions in options also
+                    //What if ... here we might not have a size yet!!
+                    if (!wThreshold) 
+                        wThreshold = (common.isMobile() ? 400: 640);  //or based off something else
                     let arr = vData.metadata.thumbnails;
                     for (i = arr.length-1; i >= 0; i--) {
                         //if it is sufficiently acceptable in size:
@@ -1546,24 +1534,8 @@ function createObject_(options, ampIntegration) {
 
                 if (!thumbnailUrl && vData.metadata.thumbnail)
                     thumbnailUrl = vData.metadata.thumbnail;
-                if (vData.metadata.title)
-                    title = vData.metadata.title;
-
-                subtitles = [
-                    {
-                        "language": "en",
-                        "url": "https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/psdk/tests/test-encode-0605-v4-en.srt",
-                        "label": "English",
-                        "mime": "text/srt"
-                    },
-                    {
-                        "language": "fr",
-                        "url": "https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/psdk/tests/fr.srt",
-                        "label": "Francois",
-                        "mime": "text/srt"
-                    }
-                ];
-                duration = vData.metadata.duration;
+                
+                
             }
         }
         // if -1 means nothing fed from upstairs
@@ -1586,10 +1558,33 @@ function createObject_(options, ampIntegration) {
         //for it to be resolved before it stick the HLS source into the <video> object
         //Reason is to save $. Coz vid.src = <HLS URL> will cause some segment loading
         //Here, _lazyStartProm will only be resolved when the video container gets sufficiently near to the viewport
+        let testsubtitles = [
+            {
+                "language": "en",
+                "url": "https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/psdk/tests/test-encode-0605-v4-en.srt",
+                "label": "English",
+                "mime": "text/srt"
+            },
+            {
+                "language": "fr",
+                "url": "https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/psdk/tests/fr.srt",
+                "label": "Francois",
+                "mime": "text/srt"
+            }
+        ]
         _pInst.setV(
             _lazyStartProm,
             _currVid, _cfg.startModePW, (downgrade == fallbackTech_ ? null : srcHLS),
-            srcFallback, offset, thumbnailUrl, title, subtitles, duration);  
+            srcFallback, //offset, thumbnailUrl, title, subtitles);  
+            {
+                AR: 1.78, //to get from proper source TODO TODO
+                duration: vData.metadata.duration,
+                offset: offset,
+                title: vData.metadata.title,
+                subtitles : testsubtitles,
+                thumbnails: [thumbnailUrl], //todo
+                thumbnail: thumbnailUrl //todo
+            });
 
         //setV will kick off a whole "promise chain" thing waiting for one thing
         //after another one.
@@ -1820,14 +1815,10 @@ function createObject_(options, ampIntegration) {
         let url = DAMApiBase_;
         if (_vidFetchAcctId) {
             url += '&partner_id=' + vId +
-            '&account_id=' + _vidFetchAcctId +
-            '&max-width=' + maxVWidth_ +
-            '&max-height=' +maxVHeight_;
+            '&account_id=' + _vidFetchAcctId;
         }
         else {
-            url += '&video_id=' + vId +
-            '&max-width=' + maxVWidth_ +
-            '&max-height=' +maxVHeight_;
+            url += '&video_id=' + vId;
         }
         if (_forcePlatform) {
             url += '&platform='+_forcePlatform;
