@@ -41,7 +41,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var _videoTitle = null;
   var _videoTitleDiv = null;
 
-  var _overlayPlayBtn = null;
+  /////var _overlayPlayBtn = null;
   var _overlayVolumeBtn = null;
   var _overlayVolumeRange = null;
   var _overlayFScreenBtn = null;
@@ -269,11 +269,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _createLeftControls(playIconsSet, pauseIconsSet) {
-    var iHTML = `<button data-title="Play" id="${'playBtnId'+randNumb}">
-                  <span class="${styles.playBtn}"></span>
-                  <span class="${styles.pauseBtn} ${styles.hide}"></span>
-                </button>
-                <div class="${styles.volCtrl}">
+    //var iHTML = `<button data-title="Play" id="${'playBtnId'+randNumb}">
+      //            <span class="${styles.playBtn}"></span>
+        //          <span class="${styles.pauseBtn} ${styles.hide}"></span>
+          //      </button>
+    var iHTML = `<div class="${styles.volCtrl}">
                   <button data-title="Mute" id="${'volumeBtnId'+randNumb}">
                     <span class="${styles.muteBtn} ${styles.hide}"></span>
                     <span class="${styles.volLow} ${styles.hide}"></span>
@@ -288,8 +288,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
                 </div>`;
     var ctrl = common.newDiv(_bottomControls, "div", iHTML, styles.leftCtrl);
 
-    _overlayPlayBtn = _byId(`${'playBtnId'+randNumb}`);
-    common.addListener(_overlayPlayBtn, "click", _togglePlay);
+    //_overlayPlayBtn = _byId(`${'playBtnId'+randNumb}`);
+    //common.addListener(_overlayPlayBtn, "click", _togglePlay);
 
     _overlayVolumeBtn = _byId(`${'volumeBtnId'+randNumb}`);
     common.addListener(_overlayVolumeBtn, "click", _toggleMute);
@@ -311,8 +311,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _overlayVolumeRange.step = "0.01";
       common.addListener(_overlayVolumeRange, "input", _updateVolume);
     }
-    playIconsSet.push(_byClass(styles.playBtn));
-    pauseIconsSet.push(_byClass(styles.pauseBtn));
+    //playIconsSet.push(_byClass(styles.playBtn));
+    //pauseIconsSet.push(_byClass(styles.pauseBtn));
     return ctrl;
   }
 
@@ -605,7 +605,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _pauseIconsSet.forEach(function(one) {
         one.classList.remove(styles.hide);
       });
-      _overlayPlayBtn.setAttribute('data-title', 'Pause');
+      //_overlayPlayBtn.setAttribute('data-title', 'Pause');
       // _animateBigPlayBtn();
     } else {
       _playIconsSet.forEach(function(one) {
@@ -614,7 +614,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _pauseIconsSet.forEach(function(one) {
         one.classList.add(styles.hide);
       });
-      _overlayPlayBtn.setAttribute('data-title', 'Play');
+      //_overlayPlayBtn.setAttribute('data-title', 'Play');
       // _bigPlayBtn.classList.remove(styles.hideOpacity);
     }
   }
