@@ -428,6 +428,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         />
     </svg>`;
   
+  const shareSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15.115" height="13.785" viewBox="0 0 15.115 13.785">
+                      <path d="M15.115,7.388,8.833.5V4.609H7.5a7.5,7.5,0,0,0-7.5,7.5v2.178l.593-.65a10.644,10.644,0,0,1,7.862-3.469h.378v4.109Zm0,0" transform="translate(0 -0.5)"/>
+                    </svg>`;
+  
   function _createSkipButtons() {
     const skipText = `<span>${skipOffset}</span>`;
 
@@ -770,7 +774,13 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _setVideoTitle(title) {
-    if (!_videoTitle) _videoTitle = common.newDiv(_videoTitleDiv, "div", title);
+    if (!_videoTitle) {
+      const iHTML = `${shareSVG}<span>${title}</span>`
+      _videoTitle = common.newDiv(_videoTitleDiv, "div", iHTML);
+      common.addListener(_videoTitle, "click", function() {
+        window.open('https://google.com', '_blank');
+      });
+    }
   }
 
   /**
