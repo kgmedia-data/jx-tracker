@@ -715,12 +715,17 @@ window.jxPromisePolyfill        = 'none';
                     _hideSpinner();
                 },
                 play: function() {
+                    if (_manualPaused) {
+                        console.log(`##_ play setting manualPaused to false`);
+                    }
+                    
                     _manualPaused = false;
                     //trying something new ....
                     if (_vid.muted) _vid.muted = false; // if the video is muted, then we need to make it play unmuted
                     _playVideo();
                 },
                 pause: function() {
+                    console.log(`##### PAUSE LAH!!!`);
                     _manualPaused = true;
                     _pauseVideo();
                 },
@@ -792,6 +797,7 @@ window.jxPromisePolyfill        = 'none';
                 },
                 setSubtitle: function(sub) {
                     if (_shakaPlayer) {
+                        if (sub.language == 'off') sub = null;
                         if (!sub) {
                             _shakaPlayer.setTextTrackVisibility(false);
                         }
@@ -928,6 +934,9 @@ window.jxPromisePolyfill        = 'none';
             return; //we go the init path first
         }
         function _onPlayingCB(param) {
+            if (_manualPaused) {
+                console.log(`##_ _onPlayingCB setting manualPaused to false`);
+            }
             _manualPaused = false;//well it already is playing. erase history.
             _detectManualPlayOrPause('playing');
 
@@ -1104,7 +1113,12 @@ window.jxPromisePolyfill        = 'none';
         //if it starts playing
 
         function _onPlayheadUpdateCB() {
-            _manualPaused = false;
+            console.log(`##A ${_vid.currentTime}`);
+            if (_manualPaused) {
+                let diff1 = _vid.currentTime- this.lastPlayhead;
+                console.log(`##_ ${diff1} _onPlayheadUpdateCB setting manualPaused to false`);
+            }
+            //_manualPaused = false;
             let currentTime = _vid.currentTime;
             //<--- Do the video events (25%, 75% etc.)
             _doPlayedPctEvent(currentTime);

@@ -1561,14 +1561,14 @@ function createObject_(options, ampIntegration) {
         let testsubtitles = [
             {
                 "language": "en",
-                "url": "https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/psdk/tests/test-encode-0605-v4-en.srt",
+                "url": "https://creatives.jixie.media/demo/assets/srt/freeguyen.srt",
                 "label": "English",
                 "mime": "text/srt"
             },
             {
-                "language": "fr",
-                "url": "https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/psdk/tests/fr.srt",
-                "label": "Francois",
+                "language": "id",
+                "url": "https://creatives.jixie.media/demo/assets/srt/freeguyid.srt",
+                "label": "Bahasa",
                 "mime": "text/srt"
             }
         ]
