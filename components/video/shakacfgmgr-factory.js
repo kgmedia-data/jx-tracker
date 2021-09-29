@@ -48,11 +48,11 @@ function MakeOnePlayerCfgMgr_(container) {
         // let's translate everything to height then.
         let tmp = Math.min(
             _r.maxheight > 0 ? _r.maxheight: hugeLength_,
-            _r.maxwidth > 0 ? _r.maxwidth/AR: hugeLength_);
+            _r.maxwidth > 0 ? Math.ceil(_r.maxwidth/AR): hugeLength_);
         _vmaxheight = tmp == hugeLength_ ? 0: tmp;
         tmp = Math.max(
             _r.minheight > 0 ? _r.minheight: 0,
-            _r.minwidth > 0 ? _r.minwidth/AR: 0);
+            _r.minwidth > 0 ? Math.ceil(_r.minwidth/AR): 0);
         _vminheight = tmp > 0 ? tmp: 0;
 
         // Get all the available heights. So that we can give it a good 
