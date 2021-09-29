@@ -71,7 +71,19 @@ const optionsObjNames_ = ['ads', 'controls', 'soundindicator', 'restrictions'];
 
 var instMap = new Map();   
 function makePlayer(options) {
+  //testing:
+  //options.restrictions = {
+    //maxheight: 720,
+    //minheight: 360
+  //};
   // dangerous!!
+  options.autoplay = 'always';
+  options.sound = 'fallback';
+  if (!options.controls) {
+    options.controls = {};
+  }
+  options.controls.font = 'Roboto';
+
   let hashStr = btoa(JSON.stringify(options));
   let instMaybe = instMap.get(hashStr);
   if (instMaybe) {

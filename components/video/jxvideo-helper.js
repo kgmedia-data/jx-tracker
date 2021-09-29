@@ -6,6 +6,7 @@ const hlsAvailHeightsMax_ = 1080;
 
 
 function MakeOneHelperObj_() {
+    /*
     var divId2Options_ = {};
 
     function walkUp_(node) {
@@ -42,7 +43,7 @@ function MakeOneHelperObj_() {
         }));
         divId2Options_[container] = copyIt;
     }
-
+    */
 
     var _unsent = {
         loaded: 1

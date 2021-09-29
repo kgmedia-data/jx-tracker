@@ -153,7 +153,7 @@
         if (!_thumbnailImg) {
             let r = Math.floor(Math.random() * (2000) + 1);
             let thumbnailID = styles.thumbnail + '-' + r;//want ID for wat?
-            _thumbnailImg = common.newDiv(_container, "img", null, styles.thumbnailCls, thumbnailID);
+            _thumbnailImg = common.newDiv(_container, "img", null, styles.thumbnail, thumbnailID);
         }
         if (thumbnailURL && thumbnailURL != _thumbnailImg.src) {
             _boundImgLoadedFcn = imgLoadedFcn.bind({ img: _thumbnailImg, cb: imgLoadedCB });

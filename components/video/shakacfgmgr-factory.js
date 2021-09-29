@@ -69,10 +69,10 @@ function MakeOnePlayerCfgMgr_(container) {
     function reset() {
     }
 
-    FactoryOneHelper.prototype.filterTracks = function(heightsArr) {
-        return heightsArr.filter((h) => 
-            ((_vmaxheight == 0 || _vmaxheight >= h) &&
-                (_vminheight == 0 || _vminheight <= h)));
+    FactoryOneHelper.prototype.filterTracks = function(tracksArr) {
+        return tracksArr.filter((t) => 
+            ((_vmaxheight == 0 || _vmaxheight >= t.height) &&
+                (_vminheight == 0 || _vminheight <= t.height)));
     }    
    // they use click proxy 
    // which is under another campaign

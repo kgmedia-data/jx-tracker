@@ -56,8 +56,7 @@ const allClasses = [
   "vidProgInput",
   "ffwrdBtnCtr",
   "bwrdBtnCtr",
-  "timeDispCtr",
-  "thumbnailCls"
+  "timeDispCtr"
 ];
 
 function makeCssClsnames_(hash) {
