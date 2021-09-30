@@ -50,7 +50,10 @@
  * }
  * 
  */
-
+// make things faster when there is only 1 player in the window.
+// shortcircuit some lookups.
+// It will only be set when there is only one player in the window.
+var _onlyContainer = null;
 var divId2HashCode_ = {};
 var theMap_ = new Map();
 
@@ -124,6 +127,12 @@ function init_(container, stylesSetObj, options, injectSSNow = []) {
     });
     divId2HashCode_[container] = hash;
     divId2Options_[container] = options;
+    if (Object.keys(divId2HashCode_).length == 1) {
+        _onlyContainer = Object.keys(divId2HashCode_)[0];
+    }
+    else {
+        _onlyContainer = null;
+    }
 }
 
 function acss_(stylesStr, stylesId = null) {
@@ -152,7 +161,7 @@ function inject_(container, stylesSetName, storedObj = null) {
         console.log(`the ${stylesSetName} already injected liao ah`);
     }
 }
-
+/*
 function walkUp_(node) {
     var parent = node;
     let times = 0;
@@ -167,14 +176,32 @@ function walkUp_(node) {
     }
     return null;
 }
+*/
+
+function getMainCtrId_(container) {
+    if (_onlyContainer) {
+        return _onlyContainer;
+    }
+    if (typeof container == 'string')
+        return container;
+    else  {
+        let parent = container;
+        let times = 0;
+        while(parent && times < 5) {
+            times++;
+            if( parent.nodeName === 'DIV' ) {
+                if (divId2HashCode_[parent.id]) {
+                    return parent.id;
+                }
+            }
+            parent = parent.parentNode;
+        }
+    }
+    return null;
+}
 
 function getStoredObj_(container) {
-    let divId;
-    if (typeof container == 'string')
-        divId = container;
-    else 
-        divId = walkUp_(container);
-    if (!divId) return; //
+    let divId = getMainCtrId_(container);
     return theMap_.get(divId2HashCode_[divId]);
 }
 
@@ -187,22 +214,14 @@ function getRealCls_(container) {
 }
 
 function getOptions_(container) {
-    let divId;
-    if (typeof container == 'string')
-        divId = container;
-    else 
-        divId = walkUp_(container);
-    if (!divId) return {}; //
+    let divId = getMainCtrId_(container);
+    if (!divId) return {};
     return (divId2Options_[divId]);
 }
 
 function updateOptions_(container, newObj) {
-    let divId;
-    if (typeof container == 'string')
-        divId = container;
-    else 
-        divId = walkUp_(container);
-    if (!divId) return {}; //
+    let divId = getMainCtrId_(container);
+    if (!divId) return;
     divId2Options_[divId] = newObj;
 }
 

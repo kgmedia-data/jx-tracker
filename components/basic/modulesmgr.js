@@ -5,14 +5,6 @@
 var theMap_ = new Map();
 //console.log('modules manager run and we create the map object ONCE here');
 function get_(name) {
-    console.log()
-    let tmp = theMap_.get(name);
-    //if (tmp) {
-      //  console.log(`_DEBUGMODULESMGR retrieved ${name} from map of size ${theMap_.size}`);
-    //}
-    //else {
-      //  console.log(`_DEBUGMODULESMGR unable to retrieve ${name} from map of size ${theMap_.size}`);
-    //}
     return theMap_.get(name);
 
 }

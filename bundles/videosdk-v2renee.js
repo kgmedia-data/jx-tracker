@@ -72,20 +72,10 @@ const optionsObjNames_ = ['ads', 'controls', 'soundindicator', 'restrictions'];
 var instMap = new Map();   
 function makePlayer(options) {
   //testing:
-  options.restrictions = {
-    //maxheight: 240
-    //maxwidth: 426
-
-    //maxheight: 360
-    //maxwidth: 640 //is just nice 639 oso cannot
-
-    //maxheight: 480,
-    //maxwidth: 853 //852 cannot 
-
-    //maxheight: 720 //719 oso cannot
-    //maxwidth: 1280 
+  //options.restrictions = {
+    //maxheight: 720,
     //minheight: 360
-  };
+  //};
   // dangerous!!
   //options.autoplay = 'always';
   //options.sound = 'fallback';
