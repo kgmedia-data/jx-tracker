@@ -314,7 +314,7 @@ const animationDelays = [
             let bgColor = config.bgcolor || defaultSoundIndBgColor;
             _duration = defaultSoundIndDuration;
 
-            //if (position.indexOf("bottom") > -1) showImmediately = false;
+            if (position.indexOf("bottom") > -1) showImmediately = false;
 
             if (!isNaN(config.duration)) {
                 _duration = parseInt(config.duration);
