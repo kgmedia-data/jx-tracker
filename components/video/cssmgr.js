@@ -75,7 +75,7 @@ function makeOptions_(options) {
     o.buttonsColor = options.color || "#C0C0C0"; //silver //just for test . easier to tell.
     o.backgroundColor = options.backgroundcolor || "#00FFFF"; //aqua     "#DFFF00"; // yellow
     o.adsButtonsColor = options.adcolor || "#FF0000"; //"#FFA07A"; //light salmon
-    o.font = options.font || 'Dancing Script'; //'Quicksand'; //Roboto
+    o.font = options.font || 'Roboto'; //'Dancing Script'; //'Quicksand'; //Roboto
     return o;
 }
 

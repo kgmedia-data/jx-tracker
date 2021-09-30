@@ -492,6 +492,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   }
 
   function _animateControls() {
+    if (_waitingOnBigPlayBtnStart) return; //hack 
+
     //[styles.capMenu, styles.speedMenu, styles.resMenu].forEach(function(x) {
       //const elm = common.qs(`.${x}`);
       //if (elm) elm.classList.add(styles.hide);
@@ -540,12 +542,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
             _createOverlayQualityMenu();
           }
         }
-        //if (_subtitleOptions.length > 0) _createOverlaySubtitleMenu();
         if (!(cOptions.subtitles === 0 || cOptions.subtitles === false)) {
           if (_vectorFcn.getSubtitles) _subtitleOptions = _vectorFcn.getSubtitles();
-            _createOverlaySubtitleMenu();
+            if (_subtitleOptions && _subtitleOptions.length)
+              _createOverlaySubtitleMenu();
         }
-      // }
 
       _onTouch();
       //cannot show visibility yet right?

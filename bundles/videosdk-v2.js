@@ -77,12 +77,12 @@ function makePlayer(options) {
     //minheight: 360
   //};
   // dangerous!!
-  options.autoplay = 'always';
-  options.sound = 'fallback';
+  //options.autoplay = 'always';
+  //options.sound = 'fallback';
   if (!options.controls) {
     options.controls = {};
   }
-  options.controls.font = 'Roboto';
+  //options.controls.font = 'Roboto';
 
   let hashStr = btoa(JSON.stringify(options));
   let instMaybe = instMap.get(hashStr);
