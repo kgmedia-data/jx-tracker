@@ -233,7 +233,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     // if (!_vectorFcn.isPaused()) {
     //   _bigPlayBtn.classList.remove(className);
     // }
-    if (_vectorFcn.cbHoverControls) _vectorFcn.cbHoverControls(false);
+    if (_vectorFcn.cbHoverControls) _vectorFcn.cbHoverControls(true);
   }
 
   function _hideAll(className) {
@@ -243,7 +243,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     // if (!_vectorFcn.isPaused()) {
     //   _bigPlayBtn.classList.add(className);
     // }
-    if (_vectorFcn.cbHoverControls) _vectorFcn.cbHoverControls(true);
+    if (_vectorFcn.cbHoverControls) _vectorFcn.cbHoverControls(false);
   }
   
   function _bigPlayClickCB(evtOjectMaybe) {
