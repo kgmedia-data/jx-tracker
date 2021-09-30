@@ -468,16 +468,24 @@ window.jxPromisePolyfill        = 'none';
             _soundFallback = sound == 'fallback' ? true: false;
         }   
         var _hide = function() {
-            _contentDiv.classList.add(styles.hide);
+            //_container.style.backgroundColor = "black";
+            //_contentDiv.classList.add(styles.hideOpacity);
         };
         var _show = function() {
+            _container.style.backgroundColor = "black";
             _contentDiv.classList.remove(styles.hide);
+            _contentDiv.classList.remove(styles.hideOpacity);
         };
         var _showSpinner = function() {
             if (_spinner) _spinner.show();
         }
         var _hideSpinner = function() {
             if (_spinner) _spinner.hide();
+        }
+        var _animate = function() {
+            _pauseVideo();
+            _container.style.backgroundColor = "black";
+            _contentDiv.classList.add(styles.hideOpacity);
         }
         //this is the function we expose to the ads object to "control us"
         //the content <video>
@@ -535,6 +543,8 @@ window.jxPromisePolyfill        = 'none';
                      onPLaying onPaused callbacks I feel...
                      _ctrls.setBtnPlayActive(true);
                     */
+                   _vid.currentTime -= 1;
+
                     let playInnerProm = _vid.play();
                     if (playInnerProm !== undefined) {
                         playInnerProm
@@ -554,6 +564,9 @@ window.jxPromisePolyfill        = 'none';
                 },
                 onAdPause: function() {
                     _detectManualPlayOrPause('pause');
+                },
+                animate: function() {
+                    _animate();
                 }
             };
         };
@@ -1632,6 +1645,7 @@ window.jxPromisePolyfill        = 'none';
                     //(that adfetch was done with autoAdsManagerStart false)
                     //So now we need to explicitly call startAd:
                     //We use a new promise keep track of the ad's startedness or error-ed-out-ness.
+                    _animate();
                     ps.push(new Promise(function(resolve, reject) {
                         _adObject.startAd(resolve);
                     }));
@@ -1975,6 +1989,7 @@ window.jxPromisePolyfill        = 'none';
                 //end of countdown period
                 _isDeferPlayPauseCmd = true; //during this time we do not allow play(), pause() api to take effect
                 //as the ad is coming:
+                _animate();
                 return new Promise(function(resolve) {
                     _adObject.startAd(resolve);
                 });
