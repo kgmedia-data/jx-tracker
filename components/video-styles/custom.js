@@ -213,7 +213,7 @@ function makeCssCustomControls_(css_, o) {
     '.'+css_.custBigPlayBtnCtr+', .'+css_.roundBigPlayBtnCtr+'{font-size:14px;cursor:pointer;order:2;display:flex;align-items:center;}',
     '.'+css_.custBigPlayBtnCtr+'{width:44px;height:51px;}',
     '.'+css_.oCenterCtrl+'{position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:2;display:flex;align-items:center;justify-content:space-between;width:40%;}',
-    '.'+css_.roundBigPlayBtnCtr+'{width:4.5em;height:4.5em;position:relative;border-radius:100%;background:'+o.backgroundColor+';}',
+    '.'+css_.roundBigPlayBtnCtr+'{width:4.5em;height:4.5em;position:relative;border-radius:100%;opacity: 0.8;background:'+o.backgroundColor+';}',
     '.'+css_.roundBigPlayBtnCtr+' span{position:absolute;left:50%;top:50%;transform:translate(-50%, -50%);font-size:3.25em;}',
     '.'+css_.hideOpacity+'{opacity:0;}',
     '.'+css_.vidProgCtr+'{display:flex;flex-direction:column;height:3px;width:100%;position:relative;margin-bottom:7px;}',

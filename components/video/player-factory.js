@@ -772,11 +772,14 @@ window.jxPromisePolyfill        = 'none';
                     // but that's not what they return leh.
                     if (track.height == 'auto') track = null;
                     // also setting memory in player Cfg Mgr !! BAD BAD
+                    //console.log(`### BEFORE setResolution ${JSON.stringify(_shakaPlayer.getConfiguration(), null, 2)}`);
+                    //console.log("--------->>>");
                     let cfg = _playerCfgMgr.getNewCfgMaybe(track ? track.height: 0);
                     _shakaPlayer.configure(cfg);
                     if (track) {
                         _shakaPlayer.selectVariantTrack(track, true);
                     }
+                    //console.log(`### AFTER setResolution ${JSON.stringify(_shakaPlayer.getConfiguration(), null, 2)}`);
                 },
                 getResolutions: function() {
                     // the active state is implicit
@@ -1113,7 +1116,7 @@ window.jxPromisePolyfill        = 'none';
         //if it starts playing
 
         function _onPlayheadUpdateCB() {
-            console.log(`##A ${_vid.currentTime}`);
+            
             if (_manualPaused) {
                 let diff1 = _vid.currentTime- this.lastPlayhead;
                 console.log(`##_ ${diff1} _onPlayheadUpdateCB setting manualPaused to false`);
@@ -1325,6 +1328,7 @@ window.jxPromisePolyfill        = 'none';
                 _contentDiv.appendChild(_logoDiv);
             }
         };
+        /*******
         var _createInfoIcon = function() {
             if (!_infoDiv) {
                 _infoDiv = common.newDiv(_contentDiv, "div", "<span>i</span>", styles.info);
@@ -1333,6 +1337,7 @@ window.jxPromisePolyfill        = 'none';
                 })
             }
         };
+        ********/
         var _createAdObjMaybe = function(makeNew) {
             if (!_adObject) {
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
@@ -1731,7 +1736,8 @@ window.jxPromisePolyfill        = 'none';
 
             _createControlsMaybe();
             _createLogoMaybe();
-            _createInfoIcon();
+            // Directed by Vincent to not show it for now
+            // _createInfoIcon();
             _ctrls.initVVisual(_videoMeta.thumbnail, function() {
                 _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
             });
@@ -1846,7 +1852,6 @@ window.jxPromisePolyfill        = 'none';
                 //this will set video.src = <THE STREAM URL>
                 return boundSetupNewVP(playbackMethod, srcHLS, srcFallback); //, offset, subTitles);
             }).then(function() {
-                console.log(`### STILL RESOLVED!!`);
                     _injectSubtitles();
                     _playerCfgMgr.changeVideo(_videoMeta.AR, _shakaPlayer);
                     if (_ctrls) {

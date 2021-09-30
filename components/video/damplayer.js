@@ -38,6 +38,9 @@ const IRThreshold_ = 0.5;
 
 
 function createObject_(options, ampIntegration) {
+    if (options.restrictions.maxwidth == 852) {
+        options.restrictions.maxwidth = 853;
+    }
     var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
     if (options.restrictions) {
         if (options.restrictions.maxheight > 0) 

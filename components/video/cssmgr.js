@@ -180,20 +180,17 @@ function walkUp_(node) {
 
 function getMainCtrId_(container) {
     if (_onlyContainer) {
-        console.log(`### YOU ARE THE ONLY ONE LOH ${_onlyContainer}`);
         return _onlyContainer;
     }
     if (typeof container == 'string')
         return container;
     else  {
-        console.log(`### NEED WALKING`);
         let parent = container;
         let times = 0;
         while(parent && times < 5) {
             times++;
             if( parent.nodeName === 'DIV' ) {
                 if (divId2HashCode_[parent.id]) {
-                    console.log(`### WALKING WAS GOOD`);
                     return parent.id;
                 }
             }

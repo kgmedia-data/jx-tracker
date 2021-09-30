@@ -229,7 +229,7 @@ const supported_ = [
         .pipe(gutil.noop())
   });
 
-  const videosdkjsfile_ = 'videosdk-v2renee';
+  const videosdkjsfile_ = 'videosdk-v2';
   gulp.task('BUILD_VIDEOSDK_BUNDLE', function() {
     let thefile = bundlessubfolder_ + videosdkjsfile_ + jsext_;
     return browserify(thefile, {

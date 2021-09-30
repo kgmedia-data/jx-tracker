@@ -45,11 +45,11 @@
     let coo = getParsedCk_(document);
     if (coo['_jx'] !== undefined) {
         ret.client_id = coo['_jx'];
-        console.log(`### FROM COOKIE1 ${ret.client_id}`);
+        //console.log(`### FROM COOKIE1 ${ret.client_id}`);
     }
     if (coo['_jxs'] !== undefined) {
         ret.sid = coo['_jxs'];
-        console.log(`### FROM COOKIE2 ${ret.sid}`);
+        //console.log(`### FROM COOKIE2 ${ret.sid}`);
     }
    }
    module.exports.get = get_;
