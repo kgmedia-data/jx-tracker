@@ -496,11 +496,13 @@ function createObject_(options, ampIntegration) {
         _vInfoMap = {};
         //TODO we start with some default values and then have the stuff merged with the user's wishes.
         //Some feeding of defaults:
+        // must be very careful...
+        // the only objects which it can work on are blabla...
          _options = JSON.parse(JSON.stringify(options)); //augmented if needed.
-        if (!_options.hasOwnProperty('container')) {
-            _options.container = '#body';
-         }
-         if (_options.container == "#body") {
+        //if (!_options.hasOwnProperty('container')) {
+          //  _options.container = '#body';
+         //}
+         if (_options.container == jxvhelper.getJxDocBodyId()) {
             _container = document.body;
          }
          else 

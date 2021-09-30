@@ -60,7 +60,7 @@ const player_fact                       = require('../components/video/player-fa
 modulesmgr.set('video/player-factory',  player_fact);
 
 // these we only use within this file, so dun bother
-const mids                              = require('../components/basic/ids');
+const mids                              = require('../components/basic/idslite');
 const createObject                      = require('../components/video/damplayer');
 
 const pginfo = mpginfo.get(); //basic pginfo we can get from the page.
@@ -83,7 +83,7 @@ function makePlayer(options) {
     options.controls = {};
   }
   //options.controls.font = 'Roboto';
-
+  //aiyo no need lah. just use the container ah.
   let hashStr = btoa(JSON.stringify(options));
   let instMaybe = instMap.get(hashStr);
   if (instMaybe) {
@@ -111,6 +111,9 @@ window.JX = {
       let canonUrl = metadata.canonicalUrl;
       options.pageurl = canonUrl;//augment
       jxvhelper.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
+      if (!options.container) {
+        options.container = jxvhelper.getJxDocBodyId();        
+      }
       return (makePlayer(options, ampIntegration));
   }
 };
