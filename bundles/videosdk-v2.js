@@ -71,8 +71,8 @@ const optionsObjNames_ = ['ads', 'controls', 'soundindicator', 'restrictions'];
 
 var instMap = new Map();   
 function makePlayer(options) {
-  //testing:
-  options.restrictions = {
+  
+  /* options.restrictions = {
     //maxheight: 240
     //maxwidth: 426
 
@@ -86,12 +86,17 @@ function makePlayer(options) {
     //maxwidth: 1280 
     //minheight: 360
   };
+  */
+ if (!options.restrictions) {
+   options.restrictions = {};
+ }
   // dangerous!!
   //options.autoplay = 'always';
   //options.sound = 'fallback';
   if (!options.controls) {
     options.controls = {};
   }
+  //options.controls.font = "Andalé Mono"; //Impact"; //Comic Sans MS"; //Arial";
   //options.controls.font = 'Roboto';
   //aiyo no need lah. just use the container ah.
   let hashStr = btoa(JSON.stringify(options));
