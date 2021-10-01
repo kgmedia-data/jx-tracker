@@ -193,7 +193,7 @@ function makeCssCustomControls_(css_, o) {
     '.'+css_.custBigPlayBtn+',.'+css_.custBigPauseBtn+'{font-size:5.5em;width:100%;height:100%;display:flex;justify-content:center;align-items:center;}',
     '.'+css_.botCtrl+' *{display:flex;align-items:center;color:'+o.buttonsColor+';}',
     '.'+css_.botCtrl+'{width:100%;justify-content:space-between;order:2;display:flex}',
-    '.'+css_.speedVal+',.'+css_.capVal+'{width:auto;height:auto;display:flex;justify-content:center;align-items:center;color:'+o.buttonsColor+';background: #ffffff5e;border-radius:2px;padding:3.5px;line-height:1;text-transform:none;font:normal normal bold 10px/11px '+o.font+' !important;letter-spacing:normal;}',
+    '.'+css_.speedVal+',.'+css_.capVal+'{width:auto;height:auto;display:flex;justify-content:center;align-items:center;color:'+o.buttonsColor+';background: #ffffff5e;border-radius:2px;padding:3.5px;line-height:1;text-transform:none;font:normal normal bold 10px/11px '+o.font+' !important;letter-spacing:normal;box-sizing:border-box;}',
     '.'+css_.volCtrl+'{display:flex;align-items:center;margin-right:10px;}',
     'input[type="range"].'+css_.volPanel+'{-webkit-appearance:none;width:70px;height:3px;background:rgba(255, 255, 255, 1);border-radius:3px;background-image:linear-gradient('+o.backgroundColor+', '+o.backgroundColor+');background-size:100% 100%;background-repeat:no-repeat;-webkit-tap-highlight-color:transparent;cursor:ew-resize;}',
     'input[type="range"].'+css_.volPanel+'::-webkit-slider-thumb{-webkit-appearance:none;height:10px;width:10px;border-radius:50%;background:#fff;'+
