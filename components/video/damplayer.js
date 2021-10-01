@@ -450,30 +450,26 @@ function createObject_(options, ampIntegration) {
         
     }
     function repairMissingOptions(options) {
-        if (!options.hasOwnProperty('muted') && !options.hasOwnProperty('sound')) {
-            options.sound = 'off';
-        }
         if (options.hasOwnProperty('muted')) {
-            // backward compatiability
+            // backward compatiable:
             options.sound = options.muted ? "off": "fallback";
+            delete options.muted;
         }
-
         //This is only for crucial properties that cannot be missing
         //a final options object. 
         //use a JSON to do it. Merging of defaults and supplied options:
-        if (options.ads && !options.ads.hasOwnProperty('prerolltimeout')) {
-            options.ads.prerolltimeout = 5000;
-        }
-        if (options.ads && !options.ads.hasOwnProperty('delay')) {
-            options.ads.delay = defaultAdDelay_;
-        }
-        if (!options.hasOwnProperty('autopause')) {
-            options.autopause = true;
-        }
-        if (!options.hasOwnProperty('autoplay')) {
-            options.autoplay = 'wifi';
-        }
-        
+        [   {sub:null, p:'autopause',d: true},
+		    {sub:null, p:'autoplay',d: "wifi"},
+		    {sub:null, p:'sound',d: "off"},
+            {sub:null, p:'starttime',d: -1}, //meaning let the mechanism works (cookie)
+		    {sub:'ads', p:'delay',d: defaultAdDelay_},
+		    {sub:'ads', p:'prerolltimeout',d: 5000},
+	    ].forEach(function(one) {
+		    o = one.sub? options[one.sub]: options;
+		    if (o && !o.hasOwnProperty(one.p)) {
+			    o[one.p] = one.d;
+		    }
+	    });
        
         if (window.IntersectionObserver) {
             _cfg.tryPlayPause = _options.autopause;
@@ -919,6 +915,7 @@ function createObject_(options, ampIntegration) {
         _vidFetchAcctId = idsAreInternal ? null : _options.accountid;
         _vidConfAcctId = _options.accountid;
         _forcePlatform = forcePlatform;
+        // 
         _startOffset = startOffset;
         
         //_initEventsHelpers(); 
@@ -1480,6 +1477,9 @@ function createObject_(options, ampIntegration) {
             }
             repairMissingOptions(_options);
             prepareAdsObj(_options);
+            //console.log(`<#########`);
+            //console.log(JSON.stringify(_options, null, 2));
+            //console.log(`#########>`);
             _pInst.setConfig(
                 _options.ads,
                 _options.logo, _options.soundindicator, _options.sound); //_options.sound (on, off, fallback)
@@ -1498,64 +1498,34 @@ function createObject_(options, ampIntegration) {
             //this is Jixie ID: real videos in our system
             srcHLS = vData.hls;
             srcFallback = vData.fallback;
-            if (vData.metadata) {
-                if (vData.metadata.thumbnails && vData.metadata.thumbnails.length > 0) {
-                    let currIdx = -1;
-                    let currWidth = 999999;
-                    //it should come from the restrictions in options also
-                    //here we might not have a size yet!!
-                    let wThreshold = _container.offsetWidth;
-                    // TODO SO SO SO SO STUPID. REWRITE IT AH
-                    //choose most suitable one:
-                    //it should come from the restrictions in options also
-                    //What if ... here we might not have a size yet!!
-                    if (!wThreshold) 
-                        wThreshold = (common.isMobile() ? 400: 640);  //or based off something else
-                    let arr = vData.metadata.thumbnails;
-                    for (i = arr.length-1; i >= 0; i--) {
-                        //if it is sufficiently acceptable in size:
-                        let w = (typeof arr[i].width == 'string' ? parseInt(arr[i].width): arr[i].width);
-                        if (w >= wThreshold && w < currWidth) {
-                            currIdx = i;
-                            currWidth = w;
-                        }
-                    }
-                    if (currIdx == -1) {
-                        //Most unlikely to come here lah!! this is super big threshold.
-                        //no choice choose the largest
-                        let largest = 1;
-                        for (i = arr.length-1; i >= 0; i--) {
-                            let w = (typeof arr[i].width == 'string' ? parseInt(arr[i].width): arr[i].width);
-                            if (w > largest) {
-                                largest = w;
-                                currIdx = i;
-                            }
-                        }
-                    }
-                    if (currIdx > -1) {
-                        thumbnailUrl = vData.metadata.thumbnails[currIdx].url;
-                    }
-                }//pick the most suitable 
+            // Now we try to pick a sensible thumbnail and hope the video area does not
+            // suddenly change drastically after we made the choice :)
+            let thresholdW = _container.offsetWidth;
+            //console.log("#### WHAT IS YOUR THRESHOLD ??? " + thresholdW);
+            if (!thresholdW)
+                thresholdW = (common.isMobile() ? 426: 640);  
+            let tnArr = vData.metadata.thumbnails;
+            if (tnArr && tnArr.length >=1) {
+	            //i. map to intermediate array with idx (in original thumbnails array) and width
+	            //ii. sort asc
+	            //iii. try to pick the first one which is big enough.
+            	let tmpA = tnArr.map((e, idx)=> ({idx: idx, w: e.width})).sort((a, b) => a.w-b.w); //tmpA is sorted with asc width.
+	            let found = tmpA.find((e) => e.w >= thresholdW);
+	            let idx = found ? found.idx : tmpA[tmpA.length-1].idx;
+	            thumbnailUrl = tnArr[idx].url;
+	            //console.log(thumbnailUrl);
+            }
+            if (!thumbnailUrl && vData.metadata.thumbnail)
+                thumbnailUrl = vData.metadata.thumbnail;
+        }
+        // _startOffset is what is from the API call (loadvideoBy*Id).
+        // if _startOffset 
+        //startOffset first priority, if nothing meaningful then options.starttime (it is repaired to have this setup property), if also not meaningful then
+        //get from cookie.
+        let offset = (_startOffset >= 0 ? _startOffset: ( options.starttime>=0 ? options.starttime: (jxvhelper.getVStoredPlayhead(_currVid))));
+        // make sure offset is not exceeding the video duration
+        offset = (offset > 0 ? (offset > vData.metadata.duration ? 0: offset): 0);
 
-                if (!thumbnailUrl && vData.metadata.thumbnail)
-                    thumbnailUrl = vData.metadata.thumbnail;
-                
-                
-            }
-        }
-        // if -1 means nothing fed from upstairs
-        let offset = (_startOffset == -1 ? jxvhelper.getVStoredPlayhead(_currVid): _startOffset);
-        if (offset < 0) {
-            offset = 0;
-        }
-        else if (offset) {
-            if (vData.metadata && vData.metadata.duration && !isNaN(vData.metadata.duration)) {
-                if (_startOffset > vData.metadata.duration) {
-                    console.log(`jxvideo : Start playhead offset (${_startOffset}) exceeds video duration (${vData.metadata.duration}). reset offset to 0`);
-                    offset = 0;
-                }
-            }
-        }
         _workoutStartModeOnce(vData.network);
         /////EASIER TO SEE: thumbnailUrl = 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/dummythumbnails/tn_corsproblem.png'; //vData.metadata.thumbnail;
         //This will always stick the thumbnail first.

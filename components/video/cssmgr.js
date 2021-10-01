@@ -72,13 +72,11 @@ function makeOptions_(options) {
     if (!options) {
         options = {};
     }
-    // the names of buttonsColor 
-    // backgroundColor and "color" :-( should be changed.
-    // the 'color' is referring to the ads controls...
-    o.buttonsColor = options.color || "#C0C0C0"; //silver //just for test . easier to tell.
-    o.backgroundColor = options.backgroundcolor || "#00FFFF"; //aqua     "#DFFF00"; // yellow
-    o.adsButtonsColor = options.adcolor || "#FF0000"; //"#FFA07A"; //light salmon
-    o.font = options.font || 'Roboto'; //'Dancing Script'; //'Quicksand'; //Roboto
+      
+    o.buttonsColor = options.color || "#FFFFFF"; 
+    o.backgroundColor = options.backgroundcolor || "#1B63D4"; 
+    o.adsButtonsColor = options.adcolor || "#FF0000"; 
+    o.font = options.font || 'Roboto'; 
     return o;
 }
 
