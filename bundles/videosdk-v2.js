@@ -96,12 +96,18 @@ function makePlayer(options) {
   if (!options.controls) {
     options.controls = {};
   }
+  //options.autoplay = 'none';
   //options.controls.font = "Andalé Mono"; //Impact"; //Comic Sans MS"; //Arial";
   //options.controls.font = 'Roboto';
   //aiyo no need lah. just use the container ah.
-  let hashStr = btoa(JSON.stringify(options));
-  let instMaybe = instMap.get(hashStr);
+  //let hashStr= btoa(JSON.stringify(options));
+  if (typeof options.container != 'string') {
+    console.log(`jxplayer: Integration error: options.container must be a div id (a string). Aborting`);
+    return;
+  }
+  let instMaybe = instMap.get(options.container);
   if (instMaybe) {
+      console.log(`jxplayer: Integration error: creating player instance on div id=${options.container} again. Aborting`);
       return;
   }
 
@@ -112,7 +118,7 @@ function makePlayer(options) {
 
   let playerInst = createObject(merged);
 
-  instMap.set(hashStr, playerInst);
+  instMap.set(options.container, playerInst);
   return playerInst;
 }
 

@@ -1477,6 +1477,9 @@ function createObject_(options, ampIntegration) {
             }
             repairMissingOptions(_options);
             prepareAdsObj(_options);
+            //console.log(`<#########`);
+            //console.log(JSON.stringify(_options, null, 2));
+            //console.log(`#########>`);
             _pInst.setConfig(
                 _options.ads,
                 _options.logo, _options.soundindicator, _options.sound); //_options.sound (on, off, fallback)
@@ -1495,8 +1498,10 @@ function createObject_(options, ampIntegration) {
             //this is Jixie ID: real videos in our system
             srcHLS = vData.hls;
             srcFallback = vData.fallback;
+            // Now we try to pick a sensible thumbnail and hope the video area does not
+            // suddenly change drastically after we made the choice :)
             let thresholdW = _container.offsetWidth;
-            console.log("#### WHAT IS YOUR THRESHOLD ??? " + thresholdW);
+            //console.log("#### WHAT IS YOUR THRESHOLD ??? " + thresholdW);
             if (!thresholdW)
                 thresholdW = (common.isMobile() ? 426: 640);  
             let tnArr = vData.metadata.thumbnails;
@@ -1507,13 +1512,12 @@ function createObject_(options, ampIntegration) {
             	let tmpA = tnArr.map((e, idx)=> ({idx: idx, w: e.width})).sort((a, b) => a.w-b.w); //tmpA is sorted with asc width.
 	            let found = tmpA.find((e) => e.w >= thresholdW);
 	            let idx = found ? found.idx : tmpA[tmpA.length-1].idx;
-	            thumbnailUrl = tnArr[idx];
-	            console.log(thumbnailUrl);
+	            thumbnailUrl = tnArr[idx].url;
+	            //console.log(thumbnailUrl);
             }
             if (!thumbnailUrl && vData.metadata.thumbnail)
                 thumbnailUrl = vData.metadata.thumbnail;
         }
-        // if -1 means nothing fed from upstairs
         // _startOffset is what is from the API call (loadvideoBy*Id).
         // if _startOffset 
         //startOffset first priority, if nothing meaningful then options.starttime (it is repaired to have this setup property), if also not meaningful then
@@ -1521,6 +1525,7 @@ function createObject_(options, ampIntegration) {
         let offset = (_startOffset >= 0 ? _startOffset: ( options.starttime>=0 ? options.starttime: (jxvhelper.getVStoredPlayhead(_currVid))));
         // make sure offset is not exceeding the video duration
         offset = (offset > 0 ? (offset > vData.metadata.duration ? 0: offset): 0);
+
         _workoutStartModeOnce(vData.network);
         /////EASIER TO SEE: thumbnailUrl = 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/dummythumbnails/tn_corsproblem.png'; //vData.metadata.thumbnail;
         //This will always stick the thumbnail first.
