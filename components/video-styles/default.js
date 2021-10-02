@@ -17,26 +17,46 @@ const allClasses = [
     "thumbnail"
 ];
 
-var css_ = {};
+function makeCssClsnames_(hash) {
+    var css_ = {};
+    allClasses.forEach(function(name) {
+      css_[name] = name + hash;
+    });
+    return css_;
+  }
+  
+  var spinnerColor    = '#000000';
+  
+  // css_ is object with css class names
+  // o currently 3 properties:
+  // {
+  //    adsbuttonsColor: dadada
+  //    backgroundColor: dadada
+  //    buttonsColor: dadada  
+  //}
+  // so this should produce a fully resolved string.
+  
+  function makeCssString_(css_, stylesSetName, o) {
+    if (stylesSetName == 'adControls') {
+        return makeCssAdControls_(css_, o);
+    }
+    if (stylesSetName == 'default') {
+      return makeCssDefault_(css_);
+    }
+    return '';
+  }
 
-allClasses.forEach(function(name) {
-  css_[name] = "jx"+name+ran;
-});
-
-let spinnerColor = '#000000';
-var controlsColor = '%%color%%';
-var stylesStrObj_ = {};
-
-    stylesStrObj_.adControls = [
+  function makeCssAdControls_(css_, o) {
+    return [
         //ad controls
         ".controls{height:100px;width:66px;margin-left:3px;position: absolute;bottom: 20px;left:5px;z-index:999;}",
         // Button play/pause CSS
         '.' + css_.adPlayBtn + ' {display: block;width: 0;height: 0;border-top: 10px solid transparent;border-bottom: 10px solid transparent;border-left: 12px solid ' +
-        controlsColor +
+        o.adsButtonsColor +
         ";margin: 5px 0px 10px 0px;position: relative;z-index: 1;transition: all 0.3s;-webkit-transition: all 0.3s;-moz-transition: all 0.3s;left: 10px;}",
 
         '.' + css_.adPlayBtn + ':before {content: "";position: absolute;top: -15px;left: -23px;bottom: -15px;right: -7px;border-radius: 50%;border: 2px solid ' +
-        controlsColor +
+        o.adsButtonsColor +
         ";z-index: 2;transition: all 0.3s;-webkit-transition: all 0.3s;-moz-transition: all 0.3s;}",
 
         '.' + css_.adPlayBtn + ':after {content: "";opacity: 0;transition: opacity 0.6s;-webkit-transition: opacity 0.6s;-moz-transition: opacity 0.6s;}',
@@ -46,19 +66,19 @@ var stylesStrObj_ = {};
         '.' + css_.adPlayBtn + '.active {border-color: transparent;}',
 
         '.' + css_.adPlayBtn + '.active:after {content: "";opacity: 1;width: 10px;height: 16px;position: absolute;left: -16px;top: -8px;border-color: ' +
-        controlsColor +
+        o.adsButtonsColor +
         "; border-style: double; border-width: 0px 0 0px 15px;}",
         
         // speaker
         '.' + css_.adMuteBtn + ' {height: 30px;width: 30px;position: relative;overflow: hidden;display: inline-block;}',
         '.' + css_.adMuteBtn + ' span {pointer-events: none; display: block;width: 8px;height: 8px;background: ' +
-        controlsColor +
+        o.adsButtonsColor +
         ";margin: 11px 0 0 2px;}",
         '.' + css_.adMuteBtn + ' span:after {content: "";position: absolute;width: 0;height: 0;border-style: solid;border-color: transparent ' +
-        controlsColor +
+        o.adsButtonsColor +
         " transparent transparent;border-width: 10px 14px 10px 15px;left: -13px;top: 5px;box-sizing: unset;}",
         '.' + css_.adMuteBtn + ' span:before {transform: rotate(45deg);border-radius: 0 50px 0 0;content: "";position: absolute;width: 5px;height: 5px;border-style: double;border-color: ' +
-        controlsColor +
+        o.adsButtonsColor +
         ";border-width: 7px 7px 0 0;left: 18px;top: 9px;transition: all 0.2s ease-out;box-sizing: unset;}",
         '.' + css_.adMuteBtn +':hover span:before {transform: scale(0.8) translate(-3px, 0) rotate(42deg);}',
         '.' + css_.adMuteBtn +'.mute span:before {transform: scale(0.5) translate(-15px, 0) rotate(36deg);opacity: 0;}',
@@ -68,9 +88,10 @@ var stylesStrObj_ = {};
         '.' + css_.adProg + '> span:after {content: "";position: absolute;top: 0;left: 0;bottom: 0;right: 0;z-index: 1;-webkit-background-size: 50px 50px;-moz-background-size: 50px 50px;background-size: 50px 50px;-webkit-border-top-right-radius: 8px;-webkit-border-bottom-right-radius: 8px;-moz-border-radius-topright: 8px;-moz-border-radius-bottomright: 8px;' +
                 'border-top-right-radius: 8px;border-bottom-right-radius: 8px;-webkit-border-top-left-radius: 20px;-webkit-border-bottom-left-radius: 20px;-moz-border-radius-topleft: 20px;-moz-border-radius-bottomleft: 20px;border-top-left-radius: 20px;border-bottom-left-radius: 20px;overflow: hidden;}'
     ].join("\n");
+}
 
-   
-    stylesStrObj_.default = [
+function makeCssDefault_(css_) {
+    return [
                 '.' + css_.spinner + ' {width: 80px;height: 80px;position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2;}',
                 '.' + css_.spinner + ':after {content: " ";display: block;width: 64px;height: 64px;margin: 8px;border-radius: 50%;border: 6px solid '+spinnerColor+';border-color: '+spinnerColor+' transparent '+spinnerColor+' transparent;animation: '+css_.spinner+' 1.2s linear infinite;}',
                 '@-webkit-keyframes ' + css_.spinner + '{0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}',
@@ -98,14 +119,7 @@ var stylesStrObj_ = {};
         '.' + css_.icon + '.bottom-right {bottom:0;right:0;}',
         '.' + css_.icon + '.bottom-left {bottom:0;left:0;}',
     ].join("\n");
-
-function makeCls_() {
-    return css_;
-}
-function makeStyles_() {
-    return stylesStrObj_;
 }
 
-
-module.exports.makeCls = makeCls_;
-module.exports.makeStyles = makeStyles_;
+module.exports.makeCssClsnames = makeCssClsnames_;
+module.exports.makeCssString = makeCssString_;

@@ -10,9 +10,6 @@ const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
 const MakeOnePlayerCfgMgr       = modulesmgr.get('video/playercfgmgr-factory');
      
-const msPlayAttributeThreshold_     = 1000;
-const msPauseAttributeThreshold_    = 1000;
-    
 
 const defaultPBMethod_          = 'shaka';
 const defaultVolume_            = 0.5;
@@ -168,7 +165,7 @@ window.jxPromisePolyfill        = 'none';
         var _boundOnFullScreenCB = null;
         var _boundVolumeChangedCB = null;
         var _boundShakaOnErrorCB = null;
-        var _boundSizeManagerFcn = null;
+        
         //----->
 
         
@@ -189,7 +186,6 @@ window.jxPromisePolyfill        = 'none';
         function FactoryPlayerWrapper(container) {
             //one off init: the synchronous stuff.
             _container = container;
-            _boundSizeManagerFcn = sizeManagerFcn.bind({ lastwidth: _container.offsetWidth, lastheight: _container.offsetHeight, container: _container });
             _spinner = MakeOneSpinner(container);
                 let r = Math.floor(Math.random() * 1000); 
                 if(!_vid) {
@@ -550,10 +546,10 @@ window.jxPromisePolyfill        = 'none';
                     _ctrls.showCtrl();
                 },
                 onAdPlaying: function() {
-                    _detectManualPlayOrPause('playing');
+                    // nothing to do anymore
                 },
                 onAdPause: function() {
-                    _detectManualPlayOrPause('pause');
+                    // nothing to do anymore
                 }
             };
         };
@@ -889,8 +885,6 @@ window.jxPromisePolyfill        = 'none';
             }
 
             if (param.type == 'pause') {
-
-                _detectManualPlayOrPause('pause');
                 
                 if (_state == 'ad') {
                     //console.log("__debug_ no need report this pause which is due to IMA sdk telling us to pause the content");
@@ -941,7 +935,6 @@ window.jxPromisePolyfill        = 'none';
                 console.log(`##_ _onPlayingCB setting manualPaused to false`);
             }
             _manualPaused = false;//well it already is playing. erase history.
-            _detectManualPlayOrPause('playing');
 
             if (_ctrls) {
                 _ctrls.setPlayBtn();
@@ -980,73 +973,12 @@ window.jxPromisePolyfill        = 'none';
             
             _updatePlayState(true);
   
-            /* Not used coz we just use native controls
-               in any case this seems rather inefficient why make 2 calls like that?!
-            if(!_vid.muted) {
-                _ctrls.setBtnMuteActive(false);
-                _ctrls.updateMutedState(false);
-            } else {
-                _ctrls.setBtnMuteActive(true);
-                _ctrls.updateMutedState(true);
-            }
-            */
             if (_startSignalledResolveFcns.length > 0) {
                 _resolveStartSignalled();
                 return; //we go the init path first
             }
         };
         
-        function _detectManualPlayOrPause(action) {
-            if (action == 'playing') {
-                //after the ad it will also start ah.
-                //console.log(`Debug___ Hmmm, it starts to play ${_accumulatedTime}`);
-                //need to set the accumulated time criteria else the bootstrapping initial play
-                //if you try to make it not muted, it will fail and then the whole thing will be paused!
-
-                //NOTE: 20210707 comment: I am disabling this code now coz it is causing problems.
-                //Scenario:
-                //Buffering so play was paused and then later then is an onPlaying cb being triggered.
-                //So since so far we do not track buffering, sdk only know that the onPLaying is not attributable
-                //to our own visiblity mechanism (_msLastInternalCallPlay) so it infers that it is user
-                //intention. So we here turn on the sound.
-                //Now if it is actually a buffering and if the user had not interacted with the video
-                //before, this play resumption will fail and the video will just stop
-
-                /* COMMENTED OUT FOR NOW!!!
-                if (_accumulatedTime > 1 && Date.now() - _msLastInternalCallPlay > msPlayAttributeThreshold_) { // get the difference between last saved timestamp and current timestamp
-                    //console.log(`Debug___ Hmmm, it starts to play MUST BE USER INTENTIONAL (${Date.now() - _msLastInternalCallPlay})`);
-                    //the last internal trigger to play was too long ago. cannot explain this
-                    //play-start. This play start likely is due to user action:
-                    try {
-                        if (_state == 'ad') {
-                            if (_adObject)
-                                _adObject.unmuteAd();
-                        }
-                        else { 
-                            if (_vid.muted) _vid.muted = false; // if the video is muted, then we need to make it play unmuted
-                            //the sound indicator object (if present), will go away soon (logic in the playheadCB)
-                            //then it is a clean disappearance 
-                            
-                        }
-                    } catch (error) {
-                        //console.log('_onPlayingCB exception', error)
-                    }
-                }*/
-            }
-            else {
-                //console.log(`Debug___ Hmmm, it starts to PAUSE ${_accumulatedTime}`);
-                /* disable for now
-                coz this apparently can be triggered via buffering!!
-                buffering is not manual pause!!
-
-                if (Date.now() - _msLastInternalCallPause > msPauseAttributeThreshold_) { // get the difference between last saved timestamp and current timestamp
-                    //the last internal trigger to pause was too long ago. cannot explain this pause
-                    //This pause likely is due to user action:
-                    //console.log(`Debug___ Hmmm, it starts to pause MUST BE USER INTENTIONAL (${Date.now() - _msLastInternalCallPause})`);
-                    _manualPaused = true;
-                }*/
-            }
-        }
        
         /**
          * Function to manage the countdown strip
@@ -1078,20 +1010,7 @@ window.jxPromisePolyfill        = 'none';
             //3,
             '25pct'
         ];
-        
-       //this function will be bound.
-       //if it detected the container DIM has changed since the last time it was called
-       //(remember in the "this" object), then it will return an object.
-        function sizeManagerFcn(mustReturnObj = false) {
-            if (mustReturnObj || (this.container.offsetWidth != this.lastwidth)) {
-                this.lastwidth = this.container.offsetWidth;
-                this.lastheight = this.container.offsetHeight;
-                return {width: this.container.offsetWidth, height: this.container.offsetHeight};
-            }
-            return null;
-
-        }
-
+       
         function _doPlayedPctEvent(playhead) {
             if (!_milestones) {
                 setupMilestones();
@@ -1346,7 +1265,7 @@ window.jxPromisePolyfill        = 'none';
             return _adObject;
         };
   
-        function _newAShakaPlayer(video, sizeMgrFcn) {
+        function _newAShakaPlayer(video) {
             shakaPlayer = new shaka.Player(video);
             let o = _playerCfgMgr.getNewCfgMaybe(0, true); //true as this is for init phase
             shakaPlayer.configure(o);
@@ -1387,7 +1306,7 @@ window.jxPromisePolyfill        = 'none';
                         //nothing much to do
                         resVal = 'native';
                     } else if(method == 'shaka') {
-                        _shakaPlayer = _newAShakaPlayer(_vid, _boundSizeManagerFcn);
+                        _shakaPlayer = _newAShakaPlayer(_vid);
                         resVal = 'shaka';
                     } else {
                         resVal = fallbackTech_;
@@ -1462,7 +1381,7 @@ window.jxPromisePolyfill        = 'none';
                     break;
                 case "shaka":
                     if (!_shakaPlayer) {
-                        _shakaPlayer = _newAShakaPlayer(_vid, _boundSizeManagerFcn);
+                        _shakaPlayer = _newAShakaPlayer(_vid);
                             //try only:
                             //https://shaka-player-demo.appspot.com/docs/api/shaka.extern.html#.AbrConfiguration
                             //https://shaka-player-demo.appspot.com/docs/api/shaka.extern.html#.PlayerConfiguration
@@ -1918,13 +1837,9 @@ window.jxPromisePolyfill        = 'none';
             })
             .finally(function(){
                 if (boundChainContextCheck()) {
-                    //console.log(`##### S_S_S_S_S_S_S                 FINALLY >>>>>`)
                     _isDeferPlayPauseCmd = false;
                     setTimeout(_flushPlayPauseCmds, 0);
                 }
-                //else {
-                  //  console.log(`##### S_S_S_S_S_S_S            (mismatch)  FINALLY >>>>>`)
-                //}
             });
             //-------HERE ENDS OUR INIT PHASE PROMISE CHAIN --------------------
         }

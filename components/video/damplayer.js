@@ -1474,12 +1474,11 @@ function createObject_(options, ampIntegration) {
                 //combine the config from server and client side into 1 and then set to the whatever wrapper.
                 _options = merge2(_options, 
                     vData.conf && typeof vData.conf === 'object' ? vData.conf:{} , nestedProp_, nestedProp2_);
+
             }
             repairMissingOptions(_options);
+            
             prepareAdsObj(_options);
-            //console.log(`<#########`);
-            //console.log(JSON.stringify(_options, null, 2));
-            //console.log(`#########>`);
             _pInst.setConfig(
                 _options.ads,
                 _options.logo, _options.soundindicator, _options.sound); //_options.sound (on, off, fallback)
@@ -1533,7 +1532,7 @@ function createObject_(options, ampIntegration) {
         //for it to be resolved before it stick the HLS source into the <video> object
         //Reason is to save $. Coz vid.src = <HLS URL> will cause some segment loading
         //Here, _lazyStartProm will only be resolved when the video container gets sufficiently near to the viewport
-        let testsubtitles = [
+        /* let testsubtitles = [
             {
                 "language": "en",
                 "url": "https://creatives.jixie.media/demo/assets/srt/freeguyen.srt",
@@ -1546,7 +1545,7 @@ function createObject_(options, ampIntegration) {
                 "label": "Bahasa",
                 "mime": "text/srt"
             }
-        ]
+        ]*/
         _pInst.setV(
             _lazyStartProm,
             _currVid, _cfg.startModePW, (downgrade == fallbackTech_ ? null : srcHLS),
@@ -1556,9 +1555,9 @@ function createObject_(options, ampIntegration) {
                 duration: vData.metadata.duration,
                 offset: offset,
                 title: vData.metadata.title,
-                subtitles : testsubtitles,
-                thumbnails: [thumbnailUrl], //todo
-                thumbnail: thumbnailUrl //todo
+                subtitles : [], //testsubtitles,
+                thumbnails: [thumbnailUrl], 
+                thumbnail: thumbnailUrl 
             });
 
         //setV will kick off a whole "promise chain" thing waiting for one thing
