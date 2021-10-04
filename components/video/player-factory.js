@@ -1084,6 +1084,10 @@ window.jxPromisePolyfill        = 'none';
                     _soundIndObj.setRemainingTime(_vid.duration - currentTime);
                 }
             }
+
+            if (_ctrls) {
+                _ctrls.videoMetaReady(_vid);
+            }
             // FOR DEBUGGING ONLY
             // if (_shakaPlayer) console.log('Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height);
             this.spacer10++; 
@@ -1773,9 +1777,6 @@ window.jxPromisePolyfill        = 'none';
             }).then(function() {
                     _injectSubtitles();
                     _playerCfgMgr.changeVideo(_videoMeta.AR, _shakaPlayer);
-                    if (_ctrls) {
-                        _ctrls.videoMetaReady(_vid);
-                    }
                     //Video is ready (metadataloaded) to be played so remove the loading spinner
                     if (!boundChainContextCheck()) {
                         throw new Error("shortcircuit");
