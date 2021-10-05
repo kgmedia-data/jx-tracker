@@ -540,10 +540,13 @@ window.jxPromisePolyfill        = 'none';
                             //alert(e);
                         })
                     }
-                    if (_soundIndObj)
-                        _soundIndObj.showMaybe();
+
+                    //overlaysChanged
+                    //if (_soundIndObj)
+                      //  _soundIndObj.showMaybe();
                     //then the state will be set to content in the onPlayingCB....
                     _ctrls.showCtrl();
+                    _ctrls.overlaysChanged(); 
                 },
                 onAdPlaying: function() {
                     // nothing to do anymore
@@ -698,10 +701,10 @@ window.jxPromisePolyfill        = 'none';
                 reportClickToStart: function() {
                     _gestureReportCB(startModeSDKClick_, _defaultReportInfoBlob);
                 },
-                cbHoverControls: function(visible) {
+                onCtrlsVisChange: function(controlsVis) {
                     if (_soundIndObj && _cfg.soundind && _cfg.soundind.position.indexOf('bottom') > -1) {
-                        if (visible) _soundIndObj.hideMaybe(); else _soundIndObj.showMaybe();
-                    } 
+                        if (controlsVis) _soundIndObj.hideMaybe(); else _soundIndObj.showMaybe();
+                    }
                 },
                 // functions to carry out imperative commands:
                 showSpinner: function() {
@@ -721,7 +724,6 @@ window.jxPromisePolyfill        = 'none';
                     _playVideo();
                 },
                 pause: function() {
-                    console.log(`##### PAUSE LAH!!!`);
                     _manualPaused = true;
                     _pauseVideo();
                 },
@@ -1068,6 +1070,8 @@ window.jxPromisePolyfill        = 'none';
                         _playVideo();
                     }
                 });
+                //console.log(`trigger it ####`);
+                _ctrls.overlaysChanged();
             }
             else if (this.soundind == 'during' && _soundIndObj) {
 
@@ -1083,10 +1087,6 @@ window.jxPromisePolyfill        = 'none';
                 else {
                     _soundIndObj.setRemainingTime(_vid.duration - currentTime);
                 }
-            }
-
-            if (_ctrls) {
-                _ctrls.videoMetaReady(_vid);
             }
             // FOR DEBUGGING ONLY
             // if (_shakaPlayer) console.log('Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height);
@@ -1777,6 +1777,9 @@ window.jxPromisePolyfill        = 'none';
             }).then(function() {
                     _injectSubtitles();
                     _playerCfgMgr.changeVideo(_videoMeta.AR, _shakaPlayer);
+                    if (_ctrls) {
+                        _ctrls.videoMetaReady(_vid);
+                    }
                     //Video is ready (metadataloaded) to be played so remove the loading spinner
                     if (!boundChainContextCheck()) {
                         throw new Error("shortcircuit");

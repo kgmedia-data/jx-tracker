@@ -85,6 +85,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var _videoObj = null;
   var _waitingOnBigPlayBtnStart = false;
 
+  var _ctrlsVis = false; //floating controls visibile or not. weneed to keep the state unfortunately
+
   // Big play button:
   // at the start, if it is click-to-play, or autoplay was not successful, the
   // bigplay button will be shown there (without all the other little ding-dong
@@ -153,6 +155,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   // these concerns those items which will be recreated for each video as video changes
   // in the player instance:
   FactoryOneCustomControls.prototype.reset = function () {
+    _ctrlsVis = false;
     _waitingOnBigPlayBtnStart = false;
     // then the thing is gone then
     /* if (_thumbnailImg) {
@@ -233,17 +236,25 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     // if (!_vectorFcn.isPaused()) {
     //   _bigPlayBtn.classList.remove(className);
     // }
-    if (_vectorFcn.cbHoverControls) _vectorFcn.cbHoverControls(true);
+    _ctrlsVis = true;
+    if (_vectorFcn.onCtrlsVisChange) _vectorFcn.onCtrlsVisChange(true);
+  }
+
+  FactoryOneCustomControls.prototype.overlaysChanged= function(){
+    setTimeout(function(){
+      if (_vectorFcn.onCtrlsVisChange) _vectorFcn.onCtrlsVisChange(_ctrlsVis);
+    }, 0);
   }
 
   function _hideAll(className) {
+    _ctrlsVis = false;
     elmArr.forEach(function(x) {
       if (x) x.classList.add(className);
     });
     // if (!_vectorFcn.isPaused()) {
     //   _bigPlayBtn.classList.add(className);
     // }
-    if (_vectorFcn.cbHoverControls) _vectorFcn.cbHoverControls(false);
+    if (_vectorFcn.onCtrlsVisChange) _vectorFcn.onCtrlsVisChange(false);
   }
   
   function _bigPlayClickCB(evtOjectMaybe) {
