@@ -70,6 +70,7 @@ window.jxPromisePolyfill        = 'none';
         /**
          * "PRIVATE" variables :-) using closure.
          */
+        var _forceAutoplayWithSound = false; 
         var _nextAdSlotTime = 999999;
         var _currToken = null;
         var _isConfigSet = false;
@@ -160,6 +161,7 @@ window.jxPromisePolyfill        = 'none';
         var _boundOnErrorCB = null;
         var _boundOnPlayheadUpdateCB = null;
         var _boundOnPlayingCB = null;
+        // var _boundOnClickCB = null;
         var _boundOnPausedCB = null;
         var _boundOnFullScreenCB = null;
         var _boundVolumeChangedCB = null;
@@ -443,7 +445,7 @@ window.jxPromisePolyfill        = 'none';
         }
         FactoryPlayerWrapper.prototype.setConfig = function(
             adsCfg, //the tags are also inside this obj: adtagurl and adtagurl2
-            logoCfg, soundIndCfg = null) {
+            logoCfg, soundIndCfg = null, mute = true) {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
             _adScheduler = MakeOneAdScheduler(_cfg.ads);
@@ -451,7 +453,10 @@ window.jxPromisePolyfill        = 'none';
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
-        }
+            if (!mute) {
+                _forceAutoplayWithSound = true;
+            }
+        }   
         var _hide = function() {
             _contentDiv.classList.add(hideCls);
         };
@@ -716,7 +721,10 @@ window.jxPromisePolyfill        = 'none';
                 },
                 setVideoPlayhead: function(time) {
                     _vid.currentTime = time;
-                }
+                },
+                isPaused: function() {
+                    return _vid.paused;
+                },
             };
             return fcnVector;
         };
@@ -789,6 +797,7 @@ window.jxPromisePolyfill        = 'none';
                         _reportCB('toplayer', param.type, _makeCurrInfoBlob(this.videoid));
                 }
             }
+            //_ctrls.showBigPlayBtn();
 
             _updatePlayState(false);
         };
@@ -1045,13 +1054,15 @@ window.jxPromisePolyfill        = 'none';
                     //the dim of the video area has changed since we last checked:
                     if (newDim) {
                         let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-                        _shakaPlayer.configure({
-                            abr: {
-                                restrictions: {
-                                    maxHeight: maxH
+                        if (maxH > 0) {
+                            _shakaPlayer.configure({
+                                abr: {
+                                    restrictions: {
+                                        maxHeight: maxH
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                 }
                 catch(ee){}
@@ -1112,7 +1123,7 @@ window.jxPromisePolyfill        = 'none';
                 }
                 if (_accumulatedTime - this.lastReportAccTime > 10) {
                     this.lastReportAccTime = _accumulatedTime;
-                    _playheadCB(_accumulatedTime);
+                    _playheadCB(currentTime);
                 }
                 this.lastPlayhead = currentTime;
             }
@@ -1129,6 +1140,8 @@ window.jxPromisePolyfill        = 'none';
             _boundOnPlayheadUpdateCB = null;
             if (_boundOnPlayingCB) _vid.removeEventListener('playing', _boundOnPlayingCB);
             _boundOnPlayingCB = null;
+            // if (_boundOnClickCB) _vid.removeEventListener('click', _boundOnClickCB);
+            // _boundOnClickCB = null;
             if (_boundOnPausedCB) _vid.removeEventListener('pause', _boundOnPausedCB);
             //NEED MAH if (_boundOnPausedCB) _vid.removeEventListener('waiting', _boundOnPausedCB);
             _boundOnPausedCB = null;
@@ -1144,6 +1157,7 @@ window.jxPromisePolyfill        = 'none';
             /////_unRegisterEventListener();
             let saved = _videoID;
             _boundOnPlayingCB = _onPlayingCB.bind({videoid: saved});
+            // _boundOnClickCB = _onVideoClickCB.bind({videoid: saved});
             _boundOnPausedCB = _onPausedCB.bind({videoid: saved});
             _boundOnPlayheadUpdateCB = _onPlayheadUpdateCB.bind({
                 soundind: _cfg.soundind? 'before': null,
@@ -1155,6 +1169,7 @@ window.jxPromisePolyfill        = 'none';
             //_onVolumeChangedCB is now done only after the play has started.
             //to avoid any setting of volume by the SDK triggering any volume tracker event
 
+            // if (common.isMobile()) _vid.addEventListener('touchstart', _boundOnClickCB, false);
             _vid.addEventListener('playing', _boundOnPlayingCB, false);
             _vid.addEventListener('pause', _boundOnPausedCB, false);
             //NEED MAH ? _vid.addEventListener('waiting', _boundOnPausedCB, false);
@@ -1167,6 +1182,13 @@ window.jxPromisePolyfill        = 'none';
             
 
         };
+        // function _onVideoClickCB() {
+        //     if (_vid.paused) {
+        //         _playVideo();
+        //     } else {
+        //         _pauseVideo();
+        //     }
+        // }
         var _createSoundIndMaybe = function() {
             //a configuration exists
             if (!_soundIndObj) {
@@ -1200,19 +1222,22 @@ window.jxPromisePolyfill        = 'none';
             shakaPlayer = new shaka.Player(video);
             let newDim = sizeMgrFcn(true);//true means force return an object whether there was a change or not
             let maxHeight2Req = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-            shakaPlayer.configure({
+            let o = {
                 streaming: {
                     useNativeHlsOnSafari: false,
                     bufferingGoal: 5
                 },
                 abr: {
-                    defaultBandwidthEstimate: 200000,
-                    switchInterval: 5,
-                    restrictions: {
-                        maxHeight: maxHeight2Req
-                    }
+                    switchInterval: 5
                 }
-            });
+            };
+            if (maxHeight2Req > 0) {
+                o.abr.defaultBandwidthEstimate = 200000;
+                o.abr.restrictions = {
+                    maxHeight: maxHeight2Req
+                }
+            }
+            shakaPlayer.configure(o);
             return shakaPlayer;       
         }                  
         /**
@@ -1348,25 +1373,61 @@ window.jxPromisePolyfill        = 'none';
                 return Promise.resolve(startModePWClick_);
             }
             return new Promise(function(resolve) {
+                // the _vid is actually following the whatever setting.
+                // whatever it was _vid.muted = false;
+                console.log(`attempt start play with video.muted=${_vid.muted}`);
                 let playInnerProm = _vid.play();
                 if (playInnerProm !== undefined) {
                     playInnerProm
                     .then(function(){
+                        console.log(`attempt start play succeeded with video.muted=${_vid.muted}`);
                         if (pauseForAd) {
                             _vid.pause();
                         }
                         resolve('apistarted'); //already started 
+                        return;
                     })
                     .catch(function(e) {
-                        console.log(e);
-                        resolve(startModePWClick_);
+                        console.log(`attempt start play failed with video.muted=${_vid.muted} (${e})`);
+                        if (_vid.muted) {
+                            // if just now that attempt was WITH sound, then now we can try 
+                            // without sound.
+                            // if already just now was without sound, then now we just stick
+                            // up the big play button.
+                            resolve(startModePWClick_);
+                            return;
+                        }
+                        // second attempt: sound off:
+                        _vid.muted = true;
+                        let playProm2 = _vid.play();
+                        if (playProm2 !== undefined) {
+                            playProm2.then(function() {
+                                console.log(`attempt start play succeeded with video.muted=${_vid.muted}`);
+                                if (pauseForAd) {
+                                    _vid.pause();
+                                }
+                                resolve('apistarted'); //already started 
+                                return;
+                            }).catch(function(ee) {
+                                console.log(`attempt start play failed with video.muted=${_vid.muted} ${ee}`);
+                                resolve(startModePWClick_);
+                                return;
+                            });
+                        }
+                        else {
+                            resolve(startModePWClick_);
+                            return;
+                        }
                     })
                 }
                 else {
                     resolve(startModePWClick_);
                 }    
             }); //promise
+            return;
         }
+
+       
 
         /**
          * Short function returning a promise used in the starting phase of a new content video
@@ -1393,6 +1454,8 @@ window.jxPromisePolyfill        = 'none';
                 //then just kan ta killed . i.e. switch to a new video
                 //then the promise chain how?
                 //then it will never resolve loh then just a dangling thing.
+                //it will need to call a resolve ah.
+                // to continue the promise chain ah.
                 _ctrls.showBigPlayBtn(resolve.bind(null, startModePWClick_), _thumbnailURL); 
             });
         }
@@ -1678,6 +1741,12 @@ window.jxPromisePolyfill        = 'none';
                         _vid.muted = _savedMuted;     
                         _savedVolume = _vid.volume;
                     }
+                    if (_forceAutoplayWithSound && _startModePW != startModePWClick_) {
+                        // coz only applies to first video.
+                        _vid.muted = false;
+                        _vid.volume = 0.5;
+                    }
+                    _forceAutoplayWithSound = false;
                     //start vis setup. wait for the signal from intersection observation etc
                     return startSignalledProm; //not the global var one ah. THIS one
             })

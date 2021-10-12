@@ -80,6 +80,7 @@ var stylesStrObj_ = {};
             '.' + commonBigPlayBtnCls + ':before {content: "";position: absolute;top: -75px;left: -115px;bottom: -75px;right: -35px;border-radius: 50%;border: 10px solid black;z-index: 2;transition: all 0.3s;-webkit-transition: all 0.3s;-moz-transition: all 0.3s;}',
     
         '.' + contentDivCls + ',.' + adDivCls + ',.' + playerCls + ',.' + thumbnailCls + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: 1;}',
+        '.' + thumbnailCls + '{cursor: pointer;}',
         '.' + adControlsCls + ',.' + playerControlsCls + '{height: 32px;width: 66px;margin-left: 3px;position: absolute;bottom: 20px;left: 5px;z-index: 999;}',
         '.' + hideCls + '{display: none;}',
         '.' + adHideCls + '{visibility: hidden;}',

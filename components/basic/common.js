@@ -74,7 +74,7 @@ function MakeOneHelperObj_() {
     FactoryOneHelper.prototype.acss = function(stylesStr, id) {
         _acss(stylesStr, id);
     }
-
+    
     function _acss(stylesArr, id) {
         var head = document.getElementsByTagName('HEAD')[0];
         var s = document.createElement("style");
