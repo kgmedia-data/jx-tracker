@@ -537,7 +537,20 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
         catch(e) {}
         if (node && node == this.divObjs.jxCoreElt) {
-            fireTracker(this.trackers, 'click'); 
+            let fire = false;
+            let tsNow = Date.now();
+            if (this.lastFired) {
+                //else sometimes there will be 2:
+                if (tsNow - this.lastFired > 3000) {
+                    fire = true;
+                }
+            }
+            else {
+                fire = true;
+            }
+            if (fire) {
+                this.lastFired = tsNow;
+            }
         }
     }
 
@@ -1761,11 +1774,11 @@ const thresholdDiff_ = 120;
                     default: //igeneric
                         //e.g. the famous cid=29
                         //srcUrl = o.bUrl.iother;
-                        //if it is SDK type, then need to talk to it.
+                        //if it is SDK type (cid=1403, for example), then need to talk to it.
                         //and this type need to fire creative View also
                         //and also need to self fire a hasad.
                         let url ;
-                        if (c.adparameters.jxeventssdk) {
+                        if (c.adparameters && c.adparameters.jxeventssdk) {
                             c.noclickevents = true;
                             url = c.url; //https://universal.jixie.io/iframe.1.1.html?'; //broker
                             sendTrackerActions = { creativeView: 1 };
