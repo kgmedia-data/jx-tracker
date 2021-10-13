@@ -229,9 +229,9 @@ const supported_ = [
         .pipe(gutil.noop())
   });
 
-  const videosdkjsfile_ = 'videosdk';
-  gulp.task('BUILD_VIDEOSDK_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + videosdkjsfile_ + jsext_;
+  const videosdkjsfile3_ = 'videosdk-v3';
+  gulp.task('BUILD_VIDEOSDKV3_BUNDLE', function() {
+    let thefile = bundlessubfolder_ + videosdkjsfile3_ + jsext_;
     return browserify(thefile, {
             debug: false
         })
@@ -243,7 +243,31 @@ const supported_ = [
             gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
         .pipe(gulpif(true, rename({
-            basename: outputprefix_ + videosdkjsfile_
+            basename: outputprefix_ + videosdkjsfile3_
+        })))
+        .pipe(gulpif(true, rename({
+            extname: '.min.js'
+        })))
+        .pipe(gulp.dest('dist'))
+        //.s3(config_aws, s3_options.dev)
+        .pipe(gutil.noop())
+  });
+
+  const videosdkjsfile2_ = 'videosdk';
+  gulp.task('BUILD_VIDEOSDKV2_BUNDLE', function() {
+    let thefile = bundlessubfolder_ + videosdkjsfile2_ + jsext_;
+    return browserify(thefile, {
+            debug: false
+        })
+        .bundle()
+        .pipe(source(thefile))
+        .pipe(buffer())
+        .pipe(gulpif(config.minify, minify()))
+        .on('error', function(err) {
+            gutil.log(gutil.colors.red('[Error]'), err.toString());
+        })
+        .pipe(gulpif(true, rename({
+            basename: outputprefix_ + videosdkjsfile2_
         })))
         .pipe(gulpif(true, rename({
             extname: '.min.js'
@@ -486,10 +510,17 @@ const whoGoesWhere = [{
         livefull: ""
     }, { 
         title: "Jixie video SDK",
-        src: videosdkjsfile_,
+        src: videosdkjsfile2_,
         signature: "window.JX.player and window.JX.ampplayer",
         //queue: not supported.
         livebase: "jxvideo2.1.min.js",
+        livefull: "https://scripts.jixie.io/jxvideo2.1.min.js"
+    }, { 
+        title: "Jixie video SDK v3",
+        src: videosdkjsfile3_,
+        signature: "window.JX.player and window.JX.ampplayer",
+        //queue: not supported.
+        livebase: "jxvideo.3.1.min.js",
         livefull: "https://scripts.jixie.io/jxvideo2.1.min.js"
     }, { 
         title: "Jixie video AD SDK (to replace jxvideo.1.3.min.js)",
@@ -505,7 +536,7 @@ const whoGoesWhere = [{
 function printWhoGoesWhere() {
     whoGoesWhere.forEach(function(oneEntry) {
         let floatSeg = (oneEntry.floatable ? '-floatable': '');
-        let devPath = `https://${config_aws.bucket}.s3-ap-southeast-1.amazonaws.com/${testFilesPath_}/${outputprefix_}${oneEntry.src}${floatSeg}.js`;
+        let devPath = `https://${config_aws.bucket}.s3-ap-southeast-1.amazonaws.com/${testFilesPath_}/${outputprefix_}${oneEntry.src}${floatSeg}.min.js`;
         let localName = `dist/bundles/${outputprefix_}` + oneEntry.src + 
             floatSeg + 
             '.min.js';
@@ -556,7 +587,8 @@ function printWhoGoesWhere() {
     'BUILD_JXRENDERER_BUNDLE', 
     'BUILD_HBRENDERER_BUNDLE', 
     'BUILD_OSM_BUNDLE',
-    'BUILD_VIDEOSDK_BUNDLE',
+    'BUILD_VIDEOSDKV2_BUNDLE',
+    'BUILD_VIDEOSDKV3_BUNDLE',
     'BUILD_VIDEOADSDK_BUNDLE',
     'BUILD_VIDEOADSDKSTANDALONE_BUNDLE', 
     'BUILD_ULITE_BUNDLE', 
@@ -569,7 +601,8 @@ function printWhoGoesWhere() {
     'BUILD_JXRENDERER_BUNDLE', 
     'BUILD_HBRENDERER_BUNDLE', 
     'BUILD_OSM_BUNDLE',
-    'BUILD_VIDEOSDK_BUNDLE',
+    'BUILD_VIDEOSDKV2_BUNDLE',
+    'BUILD_VIDEOSDKV3_BUNDLE',
     'BUILD_VIDEOADSDK_BUNDLE',
     'BUILD_VIDEOADSDKSTANDALONE_BUNDLE', 
     'BUILD_ULITE_BUNDLE', 

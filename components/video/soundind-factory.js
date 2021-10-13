@@ -88,7 +88,7 @@ const animationDelays = [
         }
         FactoryOneSoundIndicator.prototype.start = function(cb) {
             if (_soundInd) {
-                _soundInd.style.display = "table";
+                // _soundInd.style.display = "table";
                 _boundIndClicked = _indicatorClicked.bind(null, cb);
                 _soundInd.addEventListener('click', _boundIndClicked);
             }
@@ -144,10 +144,13 @@ const animationDelays = [
                 return  '.' + timeLeftCls +' .time-left-sound-bar:nth-of-type('+ (idx+1) +'){margin-left: '+obj.left+'px; animation-delay: '+obj.delay+'s;}';
             });
             let stylesArr = [
-                '.' + timeLeftCls +'{display:table;position:absolute;top:5px;right:10px;width: auto;height:auto;overflow:hidden;z-index:2;cursor:pointer;line-height:1.3;border-radius:5px;}',
+                '.' + timeLeftCls +'{display:none;position:absolute;top:5px;right:10px;width: auto;height:auto;overflow:hidden;z-index:2;cursor:pointer;line-height:1.3;border-radius:5px;}',
                 '.' + timeLeftCls +'.top-right{position:absolute;top:5px;right:10px;}',
                 '.' + timeLeftCls +'.top-left{position:absolute;top:5px;left:10px;}',
                 '.' + timeLeftCls +'.top{position:absolute;top:5px;left:50%;transform: translate(-50%, 0px);}',
+                '.' + timeLeftCls +'.bottom{position:absolute;top:unset;bottom:5px;left:50%;transform: translate(-50%, 0px);}',
+                '.' + timeLeftCls +'.bottom-left{position:absolute;top:unset;bottom:5px;left:10px;}',
+                '.' + timeLeftCls +'.bottom-right{position:absolute;top:unset;bottom:5px;right:10px;}',
                 '.' + timeLeftCls +'.no-text{padding:5px;}',
                 '.' + timeLeftCls +' .text-wrapper {text-align:center;font-size:12px;margin:0px 5px 0px 5px;font-weight:400;margin-top:-5px;font-family:Arial, Helvetica, sans-serif;}',
                 '.' + timeLeftCls +' .time-left-sound-bar {height: 5px;width: 5px;animation: '+timeLeftAnimationName+' 0.75s infinite ease;}',
@@ -250,10 +253,13 @@ const animationDelays = [
             });
             let stylesArr = [
                 //'.' + waveCls +'{display:table;justify-content:center;align-items:flex-start;position:absolute;top:5px;right:10px;width: auto;height:40px;overflow:hidden;background:'+bgColor+';z-index:2;cursor:pointer;}',
-                '.' + waveCls +'{display:table;position:absolute;top:5px;right:10px;width: auto;height:auto;overflow:hidden;z-index:2;cursor:pointer;line-height:1.3;border-radius:5px;}',
+                '.' + waveCls +'{display:none;position:absolute;top:5px;right:10px;width: auto;height:auto;overflow:hidden;z-index:2;cursor:pointer;line-height:1.3;border-radius:5px;}',
                 '.' + waveCls +'.top-right{position:absolute;top:5px;right:10px;}',
                 '.' + waveCls +'.top-left{position:absolute;top:5px;left:10px;}',
                 '.' + waveCls +'.top{position:absolute;top:5px;left:50%;transform: translate(-50%, 0px);}',
+                '.' + waveCls +'.bottom{position:absolute;bottom:5px;left:50%;transform: translate(-50%, 0px);}',
+                '.' + waveCls +'.bottom-left{position:absolute;top:unset;bottom:5px;left:10px;}',
+                '.' + waveCls +'.bottom-right{position:absolute;top:unset;bottom:5px;right:10px;}',
                 '.' + waveCls +'.no-text{padding:0 5px 5px;}',
                 // '.' + waveCls +'.top div,.' + waveCls +'.top-right div,.' + waveCls +'.top-left div{bottom:20px;}',
                 //'.' + waveCls +' span {text-align:center;font-size:12px;color: '+color+'}',
@@ -307,6 +313,9 @@ const animationDelays = [
             let color = config.color || defaultSoundIndColor;
             let bgColor = config.bgcolor || defaultSoundIndBgColor;
             _duration = defaultSoundIndDuration;
+
+            if (position.indexOf("bottom") > -1) showImmediately = false;
+
             if (!isNaN(config.duration)) {
                 _duration = parseInt(config.duration);
                 if (_duration < 0 ) {
@@ -329,8 +338,8 @@ const animationDelays = [
             else {
                 _soundInd = _makeTimeLeft(position, text, color, bgColor);
             }
-            container.appendChild(_soundInd);
             _soundInd.style.display = showImmediately ? "table": "none";
+            container.appendChild(_soundInd);
         }
         let ret = new FactoryOneSoundIndicator(container, config);
         return ret;
