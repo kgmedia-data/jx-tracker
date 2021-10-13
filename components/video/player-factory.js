@@ -693,6 +693,7 @@ window.jxPromisePolyfill        = 'none';
                 if (_adObject) _adObject.pauseAd();
             }
         }
+        
         //Currently not used much coz we are using the default controls
         //of HTML5 <video>
         var _makeFcnVectorForUI = function() {
@@ -715,7 +716,7 @@ window.jxPromisePolyfill        = 'none';
                 },
                 play: function() {
                     if (_manualPaused) {
-                        console.log(`##_ play setting manualPaused to false`);
+                        //console.log(`##_ play setting manualPaused to false`);
                     }
                     
                     _manualPaused = false;
@@ -781,6 +782,7 @@ window.jxPromisePolyfill        = 'none';
                 },
                 getResolutions: function() {
                     // the active state is implicit
+                    if (!_shakaPlayer) return;
                     let arr = _shakaPlayer.getVariantTracks();
                     if (arr) {
                         // a shaka thing:
@@ -933,9 +935,9 @@ window.jxPromisePolyfill        = 'none';
             return; //we go the init path first
         }
         function _onPlayingCB(param) {
-            if (_manualPaused) {
-                console.log(`##_ _onPlayingCB setting manualPaused to false`);
-            }
+            //if (_manualPaused) {
+                //console.log(`##_ _onPlayingCB setting manualPaused to false`);
+            //}
             _manualPaused = false;//well it already is playing. erase history.
 
             if (_ctrls) {
@@ -1040,7 +1042,7 @@ window.jxPromisePolyfill        = 'none';
             
             if (_manualPaused) {
                 let diff1 = _vid.currentTime- this.lastPlayhead;
-                console.log(`##_ ${diff1} _onPlayheadUpdateCB setting manualPaused to false`);
+                //console.log(`##_ ${diff1} _onPlayheadUpdateCB setting manualPaused to false`);
             }
             //_manualPaused = false;
             let currentTime = _vid.currentTime;
@@ -1090,7 +1092,10 @@ window.jxPromisePolyfill        = 'none';
             }
             // FOR DEBUGGING ONLY
             // if (_shakaPlayer) console.log('Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height);
-            this.spacer10++; 
+            if (this.spacer10 == -1) {
+                this.spacer10 = 10; //immediately
+            }
+            else this.spacer10++; 
             if (this.spacer10 == 10 && _shakaPlayer) {
                 let cfg = _playerCfgMgr.getNewCfgMaybe();
                 if (cfg) {
@@ -1198,7 +1203,7 @@ window.jxPromisePolyfill        = 'none';
             _boundOnPausedCB = _onPausedCB.bind({videoid: saved});
             _boundOnPlayheadUpdateCB = _onPlayheadUpdateCB.bind({
                 soundind: _cfg.soundind? 'before': null,
-                videoid: saved, spacer10: 0, lastReportAccTime: 0});
+                videoid: saved, spacer10: -1, lastReportAccTime: 0});
             _boundOnEndedCB = _onEndedCB.bind({videoid: saved});
             _boundOnErrorCB = _onErrorCB.bind({videoid: saved});
             _boundOnFullScreenCB = _onFullScreenChangeCB.bind({videoid: saved});

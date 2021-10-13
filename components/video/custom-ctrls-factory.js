@@ -179,6 +179,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _videoTitleDiv.removeChild(_videoTitle);
       _videoTitle = null;
     }
+    
+    _overlayQualityBtn = null;
+    _overlaySubtitleBtn = null;
+    
     _qualityOptions = [];
     _subtitleOptions = [];
     _qualitySelection = null;
@@ -681,6 +685,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _overlayVolumeBtn.setAttribute('data-title', 'Unmute');
       if (_overlayVolumeRange) _overlayVolumeRange.classList.add(styles.hide);
       _vectorFcn.mute(); //??
+      
     } else {
       if (volume > 0 && volume < 0.3) {
         _lowIcon.classList.remove(styles.hide);

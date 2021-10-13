@@ -64,7 +64,7 @@ const mids                              = require('../components/basic/idslite')
 const createObject                      = require('../components/video/damplayer');
 
 const pginfo = mpginfo.get(); //basic pginfo we can get from the page.
-const dbgVersion = 'v3.02';
+const dbgVersion = 'v3.03';
 pginfo.dbgVersion = dbgVersion;
 
 const optionsObjNames_ = ['ads', 'controls', 'soundindicator', 'restrictions'];
@@ -90,12 +90,12 @@ function makePlayer(options) {
  if (!options.restrictions) {
    options.restrictions = {};
  }
-  // dangerous!!
-  //options.autoplay = 'always';
-  //options.sound = 'fallback';
   if (!options.controls) {
     options.controls = {};
   }
+  // dangerous!!
+  //options.autoplay = 'always';
+  //options.sound = 'fallback';
   //options.autoplay = 'none';
   //options.controls.font = "Andalé Mono"; //Impact"; //Comic Sans MS"; //Arial";
   //options.controls.font = 'Roboto';

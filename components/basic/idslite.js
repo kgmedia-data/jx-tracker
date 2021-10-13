@@ -32,11 +32,11 @@
         let id =  ls.getItem('_jx');
         let sid = ls.getItem('_jxs');
         if (id) {
-            console.log(`### FROM LS1 ${id}`);
+            //console.log(`### FROM LS1 ${id}`);
             ret.client_id = id;
         }
         if (sid) {
-            console.log(`### FROM LS2 ${sid}`);
+            //console.log(`### FROM LS2 ${sid}`);
             ret.sid = sid;
         }
         if (id || sid) return ret;
