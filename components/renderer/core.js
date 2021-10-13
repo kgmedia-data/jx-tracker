@@ -1199,7 +1199,7 @@ const thresholdDiff_ = 120;
      function __handleScrollEvent(event, windowHeight = null, BCR = null) {
         //console.log(`windowHeight=${windowHeight} BCR=${BCR}`);
         let c = this.c;
-        if (!c.hasOwnProperty('creativeH')) {
+        if (!c.hasOwnProperty('creativeH') || !c.hasOwnProperty('containerH')) {
             //first time only.
             c.creativeH = c.height;
             c.containerH = c.fixedHeight;
