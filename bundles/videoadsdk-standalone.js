@@ -61,13 +61,15 @@ function makePlayer(containerId, adparameters, config = null, eventsVector = nul
     if (instMaybe) {
         return;
     }
-    let tmp = stylesSet.makeCls(containerId);
-    cssmgr.init(containerId, tmp, stylesSet.makeStyles(tmp));
+    //let tmp = stylesSet.makeCls(containerId);
+    //cssmgr.init(containerId, tmp, stylesSet.makeStyles(tmp));
+    cssmgr.init(containerId, stylesSet, {controls: {adcolor: '#FF0000'}}, []);
 
     let playerInst = createObject(containerId, adparameters, config, eventsVector);
     instMap.set(containerId, playerInst);
     return playerInst;
 }
+
 
 window.jxvideoadsdksal = 1;
 
