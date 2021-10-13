@@ -513,8 +513,6 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
             }
         }
         let simid = ((cr.url && cr.url.indexOf('simid') > -1) || cr.jxsimidurl);
-        console.log(`### ${cr.url} URL `);
-        console.log("kfdskfhdsjkfhjdsf ###")
         if (simid) {
             if (cr && cr.adparameters && cr.adparameters.loop) {
                 out.loop = cr.adparameters.loop;
@@ -527,6 +525,9 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
         }
         if (simid) {
             //simid cannot do the looply properly so THIS layer will handle it then.
+            //For normal vpaid Vincent says the "loop" executed by this sdk is not nice enough
+            // (I guess not seamless enough) so want the looping to still be carried out at
+            // the VPAID JS level.
             if (cr && cr.adparameters)
                 delete cr.adparameters.loop;
         }

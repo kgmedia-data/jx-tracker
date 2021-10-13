@@ -105,6 +105,14 @@
 
     //So now doing a lazy way - just to get by since we are only going
     //the 'reallyProgressed' is used in the resume pause code . just grep for it.
+    //if we are not 'reallyProgressed' at all. then hopefully thru the logic of calling 
+    //adsManager.pause() first, then adsManager.resume() the video ad can play
+
+    // The problem with the VPAID JS is. if the video cannot play, basically, nobody know
+    // there is a situation (no event, nothing). So can only HOPE the user will click click
+    // on the "confused" ads controls to hope to revive it. With this _reallyProgressed and if the
+    // video ads really cannot start, then ... the user press the play/pause button twice should make
+    // it play...
     var _reallyProgressed = false;
     var _knownCurrentTime = -1;
     
@@ -353,6 +361,9 @@
                         
 
                         if (!_reallyProgressed && adData.currentTime > 0) {
+                            //the adData.currentTime can be rubbish sometimes
+                            //before the ad starts, it can be e.g. 5, 15. So very strange.
+                            //before it then really starts from near 0 and go up.
                            if (_knownCurrentTime ==  -1) {
                                _knownCurrentTime = adData.currentTime;
                            }
