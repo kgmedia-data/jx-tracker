@@ -550,7 +550,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             }
             if (fire) {
                 this.lastFired = tsNow;
+                fireTracker(this.trackers, 'click');
             }
+
         }
     }
 
@@ -1864,10 +1866,6 @@ const thresholdDiff_ = 120;
                         else {
                             //DPA
                             out.adparameters = c.adparameters;
-                            if (c.url.indexOf('amazonaws.com') == -1) {
-                                c.url = c.url.replace(/index.min.html/g, "index.std-ulite.min.html");
-                                c.url = c.url.replace(/index.lt.min.html/g, "index.lt-ulite.min.html");
-                            }
                             if (c.scaling == 'creative') {
                                 //in the doSizeMgmt... it is possible
                                 //that the widht and height has changed:

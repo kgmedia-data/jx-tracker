@@ -217,10 +217,25 @@ function getOptions_(container) {
     return (divId2Options_[divId]);
 }
 
-function updateOptions_(container, newObj) {
-    let divId = getMainCtrId_(container);
-    if (!divId) return;
-    divId2Options_[divId] = newObj;
+function updateOptions_(container, deltaObj) {
+    //let divId = getMainCtrId_(container);
+    //if (!divId) return;
+    //divId2Options_[divId] = newObj;
+    let storedObj = getStoredObj_(container);
+    if (deltaObj && storedObj && storedObj.options) {
+        if (deltaObj.color) {
+            storedObj.options.buttonsColor = deltaObj.color;
+        }
+        if (deltaObj.backgroundcolor) {
+            storedObj.options.backgroundColor = deltaObj.backgroundcolor;
+        }
+        if (deltaObj.adcolor) {
+            storedObj.options.adsButtonsColor = deltaObj.adcolor;
+        }
+        if (deltaObj.font) {
+            storedObj.options.font = deltaObj.font;
+        }
+    }
 }
 
 
