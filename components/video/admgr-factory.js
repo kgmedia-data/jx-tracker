@@ -419,7 +419,6 @@
                 */
                 break;
             case google.ima.AdEvent.Type.STARTED:
-                console.log(`### STARTED EVENT CAME`);
                 if (_callOnceUponStarted) {
                     _callOnceUponStarted(ad, this.resolveFcn);
                 }
