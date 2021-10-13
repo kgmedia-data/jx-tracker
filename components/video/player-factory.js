@@ -8,10 +8,8 @@ const MakeOnePlayerControlsObjD = modulesmgr.get('video/ctrls-factory');
 const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
+const MakeOnePlayerCfgMgr       = modulesmgr.get('video/playercfgmgr-factory');
      
-const msPlayAttributeThreshold_     = 1000;
-const msPauseAttributeThreshold_    = 1000;
-    
 
 const defaultPBMethod_          = 'shaka';
 const defaultVolume_            = 0.5;
@@ -34,17 +32,10 @@ const remainSecEventsSeed_      = [15, 5, 2];
 
 const adCountdownSec_           = 3;
 const defaultCountDownToAdMsg   = "Ad starts in %%SECONDS%% s";
-const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
 const delayedSetOffsetPBMethods_ = [ fallbackTech_, "native"];
 
 const cssmgr                 = modulesmgr.get('video/cssmgr');
-const hideCls                = cssmgr.getRealCls('hideCls');
-const iconCls                = cssmgr.getRealCls('iconCls');
-const contentDivCls          = cssmgr.getRealCls('contentDivCls');
-const playerCls              = cssmgr.getRealCls('playerCls');
-
-
 
 const JXPlayerID                = "JXPlayer"; //Is purely internal stuff no need 
 
@@ -67,10 +58,17 @@ window.jxPromisePolyfill        = 'none';
      * @returns 
      */
      function MakePlayerWrapperObj_(container) {
+        const styles                 = cssmgr.getRealCls(container);
+
         /**
          * "PRIVATE" variables :-) using closure.
          */
+        var _playerCfgMgr = MakeOnePlayerCfgMgr(container);
+        var _videoMeta = {};
+        // these are for autoplay:
+        var _soundFallback = false;
         var _forceAutoplayWithSound = false; 
+        
         var _nextAdSlotTime = 999999;
         var _currToken = null;
         var _isConfigSet = false;
@@ -117,6 +115,7 @@ window.jxPromisePolyfill        = 'none';
          * GUI elements typically created once and just hidden when not needed:
          */
         var _logoDiv = null;
+        var _infoDiv = null;
         var _stripMessageDiv = null;
         var _stripMessage = defaultCountDownToAdMsg;
         //var _goOnModal = null;
@@ -166,8 +165,9 @@ window.jxPromisePolyfill        = 'none';
         var _boundOnFullScreenCB = null;
         var _boundVolumeChangedCB = null;
         var _boundShakaOnErrorCB = null;
-        var _boundSizeManagerFcn = null;
+        
         //----->
+
         
         var _cfg = {
             
@@ -186,7 +186,6 @@ window.jxPromisePolyfill        = 'none';
         function FactoryPlayerWrapper(container) {
             //one off init: the synchronous stuff.
             _container = container;
-            _boundSizeManagerFcn = sizeManagerFcn.bind({ lastwidth: _container.offsetWidth, lastheight: _container.offsetHeight, container: _container });
             _spinner = MakeOneSpinner(container);
                 let r = Math.floor(Math.random() * 1000); 
                 if(!_vid) {
@@ -197,8 +196,8 @@ window.jxPromisePolyfill        = 'none';
                     _contentDiv = common.newDiv(
                         _container,
                         "div",
-                        '<video class="' + playerCls + '" width="100%" height="100%" id="' + JXPlayerID + '-' + r + '" muted controls playsinline preload="' + preloadString + '"></video>',
-                        contentDivCls
+                        '<video class="' + styles.player + '" width="100%" height="100%" id="' + JXPlayerID + '-' + r + '" muted playsinline preload="' + preloadString + '"></video>',
+                        styles.cDiv
                     );
                     _vid = document.getElementById(JXPlayerID + '-' + r);
                 }
@@ -220,7 +219,10 @@ window.jxPromisePolyfill        = 'none';
             if (videoid && videoid != _videoID) { 
                 return null; 
             }
+            //It is coming from the properties videoWidth and videoHeight from the HTML5 player (the video part)
             return {
+                w: _vid.videoWidth,
+                h: _vid.videoHeight,
                 accutime: _accumulatedTime,
                 origtech: _pbMethod,
                 realtech: _pbMethodReal,
@@ -372,7 +374,7 @@ window.jxPromisePolyfill        = 'none';
             if (_ctrls)
                 _ctrls.reset();
             if (_stripMessageDiv)
-                _stripMessageDiv.classList.add(hideCls);
+                _stripMessageDiv.classList.add(styles.hide);
             if (_shakaPlayer && _boundShakaOnErrorCB) {
                 _shakaPlayer.removeEventListener('error', _boundShakaOnErrorCB);
                 _boundShakaOnErrorCB = null;
@@ -403,7 +405,7 @@ window.jxPromisePolyfill        = 'none';
             if (_adObject) {
                 _adObject.reset();
             }
-            _contentDiv.classList.remove(hideCls); //this is important. Coz if video is switched while ad is playing, 
+            _contentDiv.classList.remove(styles.hide); //this is important. Coz if video is switched while ad is playing, 
             //then the content div at that time would be hidden!
             
             _accumulatedTime = 0;
@@ -412,13 +414,13 @@ window.jxPromisePolyfill        = 'none';
             _msLastInternalCallPause = 0;
             _msLastInternalCallPlay = 0;
             _manualPaused = false;
+            
 
             //we do not reset this, we keep what was there from the first video
         };
         function _updatePlayState(isPlaying) {
             if (isPlaying) _cntVState = 'playing';
             else _cntVState = 'paused';
-            _ctrls.updatePlayState(isPlaying); //now is nothing
         }
         /**
          * This is for the caller function (JXPlayer) to set a report function
@@ -445,7 +447,7 @@ window.jxPromisePolyfill        = 'none';
         }
         FactoryPlayerWrapper.prototype.setConfig = function(
             adsCfg, //the tags are also inside this obj: adtagurl and adtagurl2
-            logoCfg, soundIndCfg = null, mute = true) {
+            logoCfg, soundIndCfg = null, sound = "off") {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
             _adScheduler = MakeOneAdScheduler(_cfg.ads);
@@ -453,15 +455,19 @@ window.jxPromisePolyfill        = 'none';
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
-            if (!mute) {
-                _forceAutoplayWithSound = true;
-            }
+            //if (!mute) {
+                //this is regarding autoplay:
+              //  _forceAutoplayWithSound = true;
+            //}
+            //only for the first video
+            _forceAutoplayWithSound = sound == 'on' ? true: false;
+            _soundFallback = sound == 'fallback' ? true: false;
         }   
         var _hide = function() {
-            _contentDiv.classList.add(hideCls);
+            _contentDiv.classList.add(styles.hide);
         };
         var _show = function() {
-            _contentDiv.classList.remove(hideCls);
+            _contentDiv.classList.remove(styles.hide);
         };
         var _showSpinner = function() {
             if (_spinner) _spinner.show();
@@ -512,7 +518,7 @@ window.jxPromisePolyfill        = 'none';
                     _showSpinner();
                     if (_soundIndObj)
                         _soundIndObj.hideMaybe(); //if the sound indicator is there need to hide ah.
-                    _ctrls.hide();
+                    _ctrls.hideCtrl();
                 },
                 switch2Cnt: function() {
                     //_state = "content";
@@ -534,16 +540,19 @@ window.jxPromisePolyfill        = 'none';
                             //alert(e);
                         })
                     }
-                    if (_soundIndObj)
-                        _soundIndObj.showMaybe();
+
+                    //overlaysChanged
+                    //if (_soundIndObj)
+                      //  _soundIndObj.showMaybe();
                     //then the state will be set to content in the onPlayingCB....
-                    _ctrls.show();
+                    _ctrls.showCtrl();
+                    _ctrls.overlaysChanged(); 
                 },
                 onAdPlaying: function() {
-                    _detectManualPlayOrPause('playing');
+                    // nothing to do anymore
                 },
                 onAdPause: function() {
-                    _detectManualPlayOrPause('pause');
+                    // nothing to do anymore
                 }
             };
         };
@@ -610,7 +619,7 @@ window.jxPromisePolyfill        = 'none';
             if (!externalCall && _manualPaused) {
                 //console.log(`Debug Even though playInt is called but it seems we were manuallyPaused earlier so better not.`);
                 
-                //externalCall means this is triggered from intersectionOb etc by player SDK
+                //!externalCall means this is triggered from intersectionOb etc by player SDK
                 //This condition says: 
                 //if this is an internally triggered play (probably due to visiblity) and our video
                 //was paused by user earlier on (intentionally), then do not execute the play.
@@ -688,30 +697,41 @@ window.jxPromisePolyfill        = 'none';
         //of HTML5 <video>
         var _makeFcnVectorForUI = function() {
             let fcnVector = {
+                // "callbacks":
+                reportClickToStart: function() {
+                    _gestureReportCB(startModeSDKClick_, _defaultReportInfoBlob);
+                },
+                onCtrlsVisChange: function(controlsVis) {
+                    if (_soundIndObj && _cfg.soundind && _cfg.soundind.position.indexOf('bottom') > -1) {
+                        if (controlsVis) _soundIndObj.hideMaybe(); else _soundIndObj.showMaybe();
+                    }
+                },
+                // functions to carry out imperative commands:
                 showSpinner: function() {
                     _showSpinner();
                 },
                 hideSpinner: function() {
                     _hideSpinner();
                 },
-                reportClickToStart: function() {
-                    _gestureReportCB(startModeSDKClick_, _defaultReportInfoBlob);
-                },
                 play: function() {
+                    if (_manualPaused) {
+                        console.log(`##_ play setting manualPaused to false`);
+                    }
+                    
+                    _manualPaused = false;
+                    //trying something new ....
+                    if (_vid.muted) _vid.muted = false; // if the video is muted, then we need to make it play unmuted
                     _playVideo();
                 },
                 pause: function() {
+                    _manualPaused = true;
                     _pauseVideo();
                 },
                 mute: function() {
                     _vid.muted = true;
-                    _ctrls.setBtnMuteActive(true);
-                    _ctrls.updateMutedState(true);
                 },
                 unMute: function() {
                     _vid.muted = false;
-                    _ctrls.setBtnMuteActive(false);
-                    _ctrls.updateMutedState(false);
                 },
                 getDuration: function() {
                     return _vid.duration;
@@ -725,6 +745,77 @@ window.jxPromisePolyfill        = 'none';
                 isPaused: function() {
                     return _vid.paused;
                 },
+                isMuted: function() {
+                    return _vid.muted;
+                },
+                setVolume: function(vol) {
+                    _vid.volume = vol;
+                },
+                getVolume: function() {
+                    return _vid.volume;
+                },
+                setPlaybackRate: function(speed) {
+                    _vid.playbackRate = speed;
+                },
+                getMeta: function() {
+                    return _videoMeta;
+                },
+                //https://animoto.com/blog/news/hd-video-creation-sharing
+                //TODO: Renee: how to harmonize with our new stuff (no force of resolution)
+                // just added to production sdk?
+                setResolution: function(track) {
+                    if (!_shakaPlayer) return; 
+                    // track could be null, in that case we still need
+                    // to do the config object
+                    // but that's not what they return leh.
+                    if (track.height == 'auto') track = null;
+                    // also setting memory in player Cfg Mgr !! BAD BAD
+                    //console.log(`### BEFORE setResolution ${JSON.stringify(_shakaPlayer.getConfiguration(), null, 2)}`);
+                    //console.log("--------->>>");
+                    let cfg = _playerCfgMgr.getNewCfgMaybe(track ? track.height: 0);
+                    _shakaPlayer.configure(cfg);
+                    if (track) {
+                        _shakaPlayer.selectVariantTrack(track, true);
+                    }
+                    //console.log(`### AFTER setResolution ${JSON.stringify(_shakaPlayer.getConfiguration(), null, 2)}`);
+                },
+                getResolutions: function() {
+                    // the active state is implicit
+                    let arr = _shakaPlayer.getVariantTracks();
+                    if (arr) {
+                        // a shaka thing:
+                        // Remove duplicate entries with the same height.  This can happen if
+                        // we have multiple resolutions of audio.  Pick an arbitrary one.
+                        // Hmmm. it is not right to just pick arbitrary one...
+                        arr = arr.filter((track, idx) => {
+                            // Keep the first one with the same height.
+                            const otherIdx = arr.findIndex((t) => t.height == track.height);
+                            return otherIdx == idx;
+                        });
+                        return _playerCfgMgr.filterTracks(arr); //other criteria to apply.
+                    }
+                    return null;
+                },
+                setSubtitle: function(sub) {
+                    if (_shakaPlayer) {
+                        if (sub.language == 'off') sub = null;
+                        if (!sub) {
+                            _shakaPlayer.setTextTrackVisibility(false);
+                        }
+                        else {
+                            _shakaPlayer.selectTextTrack(sub);
+                            _shakaPlayer.setTextTrackVisibility(true);
+                        }
+                    }
+                },
+                getSubtitles: function() {
+                    if (!_shakaPlayer) return null;
+                    let arr = _shakaPlayer.getTextTracks();
+                    if (arr) {
+                        arr = arr.filter((t) => t.kind == 'subtitle');
+                    }
+                    return arr;
+                },
             };
             return fcnVector;
         };
@@ -732,7 +823,8 @@ window.jxPromisePolyfill        = 'none';
             if (!_ctrls) {
                 _ctrls = MakeOnePlayerControlsObjD(_contentDiv, _makeFcnVectorForUI()); 
             }
-            _ctrls.hide();
+            _vid.controls = (_ctrls.showNativeCtrl() ? true: false);
+            _ctrls.hideCtrl();
         };
         var _createStripMessage = function(remaining) {
             const stripStyle = "#JXMessage{position: absolute;padding: 9px;bottom: 20px;padding-right: 32px;right: 0px;background: rgba(0, 0, 0, 0.74);z-index: 2;color: rgba(255, 255, 255, 0.8);border-radius: 4px;font-size: 13px;letter-spacing: 1px;}";
@@ -750,15 +842,23 @@ window.jxPromisePolyfill        = 'none';
         //of the next when we are in switching situation
         function _onFullScreenChangeCB() {
             var state = document.fullscreenElement || document.mozFullScreenElement ||
-            document.webkitFullscreenElement || document.msFullscreenElement;
+                document.webkitFullscreenElement || document.msFullscreenElement;
+            if (this.isIOS) {
+                state = true;
+            }
             if (state) {
                 _reportCB('video', 'fullscreen', _makeCurrInfoBlob(this.videoid));
             }
+            if (_ctrls) _ctrls.updateFsIcon();
         };
         
         function _onVolumeChangedCB() {
             _savedMuted = _vid.muted;
             _savedVolume = _vid.volume;
+
+            if (_ctrls) {
+                _ctrls.setVolIcon(_vid.volume);
+            }
             
             /* if (_vid.muted) {
                 _savedMuted = true;
@@ -782,10 +882,11 @@ window.jxPromisePolyfill        = 'none';
             _reportCB('video', 'ended', _makeCurrInfoBlob(this.videoid));
         }
         var _onPausedCB = function(param) {
+            if (_ctrls) {
+                _ctrls.setPlayBtn();
+            }
 
             if (param.type == 'pause') {
-
-                _detectManualPlayOrPause('pause');
                 
                 if (_state == 'ad') {
                     //console.log("__debug_ no need report this pause which is due to IMA sdk telling us to pause the content");
@@ -832,8 +933,14 @@ window.jxPromisePolyfill        = 'none';
             return; //we go the init path first
         }
         function _onPlayingCB(param) {
+            if (_manualPaused) {
+                console.log(`##_ _onPlayingCB setting manualPaused to false`);
+            }
             _manualPaused = false;//well it already is playing. erase history.
-            _detectManualPlayOrPause('playing');
+
+            if (_ctrls) {
+                _ctrls.setPlayBtn();
+            }
 
             if (_state == 'ad') {
                 //then suppress any event sending.
@@ -848,7 +955,7 @@ window.jxPromisePolyfill        = 'none';
             //That might succeed, leading to this callback being triggered.
             //In that case we want this call hideBigPlayBtn - for the Promise to
             //be resolved so that the ads-init promise chain and run on:
-            _ctrls.videoVisualsHide();//this is needed. Do not remove 
+            _ctrls.hideVVisual();//this is needed. Do not remove 
 
             //Special eventlistener: volumechange we only hook up after play really started
             //if we do that earlier it is possible the player-triggered volume change
@@ -862,80 +969,18 @@ window.jxPromisePolyfill        = 'none';
             //if (_state == 'init') {
               //  _state = 'content';
             //}
-            /****
+            
              //Not used coz we just use native controls 
-            _ctrls.show();
-            _ctrls.showProgressBar();
-            ****/
+            _ctrls.showCtrl();
+            
             _updatePlayState(true);
   
-            /* Not used coz we just use native controls
-               in any case this seems rather inefficient why make 2 calls like that?!
-            if(!_vid.muted) {
-                _ctrls.setBtnMuteActive(false);
-                _ctrls.updateMutedState(false);
-            } else {
-                _ctrls.setBtnMuteActive(true);
-                _ctrls.updateMutedState(true);
-            }
-            */
             if (_startSignalledResolveFcns.length > 0) {
                 _resolveStartSignalled();
                 return; //we go the init path first
             }
         };
         
-        function _detectManualPlayOrPause(action) {
-            if (action == 'playing') {
-                //after the ad it will also start ah.
-                //console.log(`Debug___ Hmmm, it starts to play ${_accumulatedTime}`);
-                //need to set the accumulated time criteria else the bootstrapping initial play
-                //if you try to make it not muted, it will fail and then the whole thing will be paused!
-
-                //NOTE: 20210707 comment: I am disabling this code now coz it is causing problems.
-                //Scenario:
-                //Buffering so play was paused and then later then is an onPlaying cb being triggered.
-                //So since so far we do not track buffering, sdk only know that the onPLaying is not attributable
-                //to our own visiblity mechanism (_msLastInternalCallPlay) so it infers that it is user
-                //intention. So we here turn on the sound.
-                //Now if it is actually a buffering and if the user had not interacted with the video
-                //before, this play resumption will fail and the video will just stop
-
-                /* COMMENTED OUT FOR NOW!!!
-                if (_accumulatedTime > 1 && Date.now() - _msLastInternalCallPlay > msPlayAttributeThreshold_) { // get the difference between last saved timestamp and current timestamp
-                    //console.log(`Debug___ Hmmm, it starts to play MUST BE USER INTENTIONAL (${Date.now() - _msLastInternalCallPlay})`);
-                    //the last internal trigger to play was too long ago. cannot explain this
-                    //play-start. This play start likely is due to user action:
-                    try {
-                        if (_state == 'ad') {
-                            if (_adObject)
-                                _adObject.unmuteAd();
-                        }
-                        else { 
-                            if (_vid.muted) _vid.muted = false; // if the video is muted, then we need to make it play unmuted
-                            //the sound indicator object (if present), will go away soon (logic in the playheadCB)
-                            //then it is a clean disappearance 
-                            
-                        }
-                    } catch (error) {
-                        //console.log('_onPlayingCB exception', error)
-                    }
-                }*/
-            }
-            else {
-                //console.log(`Debug___ Hmmm, it starts to PAUSE ${_accumulatedTime}`);
-                /* disable for now
-                coz this apparently can be triggered via buffering!!
-                buffering is not manual pause!!
-
-                if (Date.now() - _msLastInternalCallPause > msPauseAttributeThreshold_) { // get the difference between last saved timestamp and current timestamp
-                    //the last internal trigger to pause was too long ago. cannot explain this pause
-                    //This pause likely is due to user action:
-                    //console.log(`Debug___ Hmmm, it starts to pause MUST BE USER INTENTIONAL (${Date.now() - _msLastInternalCallPause})`);
-                    _manualPaused = true;
-                }*/
-            }
-        }
        
         /**
          * Function to manage the countdown strip
@@ -950,7 +995,7 @@ window.jxPromisePolyfill        = 'none';
             let remaining = Math.floor(adCountdownSec_ + this.addTime  + this.adReqTime - accuTime );
             if(remaining <= 0) {
                 _adCountdownMgrFcn = null; //self-removal so that the playhead update will not be calling it.
-                _stripMessageDiv.classList.add(hideCls);
+                _stripMessageDiv.classList.add(styles.hide);
                 this.resolveFcn('');
             }
             else {
@@ -967,20 +1012,7 @@ window.jxPromisePolyfill        = 'none';
             //3,
             '25pct'
         ];
-        
-       //this function will be bound.
-       //if it detected the container DIM has changed since the last time it was called
-       //(remember in the "this" object), then it will return an object.
-        function sizeManagerFcn(mustReturnObj = false) {
-            if (mustReturnObj || (this.container.offsetWidth != this.lastwidth)) {
-                this.lastwidth = this.container.offsetWidth;
-                this.lastheight = this.container.offsetHeight;
-                return {width: this.container.offsetWidth, height: this.container.offsetHeight};
-            }
-            return null;
-
-        }
-
+       
         function _doPlayedPctEvent(playhead) {
             if (!_milestones) {
                 setupMilestones();
@@ -1005,10 +1037,19 @@ window.jxPromisePolyfill        = 'none';
         //if it starts playing
 
         function _onPlayheadUpdateCB() {
-            _manualPaused = false;
+            
+            if (_manualPaused) {
+                let diff1 = _vid.currentTime- this.lastPlayhead;
+                console.log(`##_ ${diff1} _onPlayheadUpdateCB setting manualPaused to false`);
+            }
+            //_manualPaused = false;
             let currentTime = _vid.currentTime;
             //<--- Do the video events (25%, 75% etc.)
             _doPlayedPctEvent(currentTime);
+
+            if (_ctrls) {
+                _ctrls.setTimer(currentTime);
+            }
 
             if (!this.soundind) {
                 //dun want any sound:
@@ -1029,6 +1070,8 @@ window.jxPromisePolyfill        = 'none';
                         _playVideo();
                     }
                 });
+                //console.log(`trigger it ####`);
+                _ctrls.overlaysChanged();
             }
             else if (this.soundind == 'during' && _soundIndObj) {
 
@@ -1045,27 +1088,14 @@ window.jxPromisePolyfill        = 'none';
                     _soundIndObj.setRemainingTime(_vid.duration - currentTime);
                 }
             }
-            
-            
+            // FOR DEBUGGING ONLY
+            // if (_shakaPlayer) console.log('Adaptation: ' + _shakaPlayer.getStats().width + "x" + _shakaPlayer.getStats().height);
             this.spacer10++; 
             if (this.spacer10 == 10 && _shakaPlayer) {
-                try {
-                    let newDim = _boundSizeManagerFcn();
-                    //the dim of the video area has changed since we last checked:
-                    if (newDim) {
-                        let maxH = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-                        if (maxH > 0) {
-                            _shakaPlayer.configure({
-                                abr: {
-                                    restrictions: {
-                                        maxHeight: maxH
-                                    }
-                                }
-                            });
-                        }
-                    }
+                let cfg = _playerCfgMgr.getNewCfgMaybe();
+                if (cfg) {
+                    _shakaPlayer.configure(cfg);
                 }
-                catch(ee){}
                 this.spacer10 = 0;
             }
 
@@ -1076,6 +1106,7 @@ window.jxPromisePolyfill        = 'none';
                     _ctrls.setTramsitionProgressBar();
                     _ctrls.updateProgressBar(width);
                 }); */
+                _ctrls.setProg(_vid.currentTime);
                 let diff = currentTime- this.lastPlayhead;
                 if (diff < 0) diff = 0 - diff;
                 if(diff <= 2) {
@@ -1145,9 +1176,15 @@ window.jxPromisePolyfill        = 'none';
             if (_boundOnPausedCB) _vid.removeEventListener('pause', _boundOnPausedCB);
             //NEED MAH if (_boundOnPausedCB) _vid.removeEventListener('waiting', _boundOnPausedCB);
             _boundOnPausedCB = null;
-            if (_boundOnFullScreenCB) ["webkit", "moz", "ms"].forEach(function(prefix) {
-                _vid.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
-            });
+            if (_boundOnFullScreenCB) {
+                if (!common.isIOS()) {
+                    ["webkit", "moz", "ms"].forEach(function(prefix) {
+                        _container.removeEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                    });
+                } else {
+                    _vid.removeEventListener("webkitbeginfullscreen", _boundOnFullScreenCB, false);
+                }
+            }
             _boundOnFullScreenCB = null;
             if (_boundVolumeChangedCB) _vid.removeEventListener('volumechange', _boundVolumeChangedCB);
             _boundVolumeChangedCB = null;
@@ -1176,10 +1213,14 @@ window.jxPromisePolyfill        = 'none';
             _vid.addEventListener('timeupdate', _boundOnPlayheadUpdateCB, false);
             _vid.addEventListener('ended', _boundOnEndedCB, false);
             _vid.addEventListener('error', _boundOnErrorCB, false);
-            ["webkit", "moz", "ms"].forEach(function(prefix) {
-                _vid.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
-            }); 
-            
+            if (!common.isIOS()) {
+                ["webkit", "moz", "ms"].forEach(function(prefix) {
+                    _container.addEventListener(prefix+"fullscreenchange", _boundOnFullScreenCB, false);
+                }); 
+            } else {
+                _boundOnFullScreenCB = _onFullScreenChangeCB.bind({isIOS: true});
+                _vid.addEventListener("webkitbeginfullscreen", _boundOnFullScreenCB, false);
+            }
 
         };
         // function _onVideoClickCB() {
@@ -1199,7 +1240,7 @@ window.jxPromisePolyfill        = 'none';
             let logoObj = _cfg.logo;
             if (logoObj && logoObj.url && !_logoDiv) {
                 _logoDiv = document.createElement("div");
-                _logoDiv.className = iconCls + ' ' + (logoObj.position? logoObj.position:'');
+                _logoDiv.className = styles.icon + ' ' + (logoObj.position? logoObj.position:'');
 
                 if(logoObj.link) {
                     common.addListener(_logoDiv, 'click', function() {
@@ -1210,6 +1251,16 @@ window.jxPromisePolyfill        = 'none';
                 _contentDiv.appendChild(_logoDiv);
             }
         };
+        /*******
+        var _createInfoIcon = function() {
+            if (!_infoDiv) {
+                _infoDiv = common.newDiv(_contentDiv, "div", "<span>i</span>", styles.info);
+                common.addListener(_infoDiv, 'click', function() {
+                    window.open("https://www.jixie.io/", "_blank");
+                })
+            }
+        };
+        ********/
         var _createAdObjMaybe = function(makeNew) {
             if (!_adObject) {
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
@@ -1218,28 +1269,19 @@ window.jxPromisePolyfill        = 'none';
             return _adObject;
         };
   
-        function _newAShakaPlayer(video, sizeMgrFcn) {
+        function _newAShakaPlayer(video) {
             shakaPlayer = new shaka.Player(video);
-            let newDim = sizeMgrFcn(true);//true means force return an object whether there was a change or not
-            let maxHeight2Req = jxvhelper.getClosestDamHLSHeight(newDim.width, newDim.height);
-            let o = {
-                streaming: {
-                    useNativeHlsOnSafari: false,
-                    bufferingGoal: 5
-                },
-                abr: {
-                    switchInterval: 5
-                }
-            };
-            if (maxHeight2Req > 0) {
-                o.abr.defaultBandwidthEstimate = 200000;
-                o.abr.restrictions = {
-                    maxHeight: maxHeight2Req
-                }
-            }
+            let o = _playerCfgMgr.getNewCfgMaybe(0, true); //true as this is for init phase
             shakaPlayer.configure(o);
             return shakaPlayer;       
-        }                  
+        }   
+
+        function _injectSubtitles() {
+            if (_shakaPlayer) {
+                if (_videoMeta.subtitles.length > 0) _videoMeta.subtitles.forEach((x) => _shakaPlayer.addTextTrackAsync(x.url, x.language, 'subtitle', x.mime, '', x.label));
+                _shakaPlayer.setTextTrackVisibility(false);
+            }
+        }               
         /**
          * One-off init of this playerwrapper object.
          * Note: when switching video src no need call this again.
@@ -1268,7 +1310,7 @@ window.jxPromisePolyfill        = 'none';
                         //nothing much to do
                         resVal = 'native';
                     } else if(method == 'shaka') {
-                        _shakaPlayer = _newAShakaPlayer(_vid, _boundSizeManagerFcn);
+                        _shakaPlayer = _newAShakaPlayer(_vid);
                         resVal = 'shaka';
                     } else {
                         resVal = fallbackTech_;
@@ -1289,7 +1331,8 @@ window.jxPromisePolyfill        = 'none';
          * @param {*} playbackMethod 
          * @returns a promise
          */
-        function _initChainSetupNewVP(playbackMethod, srcHLS, srcFallback, offset) {
+        
+        function _initChainSetupNewVP(playbackMethod, srcHLS, srcFallback) { //}, offset, subTitles) {
             if (this.token != _currToken) {
                 //console.log(`_S_S_S_S_S_S _setupNewVP mismatch token ${this.token} ${_currToken}`);
                 return Promise.reject("shortcircuit");
@@ -1315,10 +1358,10 @@ window.jxPromisePolyfill        = 'none';
                         _boundMetadataLoadedCB();
                     }, 1000);
                 }
-                if (offset > 0) { 
+                if (_videoMeta.offset > 0) { 
                     //we are only bothered if offset > 0
                     _boundCanPlayThroughCB = _canPlayThroughCB.bind({
-                        offset: offset
+                        offset: _videoMeta.offset
                     });
                     _vid.addEventListener('canplay', _boundCanPlayThroughCB);
                 }
@@ -1342,7 +1385,7 @@ window.jxPromisePolyfill        = 'none';
                     break;
                 case "shaka":
                     if (!_shakaPlayer) {
-                        _shakaPlayer = _newAShakaPlayer(_vid, _boundSizeManagerFcn);
+                        _shakaPlayer = _newAShakaPlayer(_vid);
                             //try only:
                             //https://shaka-player-demo.appspot.com/docs/api/shaka.extern.html#.AbrConfiguration
                             //https://shaka-player-demo.appspot.com/docs/api/shaka.extern.html#.PlayerConfiguration
@@ -1356,7 +1399,7 @@ window.jxPromisePolyfill        = 'none';
                     _shakaPlayer.addEventListener('error', _boundShakaOnErrorCB);
                     return Promise.all([
                         p1, 
-                        _shakaPlayer.load(srcHLS, offset)
+                        _shakaPlayer.load(srcHLS, _videoMeta.offset)
                     ]);
                     break;
             }//switch
@@ -1388,8 +1431,10 @@ window.jxPromisePolyfill        = 'none';
                         return;
                     })
                     .catch(function(e) {
+                        // FAILED. Nothing to fall back
                         console.log(`attempt start play failed with video.muted=${_vid.muted} (${e})`);
-                        if (_vid.muted) {
+                        //_forceAutoplayWithSound 
+                        if (_vid.muted || !_soundFallback ) {
                             // if just now that attempt was WITH sound, then now we can try 
                             // without sound.
                             // if already just now was without sound, then now we just stick
@@ -1456,7 +1501,7 @@ window.jxPromisePolyfill        = 'none';
                 //then it will never resolve loh then just a dangling thing.
                 //it will need to call a resolve ah.
                 // to continue the promise chain ah.
-                _ctrls.showBigPlayBtn(resolve.bind(null, startModePWClick_), _thumbnailURL); 
+                _ctrls.showStarterPlayBtn(resolve.bind(null, startModePWClick_), _thumbnailURL); 
             });
         }
 
@@ -1552,7 +1597,7 @@ window.jxPromisePolyfill        = 'none';
             if (res == 'jxnonlinearadstarted' || res == 'timeout' || res == 'jxaderrored' || res == 'jxnoad' || res == 'jxnoadbreak') {
                 //THUMBNAIL_FERY : dun bother about this one first. For ads stuff _spinner.hide();
                 //_hideSpinner();
-                _ctrls.videoVisualsHide(); 
+                _ctrls.hideVVisual(); 
                 _playVideo();
             }
             //the other type I believe (need to check) the state is already content?
@@ -1597,23 +1642,26 @@ window.jxPromisePolyfill        = 'none';
          * @param {*} srcHLS <--- if this is not provided, meaning we just want do fallbackTech_
          *                   <--- this would be a retry after an error then 
          * @param {*} srcFallback
-         * @param {*} title 
-         * @param {*} offset 
+         * @param {*} videoMeta < - an object of video meta info
+         * (duration, offset, title, subtitles, thumbnail, thumbnails)
          */
         FactoryPlayerWrapper.prototype.setV = function(
             delayPutSrcWaitProm, //
             videoID,
             startModePW,
-            srcHLS, srcFallback, offset, thumbnailURL) {
+            srcHLS, srcFallback,
+            videoMeta) {    
 
+            _videoMeta = videoMeta;
             let token = videoID +"-" + Date.now();                
-            
             _currToken = token;
             _startModePW = startModePW; 
 
             _createControlsMaybe();
             _createLogoMaybe();
-            _ctrls.videoVisualsInit(thumbnailURL, function() {
+            // Directed by Vincent to not show it for now
+            // _createInfoIcon();
+            _ctrls.initVVisual(_videoMeta.thumbnail, function() {
                 _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
             });
             
@@ -1670,7 +1718,7 @@ window.jxPromisePolyfill        = 'none';
                 genInitP = Promise.resolve(_pbMethod);//gen init considered done. Hence resolve
             } 
             _videoID = videoID;
-            _thumbnailURL = thumbnailURL;
+            _thumbnailURL = _videoMeta.thumbnail;
             if(_cfg.ads.delay == 0) {
                 //pure preroll.
                 _createAdObjMaybe();
@@ -1707,6 +1755,10 @@ window.jxPromisePolyfill        = 'none';
             let boundChainContextCheck  = _initChainContextCheck.bind({token: token});
             let boundSetupNewVP         = _initChainSetupNewVP.bind({token: token});
             
+            //if (_ctrls) {
+              //  _ctrls.setVInfo(_vid, videoTitle, duration);
+            //}
+
             shakaDetachProm
             .then(function() { 
                 //we are waiting here.
@@ -1721,8 +1773,13 @@ window.jxPromisePolyfill        = 'none';
             }).then(function(playbackMethod){
                 //video readiness
                 //this will set video.src = <THE STREAM URL>
-                return boundSetupNewVP(playbackMethod, srcHLS, srcFallback, offset);
+                return boundSetupNewVP(playbackMethod, srcHLS, srcFallback); //, offset, subTitles);
             }).then(function() {
+                    _injectSubtitles();
+                    _playerCfgMgr.changeVideo(_videoMeta.AR, _shakaPlayer);
+                    if (_ctrls) {
+                        _ctrls.videoMetaReady(_vid);
+                    }
                     //Video is ready (metadataloaded) to be played so remove the loading spinner
                     if (!boundChainContextCheck()) {
                         throw new Error("shortcircuit");
@@ -1730,7 +1787,7 @@ window.jxPromisePolyfill        = 'none';
                     //in case there is no thumbnail we also can have the ready ah!!!
                     //or something screwed up.
                     _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
-                    _ctrls.videoVisualsRemoveSpinner();
+                    _ctrls.hideSpinner();
                     if(getAdMode == 'prefetch') {
                         adPromise = _adObject.makeAdRequestP(_cfg.ads.adtagurl, 
                             _startModePW == startModePWClick_? false: true, //autoplay Flag (best effort lah)
@@ -1784,13 +1841,9 @@ window.jxPromisePolyfill        = 'none';
             })
             .finally(function(){
                 if (boundChainContextCheck()) {
-                    //console.log(`##### S_S_S_S_S_S_S                 FINALLY >>>>>`)
                     _isDeferPlayPauseCmd = false;
                     setTimeout(_flushPlayPauseCmds, 0);
                 }
-                //else {
-                  //  console.log(`##### S_S_S_S_S_S_S            (mismatch)  FINALLY >>>>>`)
-                //}
             });
             //-------HERE ENDS OUR INIT PHASE PROMISE CHAIN --------------------
         }
@@ -1814,7 +1867,7 @@ window.jxPromisePolyfill        = 'none';
          * @param {*} startAccuTime. When this function is called what is the accumulated play time.
          */
         function _fetchMidrollWithCountdownP(startAccuTime, adUrl) {
-            if (isIOS_ && !_vid.muted) {
+            if (common.isIOS() && !_vid.muted) {
                 console.log(`is IOS and the thing is not muted. so we dun want to play an ad.`);
                 //on iOS we are not able to start the ad with sound (will hang)
                 //so we dun ask for ads if at this juncture there is sound.

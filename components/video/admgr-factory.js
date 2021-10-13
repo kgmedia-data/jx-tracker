@@ -7,15 +7,10 @@
  const modulesmgr            = require('../basic/modulesmgr');
  const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
- const adDivCls              = cssmgr.getRealCls('adDivCls');
- const hideCls               = cssmgr.getRealCls('hideCls');
- const adHideCls             = cssmgr.getRealCls('adHideCls');
  
  const maxNumVastRedirects_ = 5; //testing only. for ads
 
  const MakeOneAdControlsObj  = modulesmgr.get('video/adctrls-factory');
-
- const isIOS_ = !window.MSStream && /iPad|iPhone|iPod/.test(navigator.userAgent); // fails on iPad iOS 13
 
  //These we need to listen to for basic functioning:
  const imaEventsSeed_ = [
@@ -46,6 +41,8 @@
  ];
 
  function MakeOneAdObj_(container, vid, fcnVector, controlsObj, progressBar) {
+    const styles                = cssmgr.getRealCls(container);
+    var _forVideoAdSDK = false;
     var _doProgressBar = true;
     var _forceWidth = 0;
     var _forceHeight = 0;
@@ -63,6 +60,7 @@
     var _adsLoader = null;
     var _adDisplayContainer = null;
     var _sizeCheckTimer = null;
+    var _resizeObserver = null;
 
     var _autoAdsManagerStart = false;
     var _adLoaderOutcome = 'jxnone';
@@ -186,14 +184,13 @@
         //This is the part to track it really.
         //but this can be due to either the GUI 
         //or due to the playerWrapper calling
-
         if (_adsManager) {
             //for the case of those play that actually did not start (due to e.g. browser settings
             //) then we can still be revived thru this. But since the ima3 sdk might not even know
             //the video is paused (failed to play), we need this gymnastics then at least the user
             //can start the play by clicking on the GUI buttons.
-            if (!_reallyProgressed) {
-                //_adsManager.pause();
+            if (_forVideoAdSDK && !_reallyProgressed) {
+                _adsManager.pause();
                 //cannot. oh dear it breaks the pure preroll... 
                 //commented out in emergency
             }
@@ -222,14 +219,20 @@
         _pFcnVector.switch2Ad(hideContent); 
     }
     var _setupResizeListeners = function() {
-        _sizeCheckTimer = setInterval(_sizeCheck, 500);
+        // _sizeCheckTimer = setInterval(_sizeCheck, 500);
+        _resizeObserver = new ResizeObserver(_sizeCheck);
+        _resizeObserver.observe(_container);
         window.addEventListener('resize', _sizeCheck);
         window.addEventListener('jxintresize', _sizeCheck);
     }
     var _clearResizeListeners = function() {
-        if (_sizeCheckTimer) {
-            clearInterval(_sizeCheckTimer);
-            _sizeCheckTimer = null;
+        // if (_sizeCheckTimer) {
+        //     clearInterval(_sizeCheckTimer);
+        //     _sizeCheckTimer = null;
+        // }
+        if (_resizeObserver) {
+            _resizeObserver.unobserve(_container);
+            _resizeObserver = null;
         }
         window.removeEventListener('resize', _sizeCheck);
         window.removeEventListener('jxintresize', _sizeCheck);
@@ -240,7 +243,7 @@
             _adDisplayContainer = null;
         }
         _ctrls.hide();
-        _adDiv.classList.add(hideCls);
+        _adDiv.classList.add(styles.hide);
         // _adDiv.style.display = 'none'; //HACK w/o this after the ad i think the controls bars of content video still not working.
         _pFcnVector.switch2Cnt(); 
         _clearResizeListeners();
@@ -279,8 +282,8 @@
             console.log(`#$ no need show the ads controls then coz non linear`);
         }
 
-        _adDiv.classList.remove(adHideCls); //
-        _adDiv.classList.remove(hideCls); //
+        _adDiv.classList.remove(styles.adHide); //
+        _adDiv.classList.remove(styles.hide); //
 
         // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
         //pls fix this. the jxhide class does not work
@@ -341,18 +344,24 @@
             //or you can fire the thing 
             case google.ima.AdEvent.Type.AD_PROGRESS:
                 //_isAdStarted = true;
+                //it seems if the STARTED is not called, then 
                 if (evt.type == google.ima.AdEvent.Type.AD_PROGRESS) {
                     let adData = evt.getAdData();
-
+                    //console.log(`#### ONE ${JSON.stringify(adData, null, 2)}`);
                     if (adData.adPosition <= _adEnduredVec.length) {
                         _adEnduredVec[adData.adPosition] = adData.currentTime;
                         
+
                         if (!_reallyProgressed && adData.currentTime > 0) {
                            if (_knownCurrentTime ==  -1) {
                                _knownCurrentTime = adData.currentTime;
                            }
+                           else if (adData.currentTime < _knownCurrentTime) {
+                               _knownCurrentTime = adData.currentTime;
+                           }
                            else {
-                               if (adData.currentTime > _knownCurrentTime) {
+                               if (adData.currentTime > (1+ _knownCurrentTime)) {
+                                   //console.log(`## adData.currentTime=${adData.currentTime} vs knownCurrentTime=${_knownCurrentTime}`);
                                    _reallyProgressed = true;
                                }
                            }
@@ -399,6 +408,7 @@
                 */
                 break;
             case google.ima.AdEvent.Type.STARTED:
+                console.log(`### STARTED EVENT CAME`);
                 if (_callOnceUponStarted) {
                     _callOnceUponStarted(ad, this.resolveFcn);
                 }
@@ -493,7 +503,7 @@
             //this setVolume(0) is needed for iOS at least, may be not all.
             //else if e.g. video autoplayed and then I turned on the sound
             //when the ad comes the ad will not be able to play.
-            if (isIOS_) {
+            if (common.isIOS()) {
                 //console.log(`DS_DS_DS_DS_DS_DS_DS_DS 5 ${_adsManager.getVolume()}`);
                 _adsManager.setVolume(0);
                 //but then we should also change the volume of the underlying then
@@ -571,7 +581,6 @@
         }
         
         if (_width != _container.offsetWidth || _height != _container.offsetHeight) { 
-            
             _width = _container.offsetWidth;
             _height = _container.offsetHeight;
             if (_adsManager) {
@@ -587,8 +596,8 @@
         _ctrls.hide();
     };
     var _createUIElt = function() {
-        if (!_adDiv) _adDiv = common.newDiv(_container, "div", "", adDivCls);
-        _adDiv.classList.add(adHideCls);
+        if (!_adDiv) _adDiv = common.newDiv(_container, "div", "", styles.adDiv);
+        _adDiv.classList.add(styles.adHide);
         // _adDiv.style.display = 'none'; //HACK Renee put in this fix. Without this
         //during countdown the content controls are not showing
     };
@@ -671,6 +680,7 @@
                 
                 let adsRequest = new google.ima.AdsRequest();
                 adsRequest.forceNonLinearFullSlot = true;
+                // adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=937';
                 //adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=1120';
                 //adURL = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=' + Date.now();
                 if (adURL) 
@@ -745,7 +755,9 @@
         _ctrls.updateMutedState(false);
         _pFcnVector.setContentMuteState(false);
     }
-
+    FactoryOneAd.prototype.setForVideoAdSDK = function() {
+        _forVideoAdSDK = true;
+    }
     let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj, progressBar);
     return ret;
 };

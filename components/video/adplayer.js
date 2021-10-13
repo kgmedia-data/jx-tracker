@@ -11,15 +11,7 @@ const MakeOneSpinner        = modulesmgr.get('video/spinner-factory');
 const MakeOneReplayBtn      = modulesmgr.get('video/replaybtn-factory');
 const MakeOneHorizBanner    = modulesmgr.get('video/horizbanner-factory');
 const buildVastXml          = modulesmgr.get('video/vast').buildVastXml;
-
 const cssmgr                = modulesmgr.get('video/cssmgr');
-const adDivCls              = cssmgr.getRealCls('adDivCls');
-const comboDivCls           = cssmgr.getRealCls('comboDivCls');
-const contentDivCls         = cssmgr.getRealCls('contentDivCls');
-const playerCls             = cssmgr.getRealCls('playerCls');
-const thumbnailCls          = cssmgr.getRealCls('thumbnailCls');
-const hideCls               = cssmgr.getRealCls('hideCls');
-const commonBigPlayBtnCls   = cssmgr.getRealCls('bigPlayBtnCls'); //commonBigPlayBtnCls');
  
 //of all the subscribable stuff for jxvideo1.3.min.js, this subset 
 //we need from the admgr layer (IMA based)
@@ -36,6 +28,7 @@ const imaEventsSubset_ =[
 ];
 
 function MakeOneInst_(containerId, data, config = null, eventsVector = null, notifyMaster = null) {
+    const styles                = cssmgr.getRealCls(containerId);
     var _token              = null;
     var _notifyMasterFcn    = null;
     var _unsentEvents       = { jxplayvideo: 1 };
@@ -66,13 +59,13 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
         if (!_bigPlayBtn) {
             _bigPlayBtn = document.createElement("a");
             _bigPlayBtn.href = "javascript:void(0)";
-            _bigPlayBtn.className = commonBigPlayBtnCls;
+            _bigPlayBtn.className = styles.bigPlayBtn;
             _bigPlayBtn.onclick = function() {
                 _playerElt.muted = false;
                 _playerElt.volume = 1;
-                //if (_thumbnailDiv) _thumbnailDiv.classList.add(hideCls);
+                //if (_thumbnailDiv) _thumbnailDiv.classList.add(styles.hide);
                 //if (_adObj) _adObj.playOrStartAd();
-                _bigPlayBtn.classList.add(hideCls);
+                _bigPlayBtn.classList.add(styles.hide);
                 boundCB();
             }
             _comboDiv.appendChild(_bigPlayBtn);
@@ -94,13 +87,13 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
         _pDiv.style.position = 'relative';
         
        //combo div is ad or content.
-       _comboDiv = common.newDiv(_pDiv, "div", "", comboDivCls); //this is not the real ad div
-       _contentDiv = common.newDiv(_comboDiv, 'div', `<video id="idJxPlayer" class=${playerCls} controls muted playsinline></video>`, contentDivCls); 
-       _contentDiv.classList.add(hideCls);
+       _comboDiv = common.newDiv(_pDiv, "div", "", styles.comboDiv); //this is not the real ad div
+       _contentDiv = common.newDiv(_comboDiv, 'div', `<video id="idJxPlayer" class=${styles.player} controls muted playsinline></video>`, styles.cDiv); 
+       _contentDiv.classList.add(styles.hide);
 
        if (_env) {
            if (_env.defaultImage) {
-               _thumbnailDiv = common.newDiv(_comboDiv, "img", null, thumbnailCls);
+               _thumbnailDiv = common.newDiv(_comboDiv, "img", null, styles.thumbnail);
                _thumbnailDiv.style.cursor = 'pointer';
                if (_env.clickurl){
                     common.addListener(_thumbnailDiv, 'click', function() {
@@ -141,8 +134,8 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
         }
         else if (_context != 'content' && _videoSrc) {
             _context = 'content';
-            _contentDiv.classList.remove(hideCls);
-            _thumbnailDiv.classList.add(hideCls);
+            _contentDiv.classList.remove(styles.hide);
+            _thumbnailDiv.classList.add(styles.hide);
             common.addListener(_playerElt, 'ended', _onContentEnded);
             common.addListener(_playerElt, 'play',  function() {
                 if (_unsentEvents.jxplayvideo) {
@@ -154,7 +147,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
             });
             _playerElt.play();
         } else if (_thumbnailDiv) {
-            _thumbnailDiv.classList.remove(hideCls);
+            _thumbnailDiv.classList.remove(styles.hide);
         } else {
             //This one is for the universal unit to get 
             //If player sdk (jxvideo1.3.min.js) then this
@@ -169,8 +162,8 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
         }
         _context = null;
         if (_thumbnailDiv) {
-            _contentDiv.classList.add(hideCls);
-            _thumbnailDiv.classList.remove(hideCls);
+            _contentDiv.classList.add(styles.hide);
+            _thumbnailDiv.classList.remove(styles.hide);
         }
         else { //nothing to do to show. bye close shop
             _notifyMaster("jxadended");
@@ -209,7 +202,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
         switch2Ad: function() {
             _context = 'ad';
             _showSpinner();
-            if (_thumbnailDiv) _thumbnailDiv.classList.add(hideCls)
+            if (_thumbnailDiv) _thumbnailDiv.classList.add(styles.hide)
             _playerElt.pause();
         }
     };         
@@ -421,6 +414,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
             if (!_adObj) {
                 //the last param is about whether to do process bar:
                 _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls, false);
+                _adObj.setForVideoAdSDK();
                 if (blob.width && blob.height) {
                     _adObj.forceDimensions(blob.width, blob.height);
                 }
@@ -518,16 +512,24 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
                 out.autoplay = false;
             }
         }
-        if (cr && cr.adparameters && cr.adparameters.loop) {
+        let simid = ((cr.url && cr.url.indexOf('simid') > -1) || cr.jxsimidurl);
+        console.log(`### ${cr.url} URL `);
+        console.log("kfdskfhdsjkfhjdsf ###")
+        if (simid) {
+            if (cr && cr.adparameters && cr.adparameters.loop) {
                 out.loop = cr.adparameters.loop;
-        } else if (u && u.loop) {
+            } else if (u && u.loop) {
                 out.loop = u.loop;
+            }
         }
         if (cr && cr.adparameters && cr.adparameters.countpos) {
             out.stripPosition = cr.adparameters.countpos;
         }
-        if (cr && cr.adparameters)
-            delete cr.adparameters.loop;
+        if (simid) {
+            //simid cannot do the looply properly so THIS layer will handle it then.
+            if (cr && cr.adparameters)
+                delete cr.adparameters.loop;
+        }
         return out;
      }
 
@@ -545,7 +547,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
         }
         else {
             if (_thumbnailDiv) {
-                _thumbnailDiv.classList.add(hideCls);
+                _thumbnailDiv.classList.add(styles.hide);
             }
             _playerElt.play();
         }            

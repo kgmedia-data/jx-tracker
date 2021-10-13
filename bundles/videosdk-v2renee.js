@@ -1,8 +1,8 @@
 /**
  * Bundle built for the jixie "player SDK"
  */
-if (window.JX) {
-    return;
+ if (window.JX) {
+  return;
 }
 
 
@@ -11,7 +11,7 @@ const modulesmgr                       = require('../components/basic/modulesmgr
 const cssmgr                           = require('../components/video/cssmgr');
 modulesmgr.set('video/cssmgr',         cssmgr);
 
-const stylesSet                        = require('../components/video-styles/default');//we choose this set of style
+const stylesSet                        = require('../components/video-styles/custom');//we choose this set of style
 
 
 // these we only use within this file, so dun bother
@@ -44,7 +44,7 @@ modulesmgr.set('video/adctrls-factory', adctrls_fact);
 const admgr_fact                        = require('../components/video/admgr-factory');
 modulesmgr.set('video/admgr-factory',   admgr_fact);
 
-const ctrls_fact                        = require('../components/video/ctrls-factory');
+const ctrls_fact                        = require('../components/video/custom-ctrls-factory');
 modulesmgr.set('video/ctrls-factory',   ctrls_fact);
 
 const soundind_fact                     = require('../components/video/soundind-factory');
@@ -60,78 +60,68 @@ const player_fact                       = require('../components/video/player-fa
 modulesmgr.set('video/player-factory',  player_fact);
 
 // these we only use within this file, so dun bother
-const mids                              = require('../components/basic/ids');
+const mids                              = require('../components/basic/idslite');
 const createObject                      = require('../components/video/damplayer');
 
 const pginfo = mpginfo.get(); //basic pginfo we can get from the page.
-const dbgVersion = 'v59';
+const dbgVersion = 'v46';
 pginfo.dbgVersion = dbgVersion;
+
+const optionsObjNames_ = ['ads', 'controls', 'soundindicator', 'restrictions'];
 
 var instMap = new Map();   
 function makePlayer(options) {
-    if (!options.restrictions) {
-        options.restrictions = {};
-    }
-    if (!options.controls) {
-        options.controls = {};
-    }
-    //options.autoplay = 'none'; //HACK
-    
-    if (typeof options.container != 'string') {
-        console.log(`jxplayer: Integration error: options.container must be a div id (a string). Aborting`);
-        return;
-    }
-    let instMaybe = instMap.get(options.container);
-    if (instMaybe) {
-        console.log(`jxplayer: Integration error: creating player instance on div id=${options.container} again. Aborting`);
-        return;
-    }
-    /*
-    const ids = mids.get();
-    let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
+  //testing:
+  //options.restrictions = {
+    //maxheight: 720,
+    //minheight: 360
+  //};
+  // dangerous!!
+  //options.autoplay = 'always';
+  //options.sound = 'fallback';
+  if (!options.controls) {
+    options.controls = {};
+  }
+  //options.controls.font = 'Roboto';
+  //aiyo no need lah. just use the container ah.
+  let hashStr = btoa(JSON.stringify(options));
+  let instMaybe = instMap.get(hashStr);
+  if (instMaybe) {
+      return;
+  }
 
-    let tmp = stylesSet.makeCls(options.container);
-    cssmgr.init(options.container, tmp, stylesSet.makeStyles(tmp));
+  const ids = mids.get();
+  let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
+  /// TODO jxhelper.registerOptions(options.container, options, optionsObjNames_);
+  cssmgr.init(options.container, stylesSet, options, ['customControls']);
 
-    let playerInst = createObject(merged);
-    instMap.set(hashStr, playerInst);
-    return playerInst;
-    */
-    const ids = mids.get();
-    let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
-    /// TODO jxhelper.registerOptions(options.container, options, optionsObjNames_);
-    cssmgr.init(options.container, stylesSet, options, []);
+  let playerInst = createObject(merged);
 
-    let playerInst = createObject(merged);
-
-    instMap.set(options.container, playerInst);
-    return playerInst;
+  instMap.set(hashStr, playerInst);
+  return playerInst;
 }
 
-
-
-
 window.JX = {
-    player :  function(options) {
-        return (makePlayer(options, null));
-    },
-    ampplayer : function(options, ampIntegration) {
-        options.amp = true;//augment
-        let metadata = ampIntegration.getMetadata();
-        let canonUrl = metadata.canonicalUrl;
-        options.pageurl = canonUrl;//augment
-        jxvhelper.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
-        if (!options.container) {
-            options.container = jxvhelper.getJxDocBodyId();        
-        }
-        return (makePlayer(options, ampIntegration));
-    }
+  player :  function(options) {
+      return (makePlayer(options, null));
+  },
+  ampplayer : function(options, ampIntegration) {
+      options.amp = true;//augment
+      let metadata = ampIntegration.getMetadata();
+      let canonUrl = metadata.canonicalUrl;
+      options.pageurl = canonUrl;//augment
+      jxvhelper.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
+      if (!options.container) {
+        options.container = jxvhelper.getJxDocBodyId();        
+      }
+      return (makePlayer(options, ampIntegration));
+  }
 };
 
 // The loaded event we need some minimal info about the page
 // Dun have ids etc ready yet, it is ok.
 if (!window.AmpVideoIframe) {
-    //get some basic info first
-    jxvhelper.sendScriptLoadedTracker(pginfo);
+  //get some basic info first
+  jxvhelper.sendScriptLoadedTracker(pginfo);
 }
 

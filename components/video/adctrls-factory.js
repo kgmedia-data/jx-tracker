@@ -6,18 +6,12 @@
  const modulesmgr            = require('../basic/modulesmgr');
  const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
- const adControlsCls         = cssmgr.getRealCls('adControlsCls');
- const adPlayBtnCls          = cssmgr.getRealCls('adPlayBtnCls');
- const adMuteBtnCls          = cssmgr.getRealCls('adMuteBtnCls');
- const adProgressBarCls      = cssmgr.getRealCls('adProgressBarCls');
- const hideCls               = cssmgr.getRealCls('hideCls');
-  
-  
  
  const btnPlayID = 'btnPlayID';
  const btnMuteID = 'btnMuteID';
  
   function MakeOneAdControlsObj_(container, vectorFcn, doProgressBar = true, controlsObj = null) {
+     const styles                = cssmgr.getRealCls(container);
      var _container = null;
      var _cDiv = null;
      var _vectorFcn = null;
@@ -73,19 +67,19 @@
          _vectorFcn = vectorFcn;
          
          let cColor = (controlsObj && controlsObj.color ? controlsObj.color: '#FF0000');
-         cssmgr.inject('adControls', { color: cColor });
+         cssmgr.inject(container, 'adControls'); 
  
          let r = Math.floor(Math.random() * 1000);
          const innerElm = '<span style="width: 0px;"></span>'; // the child element of the progress bar
          const controlDiv = '<div style="float:left; width:30px;">' + 
-                             '<a href="javascript:void(0)" id="' + btnPlayID + '-' + r + '" class="' + adPlayBtnCls + '"></a></div>' + 
+                             '<a href="javascript:void(0)" id="' + btnPlayID + '-' + r + '" class="' + styles.adPlayBtn + '"></a></div>' + 
                            '<div style="float:left; width:30px;margin-left:3px;">' + 
-                             '<a href="javascript:void(0)" id="' + btnMuteID + '-' + r + '"  class="' + adMuteBtnCls + '"><span></span></a></div>';
+                             '<a href="javascript:void(0)" id="' + btnMuteID + '-' + r + '"  class="' + styles.adMuteBtn + '"><span></span></a></div>';
          _cDiv = common.newDiv(
              _container,
              "div",
              controlDiv,
-             adControlsCls
+             styles.adCtrl
          );
          if (controlsObj && controlsObj.position == 'right') {
              _cDiv.style.right = '5px';
@@ -97,7 +91,7 @@
                  _container,
                  "div",
                  innerElm,
-                 adProgressBarCls
+                 styles.adProg
              );
              _progressBar = _progressBarWrapper.children[0];
          }
@@ -122,12 +116,12 @@
              _muteBtn.classList.remove('mute');
      }
      FactoryOneAdControls.prototype.hide = function() {
-         _cDiv.classList.add(hideCls);
-         if (_progressBarWrapper) _progressBarWrapper.classList.add(hideCls);
+         _cDiv.classList.add(styles.hide);
+         if (_progressBarWrapper) _progressBarWrapper.classList.add(styles.hide);
      };
      FactoryOneAdControls.prototype.show = function() {
-         _cDiv.classList.remove(hideCls);
-         if (_progressBarWrapper) _progressBarWrapper.classList.remove(hideCls);
+         _cDiv.classList.remove(styles.hide);
+         if (_progressBarWrapper) _progressBarWrapper.classList.remove(styles.hide);
      };
      FactoryOneAdControls.prototype.updateProgressBar= function(value, adData){
          if (_progressBar) { // check if the progress bar child element i.e span element

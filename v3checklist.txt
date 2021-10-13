@@ -1,0 +1,29 @@
+CHECK: all the events cannot be broken
+
+CHECK: when you play the second video cannot die (which of the custom controls elements need reset and which one not? CHECK!)
+
+all those togglePlay stuff renee to review
+
+now the new ability to turn on the sound ah. Coded and not tested
+
+desktop
+iOS
+Android
+
+
+Font stuff
+dunno how to set the thing work.
+This font is only affect any text (span) stuff in our div
+cannot affect the outside
+and some of those are using the symbol font (i.e. even our control elements some use symbol font
+
+---
+all the resolution manipulations
+TODO dedicated Code
+--
+subtitles is from the dam side PLUMBING
+--
+expose a easy way to get the options obj
+
+--
+if cannot get the duration then how?
