@@ -150,14 +150,14 @@ function inject_(container, stylesSetName, storedObj = null) {
     }
     if (storedObj.injected.indexOf(stylesSetName) == -1) {
         //make the whatever.
-        console.log(`the ${stylesSetName} not yet injected_ now then do`);
+        //console.log(`the ${stylesSetName} not yet injected_ now then do`);
         let sstr = storedObj.stylesSet.makeCssString(storedObj.cssClsnames, stylesSetName, storedObj.options);
         acss_(sstr);
         storedObj.injected.push(stylesSetName);
     }
-    else {
-        console.log(`the ${stylesSetName} already injected liao ah`);
-    }
+    //else {
+        //console.log(`the ${stylesSetName} already injected liao ah`);
+    //}
 }
 /*
 function walkUp_(node) {

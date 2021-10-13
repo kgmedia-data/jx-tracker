@@ -45,6 +45,13 @@ function MakeOnePlayerCfgMgr_(container) {
     }
     // _r is the options from the page:
     FactoryOneHelper.prototype.changeVideo = function(AR, shakaPlayer) {
+        if (!shakaPlayer) {
+            _heightsArr = [];
+            _vmaxheight = 240;
+            _vminheight = 240;
+            //console.log(`#### change video11 ${_heightsArr} ${_vmaxheight} ${_vminheight}`);
+            return;
+        }
         // follow previous _scheme = 'auto';
         // let's translate everything to height then.
         let tmp = Math.min(
@@ -65,7 +72,9 @@ function MakeOnePlayerCfgMgr_(container) {
             ((_vmaxheight == 0 || _vmaxheight >= h) &&
                 (_vminheight == 0 || _vminheight <= h)));
             _heightsArr.sort(function(a, b){return a-b});
-        }                            
+            
+        }   
+        //console.log(`#### change video22 ${_heightsArr} ${_vmaxheight} ${_vminheight}`);                         
     }
     function reset() {
     }
@@ -123,6 +132,7 @@ function MakeOnePlayerCfgMgr_(container) {
             if (_vminheight) skrobj.abr.restrictions.minHeight = _vminheight;
         }
         //console.log(`### !!! *** NEW ${JSON.stringify(skrobj, null, 2)}`);
+        //console.trace();
         return skrobj;
     }
 
