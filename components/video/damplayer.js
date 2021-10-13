@@ -18,6 +18,7 @@ const modulesmgr            = require('../basic/modulesmgr');
 const jxvhelper              = modulesmgr.get('video/jxvideo-helper');
 const consts                = modulesmgr.get('video/consts');
 const MakePlayerWrapperObj  = modulesmgr.get('video/player-factory');
+const common =              modulesmgr.get("basic/common");
 
 function slackItMaybe() {}
 const errCodeDAMApiError_   = 1997;
@@ -31,23 +32,23 @@ const startModePWApi_       = consts.startModePWApi;
 const startModeSDKApi_      = consts.startModeSDKApi;
 const startModeSDKClick_    = consts.startModeSDKClick;
 
-const isMobileDevice_ = (function () {
-    var check = false;
-    (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
-    return check;
-}());
-
-const maxVWidth1_ = (isMobileDevice_ ? 641: 1281);
-const maxVHeight1_ = (isMobileDevice_ ? 361: 721);
-
-const maxVWidth_ = (isMobileDevice_ ? 641: 1281);
-const maxVHeight_ = (isMobileDevice_ ? 361: 721);
 const DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
 
 const IRThreshold_ = 0.5;
 
 
 function createObject_(options, ampIntegration) {
+    if (options.restrictions.maxwidth == 852) {
+        options.restrictions.maxwidth = 853;
+    }
+    var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
+    if (options.restrictions) {
+        if (options.restrictions.maxheight > 0) 
+            DAMApiBase_ += '&max-height=' + options.restrictions.maxheight;
+        if (options.restrictions.maxwidth > 0) 
+            DAMApiBase_ += '&max-width=' + options.restrictions.maxwidth;
+    }
+
     var _dbgCountOOS = 0;
     var _dbgCountLoad = 0;
     var _dbgL1VP = 0;
@@ -313,7 +314,10 @@ function createObject_(options, ampIntegration) {
             (action != 'hlserror' ? '&debug=' + dbgProp: '');
             if (v.adslotduration) {
                 url += '&adduration=' + v.adslotduration;
-            }       
+            } 
+            if (v.w > 0 && v.h > 0) {
+                url += '&rendition=' + v.w + 'x' + v.h;
+            }
         }    
         else {
             url = _evtsHelperBlock.trackerBase + 
@@ -374,7 +378,7 @@ function createObject_(options, ampIntegration) {
 
         //auto means playerWrapper object should just go ahead and call video.play()
 
-        if (_options.autoplay == 'wifi' && hasWifi ) {
+        if (_options.autoplay == 'wifi' && hasWifi || _options.autoplay == 'always') {
             //'justdoit' : this is our backdoor to force our player to try autoplay
             //coz somehow even at home sometimes the system (browser network connection api)
             //will detect my wifi as 4g!!
@@ -446,25 +450,26 @@ function createObject_(options, ampIntegration) {
         
     }
     function repairMissingOptions(options) {
-        if (!options.hasOwnProperty('muted')) {
-            options.muted = true;
+        if (options.hasOwnProperty('muted')) {
+            // backward compatiable:
+            options.sound = options.muted ? "off": "fallback";
+            delete options.muted;
         }
         //This is only for crucial properties that cannot be missing
         //a final options object. 
         //use a JSON to do it. Merging of defaults and supplied options:
-        if (options.ads && !options.ads.hasOwnProperty('prerolltimeout')) {
-            options.ads.prerolltimeout = 5000;
-        }
-        if (options.ads && !options.ads.hasOwnProperty('delay')) {
-            options.ads.delay = defaultAdDelay_;
-        }
-        if (!options.hasOwnProperty('autopause')) {
-            options.autopause = true;
-        }
-        if (!options.hasOwnProperty('autoplay')) {
-            options.autoplay = 'wifi';
-        }
-        
+        [   {sub:null, p:'autopause',d: true},
+		    {sub:null, p:'autoplay',d: "wifi"},
+		    {sub:null, p:'sound',d: "off"},
+            {sub:null, p:'starttime',d: -1}, //meaning let the mechanism works (cookie)
+		    {sub:'ads', p:'delay',d: defaultAdDelay_},
+		    {sub:'ads', p:'prerolltimeout',d: 5000},
+	    ].forEach(function(one) {
+		    o = one.sub? options[one.sub]: options;
+		    if (o && !o.hasOwnProperty(one.p)) {
+			    o[one.p] = one.d;
+		    }
+	    });
        
         if (window.IntersectionObserver) {
             _cfg.tryPlayPause = _options.autopause;
@@ -490,11 +495,13 @@ function createObject_(options, ampIntegration) {
         _vInfoMap = {};
         //TODO we start with some default values and then have the stuff merged with the user's wishes.
         //Some feeding of defaults:
+        // must be very careful...
+        // the only objects which it can work on are blabla...
          _options = JSON.parse(JSON.stringify(options)); //augmented if needed.
-        if (!_options.hasOwnProperty('container')) {
-            _options.container = '#body';
-         }
-         if (_options.container == "#body") {
+        //if (!_options.hasOwnProperty('container')) {
+          //  _options.container = '#body';
+         //}
+         if (_options.container == jxvhelper.getJxDocBodyId()) {
             _container = document.body;
          }
          else 
@@ -670,53 +677,27 @@ function createObject_(options, ampIntegration) {
             _fetchNPlay1VP(vid2Fetch);
         }
     }
-    JXPlayerInt.prototype.loadVideoByPartnerId = function(videoId, startOffset, playEndCB, forcePlatform) {
-        //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
-        if (startOffset === undefined) {
-            startOffset = -1; // by the normal way which is cookie
-        }
-        if (playEndCB === undefined) {
-            playEndCB = null;
-        }
-        if (forcePlatform === undefined) {
-            forcePlatform = null;
-        }
-        _load(false, [videoId], playEndCB, forcePlatform, startOffset);
-     }
      JXPlayerInt.prototype.loadVideoById = function(videoId, startOffset, playEndCB, forcePlatform) {
-        //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
-        if (startOffset === undefined) {
-            startOffset = -1; //by the normal way which is cookie
-        }
-        if (playEndCB === undefined) {
-            playEndCB = null;
-        }
-        if (forcePlatform === undefined) {
-            forcePlatform = null;
-        }
-        _load(true, [videoId], playEndCB, forcePlatform, startOffset);
+        _load(true, [videoId], (playEndCB === undefined ? null: playEndCB), 
+            (forcePlatform === undefined? null:forcePlatform), 
+            (startOffset === undefined? -1: startOffset));
      }
-     
+     JXPlayerInt.prototype.loadVideoByPartnerId = function(videoId, startOffset, playEndCB, forcePlatform) {
+        _load(false, [videoId], (playEndCB === undefined ? null: playEndCB), 
+            (forcePlatform === undefined? null:forcePlatform), 
+            (startOffset === undefined? -1: startOffset));
+     }
      JXPlayerInt.prototype.loadJx = function(param, playEndCB, forcePlatform) {
-        //console.log(`__JXTIMING loadJx called ` + (Date.now() - basetime_));
-        slackItMaybe("[ loadJx.jixie.io : " + (param ? JSON.stringify(param): "") + "]");
-        if (playEndCB === undefined) {
-            playEndCB = null;
-        }
-        if (forcePlatform === undefined) {
-            forcePlatform = null;
-        }
-        _load(true, param, playEndCB, forcePlatform);
+        _load(true, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
      }
      JXPlayerInt.prototype.load = function(param, playEndCB, forcePlatform) {
-        slackItMaybe("[ load.jixie.io : " + (param ? JSON.stringify(param): "") + "]");
-        if (playEndCB === undefined) {
-            playEndCB = null;
-        }
-        if (forcePlatform === undefined) {
-            forcePlatform = null;
-        }
-        _load(false, param, playEndCB, forcePlatform);
+        _load(false, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
+     }
+     JXPlayerInt.prototype.loadPlaylistById = function(param, playEndCB, forcePlatform) {
+        _load(true, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
+     }
+     JXPlayerInt.prototype.loadPlaylistByPartnerId = function(param, playEndCB, forcePlatform) {
+        _load(false, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
      }
 
      /***
@@ -934,6 +915,7 @@ function createObject_(options, ampIntegration) {
         _vidFetchAcctId = idsAreInternal ? null : _options.accountid;
         _vidConfAcctId = _options.accountid;
         _forcePlatform = forcePlatform;
+        // 
         _startOffset = startOffset;
         
         //_initEventsHelpers(); 
@@ -1492,12 +1474,14 @@ function createObject_(options, ampIntegration) {
                 //combine the config from server and client side into 1 and then set to the whatever wrapper.
                 _options = merge2(_options, 
                     vData.conf && typeof vData.conf === 'object' ? vData.conf:{} , nestedProp_, nestedProp2_);
+
             }
             repairMissingOptions(_options);
+            
             prepareAdsObj(_options);
             _pInst.setConfig(
                 _options.ads,
-                _options.logo, _options.soundindicator, _options.muted);
+                _options.logo, _options.soundindicator, _options.sound); //_options.sound (on, off, fallback)
         }
             
         _dbgL1VP++;
@@ -1508,63 +1492,39 @@ function createObject_(options, ampIntegration) {
         let srcHLS = null;
         let srcFallback = null;
         let thumbnailUrl = null;
-        let title = null;
-
+        
         if (vData.id) {
             //this is Jixie ID: real videos in our system
             srcHLS = vData.hls;
             srcFallback = vData.fallback;
-            if (vData.metadata) {
-                if (vData.metadata.thumbnails && vData.metadata.thumbnails.length > 0) {
-                    //choose most suitable one:
-                    let currIdx = -1;
-                    let currWidth = 999999;
-                    let wThreshold = (isMobileDevice_ ? 640: 854);  //or based off something else
-                    let arr = vData.metadata.thumbnails;
-                    for (i = arr.length-1; i >= 0; i--) {
-                        //if it is sufficiently acceptable in size:
-                        let w = (typeof arr[i].width == 'string' ? parseInt(arr[i].width): arr[i].width);
-                        if (w >= wThreshold && w < currWidth) {
-                            currIdx = i;
-                            currWidth = w;
-                        }
-                    }
-                    if (currIdx == -1) {
-                        //Most unlikely to come here lah!! this is super big threshold.
-                        //no choice choose the largest
-                        let largest = 1;
-                        for (i = arr.length-1; i >= 0; i--) {
-                            let w = (typeof arr[i].width == 'string' ? parseInt(arr[i].width): arr[i].width);
-                            if (w > largest) {
-                                largest = w;
-                                currIdx = i;
-                            }
-                        }
-                    }
-                    if (currIdx > -1) {
-                        thumbnailUrl = vData.metadata.thumbnails[currIdx].url;
-                    }
-                }//pick the most suitable 
+            // Now we try to pick a sensible thumbnail and hope the video area does not
+            // suddenly change drastically after we made the choice :)
+            let thresholdW = _container.offsetWidth;
+            //console.log("#### WHAT IS YOUR THRESHOLD ??? " + thresholdW);
+            if (!thresholdW)
+                thresholdW = (common.isMobile() ? 426: 640);  
+            let tnArr = vData.metadata.thumbnails;
+            if (tnArr && tnArr.length >=1) {
+	            //i. map to intermediate array with idx (in original thumbnails array) and width
+	            //ii. sort asc
+	            //iii. try to pick the first one which is big enough.
+            	let tmpA = tnArr.map((e, idx)=> ({idx: idx, w: e.width})).sort((a, b) => a.w-b.w); //tmpA is sorted with asc width.
+	            let found = tmpA.find((e) => e.w >= thresholdW);
+	            let idx = found ? found.idx : tmpA[tmpA.length-1].idx;
+	            thumbnailUrl = tnArr[idx].url;
+	            //console.log(thumbnailUrl);
+            }
+            if (!thumbnailUrl && vData.metadata.thumbnail)
+                thumbnailUrl = vData.metadata.thumbnail;
+        }
+        // _startOffset is what is from the API call (loadvideoBy*Id).
+        // if _startOffset 
+        //startOffset first priority, if nothing meaningful then options.starttime (it is repaired to have this setup property), if also not meaningful then
+        //get from cookie.
+        let offset = (_startOffset >= 0 ? _startOffset: ( options.starttime>=0 ? options.starttime: (jxvhelper.getVStoredPlayhead(_currVid))));
+        // make sure offset is not exceeding the video duration
+        offset = (offset > 0 ? (offset > vData.metadata.duration ? 0: offset): 0);
 
-                if (!thumbnailUrl && vData.metadata.thumbnail)
-                    thumbnailUrl = vData.metadata.thumbnail;
-                if (vData.title)
-                    title = vData.title;
-            }
-        }
-        // if -1 means nothing fed from upstairs
-        let offset = (_startOffset == -1 ? jxvhelper.getVStoredPlayhead(_currVid): _startOffset);
-        if (offset < 0) {
-            offset = 0;
-        }
-        else if (offset) {
-            if (vData.metadata && vData.metadata.duration && !isNaN(vData.metadata.duration)) {
-                if (_startOffset > vData.metadata.duration) {
-                    console.log(`jxvideo : Start playhead offset (${_startOffset}) exceeds video duration (${vData.metadata.duration}). reset offset to 0`);
-                    offset = 0;
-                }
-            }
-        }
         _workoutStartModeOnce(vData.network);
         /////EASIER TO SEE: thumbnailUrl = 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/dummythumbnails/tn_corsproblem.png'; //vData.metadata.thumbnail;
         //This will always stick the thumbnail first.
@@ -1572,10 +1532,33 @@ function createObject_(options, ampIntegration) {
         //for it to be resolved before it stick the HLS source into the <video> object
         //Reason is to save $. Coz vid.src = <HLS URL> will cause some segment loading
         //Here, _lazyStartProm will only be resolved when the video container gets sufficiently near to the viewport
+        /* let testsubtitles = [
+            {
+                "language": "en",
+                "url": "https://creatives.jixie.media/demo/assets/srt/freeguyen.srt",
+                "label": "English",
+                "mime": "text/srt"
+            },
+            {
+                "language": "id",
+                "url": "https://creatives.jixie.media/demo/assets/srt/freeguyid.srt",
+                "label": "Bahasa",
+                "mime": "text/srt"
+            }
+        ]*/
         _pInst.setV(
             _lazyStartProm,
             _currVid, _cfg.startModePW, (downgrade == fallbackTech_ ? null : srcHLS),
-            srcFallback, offset, thumbnailUrl);  
+            srcFallback, //offset, thumbnailUrl, title, subtitles);  
+            {
+                AR: 1.78, //to get from proper source TODO TODO
+                duration: vData.metadata.duration,
+                offset: offset,
+                title: vData.metadata.title,
+                subtitles : [], //testsubtitles,
+                thumbnails: [thumbnailUrl], 
+                thumbnail: thumbnailUrl 
+            });
 
         //setV will kick off a whole "promise chain" thing waiting for one thing
         //after another one.
@@ -1806,14 +1789,10 @@ function createObject_(options, ampIntegration) {
         let url = DAMApiBase_;
         if (_vidFetchAcctId) {
             url += '&partner_id=' + vId +
-            '&account_id=' + _vidFetchAcctId +
-            '&max-width=' + maxVWidth1_ +
-            '&max-height=' +maxVHeight1_;
+            '&account_id=' + _vidFetchAcctId;
         }
         else {
-            url += '&video_id=' + vId +
-            '&max-width=' + maxVWidth_ +
-            '&max-height=' +maxVHeight_;
+            url += '&video_id=' + vId;
         }
         if (_forcePlatform) {
             url += '&platform='+_forcePlatform;

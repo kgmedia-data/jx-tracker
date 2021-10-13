@@ -8,11 +8,9 @@
  const common                = modulesmgr.get('basic/common');
 
  const cssmgr                = modulesmgr.get('video/cssmgr');
- const thumbnailCls          = cssmgr.getRealCls('thumbnailCls');
- const hideCls               = cssmgr.getRealCls('hideCls');
- const bigPlayBtnCls         = cssmgr.getRealCls('bigPlayBtnCls');
  
  function MakeOnePlayerControlsObjD_(container, vectorFcn) {
+    const styles                = cssmgr.getRealCls(container);
     function FactoryOnePlayerControlsD() {}
     var _vectorFcn = null;
     var _container = null;
@@ -56,9 +54,9 @@
             _vectorFcn.reportClickToStart();
         }
         if (_bigPlayBtn)
-            _bigPlayBtn.classList.add(hideCls);
+            _bigPlayBtn.classList.add(styles.hide);
         if (_thumbnailImg)                
-            _thumbnailImg.classList.add(hideCls);
+            _thumbnailImg.classList.add(styles.hide);
         //if (_boundClickedCB)  {              
             //common.removeListener(_bigPlayBtn, 'click', _boundClickedCB);
             //_boundClickedCB = null;
@@ -87,14 +85,14 @@
      * (play can start thru various channels ... See comment for _clickedCB function above.
      * actually I am thinking, once the play starts, we can just remove the thumbnail??
      */
-    FactoryOnePlayerControlsD.prototype.videoVisualsHide= function() {
+    FactoryOnePlayerControlsD.prototype.hideVVisual= function() {
         _hideSpinner();
         if (_bigPlayBtn) {
             _clickedCB();
         }
         else {
             if (_thumbnailImg) {               
-                _thumbnailImg.classList.add(hideCls);
+                _thumbnailImg.classList.add(styles.hide);
                 _thumbnailImg = null; //aiyo can we just get rid of it .
                 //we are not going to show this again, right?
             }
@@ -107,13 +105,13 @@
      * @param {*} cb 
      */
     
-    FactoryOnePlayerControlsD.prototype.showBigPlayBtn= function(cb){
+    FactoryOnePlayerControlsD.prototype.showStarterPlayBtn= function(cb){
         if (!_bigPlayBtn) {               
             //for now should be spinner
             /**/
             _bigPlayBtn = document.createElement("a");
             _bigPlayBtn.href = "javascript:void(0)";
-            _bigPlayBtn.className = bigPlayBtnCls;
+            _bigPlayBtn.className = styles.bigPlayBtn;
             ////if (isMobileDeviceBPB_) _bigPlayBtn.className = mobilePlayBtnCls;
             _container.appendChild(_bigPlayBtn);
         }
@@ -126,7 +124,7 @@
             else {
                 common.addListener(_bigPlayBtn, 'click', _togglePlay);
             }
-            _bigPlayBtn.classList.remove(hideCls)
+            _bigPlayBtn.classList.remove(styles.hide)
         }
     }
    
@@ -150,12 +148,12 @@
      * Then 
      * @param {*} thumbnailURL 
      */
-    FactoryOnePlayerControlsD.prototype.videoVisualsInit= function(thumbnailURL, imgLoadedCB){
+    FactoryOnePlayerControlsD.prototype.initVVisual= function(thumbnailURL, imgLoadedCB){
         _showSpinner();
         if (!_thumbnailImg) {
             let r = Math.floor(Math.random() * (2000) + 1);
-            let thumbnailID = thumbnailCls + '-' + r;//want ID for wat?
-            _thumbnailImg = common.newDiv(_container, "img", null, thumbnailCls, thumbnailID);
+            let thumbnailID = styles.thumbnail + '-' + r;//want ID for wat?
+            _thumbnailImg = common.newDiv(_container, "img", null, styles.thumbnail, thumbnailID);
         }
         if (thumbnailURL && thumbnailURL != _thumbnailImg.src) {
             _boundImgLoadedFcn = imgLoadedFcn.bind({ img: _thumbnailImg, cb: imgLoadedCB });
@@ -179,23 +177,35 @@
      * So now can remove the loading spinner then
      * @param {*} thumbnailURL 
      */
-    FactoryOnePlayerControlsD.prototype.videoVisualsRemoveSpinner= function(){
+    FactoryOnePlayerControlsD.prototype.hideSpinner= function(){
         _hideSpinner();
     }
+    FactoryOnePlayerControlsD.prototype.showNativeCtrl= function(){
+        return true;
+    };
     
     //all do nothing
     FactoryOnePlayerControlsD.prototype.reset= function(){};
     FactoryOnePlayerControlsD.prototype.updatePlayState= function(){};
     FactoryOnePlayerControlsD.prototype.updateMutedState= function(){};
-    FactoryOnePlayerControlsD.prototype.hide= function(){};
-    FactoryOnePlayerControlsD.prototype.show= function(){};
+    FactoryOnePlayerControlsD.prototype.hideCtrl= function(){};
+    FactoryOnePlayerControlsD.prototype.showCtrl= function(){};
     FactoryOnePlayerControlsD.prototype.setBtnMuteActive= function(){};
     FactoryOnePlayerControlsD.prototype.setBtnPlayActive= function(){};
     FactoryOnePlayerControlsD.prototype.togglePlay= function(){};
-    FactoryOnePlayerControlsD.prototype.updateProgressBar= function(){};
     FactoryOnePlayerControlsD.prototype.showProgressBar= function(){};
     FactoryOnePlayerControlsD.prototype.hideProgressBar= function(){};
     FactoryOnePlayerControlsD.prototype.setTramsitionProgressBar= function(){};//SPELLING
+    FactoryOnePlayerControlsD.prototype.setVolIcon= function(){};
+    FactoryOnePlayerControlsD.prototype.setPlayBtn= function(){};
+    FactoryOnePlayerControlsD.prototype.setVInfo= function(){};
+    FactoryOnePlayerControlsD.prototype.setTimer= function(){};
+    FactoryOnePlayerControlsD.prototype.setProg= function(){};
+    FactoryOnePlayerControlsD.prototype.setVTitle = function () {};
+    FactoryOnePlayerControlsD.prototype.updateFsIcon = function () {};
+    FactoryOnePlayerControlsD.prototype.videoMetaReady = function () {};
+    
+      
     let ret = new FactoryOnePlayerControlsD(container, vectorFcn);
     return ret;
 }
@@ -211,7 +221,7 @@ module.exports = MakeOnePlayerControlsObjD_;
     - function which will make one player controls object
      The made object will have the following functions:
     
-    - showBigPlayBtn function(cb)
+    - showStarterBigPlayBtn function(cb)
     - videoVisualsInit function(thumbnailURL, imgLoadedCB)
         every video starts like this: stick the thumbnail there on top first
         then put the loading spinner
