@@ -77,6 +77,10 @@ function makeOptions_(options) {
     o.backgroundColor = options.backgroundcolor || "#1B63D4"; 
     o.adsButtonsColor = options.adcolor || "#FF0000"; 
     o.font = options.font || 'Roboto'; 
+    //for usages like player sdk, we only know about the controls color
+    // very lst minuate. so we cannot really shared the css ids.
+    //so just make a different set.
+    if (options.cachebuster) o.cachebuster = '1';
     return o;
 }
 
@@ -108,7 +112,11 @@ function init_(container, stylesSetObj, options, injectSSNow = []) {
     // the hash code is derived from the actual options settings.
     // so 2 containers with the exact same options color settings will map to the same hash.
     let str = ['buttonsColor','backgroundColor','adsButtonsColor','font'].map((e) => o[e]).join("|");
+    if (o.cachebuster) {
+        str += Math.floor(Math.random() * (1000)) + 1;
+    }
     let hash = makeHashCode_(str);
+    //console.log(`### str=${str} --> hash=${hash}`);
 
     let storedObj = theMap_.get(hash);
     if (!storedObj) {

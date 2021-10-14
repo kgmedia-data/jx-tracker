@@ -556,13 +556,34 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
     }
 
-        
+    /**
+     * It is very important to handle this properly:
+     * each instance of the OSM is listening. So it is important that the instance
+     * IGNORES whatever that is not meant for it!!!
+     * @param {*} e 
+     * @returns 
+     */        
     function __handleCrEvtsMsgs(e) {
+        let sureOK = false;
+        // sureOK set to true if this listener is working with a creative in an iframe
+        // and we already checked this incoming msg is from that iframe.
+        // Then no need to check to throw anything away
+        // The challenge is for those listeners working with trusted creatives ...
         if (this.divObjs.jxCoreElt && this.divObjs.jxCoreElt.contentWindow) {
             //creative is in iframe iframe situation:
             //Then we can easily check if the source of the message is that
             //iframe
             if (!(this.divObjs.jxCoreElt.contentWindow === e.source)) {
+                return;
+            }
+            sureOK = true;
+        }
+        else {
+            // our creative is not in an iframe. in that case I expect at a minimum
+            // only to entertain msg from the same window (and not some iframe thereof)
+            // if it is a normal windows messages (not one we send to ourself) then there will be a e.source
+            // in that case we want to at least check it is from this current window.
+            if (e.source && !(window === e.source)) {
                 return;
             }
         }
@@ -594,6 +615,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         if (json) {
             type = json.type;
         }
+
         if (this.c.div && this.c.crSig) {
             //trusted
             //if the creative has a signature (new trusted script type) 
@@ -610,7 +632,22 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             }
         }
         
+        // we don't want the iframe type to kill our own local creative though.
+        /*
+        if ((json && json.token && json.token != 'default' && this.c) && json.token != this.c.token) {
+            //NEW video trusted won't kill other stuff.
+            return;
+        }*/
+        if (!sureOK && json && json.token && this.c.div) {
+            if (json.token != this.c.token) { //this.c.div.token could be undefined
+                console.log(`#### type=${type} json=(${JSON.stringify(json)}) json.token=${json.token} VS this.c.token=${this.c.token}`);
+                return;
+            }
+            // then we need to check if 
+            //we need to match it properly:
 
+        }
+        
         if (type) {
             switch (type) {
                 case "jxloaded": //only used for untrusted

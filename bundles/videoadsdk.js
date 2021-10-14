@@ -99,7 +99,9 @@ function makePlayer(containerId, adparameters, config = null, eventsVector = nul
     //let tmp = stylesSet.makeCls(options.container);
     //cssmgr.init(containerId, tmp, stylesSet.makeStyles(tmp));
     //cssmgr.inject(containerId, 'adControls', { color: '#FF0000'});
-    cssmgr.init(containerId, stylesSet, {controls: {adcolor: '#FF0000'}}, []);
+
+    //cssmgr.init(containerId, stylesSet, {controls: {adcolor: '#FF0000'}}, []);
+    cssmgr.init(containerId, stylesSet, {controls: {cachebuster: 1}}, []);
 
 
     let playerInst = createObject(containerId, adparameters, config, eventsVector, notifyMaster);
