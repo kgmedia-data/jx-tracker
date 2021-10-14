@@ -47,6 +47,7 @@ modulesmgr.set('video/cssmgr',         cssmgr);
 // For style this is a bit different from the default one (for video SDK)
 const stylesSet                        = require('../components/video-styles/videoad');
 
+
 const vast                             = require('../components/video/vast');
 modulesmgr.set('video/vast',         vast);
 
@@ -95,9 +96,11 @@ function makePlayer(containerId, adparameters, config = null, eventsVector = nul
     if (instMaybe) {
         return;
     }
-    let tmp = stylesSet.makeCls(options.container);
-    cssmgr.init(containerId, tmp, stylesSet.makeStyles(tmp));
-    cssmgr.inject(containerId, 'adControls', { color: '#FF0000'});
+    //let tmp = stylesSet.makeCls(options.container);
+    //cssmgr.init(containerId, tmp, stylesSet.makeStyles(tmp));
+    //cssmgr.inject(containerId, 'adControls', { color: '#FF0000'});
+    cssmgr.init(containerId, stylesSet, {controls: {adcolor: '#FF0000'}}, []);
+
 
     let playerInst = createObject(containerId, adparameters, config, eventsVector, notifyMaster);
     instMap.set(containerId, playerInst);

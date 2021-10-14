@@ -85,6 +85,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   var _videoObj = null;
   var _waitingOnBigPlayBtnStart = false;
 
+  var _ctrlsVis = false; //floating controls visibile or not. weneed to keep the state unfortunately
+
   // Big play button:
   // at the start, if it is click-to-play, or autoplay was not successful, the
   // bigplay button will be shown there (without all the other little ding-dong
@@ -153,6 +155,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   // these concerns those items which will be recreated for each video as video changes
   // in the player instance:
   FactoryOneCustomControls.prototype.reset = function () {
+    _ctrlsVis = false;
     _waitingOnBigPlayBtnStart = false;
     // then the thing is gone then
     /* if (_thumbnailImg) {
@@ -176,6 +179,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _videoTitleDiv.removeChild(_videoTitle);
       _videoTitle = null;
     }
+    
+    _overlayQualityBtn = null;
+    _overlaySubtitleBtn = null;
+    
     _qualityOptions = [];
     _subtitleOptions = [];
     _qualitySelection = null;
@@ -233,17 +240,25 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     // if (!_vectorFcn.isPaused()) {
     //   _bigPlayBtn.classList.remove(className);
     // }
-    if (_vectorFcn.cbHoverControls) _vectorFcn.cbHoverControls(false);
+    _ctrlsVis = true;
+    if (_vectorFcn.onCtrlsVisChange) _vectorFcn.onCtrlsVisChange(true);
+  }
+
+  FactoryOneCustomControls.prototype.overlaysChanged= function(){
+    setTimeout(function(){
+      if (_vectorFcn.onCtrlsVisChange) _vectorFcn.onCtrlsVisChange(_ctrlsVis);
+    }, 0);
   }
 
   function _hideAll(className) {
+    _ctrlsVis = false;
     elmArr.forEach(function(x) {
       if (x) x.classList.add(className);
     });
     // if (!_vectorFcn.isPaused()) {
     //   _bigPlayBtn.classList.add(className);
     // }
-    if (_vectorFcn.cbHoverControls) _vectorFcn.cbHoverControls(true);
+    if (_vectorFcn.onCtrlsVisChange) _vectorFcn.onCtrlsVisChange(false);
   }
   
   function _bigPlayClickCB(evtOjectMaybe) {
@@ -427,11 +442,12 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
         d="M65.2653 29.2792C65.9333 30.0568 66.8839 30.5379 67.9077 30.6164C68.9315 30.695 69.9447 30.3645 70.7241 29.6979L84.2695 18.12C85.1279 17.3868 85.622 16.316 85.622 15.1889C85.622 14.0617 85.1279 12.9909 84.2695 12.2577L70.7241 0.679852C69.6795 -0.259097 68.2062 -0.55903 66.8761 -0.103563C65.546 0.351905 64.5683 1.49108 64.3225 2.87192C64.0767 4.25276 64.6014 5.65791 65.693 6.54212L75.8036 15.1927L65.6891 23.8395C64.0664 25.2253 63.8767 27.6601 65.2653 29.2792Z"
         />
     </svg>`;
-  
+  /*
+  Demo-ed already; Activate only when publisher is ready.
   const shareSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15.115" height="13.785" viewBox="0 0 15.115 13.785">
                       <path d="M15.115,7.388,8.833.5V4.609H7.5a7.5,7.5,0,0,0-7.5,7.5v2.178l.593-.65a10.644,10.644,0,0,1,7.862-3.469h.378v4.109Zm0,0" transform="translate(0 -0.5)"/>
                     </svg>`;
-  
+  */
   function _createSkipButtons() {
     const skipText = `<span>${skipOffset}</span>`;
 
@@ -669,6 +685,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _overlayVolumeBtn.setAttribute('data-title', 'Unmute');
       if (_overlayVolumeRange) _overlayVolumeRange.classList.add(styles.hide);
       _vectorFcn.mute(); //??
+      
     } else {
       if (volume > 0 && volume < 0.3) {
         _lowIcon.classList.remove(styles.hide);
@@ -776,12 +793,18 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
 
   function _setVideoTitle(title) {
     if (!_videoTitle) {
+      const iHTML = `<span>${title}</span>`
+      _videoTitle = common.newDiv(_videoTitleDiv, "div", iHTML);
+    }
+    /* after demo. we deactivate until it is meaningful to activate it
+    pub not ready
+    if (!_videoTitle) {
       const iHTML = `${shareSVG}<span>${title}</span>`
       _videoTitle = common.newDiv(_videoTitleDiv, "div", iHTML);
       common.addListener(_videoTitle, "click", function() {
         window.open('https://google.com', '_blank');
       });
-    }
+    }*/
   }
 
   /**

@@ -35,6 +35,9 @@ modulesmgr.set('video/jxvideo-helper', jxvhelper);
 const consts                            = require('../components/video/consts'); 
 modulesmgr.set('video/consts',          consts);
 
+const playercfgmgr_fact                 = require('../components/video/shakacfgmgr-factory');
+modulesmgr.set('video/playercfgmgr-factory', playercfgmgr_fact);
+
 const adctrls_fact                      = require('../components/video/adctrls-factory');
 modulesmgr.set('video/adctrls-factory', adctrls_fact);
 
@@ -66,11 +69,24 @@ pginfo.dbgVersion = dbgVersion;
 
 var instMap = new Map();   
 function makePlayer(options) {
-    let hashStr = btoa(JSON.stringify(options));
-    let instMaybe = instMap.get(hashStr);
-    if (instMaybe) {
+    if (!options.restrictions) {
+        options.restrictions = {};
+    }
+    if (!options.controls) {
+        options.controls = {};
+    }
+    //options.autoplay = 'none'; //HACK
+    
+    if (typeof options.container != 'string') {
+        console.log(`jxplayer: Integration error: options.container must be a div id (a string). Aborting`);
         return;
     }
+    let instMaybe = instMap.get(options.container);
+    if (instMaybe) {
+        console.log(`jxplayer: Integration error: creating player instance on div id=${options.container} again. Aborting`);
+        return;
+    }
+    /*
     const ids = mids.get();
     let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
 
@@ -80,7 +96,20 @@ function makePlayer(options) {
     let playerInst = createObject(merged);
     instMap.set(hashStr, playerInst);
     return playerInst;
+    */
+    const ids = mids.get();
+    let merged = Object.assign({}, ids, pginfo, options);//pginfo we gotten earlier
+    /// TODO jxhelper.registerOptions(options.container, options, optionsObjNames_);
+    cssmgr.init(options.container, stylesSet, options, []);
+
+    let playerInst = createObject(merged);
+
+    instMap.set(options.container, playerInst);
+    return playerInst;
 }
+
+
+
 
 window.JX = {
     player :  function(options) {
@@ -92,6 +121,9 @@ window.JX = {
         let canonUrl = metadata.canonicalUrl;
         options.pageurl = canonUrl;//augment
         jxvhelper.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
+        if (!options.container) {
+            options.container = jxvhelper.getJxDocBodyId();        
+        }
         return (makePlayer(options, ampIntegration));
     }
 };

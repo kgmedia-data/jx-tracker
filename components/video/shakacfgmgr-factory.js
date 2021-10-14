@@ -35,6 +35,7 @@ function MakeOnePlayerCfgMgr_(container) {
 
     function _getChangedSize(mustReturnObj = false) {
         if (mustReturnObj || (_container.offsetWidth != _lastwidth)) {
+            //console.log(`_### !!!! GET CHANGED SIZE ${_container.offsetWidth} ${_container.offsetHeight}`);
             _lastwidth = _container.offsetWidth;
             _lastheight = _container.offsetHeight;
             return {width: _container.offsetWidth, height: _container.offsetHeight};
@@ -44,6 +45,13 @@ function MakeOnePlayerCfgMgr_(container) {
     }
     // _r is the options from the page:
     FactoryOneHelper.prototype.changeVideo = function(AR, shakaPlayer) {
+        if (!shakaPlayer) {
+            _heightsArr = [];
+            _vmaxheight = 240;
+            _vminheight = 240;
+            //console.log(`#### change video11 ${_heightsArr} ${_vmaxheight} ${_vminheight}`);
+            return;
+        }
         // follow previous _scheme = 'auto';
         // let's translate everything to height then.
         let tmp = Math.min(
@@ -64,7 +72,9 @@ function MakeOnePlayerCfgMgr_(container) {
             ((_vmaxheight == 0 || _vmaxheight >= h) &&
                 (_vminheight == 0 || _vminheight <= h)));
             _heightsArr.sort(function(a, b){return a-b});
-        }                            
+            
+        }   
+        //console.log(`#### change video22 ${_heightsArr} ${_vmaxheight} ${_vminheight}`);                         
     }
     function reset() {
     }
@@ -74,9 +84,13 @@ function MakeOnePlayerCfgMgr_(container) {
             ((_vmaxheight == 0 || _vmaxheight >= t.height) &&
                 (_vminheight == 0 || _vminheight <= t.height)));
     }    
-   // they use click proxy 
-   // which is under another campaign
-   // obfuscate campaignid
+    /**
+     * To create the config object to call shakaplayer configure() on
+     * @param {*} forceHeightMaybe if > 0, then it must be from user choice of specific rendition
+     * if 0, then we doing auto (managed by us in response to video height.)
+     * @param {*} forInit : the init phase of 
+     * @returns 
+     */
     FactoryOneHelper.prototype.getNewCfgMaybe = function(forceHeightMaybe, forInit = false) {
         // write the answer into out.
         // will be based on everything.
@@ -117,6 +131,8 @@ function MakeOnePlayerCfgMgr_(container) {
             };
             if (_vminheight) skrobj.abr.restrictions.minHeight = _vminheight;
         }
+        //console.log(`### !!! *** NEW ${JSON.stringify(skrobj, null, 2)}`);
+        //console.trace();
         return skrobj;
     }
 
@@ -127,7 +143,7 @@ function MakeOnePlayerCfgMgr_(container) {
                 return _heightsArr[i];
             }
         }
-        return _heightsArr[0];
+        return _heightsArr[_heightsArr.length-1];
     }
      let ret = new FactoryOneHelper();
     return ret;

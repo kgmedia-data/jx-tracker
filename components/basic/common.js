@@ -11,6 +11,7 @@ function MakeOneHelperObj_() {
          });
     }
     //DUNNO WHO CALL?
+    /*
     FactoryOneHelper.prototype.ancestor = function(el, tagName) {
         tagName = tagName.toLowerCase();
         while (el && el.parentNode) {
@@ -21,6 +22,7 @@ function MakeOneHelperObj_() {
         }
         return null;
     }
+    */
 
     /**
      * May not be working perfectly yet. Still need to check to tweak
@@ -127,7 +129,7 @@ module.exports = gH;
  Please just read the code to know what it tries to do. Too simple
 * module.exports:
     - toCamelCase function(str)
-    - ancestor function(el, tagName)
+    ////- ancestor function(el, tagName)
     - loadIMAScriptP function()
     - addListener  function(e, event, h)
     - removeListener function(e, event, h)

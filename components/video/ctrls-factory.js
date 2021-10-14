@@ -56,7 +56,7 @@
         if (_bigPlayBtn)
             _bigPlayBtn.classList.add(styles.hide);
         if (_thumbnailImg)                
-            _thumbnailImg.classList.add(hideCls);
+            _thumbnailImg.classList.add(styles.hide);
         //if (_boundClickedCB)  {              
             //common.removeListener(_bigPlayBtn, 'click', _boundClickedCB);
             //_boundClickedCB = null;
@@ -203,6 +203,9 @@
     FactoryOnePlayerControlsD.prototype.setProg= function(){};
     FactoryOnePlayerControlsD.prototype.setVTitle = function () {};
     FactoryOnePlayerControlsD.prototype.updateFsIcon = function () {};
+    FactoryOnePlayerControlsD.prototype.videoMetaReady = function () {};
+    
+      
     let ret = new FactoryOnePlayerControlsD(container, vectorFcn);
     return ret;
 }

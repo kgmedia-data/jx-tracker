@@ -48,12 +48,10 @@ function start_(options) {
 
 var ourSigQ = '';
 if (JX_FLOAT_COND_COMPILE) {
-    console.log(`MIOW TYPE 1`);
     ourSigQ = '_jxuniversalfltq';
     window.jxuniversalflt = { init: start_}; 
 }
 else {
-    console.log(`MIOW TYPE 2`);
     ourSigQ = '_jxuniversalq';
     window.jxuniversal = { init: start_}; 
 }

@@ -63,11 +63,13 @@
      }
  
      function FactoryOneAdControls(container, vectorFcn, doProgressBar, controlsObj) {
-         _container = container;
-         _vectorFcn = vectorFcn;
+        _container = container;
+        _vectorFcn = vectorFcn;
          
-         let cColor = (controlsObj && controlsObj.color ? controlsObj.color: '#FF0000');
-         cssmgr.inject(container, 'adControls'); 
+        let cColor = (controlsObj && controlsObj.color ? controlsObj.color: '#FF0000');
+        
+        cssmgr.updateOptions(container, {adcolor: cColor});
+        cssmgr.inject(container, 'adControls'); 
  
          let r = Math.floor(Math.random() * 1000);
          const innerElm = '<span style="width: 0px;"></span>'; // the child element of the progress bar

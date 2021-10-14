@@ -42,7 +42,7 @@
 
  function MakeOneAdObj_(container, vid, fcnVector, controlsObj, progressBar) {
     const styles                = cssmgr.getRealCls(container);
-
+    var _forVideoAdSDK = false;
     var _doProgressBar = true;
     var _forceWidth = 0;
     var _forceHeight = 0;
@@ -105,6 +105,14 @@
 
     //So now doing a lazy way - just to get by since we are only going
     //the 'reallyProgressed' is used in the resume pause code . just grep for it.
+    //if we are not 'reallyProgressed' at all. then hopefully thru the logic of calling 
+    //adsManager.pause() first, then adsManager.resume() the video ad can play
+
+    // The problem with the VPAID JS is. if the video cannot play, basically, nobody know
+    // there is a situation (no event, nothing). So can only HOPE the user will click click
+    // on the "confused" ads controls to hope to revive it. With this _reallyProgressed and if the
+    // video ads really cannot start, then ... the user press the play/pause button twice should make
+    // it play...
     var _reallyProgressed = false;
     var _knownCurrentTime = -1;
     
@@ -184,14 +192,13 @@
         //This is the part to track it really.
         //but this can be due to either the GUI 
         //or due to the playerWrapper calling
-
         if (_adsManager) {
             //for the case of those play that actually did not start (due to e.g. browser settings
             //) then we can still be revived thru this. But since the ima3 sdk might not even know
             //the video is paused (failed to play), we need this gymnastics then at least the user
             //can start the play by clicking on the GUI buttons.
-            if (!_reallyProgressed) {
-                //_adsManager.pause();
+            if (_forVideoAdSDK && !_reallyProgressed) {
+                _adsManager.pause();
                 //cannot. oh dear it breaks the pure preroll... 
                 //commented out in emergency
             }
@@ -345,18 +352,27 @@
             //or you can fire the thing 
             case google.ima.AdEvent.Type.AD_PROGRESS:
                 //_isAdStarted = true;
+                //it seems if the STARTED is not called, then 
                 if (evt.type == google.ima.AdEvent.Type.AD_PROGRESS) {
                     let adData = evt.getAdData();
-
+                    //console.log(`#### ONE ${JSON.stringify(adData, null, 2)}`);
                     if (adData.adPosition <= _adEnduredVec.length) {
                         _adEnduredVec[adData.adPosition] = adData.currentTime;
                         
+
                         if (!_reallyProgressed && adData.currentTime > 0) {
+                            //the adData.currentTime can be rubbish sometimes
+                            //before the ad starts, it can be e.g. 5, 15. So very strange.
+                            //before it then really starts from near 0 and go up.
                            if (_knownCurrentTime ==  -1) {
                                _knownCurrentTime = adData.currentTime;
                            }
+                           else if (adData.currentTime < _knownCurrentTime) {
+                               _knownCurrentTime = adData.currentTime;
+                           }
                            else {
-                               if (adData.currentTime > _knownCurrentTime) {
+                               if (adData.currentTime > (1+ _knownCurrentTime)) {
+                                   //console.log(`## adData.currentTime=${adData.currentTime} vs knownCurrentTime=${_knownCurrentTime}`);
                                    _reallyProgressed = true;
                                }
                            }
@@ -755,7 +771,9 @@
         _ctrls.updateMutedState(false);
         _pFcnVector.setContentMuteState(false);
     }
-
+    FactoryOneAd.prototype.setForVideoAdSDK = function() {
+        _forVideoAdSDK = true;
+    }
     let ret = new FactoryOneAd(container, vid, fcnVector, controlsObj, progressBar);
     return ret;
 };

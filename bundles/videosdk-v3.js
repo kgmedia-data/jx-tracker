@@ -60,33 +60,54 @@ const player_fact                       = require('../components/video/player-fa
 modulesmgr.set('video/player-factory',  player_fact);
 
 // these we only use within this file, so dun bother
-const mids                              = require('../components/basic/ids');
+const mids                              = require('../components/basic/idslite');
 const createObject                      = require('../components/video/damplayer');
 
 const pginfo = mpginfo.get(); //basic pginfo we can get from the page.
-const dbgVersion = 'v46';
+const dbgVersion = 'v3.03';
 pginfo.dbgVersion = dbgVersion;
 
 const optionsObjNames_ = ['ads', 'controls', 'soundindicator', 'restrictions'];
 
 var instMap = new Map();   
 function makePlayer(options) {
-  //testing:
-  //options.restrictions = {
-    //maxheight: 720,
+  
+  /* options.restrictions = {
+    //maxheight: 240
+    //maxwidth: 426
+
+    //maxheight: 360
+    //maxwidth: 640 //is just nice 639 oso cannot
+
+    //maxheight: 480,
+    //maxwidth: 853 //852 cannot 
+
+    //maxheight: 720 //719 oso cannot
+    //maxwidth: 1280 
     //minheight: 360
-  //};
-  // dangerous!!
-  //options.autoplay = 'always';
-  //options.sound = 'fallback';
+  };
+  */
+ if (!options.restrictions) {
+   options.restrictions = {};
+ }
   if (!options.controls) {
     options.controls = {};
   }
+  // dangerous!!
+  //options.autoplay = 'always';
+  //options.sound = 'fallback';
+  //options.autoplay = 'none';
+  //options.controls.font = "Andalé Mono"; //Impact"; //Comic Sans MS"; //Arial";
   //options.controls.font = 'Roboto';
-
-  let hashStr = btoa(JSON.stringify(options));
-  let instMaybe = instMap.get(hashStr);
+  //aiyo no need lah. just use the container ah.
+  //let hashStr= btoa(JSON.stringify(options));
+  if (typeof options.container != 'string') {
+    console.log(`jxplayer: Integration error: options.container must be a div id (a string). Aborting`);
+    return;
+  }
+  let instMaybe = instMap.get(options.container);
   if (instMaybe) {
+      console.log(`jxplayer: Integration error: creating player instance on div id=${options.container} again. Aborting`);
       return;
   }
 
@@ -97,7 +118,7 @@ function makePlayer(options) {
 
   let playerInst = createObject(merged);
 
-  instMap.set(hashStr, playerInst);
+  instMap.set(options.container, playerInst);
   return playerInst;
 }
 
@@ -111,6 +132,9 @@ window.JX = {
       let canonUrl = metadata.canonicalUrl;
       options.pageurl = canonUrl;//augment
       jxvhelper.sendScriptLoadedTrackerAMP({pageurl: canonUrl, dbgVersion: dbgVersion});
+      if (!options.container) {
+        options.container = jxvhelper.getJxDocBodyId();        
+      }
       return (makePlayer(options, ampIntegration));
   }
 };

@@ -414,6 +414,7 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
             if (!_adObj) {
                 //the last param is about whether to do process bar:
                 _adObj = MakeOneAdObj(_comboDiv,  _playerElt, _vectorForAdMgr, _env.controls, false);
+                _adObj.setForVideoAdSDK();
                 if (blob.width && blob.height) {
                     _adObj.forceDimensions(blob.width, blob.height);
                 }
@@ -511,16 +512,25 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
                 out.autoplay = false;
             }
         }
-        if (cr && cr.adparameters && cr.adparameters.loop) {
+        let simid = ((cr.url && cr.url.indexOf('simid') > -1) || cr.jxsimidurl);
+        if (simid) {
+            if (cr && cr.adparameters && cr.adparameters.loop) {
                 out.loop = cr.adparameters.loop;
-        } else if (u && u.loop) {
+            } else if (u && u.loop) {
                 out.loop = u.loop;
+            }
         }
         if (cr && cr.adparameters && cr.adparameters.countpos) {
             out.stripPosition = cr.adparameters.countpos;
         }
-        if (cr && cr.adparameters)
-            delete cr.adparameters.loop;
+        if (simid) {
+            //simid cannot do the looply properly so THIS layer will handle it then.
+            //For normal vpaid Vincent says the "loop" executed by this sdk is not nice enough
+            // (I guess not seamless enough) so want the looping to still be carried out at
+            // the VPAID JS level.
+            if (cr && cr.adparameters)
+                delete cr.adparameters.loop;
+        }
         return out;
      }
 

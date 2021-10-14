@@ -50,7 +50,10 @@
  * }
  * 
  */
-
+// make things faster when there is only 1 player in the window.
+// shortcircuit some lookups.
+// It will only be set when there is only one player in the window.
+var _onlyContainer = null;
 var divId2HashCode_ = {};
 var theMap_ = new Map();
 
@@ -69,13 +72,11 @@ function makeOptions_(options) {
     if (!options) {
         options = {};
     }
-    // the names of buttonsColor 
-    // backgroundColor and "color" :-( should be changed.
-    // the 'color' is referring to the ads controls...
-    o.buttonsColor = options.color || "#C0C0C0"; //silver //just for test . easier to tell.
-    o.backgroundColor = options.backgroundcolor || "#00FFFF"; //aqua     "#DFFF00"; // yellow
-    o.adsButtonsColor = options.adcolor || "#FF0000"; //"#FFA07A"; //light salmon
-    o.font = options.font || 'Roboto'; //'Dancing Script'; //'Quicksand'; //Roboto
+      
+    o.buttonsColor = options.color || "#FFFFFF"; 
+    o.backgroundColor = options.backgroundcolor || "#1B63D4"; 
+    o.adsButtonsColor = options.adcolor || "#FF0000"; 
+    o.font = options.font || 'Roboto'; 
     return o;
 }
 
@@ -124,6 +125,12 @@ function init_(container, stylesSetObj, options, injectSSNow = []) {
     });
     divId2HashCode_[container] = hash;
     divId2Options_[container] = options;
+    if (Object.keys(divId2HashCode_).length == 1) {
+        _onlyContainer = Object.keys(divId2HashCode_)[0];
+    }
+    else {
+        _onlyContainer = null;
+    }
 }
 
 function acss_(stylesStr, stylesId = null) {
@@ -143,16 +150,16 @@ function inject_(container, stylesSetName, storedObj = null) {
     }
     if (storedObj.injected.indexOf(stylesSetName) == -1) {
         //make the whatever.
-        console.log(`the ${stylesSetName} not yet injected_ now then do`);
+        //console.log(`the ${stylesSetName} not yet injected_ now then do`);
         let sstr = storedObj.stylesSet.makeCssString(storedObj.cssClsnames, stylesSetName, storedObj.options);
         acss_(sstr);
         storedObj.injected.push(stylesSetName);
     }
-    else {
-        console.log(`the ${stylesSetName} already injected liao ah`);
-    }
+    //else {
+        //console.log(`the ${stylesSetName} already injected liao ah`);
+    //}
 }
-
+/*
 function walkUp_(node) {
     var parent = node;
     let times = 0;
@@ -167,14 +174,32 @@ function walkUp_(node) {
     }
     return null;
 }
+*/
+
+function getMainCtrId_(container) {
+    if (_onlyContainer) {
+        return _onlyContainer;
+    }
+    if (typeof container == 'string')
+        return container;
+    else  {
+        let parent = container;
+        let times = 0;
+        while(parent && times < 5) {
+            times++;
+            if( parent.nodeName === 'DIV' ) {
+                if (divId2HashCode_[parent.id]) {
+                    return parent.id;
+                }
+            }
+            parent = parent.parentNode;
+        }
+    }
+    return null;
+}
 
 function getStoredObj_(container) {
-    let divId;
-    if (typeof container == 'string')
-        divId = container;
-    else 
-        divId = walkUp_(container);
-    if (!divId) return; //
+    let divId = getMainCtrId_(container);
     return theMap_.get(divId2HashCode_[divId]);
 }
 
@@ -187,23 +212,30 @@ function getRealCls_(container) {
 }
 
 function getOptions_(container) {
-    let divId;
-    if (typeof container == 'string')
-        divId = container;
-    else 
-        divId = walkUp_(container);
-    if (!divId) return {}; //
+    let divId = getMainCtrId_(container);
+    if (!divId) return {};
     return (divId2Options_[divId]);
 }
 
-function updateOptions_(container, newObj) {
-    let divId;
-    if (typeof container == 'string')
-        divId = container;
-    else 
-        divId = walkUp_(container);
-    if (!divId) return {}; //
-    divId2Options_[divId] = newObj;
+function updateOptions_(container, deltaObj) {
+    //let divId = getMainCtrId_(container);
+    //if (!divId) return;
+    //divId2Options_[divId] = newObj;
+    let storedObj = getStoredObj_(container);
+    if (deltaObj && storedObj && storedObj.options) {
+        if (deltaObj.color) {
+            storedObj.options.buttonsColor = deltaObj.color;
+        }
+        if (deltaObj.backgroundcolor) {
+            storedObj.options.backgroundColor = deltaObj.backgroundcolor;
+        }
+        if (deltaObj.adcolor) {
+            storedObj.options.adsButtonsColor = deltaObj.adcolor;
+        }
+        if (deltaObj.font) {
+            storedObj.options.font = deltaObj.font;
+        }
+    }
 }
 
 

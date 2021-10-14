@@ -403,6 +403,9 @@ function MakeOneHelperObj_() {
         if (options.amp) tmp += '&device=amp';
         return tmp;
     }
+    FactoryOneHelper.prototype.getJxDocBodyId = function() {
+        return '_jxfklfjdls';
+    }
     FactoryOneHelper.prototype.getAdTag = function(options) {
         let tmp = 'https://ad.jixie.io/v1/video?maxnumcreatives=13&source=jxplayer';
         ['client_id', 'sid', 'creativeid'].forEach(function(prop) {
