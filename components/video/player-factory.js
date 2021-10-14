@@ -182,6 +182,7 @@ window.jxPromisePolyfill        = 'none';
         var _msLastInternalCallPause = 0;
         var _msLastInternalCallPlay = 0;
         var _manualPaused = false;
+        var _isDelayedAd = false;
   
         function FactoryPlayerWrapper(container) {
             //one off init: the synchronous stuff.
@@ -464,13 +465,16 @@ window.jxPromisePolyfill        = 'none';
             _soundFallback = sound == 'fallback' ? true: false;
         }   
         var _hide = function() {
+            if (!_isDelayedAd) _contentDiv.classList.add(styles.hide);
             //_container.style.backgroundColor = "black";
             //_contentDiv.classList.add(styles.hideOpacity);
         };
         var _show = function() {
-            _container.style.backgroundColor = "black";
             _contentDiv.classList.remove(styles.hide);
-            _contentDiv.classList.remove(styles.hideOpacity);
+            if (_isDelayedAd) {
+                _container.style.backgroundColor = "black";
+                _contentDiv.classList.remove(styles.hideOpacity);
+            }
         };
         var _showSpinner = function() {
             if (_spinner) _spinner.show();
@@ -539,7 +543,7 @@ window.jxPromisePolyfill        = 'none';
                      onPLaying onPaused callbacks I feel...
                      _ctrls.setBtnPlayActive(true);
                     */
-                   _vid.currentTime -= 1;
+                   if (_isDelayedAd) _vid.currentTime -= 1;
 
                     let playInnerProm = _vid.play();
                     if (playInnerProm !== undefined) {
@@ -1281,7 +1285,7 @@ window.jxPromisePolyfill        = 'none';
         ********/
         var _createAdObjMaybe = function(makeNew) {
             if (!_adObject) {
-                _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
+                _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd(), null, true, _isDelayedAd);
                 _adObject.setVpaidSecure(false);
             }
             return _adObject;
@@ -1578,7 +1582,6 @@ window.jxPromisePolyfill        = 'none';
                     //(that adfetch was done with autoAdsManagerStart false)
                     //So now we need to explicitly call startAd:
                     //We use a new promise keep track of the ad's startedness or error-ed-out-ness.
-                    _animate();
                     ps.push(new Promise(function(resolve, reject) {
                         _adObject.startAd(resolve);
                     }));
@@ -1745,6 +1748,7 @@ window.jxPromisePolyfill        = 'none';
                 //can cause more "wasted ads" not sure if the adnetworks like it.
             }
             else {
+                _isDelayedAd = true;
                 getAdMode = 'none';
             }
             //basically we need to know the state ah.
