@@ -1834,6 +1834,8 @@ const thresholdDiff_ = 120;
                 break;    
             case 'video': 
                 trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
+                c.adparameters.trusted = true; //HACK
+                // ##### HACK HACK HACK TRY THIS!!!!!!
                 if (c.adparameters.trusted) {
                     trusted = true;
                     out.crSig = jxScriptUrls_.video.signature

@@ -475,10 +475,14 @@
     };
     var _startAd = function(resolveFcn) {
         // console.log(`___ adsManager init ${_forceWidth ? _forceWidth : _width} ${_forceHeight ? _forceHeight : _height}`);
-        _adsManager.init(
+        if (!_forVideoAdSDK) {
+            // for the general ads putting the init too early we encountered problems before.
+            // For our own that vpaid js stuff, doing the init earlier is OK.
+            _adsManager.init(
             _forceWidth ? _forceWidth : _width, 
             _forceHeight ? _forceHeight : _height, 
-            google.ima.ViewMode.NORMAL);
+            google.ima.ViewMode.NORMAL); 
+        }
         if (!_subscribedEvents) {            
             //earlier the IMA SDK might not be loaded so the string like
             //google.ima.AdEvent.Type.IMPRESSION might not be defined
@@ -553,11 +557,11 @@
         
         let adsRenderingSettings = new google.ima.AdsRenderingSettings();
         //https://gist.github.com/i-like-robots/4d808f71c5602e0d6dfd320a37b24cb2
-        //adsRenderingSettings.enablePreloading = true;
+        if (_forVideoAdSDK) {
+            adsRenderingSettings.enablePreloading = true;
+        }
         // you must restore original state for mobile devices that recycle video element
-       // adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true; //?? TODO. dun understand
-        //XXX adsRenderingSettings.enablePreloading = false;
-
+        // adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true; //?? TODO. dun understand
 
         _adsManager = adsManagerLoadedEvent.getAdsManager(_vid, adsRenderingSettings);
         _width = _container.offsetWidth;
@@ -575,6 +579,14 @@
             google.ima.AdErrorEvent.Type.AD_ERROR,
             _onAdError.bind({resolveFcn: resFcn }));
         
+        if (_forVideoAdSDK) {
+            _adsManager.init(
+                _forceWidth ? _forceWidth : _width, 
+                _forceHeight ? _forceHeight : _height, 
+                google.ima.ViewMode.NORMAL);    
+        }
+        console.log(`##### autoAdsMgrStart = ${_autoAdsManagerStart}`);
+
         if (_autoAdsManagerStart) {
             _startAd(this.resolveFcn); //the one used in the makeAdRequest promise
             //then this is the original promise
