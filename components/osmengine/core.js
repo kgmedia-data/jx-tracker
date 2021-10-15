@@ -1021,7 +1021,6 @@
                     let partner = _partners[thisCr.subtype];
 
                     let oneLayerInst = new OneOSMLayer(partner, _msWFInit, _ctrID, _loggerInst);
-                    console.log("_______new OSMLayer " + partner.name);
                     oneLayerInst.init(
                         _getPgSelector, _fixedHeight,
                         thisCr,
