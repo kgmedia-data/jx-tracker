@@ -64,7 +64,7 @@ const mids                              = require('../components/basic/idslite')
 const createObject                      = require('../components/video/damplayer');
 
 const pginfo = mpginfo.get(); //basic pginfo we can get from the page.
-const dbgVersion = 'v3.04';
+const dbgVersion = 'v3.05';
 pginfo.dbgVersion = dbgVersion;
 
 const optionsObjNames_ = ['ads', 'controls', 'soundindicator', 'restrictions'];

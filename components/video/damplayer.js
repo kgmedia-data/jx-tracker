@@ -32,16 +32,21 @@ const startModePWApi_       = consts.startModePWApi;
 const startModeSDKApi_      = consts.startModeSDKApi;
 const startModeSDKClick_    = consts.startModeSDKClick;
 
-const DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
+var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
+
+if (window.location && window.location.hostname) {
+    if (window.location.hostname.indexOf("megapolitan") > -1) {
+          DAMApiBase_ = `https://jixie-dam-api-release-candidate.azurewebsites.net/api/stream?format=hls&metadata=basic`;
+    }
+}
 
 const IRThreshold_ = 0.5;
-
 
 function createObject_(options, ampIntegration) {
     if (options.restrictions.maxwidth == 852) {
         options.restrictions.maxwidth = 853;
     }
-    var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
+        
     if (options.restrictions) {
         if (options.restrictions.maxheight > 0) 
             DAMApiBase_ += '&max-height=' + options.restrictions.maxheight;
