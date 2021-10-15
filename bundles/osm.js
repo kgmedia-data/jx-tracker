@@ -66,10 +66,12 @@ function start(options) {
         return;
     }
     const ids = mids.get();
+    //check if the options has the keywords.
+    
     const pginfo = mpginfo.get();
+    // if options has pagekeywords, then it will win over whatever pginfo gets.
     let merged = Object.assign({}, ids, pginfo, options);
-    //console.log(`###merged ${JSON.stringify(merged, null, 2)}`);
-
+    
     var osmInst = mosmcore.createInstance(merged, {
             jixie: mpjixie,
             selectmedia: mpsm,
