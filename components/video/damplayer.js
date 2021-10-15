@@ -32,13 +32,16 @@ const startModePWApi_       = consts.startModePWApi;
 const startModeSDKApi_      = consts.startModeSDKApi;
 const startModeSDKClick_    = consts.startModeSDKClick;
 
-var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
+//var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
+var DAMApiBase_ = 'https://jixie-dam-api-w.azurewebsites.net/api/stream?format=hls&metadata=basic';
 
+/* 
 if (window.location && window.location.hostname) {
     if (window.location.hostname.indexOf("megapolitan") > -1) {
           DAMApiBase_ = `https://jixie-dam-api-release-candidate.azurewebsites.net/api/stream?format=hls&metadata=basic`;
     }
 }
+*/
 
 const IRThreshold_ = 0.5;
 
@@ -353,6 +356,32 @@ function createObject_(options, ampIntegration) {
         }); 
         
     }
+
+    function drWifiValueFromDam(value) {
+        //console.log(`## drWifiValueFromDam: ${value}`);
+        if (common.isMobile()) {
+            value = 'mobile';
+            let connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection) {
+                //alert(`a=${connection.type} b =${connection.effectiveType}`);
+                //console.log(`## drWifiValueFromDam: type ${connection.type}`);
+                //console.log(`## drWifiValueFromDam: eff type ${connection.effectiveType}`);
+            	if (connection.type == "wifi") {
+		            if (['slow-2g', '2g', '3g'].indexOf(connection.effectiveType) == -1) {
+	   	                value = "wifi";
+		            }
+	            }
+	        }
+            //else {
+            //    alert("connection not defined");
+            //}
+        }
+        //else {
+        //    alert("IS NOT MOBILE");
+        //}
+        return value;
+    }
+    
     /**
      * figure out the startMode once and for all.
      * O no ... actually the wifi non wifi it will change ah
@@ -363,6 +392,7 @@ function createObject_(options, ampIntegration) {
     function _workoutStartModeOnce(nwFromAPI) {
         let hasWifi;
         if (nwFromAPI) {
+            nwFromAPI = drWifiValueFromDam(nwFromAPI);
             //it is possible to get 'unknown' from the the video info api endpoint
             //in that case we assume no wifi. so all good
             hasWifi = (nwFromAPI == 'wifi');

@@ -75,7 +75,7 @@ function makeOptions_(options) {
       
     o.buttonsColor = options.color || "#FFFFFF"; 
     o.backgroundColor = options.backgroundcolor || "#1B63D4"; 
-    o.adsButtonsColor = options.adcolor || "#FF0000"; 
+    o.adsButtonsColor = options.adcolor || "#FFFFFF"; 
     o.font = options.font || 'Roboto'; 
     return o;
 }
