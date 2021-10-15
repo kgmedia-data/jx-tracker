@@ -270,7 +270,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             //the queue name is '_' + signature + 'q';
             //so here it is _jxvideoadsdkq
             url: 'https://scripts.jixie.media/jxvideocr.1.0.min.js'
-        }
+            ///////url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk-test.min.js'
+       }
     };
     const visThreshold_ = 0.4;
    
@@ -657,6 +658,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 case "jxhasad":     
                 case "jxnoad":
                 case "jxadended":
+                    if (type == 'jxhasad') {
+                        console.log(`#### jxhasad received by renderer.`);
+                    }
                     if (this.handlers[type]) {
                         this.handlers[type]();
                     }
@@ -821,14 +825,31 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 jxCoreElt.src = normCrParams.iframe.url;
             }
             else if (blob.scripturl && !blob.jxuni_p) {
-                console.log(`Type iframe | script | no jxuni_p`);
                 //OUR VIDEO ADS belong here. Not using the old jxuni_p to pass params
                 //but using postMessages later.
                 //So simpler injection
                 //Moving forward, this should be the way for any new jixie crative type
                 //whether trusted or not
-                let html = `<body style="margin: 0;"><script type="text/javascript" src="${blob.scripturl}"></script></body>`;
-                jxCoreElt.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
+                //
+                //<-- I am switching to this method now:
+                // strange thing is that using this (in the comment):
+                //    let html = `<body style="margin: 0;"><script type="text/javascript" src="${blob.scripturl}"></script></body>`;
+                //    jxCoreElt.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
+                // things appear to work, but then, the mp4 for the ad video is never taken from disk cache and sometimes is also
+                // loaded in chuncks. 
+                // Once I switch to this following way, then I start to see the mp4 (at least those from bunny cdn since disk caching
+                // is configured) being FROM DISK CACHE. 
+                // Don't quite understand why yet.
+                var jxinter = window.setInterval(function() {
+                    // put inside function 
+                    var jxiframeDoc = jxCoreElt.contentDocument || jxCoreElt.contentWindow.document;
+                    if(jxiframeDoc.readyState == "complete") {
+                        window.clearInterval(jxinter);
+                        var ns = document.createElement("script");
+                        ns.src = blob.scripturl;
+                        jxiframeDoc.body.appendChild(ns);
+                    }
+                },500);
             }
             else if (blob.scripturl && blob.jxuni_p) {
                 //console.log(`Type iframe | script | using jxuni_p`);
@@ -1834,8 +1855,7 @@ const thresholdDiff_ = 120;
                 break;    
             case 'video': 
                 trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
-                c.adparameters.trusted = true; //HACK
-                // ##### HACK HACK HACK TRY THIS!!!!!!
+                //c.adparameters.trusted = true; //HACK
                 if (c.adparameters.trusted) {
                     trusted = true;
                     out.crSig = jxScriptUrls_.video.signature

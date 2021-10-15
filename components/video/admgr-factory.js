@@ -209,6 +209,7 @@
         //this is only legit if really started ah
         if (_adsManager) {
             if (_isAdStarted) {
+                //console.log(`## admgr to call _adsManager.pause()`);
                 _adsManager.pause();
             }
         }
@@ -585,7 +586,7 @@
                 _forceHeight ? _forceHeight : _height, 
                 google.ima.ViewMode.NORMAL);    
         }
-        console.log(`##### autoAdsMgrStart = ${_autoAdsManagerStart}`);
+        //console.log(`##### autoAdsMgrStart = ${_autoAdsManagerStart}`);
 
         if (_autoAdsManagerStart) {
             _startAd(this.resolveFcn); //the one used in the makeAdRequest promise
@@ -735,9 +736,11 @@
     FactoryOneAd.prototype.playOrStartAd = function() {
         if (!_aStartApiCalled) {
             _aStartApiCalled = true;
+            //console.log(`## admgr to call _startAd()`);
             _startAd();
             return;
         }
+        //console.log(`## admgr to call _playAd()`);
         _playAd();
     };
     
@@ -746,7 +749,6 @@
         _playAd();
     };
     FactoryOneAd.prototype.pauseAd = function() {
-        console.log("#### pauseAd is called");
         _pauseAd();
     };
     FactoryOneAd.prototype.subscribeToEvents = function(eventsArr, callback) {
