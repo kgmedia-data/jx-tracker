@@ -18,6 +18,8 @@ const allClasses = [
   "adHide",
   "hideOpacity",
   "spinner",
+  "adFadeIn",
+  "adFadeOut",
 
   "oBotCtrl",
   "oCenterCtrl",
@@ -153,7 +155,6 @@ function makeCssDefault_(css_) {
     '.' + css_.comBigPlayBtn + ':before {content: "";position: absolute;top: -75px;left: -115px;bottom: -75px;right: -35px;border-radius: 50%;border: 10px solid black;z-index: 2;transition: all 0.3s;-webkit-transition: all 0.3s;-moz-transition: all 0.3s;}',
   
     '.' + css_.cDiv + ',.' + css_.adDiv + ',.' + css_.player + ',.' + css_.thumbnail + '{position: absolute;top: 0;left: 0;right: 0;bottom: 0;width: 100%;height: 100%;z-index: 1;}',
-    '.' + css_.cDiv + '{opacity:1;transition:opacity 0.8s;}',
     '.' + css_.adCtrl + ',.' + css_.playerCtrl + '{height: 32px;width: 66px;margin-left: 3px;position: absolute;bottom: 20px;left: 5px;z-index: 999;}',
     '.' + css_.hide + '{display: none !important;}',
     '.' + css_.adHide + '{visibility: hidden;}',
@@ -165,6 +166,10 @@ function makeCssDefault_(css_) {
     '.' + css_.icon + '.bottom-left{bottom:0;left:0;}',
     '.' + css_.info + '{right:1px;top:1px;width:20px;height:20px;}',
     '.' + css_.info + ' span{display:flex;justify-content:center;align-items:center;color:#fff;font-size:14px;border-radius:50%;border:solid 2px #fff;width:20px;height:20px;font-weight:bold;font-family:Times;}',
+    '@keyframes adFadeIn{from{opacity:0;}to{opacity:1;}}',
+    '@keyframes adFadeOut{from{opacity:1;}to{opacity:0;}}',
+    '.' + css_.adFadeIn + '{animation:adFadeIn .8s;webkit-animation:adFadeIn .8s;}',
+    '.' + css_.adFadeOut + '{animation:adFadeOut .8s;webkit-animation:adFadeOut .8s;}'
   ].join("\n");
 }
 

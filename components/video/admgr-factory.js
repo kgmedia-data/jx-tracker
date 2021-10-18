@@ -296,7 +296,7 @@
             _adDiv.classList.remove(styles.adHide); //
             _adDiv.classList.remove(styles.hide); //
         }
-
+        
 
         // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
         //pls fix this. the jxhide class does not work
@@ -530,11 +530,9 @@
             // _adDiv.style.display = 'block'; //TODO
             //console.log(`#$ calling adsManager start`);
             if (_delayedAd) {
-                setTimeout(function() {
-                    _adDiv.classList.remove(styles.adHide);
-                    _adDiv.classList.remove(styles.hide);
-                    _adsManager.start();
-                }, 800)
+                _adDiv.classList.remove(styles.adHide);
+                _adDiv.classList.remove(styles.hide);
+                _adsManager.start();
             } else {
                 _adsManager.start();
             }
@@ -589,7 +587,6 @@
             _onAdError.bind({resolveFcn: resFcn }));
         
         if (_autoAdsManagerStart) {
-            if (_delayedAd) _pFcnVector.animate();
             _startAd(this.resolveFcn); //the one used in the makeAdRequest promise
             //then this is the original promise
             //we only resolve when the ad has either started or errorer out.

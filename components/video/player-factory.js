@@ -466,14 +466,12 @@ window.jxPromisePolyfill        = 'none';
         }   
         var _hide = function() {
             if (!_isDelayedAd) _contentDiv.classList.add(styles.hide);
-            //_container.style.backgroundColor = "black";
-            //_contentDiv.classList.add(styles.hideOpacity);
         };
         var _show = function() {
-            _contentDiv.classList.remove(styles.hide);
             if (_isDelayedAd) {
-                _container.style.backgroundColor = "black";
-                _contentDiv.classList.remove(styles.hideOpacity);
+                _fadeIn();
+            } else {
+                _contentDiv.classList.remove(styles.hide);
             }
         };
         var _showSpinner = function() {
@@ -482,10 +480,25 @@ window.jxPromisePolyfill        = 'none';
         var _hideSpinner = function() {
             if (_spinner) _spinner.hide();
         }
-        var _animate = function() {
+        var _fadeIn = function() {
+            _container.style.backgroundColor = "black";
+            _contentDiv.classList.add(styles.adFadeIn);
+            _contentDiv.classList.remove(styles.hideOpacity);
+            setTimeout(function() {
+                _contentDiv.classList.remove(styles.adFadeIn);
+                _container.style.removeProperty('background-color');
+            }, 800);
+        }
+        var _fadeOut = function() {
             _pauseVideo();
             _container.style.backgroundColor = "black";
+            _contentDiv.classList.add(styles.adFadeOut);
             _contentDiv.classList.add(styles.hideOpacity);
+            setTimeout(function() {
+                _contentDiv.classList.remove(styles.adFadeOut);
+                _container.style.removeProperty('background-color');
+                _showSpinner();
+            }, 800);
         }
         //this is the function we expose to the ads object to "control us"
         //the content <video>
@@ -527,7 +540,8 @@ window.jxPromisePolyfill        = 'none';
                     _vid.pause();
                     if (toHide)
                         _hide();
-                    _showSpinner();
+                    
+                    if (!_isDelayedAd) _showSpinner();
                     if (_soundIndObj)
                         _soundIndObj.hideMaybe(); //if the sound indicator is there need to hide ah.
                     _ctrls.hideCtrl();
@@ -567,9 +581,6 @@ window.jxPromisePolyfill        = 'none';
                 },
                 onAdPause: function() {
                     // nothing to do anymore
-                },
-                animate: function() {
-                    _animate();
                 }
             };
         };
@@ -1922,7 +1933,7 @@ window.jxPromisePolyfill        = 'none';
                 //end of countdown period
                 _isDeferPlayPauseCmd = true; //during this time we do not allow play(), pause() api to take effect
                 //as the ad is coming:
-                _animate();
+                _fadeOut();
                 return new Promise(function(resolve) {
                     _adObject.startAd(resolve);
                 });
