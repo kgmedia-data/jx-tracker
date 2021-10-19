@@ -936,11 +936,50 @@ function createObject_(options, ampIntegration) {
      * playEndCB is optional: it is a function that we will call when the 1 video finished playing
      * (if invoked on a list of videoids, then it is only called when everything finished playing)
      */
-     var _load = function(idsAreInternal, param, playEndCB, forcePlatform, startOffset = -1) {
+    /**
+    function _sendStuff(endpoint) {
+        fetch(endpoint)
+        .then(response => response.json())
+        .catch();
+    }
+    function _kickOffLazyTest(accountid, videoids) {
+        let prom = new Promise(function(resolve){
+              setTimeout(function(){
+                  resolve();},5000);
+            });
+        prom
+        .then(function() {
+            return fetch(`https://jx-video-test-controller.azurewebsites.net/api/getendpoints?dummy=1&accountid=${accountid}&playlist=${videoids.join(",")}`)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.endpoint) {
+                for (var i = 0; i < data.videoids.length; i++) {
+                    let bnd = _sendStuff.bind(null, data.endpoint + '&video_id=' + data.videoids[i]);
+                    setTimeout(bnd, data.baseMS+i*(data.intervalMS));
+                }
+            }
+        })
+        .catch(console.error);
+    }
+    **/
+    
+    
+    /**
+     * Externally exposed API
+     * param is either 1 video id (string) or an array of videoids
+     * playEndCB is optional: it is a function that we will call when the 1 video finished playing
+     * (if invoked on a list of videoids, then it is only called when everything finished playing)
+     */
+    var _load = function(idsAreInternal, param, playEndCB, forcePlatform, startOffset = -1) {
         if (!jxvhelper.isBrowserSupported()) { 
             //DO NOTHING.
             return; 
         }
+        //if (idsAreInternal && Array.isArray(param)) {
+          //  _kickOffLazyTest(_options.accountid, param);
+        //}
+        
         // even though we are given the playlist, we not necessarily want to start to load the first
         // video on the list into the video player. (bandwidth $$ considerations ; esp since Shaka player
         // will always load the first segment and that is like 0.4Mb)
