@@ -1723,6 +1723,16 @@ const thresholdDiff_ = 120;
             clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
         }
 
+        // Currently the likes of R2B2 they are not properly integrated with our OSM stack, so
+        // just put here as  a script type (type=display and subtype = script)
+        // the thing is they actually better to follow the width of the container
+        // It is better for such stuff to really occupy the full width of the article
+        //So here we do just that.
+        if (!isNaN(jxParams.fixedHeight) && c.universal && c.universal.scaling == 'article') {
+            c.width = jxParams.maxwidth-1;
+            c.height = jxParams.maxheight-1;
+            c.universal.scaling = 'none';
+        }
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
         doSizeMgmt(jxParams, c);

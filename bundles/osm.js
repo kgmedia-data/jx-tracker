@@ -86,7 +86,11 @@ window.jxoutstreammgr = {
 var JxOSMQ = function () {
     this.push = function () {
         for (var i = 0; i < arguments.length; i++) try {
-            start(arguments[i]);
+            if (Array.isArray(arguments[i]) && arguments[i][0] == 'init') {
+                start(arguments[i][1]);    
+            }
+            else 
+                start(arguments[i]);
         } catch (e) {}
     }
 };
