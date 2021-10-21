@@ -367,7 +367,8 @@ function createObject_(options, ampIntegration) {
                 //console.log(`## drWifiValueFromDam: type ${connection.type}`);
                 //console.log(`## drWifiValueFromDam: eff type ${connection.effectiveType}`);
             	if (connection.type == "wifi") {
-		            if (['slow-2g', '2g', '3g'].indexOf(connection.effectiveType) == -1) {
+                    //if (['slow-2g', '2g', '3g'].indexOf(connection.effectiveType) == -1) {
+		            if (['slow-2g', '2g'].indexOf(connection.effectiveType) == -1) {
 	   	                value = "wifi";
 		            }
 	            }
