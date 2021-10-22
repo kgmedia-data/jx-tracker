@@ -37,7 +37,7 @@ gulp DEPLOY-DEVELOPER1-DEV
 
 const bundlessubfolder_ = 'bundles/';
 const jsext_ = '.js';
-const outputprefix_ = 'jx-app-';
+//const outputprefix_ = 'jx-app-';
 
 //support arguments to gulp
 const supported_ = [
@@ -57,12 +57,6 @@ const supported_ = [
   
     //WELCOME TO ADD WHATEVER CAN HELP YOU.
   ];
-  
-  //MAIN FILE LIST: files that only require simple minifying at most
-  //we don't have any that only require simple minifying ...
-  const fileslist_ = [
-  ];
-  
   
   var gulp = require('gulp');
   var uglifyjs = require('uglify-es');
@@ -87,6 +81,87 @@ const supported_ = [
   const wrap = require('wordwrap')(5, 100);
   var config = null;
   
+  var bundles_  = [
+    {
+        name: 'OSM',
+        in: 'osm',
+        out: 'jxosm.1.0',
+        floatable: 'no',
+        signature: "window.jxoutstreammgr.init", //already live
+        queue: "window._jxoutstreammgrq",
+        liveall: ["https://scripts.jixie.io/jxosm.1.0.min.js"]
+    },
+    {
+        name: 'OSM-AMP',
+        in: 'amp-osm',
+        out: 'jxamp',
+        floatable: 'no',
+        signature: "n/a", 
+        queue: "n/a",
+        liveall: ["https://scripts.jixie.io/jxamp.min.js"]
+    },
+    {
+        name: 'HBRENDERER',
+        in: 'hbrenderer',
+        out: 'jxhbrenderer.1.1',
+        floatable: 'no',
+        signature: "window.jxhbuniversal.hbinit",
+        queue: "jxhbrendererq", 
+        livefull: ["https://scripts.jixie.io/jxhbrenderer.1.1.min.js"]
+    },
+    
+    {
+        name: 'UNIVERSAL (no float)',
+        in: 'ulite',
+        out: 'jxfriendly.2.0',
+        floatable: 'no',
+        signature: "window.jxuniversal.init",
+        queue: "window._jxuniversalq",
+        liveall: ["https://scripts.jixie.io/jxfriendly.2.0.min.js"]
+    },
+    {
+        name: 'UNIVERSAL (can float)',
+        in: 'ulite',
+        out: 'jxfriendly.2.0.flt',
+        floatable: 'yes',
+        signature: "window.jxuniversal.init", //<--!!!
+        queue: "window._jxuniversalfltq",
+        liveall: ["https://scripts.jixie.io/jxfriendly.2.0.flt.min.js"]
+    },
+    //---
+    {
+        name: 'VIDEOPLAYER',
+        in: 'videosdk-v3',
+        out: 'jxvideo.3.1',
+        signature: "window.JX.player and window.JX.ampplayer",
+        //queue: not supported.
+        liveall: ["https://scripts.jixie.media/jxvideo.3.1.min.js"]
+    },  
+    {
+        name: 'VIDEOP-AD-PLAYER',
+        // use with our osm, new universal etc
+        in: 'videoadsdk',
+        out: 'jxvideocr.1.0',
+        signature: "window.jxvideoadsdk",
+        queue: "_jxvideoadsdkq",
+        //queue: not supported.
+        liveall: ["https://scripts.jixie.media/jxvideocr.1.0.min.js"]
+    },  
+    {
+        name: 'VIDEO-AD-SDK',
+        // successor to jxvideo.1.3.min.js used by KG masterhead
+        in: 'videoadsdk-standalone',
+        out: 'jxvideoad.2.0',
+        signature: "window.jxvideoadsdksal",
+        //queue: not supported.
+        liveall: ["https://scripts.jixie.media/jxvideoad.2.0.min.js"]
+    },  
+];
+  // 
+  // we will be adding to this array based on a JSON object with all the bundles we need to build
+  // a var called bundles_ .
+  var orderedTasksArr = ['clean', 'BUILD_3PARTYCR_PROXY_SDK'];
+
    var minify_options_strip_float = {
     compress: {
       global_defs: {
@@ -99,6 +174,7 @@ const supported_ = [
   const floatPatternTurnOff = `window.JX_FLOAT_COND_COMPILE = false;`;
   const floatPatternTurnOn = `window.JX_FLOAT_COND_COMPILE = true;`;
   
+  // <-- this one is for copying those test files (not the real prod) onto s3.
     var configKeys = require("./config-keys")(); //PLEASE SEE THIS FILE config-keys-seed.js is commited though
     var config_aws = {
         key: configKeys.awsKey,
@@ -124,50 +200,115 @@ const supported_ = [
             failOnError: true
         }
     };
+  // -- this one is for copying those test files (not the real prod) onto s3. -->
+
+  // This is the most most important list
+var bundles_  = [
+    {
+        name: 'OSM',
+        in: 'osm',
+        out: 'jxosm.1.0',
+        floatable: 'no',
+        signature: "window.jxoutstreammgr.init", //already live
+        queue: "window._jxoutstreammgrq",
+        liveall: ["https://scripts.jixie.io/jxosm.1.0.min.js"]
+    },
+    {
+        name: 'OSM-AMP',
+        in: 'amp-osm',
+        out: 'jxamp',
+        floatable: 'no',
+        signature: "n/a", 
+        queue: "n/a",
+        liveall: ["https://scripts.jixie.io/jxamp.min.js"]
+    },
+    {
+        name: 'HBRENDERER',
+        in: 'hbrenderer',
+        out: 'jxhbrenderer.1.1',
+        floatable: 'no',
+        signature: "window.jxhbuniversal.hbinit",
+        queue: "jxhbrendererq", 
+        livefull: ["https://scripts.jixie.io/jxhbrenderer.1.1.min.js"]
+    },
     
-  
-  /**
-  * (1) The easy-to-build scripts . We have none. Just a placeholder. This is not called
-  * by any steps currently
-  */
-  var options = {};
-  gulp.task('BUILD_BULK', function(cb) {
-    pump([
-            gulp.src(fileslist_),
-            gulpif(config.minify, minify(options)),
-            gulpif(config.minify, rename({
-                extname: '.min.js'
-            })),
-            gulp.dest('dist/js')
-        ],
-        cb
-    );
-  });
-  
+    {
+        name: 'UNIVERSAL (no float)',
+        in: 'ulite',
+        out: 'jxfriendly.2.0',
+        floatable: 'no',
+        signature: "window.jxuniversal.init",
+        queue: "window._jxuniversalq",
+        liveall: ["https://scripts.jixie.io/jxfriendly.2.0.min.js"]
+    },
+    {
+        name: 'UNIVERSAL (can float)',
+        in: 'ulite',
+        out: 'jxfriendly.2.0.flt',
+        floatable: 'yes',
+        signature: "window.jxuniversal.init", //<--!!!
+        queue: "window._jxuniversalfltq",
+        liveall: ["https://scripts.jixie.io/jxfriendly.2.0.flt.min.js"]
+    },
+    //---
+    {
+        name: 'VIDEOPLAYER',
+        in: 'videosdk-v3',
+        out: 'jxvideo.3.1',
+        signature: "window.JX.player and window.JX.ampplayer",
+        //queue: not supported.
+        liveall: ["https://scripts.jixie.media/jxvideo.3.1.min.js"]
+    },  
+    {
+        name: 'VIDEOP-AD-PLAYER',
+        // use with our osm, new universal etc
+        in: 'videoadsdk',
+        out: 'jxvideocr.1.0',
+        signature: "window.jxvideoadsdk",
+        queue: "_jxvideoadsdkq",
+        //queue: not supported.
+        liveall: ["https://scripts.jixie.media/jxvideocr.1.0.min.js"]
+    },  
+    {
+        name: 'VIDEO-AD-SDK',
+        // successor to jxvideo.1.3.min.js used by KG masterhead
+        in: 'videoadsdk-standalone',
+        out: 'jxvideoad.2.0',
+        signature: "window.jxvideoadsdksal",
+        //queue: not supported.
+        liveall: ["https://scripts.jixie.media/jxvideoad.2.0.min.js"]
+    },  
+];
+
+// create the tasks for all the bundle items:
+bundles_.forEach(function (bundle) {
+    let bundlename = bundle.name;
+    let doCoreB_ =  doCore_.bind(null, bundle.in, bundle.out);
+    gulp.task(bundlename, function() {
+        return doCoreB_();
+    });
+    orderedTasksArr.push(bundlename);
+
+});
+orderedTasksArr.push('UPLOAD_TEST_HTML');
+orderedTasksArr.push('UPLOAD_TEST_HTML');
  
-  
-  /**
-  * (2) trackerJS script which uses an external module and therefore needs browserify.
-  * This is our main script (and only one) currently
-  */
-  const osmjsfile_ =
-    'osm';
-  
-  gulp.task('BUILD_OSM_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + osmjsfile_ + jsext_;
+function doCore_(inname, outname, floatable = 'na') {
+    let minifyOptions = floatable != 'yes' ? minify_options_strip_float: {};
+    let thefile = bundlessubfolder_ + inname + jsext_;
     return browserify(thefile, {
             debug: false
         })
         .bundle()
         .pipe(source(thefile))
         .pipe(buffer())
-        .pipe(replace(floatPatternStub,    floatPatternTurnOff))
-        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
+        .pipe(gulpif((floatable == 'yes' || floatable == 'no'), replace(floatPatternStub,   floatable == 'yes' ? floatPatternTurnOn: floatPatternTurnOff)))
+        .pipe(gulpif(config.minify, minify(minifyOptions)))
         .on('error', function(err) {
             gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
         .pipe(gulpif(true, rename({
-            basename: outputprefix_ + osmjsfile_
+            basename: outname
         })))
         .pipe(gulpif(true, rename({
             extname: '.min.js'
@@ -175,231 +316,8 @@ const supported_ = [
         .pipe(gulp.dest('dist'))
         //.s3(config_aws, s3_options.dev)
         .pipe(gutil.noop())
-  });
-
-  const ulitejsfile_ = 'ulite';
- gulp.task('BUILD_ULITE_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + ulitejsfile_ + jsext_;
-    floatNewPattern =  `window.JX_FLOAT_COND_COMPILE = false;`;
-    return browserify(thefile, {
-            debug: false
-        })
-        .bundle()
-        .pipe(source(thefile))
-        .pipe(buffer())
-        .pipe(replace(floatPatternStub,    floatPatternTurnOff))
-        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
-        .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulpif(true, rename({
-            basename: outputprefix_ + ulitejsfile_
-        })))
-        .pipe(gulpif(true, rename({
-            extname: '.min.js'
-        })))
-        .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
-  });
-
-  
-  gulp.task('BUILD_FLOATABLE_ULITE_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + ulitejsfile_ + jsext_;
-     
-    return browserify(thefile, {
-            debug: false
-        })
-        .bundle()
-        .pipe(source(thefile))
-        .pipe(buffer())
-        .pipe(replace(floatPatternStub,    floatPatternTurnOn))
-        .pipe(gulpif(config.minify, minify()))
-        .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulpif(true, rename({
-            basename: outputprefix_ + ulitejsfile_ + '-floatable'
-        })))
-        .pipe(gulpif(true, rename({
-            extname: '.min.js'
-        })))
-        .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
-  });
-
-  const videosdkjsfile3_ = 'videosdk-v3';
-  gulp.task('BUILD_VIDEOSDKV3_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + videosdkjsfile3_ + jsext_;
-    return browserify(thefile, {
-            debug: false
-        })
-        .bundle()
-        .pipe(source(thefile))
-        .pipe(buffer())
-        .pipe(gulpif(config.minify, minify()))
-        .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulpif(true, rename({
-            basename: outputprefix_ + videosdkjsfile3_
-        })))
-        .pipe(gulpif(true, rename({
-            extname: '.min.js'
-        })))
-        .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
-  });
-
-  const videosdkjsfile2_ = 'videosdk';
-  gulp.task('BUILD_VIDEOSDKV2_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + videosdkjsfile2_ + jsext_;
-    return browserify(thefile, {
-            debug: false
-        })
-        .bundle()
-        .pipe(source(thefile))
-        .pipe(buffer())
-        .pipe(gulpif(config.minify, minify()))
-        .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulpif(true, rename({
-            basename: outputprefix_ + videosdkjsfile2_
-        })))
-        .pipe(gulpif(true, rename({
-            extname: '.min.js'
-        })))
-        .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
-  });
-
-  const amposmjsfile_ = 'amp-osm';
-  gulp.task('BUILD_AMPOSM_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + amposmjsfile_ + jsext_;
-    return browserify(thefile, {
-            debug: false
-        })
-        .bundle()
-        .pipe(source(thefile))
-        .pipe(buffer())
-        .pipe(replace(floatPatternStub,   floatPatternTurnOff))
-        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
-        .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulpif(true, rename({
-            basename: outputprefix_ + amposmjsfile_
-        })))
-        .pipe(gulpif(true, rename({
-            extname: '.min.js'
-        })))
-        .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
-  });
-
-  const hbrendererjsfile_ = 'hbrenderer';
-  gulp.task('BUILD_HBRENDERER_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + hbrendererjsfile_ + jsext_;
-    return browserify(thefile, {
-            debug: false
-        })
-        .bundle()
-        .pipe(source(thefile))
-        .pipe(buffer())
-        .pipe(replace(floatPatternStub,    floatPatternTurnOff))
-        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
-        .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulpif(true, rename({
-            basename: outputprefix_ + hbrendererjsfile_
-        })))
-        .pipe(gulpif(true, rename({
-            extname: '.min.js'
-        })))
-        .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
-  });
-
-  const jxrendererjsfile_ = 'jxrenderer';
-  gulp.task('BUILD_JXRENDERER_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + jxrendererjsfile_ + jsext_;
-    return browserify(thefile, {
-            debug: false
-        })
-        .bundle()
-        .pipe(source(thefile))
-        .pipe(buffer())
-        .pipe(replace(floatPatternStub,    floatPatternTurnOff))
-        .pipe(gulpif(config.minify, minify(minify_options_strip_float)))
-        .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulpif(true, rename({
-            basename: outputprefix_ + jxrendererjsfile_
-        })))
-        .pipe(gulpif(true, rename({
-            extname: '.min.js'
-        })))
-        .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
-  });
-
-  const videoadsdkjsfile_ = 'videoadsdk';
-  gulp.task('BUILD_VIDEOADSDK_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + videoadsdkjsfile_ + jsext_;
-    return browserify(thefile, {
-            debug: false
-        })
-        .bundle()
-        .pipe(source(thefile))
-        .pipe(buffer())
-        .pipe(gulpif(config.minify, minify()))
-        .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulpif(true, rename({
-            basename: outputprefix_ + videoadsdkjsfile_
-        })))
-        .pipe(gulpif(true, rename({
-            extname: '.min.js'
-        })))
-        .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
-  });
-
-  const videoadsdkstandalonejsfile_ = 'videoadsdk-standalone';
-  gulp.task('BUILD_VIDEOADSDKSTANDALONE_BUNDLE', function() {
-    let thefile = bundlessubfolder_ + videoadsdkstandalonejsfile_ + jsext_;
+    }
  
-    return browserify(thefile, {
-            debug: false
-        })
-        .bundle()
-        .pipe(source(thefile))
-        .pipe(buffer())
-        .pipe(gulpif(config.minify, minify()))
-        .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulpif(true, rename({
-            basename: outputprefix_ + videoadsdkstandalonejsfile_
-        })))
-        .pipe(gulpif(true, rename({
-            extname: '.min.js'
-        })))
-        .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
-  });
   
   gulp.task('BUILD_3PARTYCR_PROXY_SDK', function(cb) {
     pump([
@@ -413,6 +331,7 @@ const supported_ = [
         cb
     );
   });
+
   gulp.task('UPLOAD_TEST_HTML', function(cb) {
     pump([
             gulp.src(['dist/sdks/*.js', 'dist/bundles/*.js', 'tests/*.json', 'tests/*.html', 'tests/*.css']),
@@ -451,7 +370,8 @@ const supported_ = [
 
 
  
-const whoGoesWhere = [{   
+const whoGoesWhere = [];
+/*{ 
         title: "OSM non AMP",
         signature: "window.jxoutstreammgr.init", //already live
         queue: "window._jxoutstreammgrq",
@@ -531,7 +451,7 @@ const whoGoesWhere = [{
         livebase: "jxvideoad.1.0.min.js", //aiyo what to call it ah?
         livefull: "https://scripts.jixie.io/jxvideoad.1.0.min.js"
     }
-];       
+];       */
 
 function printWhoGoesWhere() {
     whoGoesWhere.forEach(function(oneEntry) {
@@ -577,10 +497,12 @@ function printWhoGoesWhere() {
     }).pipe(clean());
   });
   
-  ////gulp.task('main', gulp.series('npmnotice', 'clean', 'BUILD_TRACKERJS'));
+  gulp.task('main', gulp.series(orderedTasksArr));
+
   
   //add this to the list later 'BUILD_OUTSTREAMJS'
   //we are continually modifying the ids common ah.
+  /*
   gulp.task('main', gulp.series('clean', 
     'BUILD_3PARTYCR_PROXY_SDK',
     'BUILD_AMPOSM_BUNDLE', 
@@ -609,6 +531,7 @@ function printWhoGoesWhere() {
     'BUILD_FLOATABLE_ULITE_BUNDLE',
     'UPLOAD_TEST_HTML',
     'WRAP_UP'));
+    */
   
   config = (function() {
     var
