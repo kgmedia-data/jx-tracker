@@ -31,7 +31,6 @@
                 getPageSlotFcn,
                 fixedHeightBlob
               }) {
-                  console.log("!!!!!!!");
                 //rtjson prepared.
                 let rtjson = {
                     timeout: dbjson.timeout ? dbjson.timeout: defaultPTimeout_,

@@ -348,7 +348,7 @@
                         if (_jsonObj.createslot.div.css) {
                             childNode.style.cssText = _jsonObj.createslot.div.css;
                         }
-
+                        //console.log(`## (_start partner=${_jsonObj.partner}) OSM APPENDING childNode.id=${childNode.id} to parentNode.id=${parentNode.id}`);
                         parentNode.appendChild(childNode);
                     }
                     if(childNode) {
@@ -393,6 +393,7 @@
                         _dbgprint(`**Added ${_jsonObj.partner} script to page: ${scriptBody}`, true);
                     }
                     if (scriptBody) {
+                        //console.log(`## (_start partner=${_jsonObj.partner}) OSM appending ContextualFragment to injectedDiv.id=${_injectedDiv.id}`);
                         _injectedDiv.appendChild(range.createContextualFragment(scriptBody));
                     }
                     else {//only partner Jixie has this. //so if this function is not there. then bye
@@ -402,6 +403,7 @@
                     if(parent) {
                         try {
                             parent.appendChild(_injectedDiv);
+                            //console.log(`## (_start ?? partner=${_jsonObj.partner}) OSM APPENDING injectedDiv.id=${_injectedDiv.id} to parent.id=${parent.id}`);
                             keep = true;
                         }
                         catch (error) {
@@ -514,6 +516,7 @@
             }
 
             if (_injectedDiv) {
+                //console.log(`## (_prepareGoNext partner=${_jsonObj.partner}) Removing injectedDiv.id=${_injectedDiv.id} From parent.id${_injectedDiv.parentNode.id}`);
                 _injectedDiv.parentNode.removeChild(_injectedDiv);
             }
             if (_jsonObj.removedivclass) {
@@ -1018,7 +1021,6 @@
                     let partner = _partners[thisCr.subtype];
 
                     let oneLayerInst = new OneOSMLayer(partner, _msWFInit, _ctrID, _loggerInst);
-                    console.log("_______new OSMLayer " + partner.name);
                     oneLayerInst.init(
                         _getPgSelector, _fixedHeight,
                         thisCr,
@@ -1041,7 +1043,7 @@
             }
             //the default place to "hang" the script fragments...
             //but some partners they need to hang the script fragments somewhere else.
-            let pCtr = getAnElt('#' + (p.managerdiv ? p.managerdiv: idJXOSMDiv_));
+            let pCtr = getAnElt('#' + (p.managerdiv));
             if (!pCtr) {
                 throw new Error("no slot");
                 //no do.
@@ -1049,6 +1051,7 @@
             }
             let pDiv = document.createElement('div');
             pDiv.id = _ctrID;
+            //console.log(`## (_oneOffNonsense) OSM APPENDING pDiv.id=${pDiv.id} to pCtr.id=${pCtr.id}`);
             pCtr.appendChild(pDiv);
         };
         var _doctor = function(qparams, creativesArray) {

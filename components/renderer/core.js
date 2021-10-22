@@ -270,7 +270,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             //the queue name is '_' + signature + 'q';
             //so here it is _jxvideoadsdkq
             url: 'https://scripts.jixie.media/jxvideocr.1.0.min.js'
-        }
+            ///////url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk-test.min.js'
+       }
     };
     const visThreshold_ = 0.4;
    
@@ -556,13 +557,34 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
     }
 
-        
+    /**
+     * It is very important to handle this properly:
+     * each instance of the OSM is listening. So it is important that the instance
+     * IGNORES whatever that is not meant for it!!!
+     * @param {*} e 
+     * @returns 
+     */        
     function __handleCrEvtsMsgs(e) {
+        let sureOK = false;
+        // sureOK set to true if this listener is working with a creative in an iframe
+        // and we already checked this incoming msg is from that iframe.
+        // Then no need to check to throw anything away
+        // The challenge is for those listeners working with trusted creatives ...
         if (this.divObjs.jxCoreElt && this.divObjs.jxCoreElt.contentWindow) {
             //creative is in iframe iframe situation:
             //Then we can easily check if the source of the message is that
             //iframe
             if (!(this.divObjs.jxCoreElt.contentWindow === e.source)) {
+                return;
+            }
+            sureOK = true;
+        }
+        else {
+            // our creative is not in an iframe. in that case I expect at a minimum
+            // only to entertain msg from the same window (and not some iframe thereof)
+            // if it is a normal windows messages (not one we send to ourself) then there will be a e.source
+            // in that case we want to at least check it is from this current window.
+            if (e.source && !(window === e.source)) {
                 return;
             }
         }
@@ -594,6 +616,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         if (json) {
             type = json.type;
         }
+
         if (this.c.div && this.c.crSig) {
             //trusted
             //if the creative has a signature (new trusted script type) 
@@ -610,7 +633,17 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             }
         }
         
+        // we don't want the iframe type to kill our own local creative though.
+        if (!sureOK && json && json.token && this.c.div) {
+            if (json.token != this.c.token) { //this.c.div.token could be undefined
+                // console.log(`#### type=${type} json=(${JSON.stringify(json)}) json.token=${json.token} VS this.c.token=${this.c.token}`);
+                return;
+            }
+            // then we need to check if 
+            //we need to match it properly:
 
+        }
+        
         if (type) {
             switch (type) {
                 case "jxloaded": //only used for untrusted
@@ -784,14 +817,31 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 jxCoreElt.src = normCrParams.iframe.url;
             }
             else if (blob.scripturl && !blob.jxuni_p) {
-                console.log(`Type iframe | script | no jxuni_p`);
                 //OUR VIDEO ADS belong here. Not using the old jxuni_p to pass params
                 //but using postMessages later.
                 //So simpler injection
                 //Moving forward, this should be the way for any new jixie crative type
                 //whether trusted or not
-                let html = `<body style="margin: 0;"><script type="text/javascript" src="${blob.scripturl}"></script></body>`;
-                jxCoreElt.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
+                //
+                //<-- I am switching to this method now:
+                // strange thing is that using this (in the comment):
+                //    let html = `<body style="margin: 0;"><script type="text/javascript" src="${blob.scripturl}"></script></body>`;
+                //    jxCoreElt.src = 'data:text/html;charset=utf-8,' + encodeURI(html);
+                // things appear to work, but then, the mp4 for the ad video is never taken from disk cache and sometimes is also
+                // loaded in chuncks. 
+                // Once I switch to this following way, then I start to see the mp4 (at least those from bunny cdn since disk caching
+                // is configured) being FROM DISK CACHE. 
+                // Don't quite understand why yet.
+                var jxinter = window.setInterval(function() {
+                    // put inside function 
+                    var jxiframeDoc = jxCoreElt.contentDocument || jxCoreElt.contentWindow.document;
+                    if(jxiframeDoc.readyState == "complete") {
+                        window.clearInterval(jxinter);
+                        var ns = document.createElement("script");
+                        ns.src = blob.scripturl;
+                        jxiframeDoc.body.appendChild(ns);
+                    }
+                },500);
             }
             else if (blob.scripturl && blob.jxuni_p) {
                 //console.log(`Type iframe | script | using jxuni_p`);
@@ -1673,6 +1723,16 @@ const thresholdDiff_ = 120;
             clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
         }
 
+        // Currently the likes of R2B2 they are not properly integrated with our OSM stack, so
+        // just put here as  a script type (type=display and subtype = script)
+        // the thing is they actually better to follow the width of the container
+        // It is better for such stuff to really occupy the full width of the article
+        //So here we do just that.
+        if (!isNaN(jxParams.fixedHeight) && c.universal && c.universal.scaling == 'article') {
+            c.width = jxParams.maxwidth-1;
+            c.height = jxParams.maxheight-1;
+            c.universal.scaling = 'none';
+        }
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
         doSizeMgmt(jxParams, c);
@@ -1797,6 +1857,7 @@ const thresholdDiff_ = 120;
                 break;    
             case 'video': 
                 trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
+                //c.adparameters.trusted = true; //HACK
                 if (c.adparameters.trusted) {
                     trusted = true;
                     out.crSig = jxScriptUrls_.video.signature
