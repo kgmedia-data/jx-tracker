@@ -85,7 +85,36 @@ function get_() {
     return ret;
 }
 
+// AMP they cannot have htis already .
+/*
+not good also lah: this one only take from the current window. 
+
+function getKeywords_(tagNameMaybe = null) {
+    let keywords = null;
+    if (tagNameMaybe) {
+        keywords = document.querySelector(`meta[name="${tagNameMaybe}"]`).content;
+        if (keywords) { 
+            return keywords; 
+        }
+    }
+    let metas = document.getElementsByTagName("meta");
+    if (metas && metas.length > 0) {
+        for (var i = 0; i < metas.length; i++) {
+            if (metas[i].name.indexOf("keyword") > -1) {
+                keywords = metas[i].content;
+                if (keywords) { 
+                    return keywords; 
+                }
+            }
+        }
+
+    }
+    return null;
+}
+*/
+
 module.exports.get = get_;
+//module.exports.getKeywords = getKeywords_;
 
 /* 
  ************** module: basic/pginfo **************************************************
