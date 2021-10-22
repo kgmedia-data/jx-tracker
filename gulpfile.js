@@ -283,15 +283,13 @@ var bundles_  = [
 // create the tasks for all the bundle items:
 bundles_.forEach(function (bundle) {
     let bundlename = bundle.name;
-    let doCoreB_ =  doCore_.bind(null, bundle.in, bundle.out);
+    let doCoreB_ =  doCore_.bind(null, bundle.in, bundle.out, bundle.floatable);
     gulp.task(bundlename, function() {
         return doCoreB_();
     });
     orderedTasksArr.push(bundlename);
 
 });
-orderedTasksArr.push('UPLOAD_TEST_HTML');
-orderedTasksArr.push('UPLOAD_TEST_HTML');
  
 function doCore_(inname, outname, floatable = 'na') {
     let minifyOptions = floatable != 'yes' ? minify_options_strip_float: {};
@@ -332,7 +330,7 @@ function doCore_(inname, outname, floatable = 'na') {
     );
   });
 
-  gulp.task('UPLOAD_TEST_HTML', function(cb) {
+  gulp.task('UPLOAD_TESTFILES', function(cb) {
     pump([
             gulp.src(['dist/sdks/*.js', 'dist/bundles/*.js', 'tests/*.json', 'tests/*.html', 'tests/*.css']),
             gulpif(true, s3(config_aws, s3_options.dev))
@@ -498,7 +496,7 @@ function printWhoGoesWhere() {
   });
   
   gulp.task('main', gulp.series(orderedTasksArr));
-
+  gulp.task('developer1', gulp.series(orderedTasksArr.concat(['UPLOAD_TESTFILES'])));
   
   //add this to the list later 'BUILD_OUTSTREAMJS'
   //we are continually modifying the ids common ah.
