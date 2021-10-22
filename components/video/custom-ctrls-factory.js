@@ -125,7 +125,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _container = container;
 
     // choices are: simple or 2color (may need to change the names)
-    if (cOptions.bigplaybutton != 'simple') _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
+    if (cOptions.bigplaybutton == '2color') _bigPlayBtnCls = styles.roundBigPlayBtnCtr;
 
     cssmgr.inject(container, 'customControls');
 
