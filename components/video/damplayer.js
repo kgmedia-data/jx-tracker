@@ -32,16 +32,9 @@ const startModePWApi_       = consts.startModePWApi;
 const startModeSDKApi_      = consts.startModeSDKApi;
 const startModeSDKClick_    = consts.startModeSDKClick;
 
-//var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
 var DAMApiBase_ = 'https://jixie-dam-api-w.azurewebsites.net/api/stream?format=hls&metadata=basic';
 
-/* 
-if (window.location && window.location.hostname) {
-    if (window.location.hostname.indexOf("megapolitan") > -1) {
-          DAMApiBase_ = `https://jixie-dam-api-release-candidate.azurewebsites.net/api/stream?format=hls&metadata=basic`;
-    }
-}
-*/
+
 
 const IRThreshold_ = 0.5;
 
@@ -937,7 +930,7 @@ function createObject_(options, ampIntegration) {
      * playEndCB is optional: it is a function that we will call when the 1 video finished playing
      * (if invoked on a list of videoids, then it is only called when everything finished playing)
      */
-    /**
+    
     function _sendStuff(endpoint) {
         fetch(endpoint)
         .then(response => response.json())
@@ -963,7 +956,7 @@ function createObject_(options, ampIntegration) {
         })
         .catch(console.error);
     }
-    **/
+    
     
     
     /**
@@ -977,9 +970,9 @@ function createObject_(options, ampIntegration) {
             //DO NOTHING.
             return; 
         }
-        //if (idsAreInternal && Array.isArray(param)) {
-          //  _kickOffLazyTest(_options.accountid, param);
-        //}
+        if (idsAreInternal && Array.isArray(param)) {
+            _kickOffLazyTest(_options.accountid, param);
+        }
         
         // even though we are given the playlist, we not necessarily want to start to load the first
         // video on the list into the video player. (bandwidth $$ considerations ; esp since Shaka player
