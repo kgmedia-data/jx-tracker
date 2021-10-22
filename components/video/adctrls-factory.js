@@ -66,8 +66,24 @@
         _container = container;
         _vectorFcn = vectorFcn;
          
-        let cColor = (controlsObj && controlsObj.color ? controlsObj.color: '#FF0000');
-        
+        let cColor = (controlsObj && controlsObj.color ? controlsObj.color: '#FFFFFF');
+
+/* let arr = [
+'#DFFF00',
+'#FFBF00',
+'#FF7F50',
+'#DE3163',
+'#9FE2BF',
+'#40E0D0',
+'#6495ED',
+'#CCCCFF'
+];
+let maxmax = arr.length -1;
+let minmin = 0;
+var randomnumber = Math.floor(Math.random() * (maxmax - minmin + 1)) + minmin;
+cColor = arr[randomnumber];
+console.log(`${cColor} IS CHOSEN COLOR ###`);
+*/     
         cssmgr.updateOptions(container, {adcolor: cColor});
         cssmgr.inject(container, 'adControls'); 
  

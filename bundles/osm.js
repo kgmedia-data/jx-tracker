@@ -19,7 +19,15 @@ const mpsm          = require('../components/osmpartners/selectmedia');
 const mpteads       = require('../components/osmpartners/teads');
 const mpunruly      = require('../components/osmpartners/unruly');
 
+const osmWorkingDivId_ = 'osmdiv';
 
+if (!document.getElementById(osmWorkingDivId_)) {
+    var div = document.createElement("div");
+    div.id = osmWorkingDivId_;
+    div.style.display = "none;";
+    div.style.visibility = "hidden";
+    document.body.appendChild(div);
+}
 
 //<-- If we want, we can build the renderer code right in
 //    of course our script will be much bigger then.
@@ -27,11 +35,13 @@ const mpunruly      = require('../components/osmpartners/unruly');
 //    the JX renderer stuff would have been included in vain.
 const mrenderer     = require('../components/renderer/core');
 if (!window.jxrenderer) {
+    //this is for playing jixie ad
     //check the exact prop name. this is just the idea only
     //then this will be accessible by any other things inside
     //the same window!
     window.jxrenderer = {
         init: function(options) {
+            //options.managerdiv = osmWorkingDivId_;
             //Perhaps this should also maintain a map
             mrenderer.createInstance(options);
         }
@@ -49,15 +59,19 @@ function start(options) {
     //ability to handle a few OSM units on the page.
     //I assume the publisher is sensible enough to put different
     //selectors in the options. Else the ads will go haywire.
+    options.managerdiv = osmWorkingDivId_;
     let hashStr = btoa(JSON.stringify(options));
     let instMaybe = instMap.get(hashStr);
     if (instMaybe) {
         return;
     }
     const ids = mids.get();
+    //check if the options has the keywords.
+    
     const pginfo = mpginfo.get();
+    // if options has pagekeywords, then it will win over whatever pginfo gets.
     let merged = Object.assign({}, ids, pginfo, options);
-
+    
     var osmInst = mosmcore.createInstance(merged, {
             jixie: mpjixie,
             selectmedia: mpsm,
@@ -74,17 +88,11 @@ window.jxoutstreammgr = {
 var JxOSMQ = function () {
     this.push = function () {
         for (var i = 0; i < arguments.length; i++) try {
-            //if (typeof arguments[i] === "function") arguments[i]();
-            //else 
-            {
-                let fcnname = arguments[i][0];
-                //console.log(`##### x = ${x}`);
-                //console.log(`##### y = ${y}`);
-                if (fcnname == 'init') {
-                    //if our thing is really really loaded late, then perhaps we don't even have the stuff to send the event!
-                    start(arguments[i][1]);
-                }
+            if (Array.isArray(arguments[i]) && arguments[i][0] == 'init') {
+                start(arguments[i][1]);    
             }
+            else 
+                start(arguments[i]);
         } catch (e) {}
     }
 };
@@ -97,4 +105,5 @@ window._jxoutstreammgrq = new JxOSMQ(); //actually no need object, just cloned f
 if (_old_jxoutstreammgrq) {
     window._jxoutstreammgrq.push.apply(window._jxoutstreammgrq, _old_jxoutstreammgrq);
 }
+
 
