@@ -66,7 +66,7 @@
         _container = container;
         _vectorFcn = vectorFcn;
          
-        let cColor = (controlsObj && controlsObj.color ? controlsObj.color: '#FF0000');
+        let cColor = (controlsObj && controlsObj.color ? controlsObj.color: '#FFFFFF');
 
 /* let arr = [
 '#DFFF00',

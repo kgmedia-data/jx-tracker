@@ -8,6 +8,7 @@
  const common                = modulesmgr.get('basic/common');
  const cssmgr                = modulesmgr.get('video/cssmgr');
  
+ 
  const maxNumVastRedirects_ = 5; //testing only. for ads
 
  const MakeOneAdControlsObj  = modulesmgr.get('video/adctrls-factory');
@@ -42,6 +43,7 @@
 
  function MakeOneAdObj_(container, vid, fcnVector, controlsObj, progressBar) {
     const styles                = cssmgr.getRealCls(container);
+
     var _forVideoAdSDK = false;
     var _doProgressBar = true;
     var _forceWidth = 0;
@@ -67,6 +69,8 @@
     var _controlsObj = null;
 
     var _vpaidSecure = true;
+
+    var _delayedAd = false;
 
 
     /**
@@ -117,7 +121,6 @@
     var _knownCurrentTime = -1;
     
     FactoryOneAd.prototype.reset = function() {
-
         _reallyProgressed = false;
         _knownCurrentTime = -1;
 
@@ -225,7 +228,7 @@
         //video sdk will not have this issue. Coz it always check if autoplay is really
         //possible . if not, then it will put up a big play button to start with
         _ctrls.show();
-        _pFcnVector.switch2Ad(hideContent); 
+        _pFcnVector.switch2Ad(hideContent, _delayedAd); 
     }
     var _setupResizeListeners = function() {
         // _sizeCheckTimer = setInterval(_sizeCheck, 500);
@@ -254,7 +257,7 @@
         _ctrls.hide();
         _adDiv.classList.add(styles.hide);
         // _adDiv.style.display = 'none'; //HACK w/o this after the ad i think the controls bars of content video still not working.
-        _pFcnVector.switch2Cnt(); 
+        _pFcnVector.switch2Cnt(_delayedAd); 
         _clearResizeListeners();
     }
     var _leftoverEvents = {}; //use to help us fire events and make sure dun fire the same thing more than once
@@ -293,7 +296,7 @@
 
         _adDiv.classList.remove(styles.adHide); //
         _adDiv.classList.remove(styles.hide); //
-
+        
         // _adDiv.style.display = 'block';//Fery pls note that I had to manipulate the display block and none
         //pls fix this. the jxhide class does not work
         if (resolveFcn) {
@@ -729,7 +732,8 @@
             })
         })
     };
-    FactoryOneAd.prototype.startAd = function(resolveFcn) {
+    FactoryOneAd.prototype.startAd = function(resolveFcn, isDelayedAd = false) {
+        _delayedAd = isDelayedAd;
         _aStartApiCalled = true;
         _startAd(resolveFcn);
     };

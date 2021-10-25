@@ -179,10 +179,8 @@ window.jxPromisePolyfill        = 'none';
 
         //we need to do some heuristics to help us know whether the current pausing or playing
         //is due to user action or just our internal mechanism (intersectionObserver etc)
-        var _msLastInternalCallPause = 0;
-        var _msLastInternalCallPlay = 0;
         var _manualPaused = false;
-  
+        
         function FactoryPlayerWrapper(container) {
             //one off init: the synchronous stuff.
             _container = container;
@@ -407,12 +405,13 @@ window.jxPromisePolyfill        = 'none';
             }
             _contentDiv.classList.remove(styles.hide); //this is important. Coz if video is switched while ad is playing, 
             //then the content div at that time would be hidden!
+            _contentDiv.classList.remove(styles.hideOpacity); //this is important. Coz if video is switched while ad is playing, 
+            //due to supporting the fade and fade out stuff, there are now 2 different ways to hide content (if do the fade-back-to-content <-- 
+            //even if we do no do fade-into-ad, we still will be using styles.hideOpacity to hide the content and not styles.hide)
             
             _accumulatedTime = 0;
             _thumbnailURL = null;
 
-            _msLastInternalCallPause = 0;
-            _msLastInternalCallPlay = 0;
             _manualPaused = false;
             
 
@@ -463,18 +462,40 @@ window.jxPromisePolyfill        = 'none';
             _forceAutoplayWithSound = sound == 'on' ? true: false;
             _soundFallback = sound == 'fallback' ? true: false;
         }   
-        var _hide = function() {
-            _contentDiv.classList.add(styles.hide);
-        };
-        var _show = function() {
-            _contentDiv.classList.remove(styles.hide);
-        };
         var _showSpinner = function() {
             if (_spinner) _spinner.show();
         }
         var _hideSpinner = function() {
             if (_spinner) _spinner.hide();
         }
+        var _fadeIn = function() {
+            _container.style.backgroundColor = "black";
+            _contentDiv.classList.add(styles.adFadeIn);
+            _contentDiv.classList.remove(styles.hideOpacity);
+            setTimeout(function() {
+                _contentDiv.classList.remove(styles.adFadeIn);
+                _container.style.removeProperty('background-color');
+            }, 800);
+        }
+        /* var _fadeOut = function() {
+            //the fade out does not quite make sense.
+            //in the past the video will continue until the admgr sends
+            //the content-pause-request thing.
+            //now we already try to pause the video
+            //it does not quite make sense.
+            //then still later will have the ad spinner spins around
+            //until the ad REALLY starts.
+            //may as well not do this fade out.
+            _pauseVideo();
+            _container.style.backgroundColor = "black"; //ON
+            _contentDiv.classList.add(styles.adFadeOut); //added
+            _contentDiv.classList.add(styles.hideOpacity); //note: <--- this was never removed. only removed in fadeIn
+            setTimeout(function() {
+                _contentDiv.classList.remove(styles.adFadeOut); //removed
+                _container.style.removeProperty('background-color'); //OFF
+                _showSpinner(); //<--- NOt sure about that 
+            }, 800);
+        }*/
         //this is the function we expose to the ads object to "control us"
         //the content <video>
         var _makeFcnVectorForAd = function() {
@@ -509,21 +530,29 @@ window.jxPromisePolyfill        = 'none';
                     }
                     _reportCB('ad', evt, b, adErrBlob);
                 },
-                switch2Ad: function(toHide) {
+                switch2Ad: function(toHide, isDelayedAd) {
                     _state = "ad";
-                    _msLastInternalCallPause = Date.now();
                     _vid.pause();
-                    if (toHide)
-                        _hide();
+                    if (toHide) {
+                        //even if we do not do the fade-in-ad effect, we still need to do the
+                        //hide content differently (so that we can do the fade-into-content)
+                        if (isDelayedAd)
+                            _contentDiv.classList.add(styles.hideOpacity); 
+                        else
+                            _contentDiv.classList.add(styles.hide);
+                    }
                     _showSpinner();
                     if (_soundIndObj)
                         _soundIndObj.hideMaybe(); //if the sound indicator is there need to hide ah.
                     _ctrls.hideCtrl();
                 },
-                switch2Cnt: function() {
+                switch2Cnt: function(isDelayedAd) {
                     //_state = "content";
-                    _show();
-                    _msLastInternalCallPlay = Date.now();
+                    if (isDelayedAd) {
+                        _fadeIn();
+                    } else {
+                        _contentDiv.classList.remove(styles.hide);
+                    }
                     /****
                      * We only use native controls
                      in any case this should be reviewed.
@@ -531,6 +560,8 @@ window.jxPromisePolyfill        = 'none';
                      onPLaying onPaused callbacks I feel...
                      _ctrls.setBtnPlayActive(true);
                     */
+                   if (isDelayedAd && _vid.currentTime > 1) _vid.currentTime -= 1;
+
                     let playInnerProm = _vid.play();
                     if (playInnerProm !== undefined) {
                         playInnerProm
@@ -663,8 +694,6 @@ window.jxPromisePolyfill        = 'none';
               //  _queuePlayPauseCmds(true);
             //}
             //else
-            _msLastInternalCallPlay = new Date().getTime();
-
             if (_state == 'content') {
                 _playVideo();
             } else if (_state == 'ad') {
@@ -686,7 +715,6 @@ window.jxPromisePolyfill        = 'none';
               //  _queuePlayPauseCmds(false);
             //}
             //else 
-            _msLastInternalCallPause = new Date().getTime();
             if (_state == 'content') {
                 _pauseVideo();
             } else if (_state == 'ad') {
@@ -1565,8 +1593,8 @@ window.jxPromisePolyfill        = 'none';
                     //(that adfetch was done with autoAdsManagerStart false)
                     //So now we need to explicitly call startAd:
                     //We use a new promise keep track of the ad's startedness or error-ed-out-ness.
-                    ps.push(new Promise(function(resolve, reject) {
-                        _adObject.startAd(resolve);
+                    ps.push(new Promise(function(resolve) {
+                        _adObject.startAd(resolve, false); //false because this is non delayed Ad , this is real preroll.
                     }));
                     break;
             }
@@ -1904,8 +1932,9 @@ window.jxPromisePolyfill        = 'none';
                 //end of countdown period
                 _isDeferPlayPauseCmd = true; //during this time we do not allow play(), pause() api to take effect
                 //as the ad is coming:
+                //_fadeOut();
                 return new Promise(function(resolve) {
-                    _adObject.startAd(resolve);
+                    _adObject.startAd(resolve, true); //true as this is delayedAd
                 });
             })
             .catch(function(res) {

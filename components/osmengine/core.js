@@ -1141,7 +1141,7 @@
                 if (p[prop])
                     url += '&' + prop + '=' + p[prop];
             });
-            ['pageurl', 'domain'].forEach(function(prop) {
+            ['pageurl', 'domain', 'pagekeywords'].forEach(function(prop) {
                 if (p[prop])
                     url += '&' + prop + '=' + encodeURIComponent(p[prop]);
             });
