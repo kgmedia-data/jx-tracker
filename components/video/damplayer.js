@@ -930,7 +930,7 @@ function createObject_(options, ampIntegration) {
      * playEndCB is optional: it is a function that we will call when the 1 video finished playing
      * (if invoked on a list of videoids, then it is only called when everything finished playing)
      */
-    
+    /***
     function _sendStuff(endpoint) {
         fetch(endpoint)
         .then(response => response.json())
@@ -956,7 +956,7 @@ function createObject_(options, ampIntegration) {
         })
         .catch(console.error);
     }
-    
+    ***/
     
     
     /**
@@ -970,9 +970,9 @@ function createObject_(options, ampIntegration) {
             //DO NOTHING.
             return; 
         }
-        if (idsAreInternal && Array.isArray(param)) {
-            _kickOffLazyTest(_options.accountid, param);
-        }
+        //if (idsAreInternal && Array.isArray(param)) {
+          //  _kickOffLazyTest(_options.accountid, param);
+        //}
         
         // even though we are given the playlist, we not necessarily want to start to load the first
         // video on the list into the video player. (bandwidth $$ considerations ; esp since Shaka player
