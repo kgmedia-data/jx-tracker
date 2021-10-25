@@ -23,6 +23,8 @@
       //  return;
     //}
 
+    injectCssRules();//it will be run only once.
+
         const JX_SLACK_OR_CONSOLE_COND_COMPILE = false;
         const JX_PARTNER_TEST= false;
         const JX_SLACK_COND_COMPILE= false;
@@ -1227,7 +1229,20 @@
         }            
     }
 
-    
+    function injectCssRules() {
+        //So far only need to do this due to Unruly
+        //coz the page css (publisher page) is interfering with their stuff.
+        //This won't be done for amp then as amp is doing amp-core.js
+        try {
+            let head = document.getElementsByTagName('HEAD')[0];
+            let s = document.createElement("style");
+            s.innerHTML = `.unruly_in_article_video_container iframe {color-scheme: none !important;}`;
+            //to test only: s.innerHTML = `.unruly_in_article_video_container iframe {background-color: red !important;}`;
+            head.appendChild(s);
+        }
+        catch(err) {}
+    }
+
     module.exports.createInstance = createInstance_;
 
 /* 
