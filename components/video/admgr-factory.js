@@ -532,8 +532,6 @@
             //On purpose
             // _adDiv.style.display = 'block'; //TODO
             //console.log(`#$ calling adsManager start`);
-            _adDiv.classList.remove(styles.adHide);
-            _adDiv.classList.remove(styles.hide);
             _adsManager.start();
         }
     };
