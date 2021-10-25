@@ -18,6 +18,8 @@ const allClasses = [
   "adHide",
   "hideOpacity",
   "spinner",
+  "adFadeIn",
+  "adFadeOut",
 
   "oBotCtrl",
   "oCenterCtrl",
@@ -164,6 +166,10 @@ function makeCssDefault_(css_) {
     '.' + css_.icon + '.bottom-left{bottom:0;left:0;}',
     '.' + css_.info + '{right:1px;top:1px;width:20px;height:20px;}',
     '.' + css_.info + ' span{display:flex;justify-content:center;align-items:center;color:#fff;font-size:14px;border-radius:50%;border:solid 2px #fff;width:20px;height:20px;font-weight:bold;font-family:Times;}',
+    '@keyframes adFadeIn{from{opacity:0;}to{opacity:1;}}',
+    '@keyframes adFadeOut{from{opacity:1;}to{opacity:0;}}',
+    '.' + css_.adFadeIn + '{animation:adFadeIn 0.8s;webkit-animation:adFadeIn 0.8s;}',
+    '.' + css_.adFadeOut + '{animation:adFadeOut 0.8s;webkit-animation:adFadeOut 0.8s;}'
   ].join("\n");
 }
 

@@ -2460,7 +2460,7 @@ const thresholdDiff_ = 120;
                     if (_jxParams[prop])
                         tmp += '&' + prop + '=' + _jxParams[prop];
                 });
-                ['pageurl', 'domain'].forEach(function(prop) {
+                ['pageurl', 'domain', 'pagekeywords'].forEach(function(prop) {
                     if (_jxParams[prop])
                         tmp += '&' + prop + '=' + _jxParams[prop];
                 });
