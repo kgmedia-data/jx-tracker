@@ -459,7 +459,7 @@ window.jxPromisePolyfill        = 'none';
               //  _forceAutoplayWithSound = true;
             //}
             //only for the first video
-            _forceAutoplayWithSound = sound == 'on' ? true: false;
+            _forceAutoplayWithSound = (( sound == 'on' || sound == 'fallback') ? true: false);
             _soundFallback = sound == 'fallback' ? true: false;
         }   
         var _showSpinner = function() {
@@ -1874,6 +1874,8 @@ window.jxPromisePolyfill        = 'none';
             })
             .finally(function(){
                 if (boundChainContextCheck()) {
+                    if (_ctrls)
+                        _ctrls.setMuteBtn();
                     _isDeferPlayPauseCmd = false;
                     setTimeout(_flushPlayPauseCmds, 0);
                 }

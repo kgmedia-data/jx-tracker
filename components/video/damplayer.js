@@ -32,7 +32,8 @@ const startModePWApi_       = consts.startModePWApi;
 const startModeSDKApi_      = consts.startModeSDKApi;
 const startModeSDKClick_    = consts.startModeSDKClick;
 
-var DAMApiBase_ = 'https://jixie-dam-api-w.azurewebsites.net/api/stream?format=hls&metadata=basic';
+//var DAMApiBase_ = 'https://jixie-dam-api-w.azurewebsites.net/api/stream?format=hls&metadata=basic';
+var DAMApiBase_ = 'https://jx-dam-api-express.azurewebsites.net/api/stream?format=hls&metadata=basic';
 
 
 
@@ -350,6 +351,7 @@ function createObject_(options, ampIntegration) {
         
     }
 
+    /*
     function drWifiValueFromDam(value) {
         //console.log(`## drWifiValueFromDam: ${value}`);
         if (common.isMobile()) {
@@ -375,6 +377,7 @@ function createObject_(options, ampIntegration) {
         //}
         return value;
     }
+    */
     
     /**
      * figure out the startMode once and for all.
@@ -386,7 +389,7 @@ function createObject_(options, ampIntegration) {
     function _workoutStartModeOnce(nwFromAPI) {
         let hasWifi;
         if (nwFromAPI) {
-            nwFromAPI = drWifiValueFromDam(nwFromAPI);
+            //nwFromAPI = drWifiValueFromDam(nwFromAPI);
             //it is possible to get 'unknown' from the the video info api endpoint
             //in that case we assume no wifi. so all good
             hasWifi = (nwFromAPI == 'wifi');
@@ -481,8 +484,9 @@ function createObject_(options, ampIntegration) {
     function repairMissingOptions(options) {
         if (options.hasOwnProperty('muted')) {
             // backward compatiable:
-            options.sound = options.muted ? "off": "fallback";
-            delete options.muted;
+            if (options.hasOwnProperty('sound')) {
+                delete options.muted;
+            }
         }
         //This is only for crucial properties that cannot be missing
         //a final options object. 
@@ -931,11 +935,14 @@ function createObject_(options, ampIntegration) {
      * (if invoked on a list of videoids, then it is only called when everything finished playing)
      */
     /***/
+    /*
     function _sendStuff(endpoint) {
         fetch(endpoint)
         .then(response => response.json())
         .catch();
     }
+    */
+   /*
     function _kickOffLazyTest(accountid, videoids) {
         let prom = new Promise(function(resolve){
               setTimeout(function(){
@@ -956,6 +963,7 @@ function createObject_(options, ampIntegration) {
         })
         .catch(console.error);
     }
+    */
     /***/
     
     
@@ -970,9 +978,9 @@ function createObject_(options, ampIntegration) {
             //DO NOTHING.
             return; 
         }
-        if (idsAreInternal && Array.isArray(param)) {
-            _kickOffLazyTest(_options.accountid, param);
-        }
+        //if (idsAreInternal && Array.isArray(param)) {
+          //  _kickOffLazyTest(_options.accountid, param);
+        //}
         
         // even though we are given the playlist, we not necessarily want to start to load the first
         // video on the list into the video player. (bandwidth $$ considerations ; esp since Shaka player
