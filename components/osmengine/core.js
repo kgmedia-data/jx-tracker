@@ -1138,7 +1138,7 @@
             _msWFInit = Date.now();
             _instID = "OSMWF_" + _msWFInit;
             _ctrID = "ctrid" + _msWFInit; //TODO REfers to the container for the injected CODE of the various partners
-            let url = `https://${p.debug?'ad-rc':'ad'}.jixie.io/v2/osm?source=osm`;
+            let url = `https://${p.debug?'ad-rc':'content'}.jixie.io/v2/osm?source=osm`;
             ['unit', 'client_id', 'sid', 'campaignid', 'creativeids'].forEach(function(prop) {
                 if (p[prop])
                     url += '&' + prop + '=' + p[prop];
