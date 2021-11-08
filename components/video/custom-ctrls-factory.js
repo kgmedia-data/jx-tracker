@@ -315,6 +315,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _midIcon = _byClass(styles.volMid);
     _highIcon = _byClass(styles.volHigh);
     _timeElapsed = _byId(`${'timeElapsedId'+randNumb}`);
+   // _timeElapsed.setAttribute('visibility', 'hidden'); //RENEE
+    _timeElapsed.style.visibility = "hidden";
 
     if (!common.isIOS()) {
       // then you wrong then?!
@@ -579,10 +581,19 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       const selectedPlaybackValue = _qsa(`.${styles.speedMenu} div[data-playback~="${speed}"]`);
   
       durationText.innerText = `${time.minutes}:${time.seconds}`;
-
+      let visstr = ((videoDuration < 0 || videoDuration > 86400 )? 'hidden': 'visible'); //RENEE
+      durationText.style.visibility = visstr; //RENEE
+      _timeElapsed.style.visibility = visstr; //RENEE
+      
       _progressBarInput.setAttribute('max', videoDuration);
       _progressBar.setAttribute('max', videoDuration);
-  
+      //I think need to hide the progress bar
+      //and hide the elapsed time
+      //_progressBarInput.setAttribute('visibility', 'hidden'); //RENEE
+      //_progressBar.setAttribute('visibility', 'hidden'); //RENEE
+      _progressBarInput.style.visibility = visstr; //RENEE
+      _progressBar.style.visibility = visstr; //RENEE
+      
       if (_overlayVolumeRange) _overlayVolumeRange.setAttribute('data-volume', volume);
       _updateVolumeIcon(true, volume);
 
@@ -912,6 +923,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_videoControls) _videoControls.classList.add(styles.hide);
   };
   FactoryOneCustomControls.prototype.setTimer = function (currTime) {
+    //if it is live stream then no need to do this:
     _updateTimeElapsed(currTime);
   };
   FactoryOneCustomControls.prototype.videoMetaReady = function (videoObj) {

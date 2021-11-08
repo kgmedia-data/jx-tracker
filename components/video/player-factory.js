@@ -243,8 +243,11 @@ window.jxPromisePolyfill        = 'none';
             }
         }
 
+        function _isVODDuration(dur) {
+            return (dur > 0 && dur < 1000);
+        }
         function setupMilestones() {
-            if (!_milestones && _vid.duration > 0) {
+            if (!_milestones && _isVODDuration(_vid.duration)) {
                 //set up then we can compare more easily in the playhead update
                 //no need everytime do a calculation ...
                 //calculate once 
@@ -769,6 +772,7 @@ window.jxPromisePolyfill        = 'none';
                     return _vid.currentTime;
                 },
                 setVideoPlayhead: function(time) {
+                    //we only allow that if not live stream TODO
                     _vid.currentTime = time;
                 },
                 isPaused: function() {
@@ -1067,7 +1071,7 @@ window.jxPromisePolyfill        = 'none';
         //if it starts playing
 
         function _onPlayheadUpdateCB() {
-            
+            console.log(`#### _ ${_vid.currentTime} #### ${_accumulatedTime}`);
             if (_manualPaused) {
                 let diff1 = _vid.currentTime- this.lastPlayhead;
                 //console.log(`##_ ${diff1} _onPlayheadUpdateCB setting manualPaused to false`);
