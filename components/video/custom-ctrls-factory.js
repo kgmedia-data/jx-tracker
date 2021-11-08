@@ -640,6 +640,11 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     }
   }
 
+  function _updateMuteIcon() {
+    let v = _vectorFcn.getVolume();
+    _updateVolumeIcon(false, v)
+  }
+
   function _togglePlay() {
     if (_vectorFcn.isPaused()) {
       _vectorFcn.play();
@@ -917,6 +922,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   };
   FactoryOneCustomControls.prototype.setVolIcon = function (vol) {
     _updateVolumeIcon(false, vol);
+  };
+  FactoryOneCustomControls.prototype.setMuteBtn = function () {
+    _updateMuteIcon();
   };
   FactoryOneCustomControls.prototype.updateFsIcon = function () {
     _updateFullscreenButton();

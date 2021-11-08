@@ -32,17 +32,18 @@ const startModePWApi_       = consts.startModePWApi;
 const startModeSDKApi_      = consts.startModeSDKApi;
 const startModeSDKClick_    = consts.startModeSDKClick;
 
-//const DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
-var DAMApiBase_ = 'https://jixie-dam-api-w.azurewebsites.net/api/stream?format=hls&metadata=basic';
+//var DAMApiBase_ = 'https://jixie-dam-api-w.azurewebsites.net/api/stream?format=hls&metadata=basic';
+var DAMApiBase_ = 'https://jx-dam-api-express.azurewebsites.net/api/stream?format=hls&metadata=basic';
+
 
 
 const IRThreshold_ = 0.5;
-
 
 function createObject_(options, ampIntegration) {
     if (options.restrictions.maxwidth == 852) {
         options.restrictions.maxwidth = 853;
     }
+        
     if (options.restrictions) {
         if (options.restrictions.maxheight > 0) 
             DAMApiBase_ += '&max-height=' + options.restrictions.maxheight;
@@ -349,6 +350,35 @@ function createObject_(options, ampIntegration) {
         }); 
         
     }
+
+    /*
+    function drWifiValueFromDam(value) {
+        //console.log(`## drWifiValueFromDam: ${value}`);
+        if (common.isMobile()) {
+            value = 'mobile';
+            let connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection) {
+                //alert(`a=${connection.type} b =${connection.effectiveType}`);
+                //console.log(`## drWifiValueFromDam: type ${connection.type}`);
+                //console.log(`## drWifiValueFromDam: eff type ${connection.effectiveType}`);
+            	if (connection.type == "wifi") {
+                    //if (['slow-2g', '2g', '3g'].indexOf(connection.effectiveType) == -1) {
+		            if (['slow-2g', '2g'].indexOf(connection.effectiveType) == -1) {
+	   	                value = "wifi";
+		            }
+	            }
+	        }
+            //else {
+            //    alert("connection not defined");
+            //}
+        }
+        //else {
+        //    alert("IS NOT MOBILE");
+        //}
+        return value;
+    }
+    */
+    
     /**
      * figure out the startMode once and for all.
      * O no ... actually the wifi non wifi it will change ah
@@ -359,6 +389,7 @@ function createObject_(options, ampIntegration) {
     function _workoutStartModeOnce(nwFromAPI) {
         let hasWifi;
         if (nwFromAPI) {
+            //nwFromAPI = drWifiValueFromDam(nwFromAPI);
             //it is possible to get 'unknown' from the the video info api endpoint
             //in that case we assume no wifi. so all good
             hasWifi = (nwFromAPI == 'wifi');
@@ -453,8 +484,9 @@ function createObject_(options, ampIntegration) {
     function repairMissingOptions(options) {
         if (options.hasOwnProperty('muted')) {
             // backward compatiable:
-            options.sound = options.muted ? "off": "fallback";
-            delete options.muted;
+            if (options.hasOwnProperty('sound')) {
+                delete options.muted;
+            }
         }
         //This is only for crucial properties that cannot be missing
         //a final options object. 
@@ -902,11 +934,54 @@ function createObject_(options, ampIntegration) {
      * playEndCB is optional: it is a function that we will call when the 1 video finished playing
      * (if invoked on a list of videoids, then it is only called when everything finished playing)
      */
-     var _load = function(idsAreInternal, param, playEndCB, forcePlatform, startOffset = -1) {
+    /***/
+    /*
+    function _sendStuff(endpoint) {
+        fetch(endpoint)
+        .then(response => response.json())
+        .catch();
+    }
+    */
+   /*
+    function _kickOffLazyTest(accountid, videoids) {
+        let prom = new Promise(function(resolve){
+              setTimeout(function(){
+                  resolve();},5000);
+            });
+        prom
+        .then(function() {
+            return fetch(`https://jx-video-test-controller.azurewebsites.net/api/getendpoints?dummy=1&accountid=${accountid}&playlist=${videoids.join(",")}`)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.endpoint) {
+                for (var i = 0; i < data.videoids.length; i++) {
+                    let bnd = _sendStuff.bind(null, data.endpoint + '&video_id=' + data.videoids[i]);
+                    setTimeout(bnd, data.baseMS+i*(data.intervalMS));
+                }
+            }
+        })
+        .catch(console.error);
+    }
+    */
+    /***/
+    
+    
+    /**
+     * Externally exposed API
+     * param is either 1 video id (string) or an array of videoids
+     * playEndCB is optional: it is a function that we will call when the 1 video finished playing
+     * (if invoked on a list of videoids, then it is only called when everything finished playing)
+     */
+    var _load = function(idsAreInternal, param, playEndCB, forcePlatform, startOffset = -1) {
         if (!jxvhelper.isBrowserSupported()) { 
             //DO NOTHING.
             return; 
         }
+        //if (idsAreInternal && Array.isArray(param)) {
+          //  _kickOffLazyTest(_options.accountid, param);
+        //}
+        
         // even though we are given the playlist, we not necessarily want to start to load the first
         // video on the list into the video player. (bandwidth $$ considerations ; esp since Shaka player
         // will always load the first segment and that is like 0.4Mb)
