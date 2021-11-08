@@ -1,35 +1,11 @@
 # README #
 
-## use gulp xxxx to build 
-- Just type gulp x and it will spit out the possible arguments
+# What is this?
+- the repo for building our Jixie video player, OSM, HB renderer and hopefully soon the new universal unit
+- From the gulpfile, you can more easily see where each thing is supposed to go to.
 
-
-## NOTE
- - for the JS source code, typically there will be some "interface" info at the bottom of each file
-## Deployment Names
-- bundles/amp-osm.js 
-    ==x PLANNED BY NOT YET ==>  https://scripts.jixie.io/jxamp.min.js
-
-- bundles/hbrenderer.js 
-    - ===> https://scripts.jixie.io/jxhbrenderer.1.1.min.js
-    
-- bundles/osm.js 
-    - ===> LIVE AS https://scripts.jixie.io/jxosm.1.0.min.js
-
-- bundles/ulite.js 
-    - ==x PLANNED BUT NOT YET : replace https://scripts.jixie.io/jxfriendly1.3.min.js from universal repo
-
-- bundles/videoadsdk-standalone.js 
-    - ==x not yet ==> https://universal.jixie.io/js/jxvideo.1.3.min.js"
-    - i.e. when i feel ready, likely I will just have the contents of the jxvideo.1.3.min.js will be replaced by the new stuff
-    - used mainly by publisher - the Kompas MASTER HEAD campaigns
-
-- bundles/videoadsdk.js
-    - ===> LIVE AS https://scripts.jixie.io/jxvideocr.1.0.min.js"
-    - This is loaded by the renderers e.g jxosm.1.0.min.js / HB renderer, Univer renderer to play video type creatives
-
-- bundles/videosdk.js
-    - ===> LIVE AS https://scripts.jixie.io/jxvideo2.1.min.js
+# More info
+- read the gulpfile.js : lines 1 - 150 should say it all.
 
 
 ### What is this repository for? ###

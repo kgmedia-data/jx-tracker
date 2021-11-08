@@ -13,48 +13,34 @@ then just run one of the following commands
 
 */
 
-/* day-to-day running:
+/* input parameters:
 
 gulp PREP-DEV
-a selected subset of the scripts : feel free to add to it (look for fileslist_)
-main thing is it concact the yt bridge and the yt1.2. together! into 1 file so that no need to have so many script loading (-1)
+build the files without minification. The resultant files will be found in dist/bundles/ folder
 
 gulp PREP-PROD
-a selected subset of the scripts : feel free to add to it (look for fileslist_)
-main thing is it concact the yt bridge and the yt1.2. together! into 1 file so that no need to have so many script loading (-1)
-
-gulp DEPLOY-DEVELOPER1-PROD
- used by developer1 (renee) to easily build a set of files for a live test  
- DEPLOY coz it copy the file to s3
- PROD coz it minifies
+build the files with minification. The resultant files will be found in dist/bundles/ folder
+You take those by hand and then copy over to whatever destination and do your own cdn cache clearing etc
 
 gulp DEPLOY-DEVELOPER1-DEV
- used by developer1 (renee) to easily build a set of files for a live test  
- DEPLOY coz it copy the file to s3
- PROD coz it minifies
-
+gulp DEPLOY-DEVELOPER1-PROD
+This is also w/o and w minification. The difference between the PREP-* stuff is that this one give you 
+a convenience of copying your files to s3 (You probably would have set up resource override on your Chrome/Firefox
+browser e.g.
+https://scripts.jixie.media/jxvideo.3.1.min.js --> https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/blablablatest/jxvideo.3.1.min.js
+ 
 */
 
 const bundlessubfolder_ = 'bundles/';
 const jsext_ = '.js';
-//const outputprefix_ = 'jx-app-';
 
 //support arguments to gulp
 const supported_ = [
-    //handle 3 types of things:
-    //(1) our main files. some are simple just need minifying (PROD will do that)
-    //(2) some need some concat (jxyoutubebridge-core.1.0.js + jxyoutube.1.2.js = dist/js/jxyoutubebridge.1.0.(min.)js
-    //(3) some need browserify etc
     "PREP-PROD", 
     "PREP-DEV", 
     
-    //Currently developer1 stuff is used by renee.
-    //other people are welcome to clone and make their own.
-    //use the word DEPLOY coz it involves copying,  PROD vs DEV is minify vs no minify.
     'DEPLOY-DEVELOPER1-PROD',
     'DEPLOY-DEVELOPER1-DEV'
-  
-  
     //WELCOME TO ADD WHATEVER CAN HELP YOU.
   ];
   
@@ -81,13 +67,15 @@ const supported_ = [
   const wrap = require('wordwrap')(5, 100);
   var config = null;
   
+  // Important: even the gulp tasks are generated dynamically from this array
+  // so if there is a new bundle, then you will need to add to this array here.
   var bundles_  = [
     {
         name: 'OSM',
-        in: 'osm',
-        out: 'jxosm.1.0',
+        in: 'osm', //name of the file in bundles/ folder. So this one is bundles/osm.js
+        out: 'jxosm.1.0', //the built file is jxosm.1.0.min.js 
         floatable: 'no',
-        signature: "window.jxoutstreammgr.init", //already live
+        signature: "window.jxoutstreammgr.init", 
         queue: "window._jxoutstreammgrq",
         liveall: ["https://scripts.jixie.io/jxosm.1.0.min.js"]
     },
@@ -202,83 +190,6 @@ const supported_ = [
     };
   // -- this one is for copying those test files (not the real prod) onto s3. -->
 
-  // This is the most most important list
-var bundles_  = [
-    {
-        name: 'OSM',
-        in: 'osm',
-        out: 'jxosm.1.0',
-        floatable: 'no',
-        signature: "window.jxoutstreammgr.init", //already live
-        queue: "window._jxoutstreammgrq",
-        liveall: ["https://scripts.jixie.io/jxosm.1.0.min.js"]
-    },
-    {
-        name: 'OSM-AMP',
-        in: 'amp-osm',
-        out: 'jxamp',
-        floatable: 'no',
-        signature: "n/a", 
-        queue: "n/a",
-        liveall: ["https://scripts.jixie.io/jxamp.min.js"]
-    },
-    {
-        name: 'HBRENDERER',
-        in: 'hbrenderer',
-        out: 'jxhbrenderer.1.1',
-        floatable: 'no',
-        signature: "window.jxhbuniversal.hbinit",
-        queue: "jxhbrendererq", 
-        livefull: ["https://scripts.jixie.io/jxhbrenderer.1.1.min.js"]
-    },
-    
-    {
-        name: 'UNIVERSAL (no float)',
-        in: 'ulite',
-        out: 'jxfriendly.2.0',
-        floatable: 'no',
-        signature: "window.jxuniversal.init",
-        queue: "window._jxuniversalq",
-        liveall: ["https://scripts.jixie.io/jxfriendly.2.0.min.js"]
-    },
-    {
-        name: 'UNIVERSAL (can float)',
-        in: 'ulite',
-        out: 'jxfriendly.2.0.flt',
-        floatable: 'yes',
-        signature: "window.jxuniversal.init", //<--!!!
-        queue: "window._jxuniversalfltq",
-        liveall: ["https://scripts.jixie.io/jxfriendly.2.0.flt.min.js"]
-    },
-    //---
-    {
-        name: 'VIDEOPLAYER',
-        in: 'videosdk-v3',
-        out: 'jxvideo.3.1',
-        signature: "window.JX.player and window.JX.ampplayer",
-        //queue: not supported.
-        liveall: ["https://scripts.jixie.media/jxvideo.3.1.min.js"]
-    },  
-    {
-        name: 'VIDEOP-AD-PLAYER',
-        // use with our osm, new universal etc
-        in: 'videoadsdk',
-        out: 'jxvideocr.1.0',
-        signature: "window.jxvideoadsdk",
-        queue: "_jxvideoadsdkq",
-        //queue: not supported.
-        liveall: ["https://scripts.jixie.media/jxvideocr.1.0.min.js"]
-    },  
-    {
-        name: 'VIDEO-AD-SDK',
-        // successor to jxvideo.1.3.min.js used by KG masterhead
-        in: 'videoadsdk-standalone',
-        out: 'jxvideoad.2.0',
-        signature: "window.jxvideoadsdksal",
-        //queue: not supported.
-        liveall: ["https://scripts.jixie.media/jxvideoad.2.0.min.js"]
-    },  
-];
 
 // create the tasks for all the bundle items:
 bundles_.forEach(function (bundle) {
@@ -339,10 +250,10 @@ function doCore_(inname, outname, floatable = 'na') {
     );
   });
 
-  gulp.task('WRAP_UP', function(cb) {
-    printWhoGoesWhere();
-    cb();
-  });
+  //gulp.task('WRAP_UP', function(cb) {
+    //printWhoGoesWhere();
+    //cb();
+  //});
   //https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/osmwrapper.js
   
   function handleError(err) {
@@ -367,89 +278,9 @@ function doCore_(inname, outname, floatable = 'na') {
   }
 
 
- 
+ /*
 const whoGoesWhere = [];
-/*{ 
-        title: "OSM non AMP",
-        signature: "window.jxoutstreammgr.init", //already live
-        queue: "window._jxoutstreammgrq",
-        src: osmjsfile_, 
-        livebase: "jxosm.1.0.min.js", 
-        livefull: "https://scripts.jixie.io/jxosm.1.0.min.js"
-    }, { 
-        //eventually it should replace the friendly system lah.
-        title: "universal (new) floatable (replaces jxfriendly.1.3.flt.min.js)",
-        signature: "window.jxuniversal.init",
-        queue: "window._jxuniversalfltq",
-        src: ulitejsfile_,
-        floatable: true,
-        livebase: "jxfriendly.2.0.flt.min.js",
-        livefull: "https://scripts.jixie.io/jxfriendly.2.0.flt.min.js"
-    }, { 
-        //eventually it should replace the friendly system lah.
-        title: "universal (new) not-floatable (replaces jxfriendly.1.3.min.js)",
-        signature: "window.jxuniversal.init",
-        queue: "window._jxuniversalq",
-        src: ulitejsfile_,
-        livebase: "jxfriendly.2.0.min.js",
-        livefull: "https://scripts.jixie.io/jxfriendly.2.0.min.js"
-    }, { 
-        title: "video ad sdk (to replace jxvideo.1.4.min.js)",
-        //this is used expressedly by the renderer and talk using
-        //adparameters etc.
-        //so this is custom.
-        signature: "window.jxvideoadsdk (flat)", //coz this one is not really "called from page"
-        queue: "_jxvideoadsdkq", 
-        src: videoadsdkjsfile_,
-        livebase: "jxvideocr.1.0.min.js",
-        livefull: "https://scripts.jixie.io/jxvideocr.1.0.min.js",
-    }, {
-        title: "OSM (AMP). Our JS for amp-ad jixie",
-        src: amposmjsfile_,
-        //signature: "n/a",
-        //queue: "n/a",
-        livebase: "jxamp.min.js",
-        //cannot anyhow changed. Built into AMP runtime.
-        livefull: "https://scripts.jixie.io/jxamp.min.js"
-    }, {
-        title: "renderer to play HB ad",
-        src: hbrendererjsfile_,
-        signature: "window.jxhbuniversal.hbinit",
-        queue: "jxhbrendererq", 
-        livebase: "jxhbrenderer.1.1.min.js",
-        livefull: "https://scripts.jixie.io/jxhbrenderer.1.1.min.js"
-    }, { 
-        title: "renderer to play simple ad (from base64 blob)",
-        //we should combine there 2.
-        //this one is not officially used yet.
-        src: jxrendererjsfile_,
-        signature: "window.jxrenderer.init",
-        livebase: "",
-        livefull: ""
-    }, { 
-        title: "Jixie video SDK",
-        src: videosdkjsfile2_,
-        signature: "window.JX.player and window.JX.ampplayer",
-        //queue: not supported.
-        livebase: "jxvideo2.1.min.js",
-        livefull: "https://scripts.jixie.io/jxvideo2.1.min.js"
-    }, { 
-        title: "Jixie video SDK v3",
-        src: videosdkjsfile3_,
-        signature: "window.JX.player and window.JX.ampplayer",
-        //queue: not supported.
-        livebase: "jxvideo.3.1.min.js",
-        livefull: "https://scripts.jixie.io/jxvideo2.1.min.js"
-    }, { 
-        title: "Jixie video AD SDK (to replace jxvideo.1.3.min.js)",
-        //not sure if it is working now.
-        src: videoadsdkstandalonejsfile_,
-        signature: "window.jxvideoadsdksal (flat)",
-        //queue: not supported
-        livebase: "jxvideoad.1.0.min.js", //aiyo what to call it ah?
-        livefull: "https://scripts.jixie.io/jxvideoad.1.0.min.js"
-    }
-];       */
+
 
 function printWhoGoesWhere() {
     whoGoesWhere.forEach(function(oneEntry) {
@@ -467,6 +298,7 @@ function printWhoGoesWhere() {
     
     });
   }
+  */
   
   const readline          = require('readline');  
   const npmCheckMsg_       = `IMPORTANT!! Check the lines for jixie-vast-common and jixie-ids-common in package.json (version stamps)\n` +
@@ -497,39 +329,6 @@ function printWhoGoesWhere() {
   
   gulp.task('main', gulp.series(orderedTasksArr));
   gulp.task('developer1', gulp.series(orderedTasksArr.concat(['UPLOAD_TESTFILES'])));
-  
-  //add this to the list later 'BUILD_OUTSTREAMJS'
-  //we are continually modifying the ids common ah.
-  /*
-  gulp.task('main', gulp.series('clean', 
-    'BUILD_3PARTYCR_PROXY_SDK',
-    'BUILD_AMPOSM_BUNDLE', 
-    'BUILD_JXRENDERER_BUNDLE', 
-    'BUILD_HBRENDERER_BUNDLE', 
-    'BUILD_OSM_BUNDLE',
-    'BUILD_VIDEOSDKV2_BUNDLE',
-    'BUILD_VIDEOSDKV3_BUNDLE',
-    'BUILD_VIDEOADSDK_BUNDLE',
-    'BUILD_VIDEOADSDKSTANDALONE_BUNDLE', 
-    'BUILD_ULITE_BUNDLE', 
-    'BUILD_FLOATABLE_ULITE_BUNDLE',
-    'WRAP_UP'));
-  
-  gulp.task('developer1', gulp.series('clean', 
-    'BUILD_3PARTYCR_PROXY_SDK',
-    'BUILD_AMPOSM_BUNDLE', 
-    'BUILD_JXRENDERER_BUNDLE', 
-    'BUILD_HBRENDERER_BUNDLE', 
-    'BUILD_OSM_BUNDLE',
-    'BUILD_VIDEOSDKV2_BUNDLE',
-    'BUILD_VIDEOSDKV3_BUNDLE',
-    'BUILD_VIDEOADSDK_BUNDLE',
-    'BUILD_VIDEOADSDKSTANDALONE_BUNDLE', 
-    'BUILD_ULITE_BUNDLE', 
-    'BUILD_FLOATABLE_ULITE_BUNDLE',
-    'UPLOAD_TEST_HTML',
-    'WRAP_UP'));
-    */
   
   config = (function() {
     var
