@@ -10,10 +10,11 @@
  * Read the top 30 lines of gulpfile and all will be clear
  */
 var configKeys = {
-    awsKey: "",
-    awsSecret: "",
-    awsBucket: "jx-demo-creatives",
-    awsRegion: "ap-southeast-1"
+    awsKey: "", //<-- your config-keys.js should have whatever works for you
+    awsSecret: "", //<-- your config-keys.js should have whatever works for you
+    awsBucket: "jx-demo-creatives", //<-- your config-keys.js should have whatever works for you
+    awsRegion: "ap-southeast-1",
+    testFilesPath: "osmtest" //<-- your config-keys.js should have whatever works for you
 };
 module.exports = function(){
     return configKeys;

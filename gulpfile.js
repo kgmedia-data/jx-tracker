@@ -69,14 +69,26 @@ const supported_ = [
   
   // Important: even the gulp tasks are generated dynamically from this array
   // so if there is a new bundle, then you will need to add to this array here.
+  /*
+  explanation WHAT IS signature: it is not needed for build-purpose, but good to know.
+  Coz our scripts all aim to: 1 script in one window-space. yet serve multiple instances
+  if needed (example is: 1 OSM script but support several units on the page)
+  */
   var bundles_  = [
     {
-        name: 'OSM',
+        name: 'OSM', //name does not matter
         in: 'osm', //name of the file in bundles/ folder. So this one is bundles/osm.js
         out: 'jxosm.1.0', //the built file is jxosm.1.0.min.js 
-        floatable: 'no',
-        signature: "window.jxoutstreammgr.init", 
+        floatable: 'no', //this will determine the built for some of the stuff so it matters.
+                         //floatable no means it will not have the ability to float.
+        signature: "window.jxoutstreammgr.init", //if the script is somehow loaded twice by the publisher
+                                                 // the second time the script sees that window.jxoutstreammgr & the init
+                                                 // is already defined, then it will not continue to run.
         queue: "window._jxoutstreammgrq",
+        //so there are 2 ways to deploy the unit.
+        // Method 1 the traditional way of calling window.jxoutstreammgr.init (but need to spin wait until sure that 
+        // the script is loaded)
+        // Method 2: the newer way of enqueueing to window._jxoutstreammgrq (queue)
         liveall: ["https://scripts.jixie.io/jxosm.1.0.min.js"]
     },
     {
@@ -86,6 +98,7 @@ const supported_ = [
         floatable: 'no',
         signature: "n/a", 
         queue: "n/a",
+        // this destination cannot anyhow be changed: as it is wired into our jixie AMP adaptor:
         liveall: ["https://scripts.jixie.io/jxamp.min.js"]
     },
     {
@@ -95,10 +108,29 @@ const supported_ = [
         floatable: 'no',
         signature: "window.jxhbuniversal.hbinit",
         queue: "jxhbrendererq", 
-        livefull: ["https://scripts.jixie.io/jxhbrenderer.1.1.min.js"]
+        //this is set as a repository variable in the jixie_retargeting_engine repo:
+        livefull: ["https://scripts.jixie.media/jxhbrenderer.1.1.min.js"]
     },
-    
     {
+        name: 'VIDEOPLAYER',
+        in: 'videosdk-v3',
+        out: 'jxvideo.3.1',
+        signature: "window.JX.player and window.JX.ampplayer",
+        //queue: not supported.
+        liveall: ["https://scripts.jixie.media/jxvideo.3.1.min.js"]
+    },  
+    {
+        name: 'VIDEOP-AD-PLAYER',
+        // use with our osm, new universal etc
+        in: 'videoadsdk',
+        out: 'jxvideocr.1.0',
+        signature: "window.jxvideoadsdk",
+        queue: "_jxvideoadsdkq",
+        liveall: ["https://scripts.jixie.media/jxvideocr.1.0.min.js"]
+    },
+    //<--------- NOT USED ACTIVITELY IN LIVE YET -----------------------
+    {   // as of now, the universal unit (jxfriendly.1.3.min.js etc that is LIVE
+        //is built from the universal_ad_unit repo)
         name: 'UNIVERSAL (no float)',
         in: 'ulite',
         out: 'jxfriendly.2.0',
@@ -116,34 +148,16 @@ const supported_ = [
         queue: "window._jxuniversalfltq",
         liveall: ["https://scripts.jixie.io/jxfriendly.2.0.flt.min.js"]
     },
-    //---
-    {
-        name: 'VIDEOPLAYER',
-        in: 'videosdk-v3',
-        out: 'jxvideo.3.1',
-        signature: "window.JX.player and window.JX.ampplayer",
-        //queue: not supported.
-        liveall: ["https://scripts.jixie.media/jxvideo.3.1.min.js"]
-    },  
-    {
-        name: 'VIDEOP-AD-PLAYER',
-        // use with our osm, new universal etc
-        in: 'videoadsdk',
-        out: 'jxvideocr.1.0',
-        signature: "window.jxvideoadsdk",
-        queue: "_jxvideoadsdkq",
-        //queue: not supported.
-        liveall: ["https://scripts.jixie.media/jxvideocr.1.0.min.js"]
-    },  
     {
         name: 'VIDEO-AD-SDK',
-        // successor to jxvideo.1.3.min.js used by KG masterhead
+        // successor to jxvideo.1.3.min.js to be used by KG masterhead
         in: 'videoadsdk-standalone',
         out: 'jxvideoad.2.0',
         signature: "window.jxvideoadsdksal",
         //queue: not supported.
         liveall: ["https://scripts.jixie.media/jxvideoad.2.0.min.js"]
-    },  
+    }  
+    //--------- NOT USED ACTIVITELY IN LIVE ----------------------->
 ];
   // 
   // we will be adding to this array based on a JSON object with all the bundles we need to build
@@ -164,13 +178,15 @@ const supported_ = [
   
   // <-- this one is for copying those test files (not the real prod) onto s3.
     var configKeys = require("./config-keys")(); //PLEASE SEE THIS FILE config-keys-seed.js is commited though
+    console.log(configKeys);
+    console.log("-----");
     var config_aws = {
         key: configKeys.awsKey,
         secret: configKeys.awsSecret,
         bucket: configKeys.awsBucket,
         region: configKeys.awsRegion
     };
-    var testFilesPath_    = 'osmtest'; //configKeys.testFilesPath;
+    var testFilesPath_    = configKeys.testFilesPath;
   
     const s3_options = {
         "dev": {
