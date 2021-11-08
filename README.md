@@ -1,36 +1,61 @@
 # README #
 
-## use gulp xxxx to build 
-- Just type gulp x and it will spit out the possible arguments
+# What is this?
+- the repo for building our Jixie video player, OSM, HB renderer and hopefully soon the new universal unit
+- From the gulpfile, you can more easily see where each thing is supposed to go to.
+
+# What branches ??!
+- there is the master
+- there are currently 2 production branch that matters:
+    - production_videosdk (which is supposed to produce the file for this https://scripts.jixie.media/jxvideo.3.1.min.js)
+    - production_osm (which is supposed to produce everything else)
+- sometimes there will be certain fixes based off the production_videosdk or production_osm branch
+    - then after a while, I will manually introduce them to the master branch
+    - so that the master branch is the great superset. 
+    - then merge master into e.g. production_videosdk (i.e. master = production_videosdk)
+    - i.e. sometime the production_videosdk will deviate from master
+    - however, periodically the master will be updated to have those changes
 
 
-## NOTE
- - for the JS source code, typically there will be some "interface" info at the bottom of each file
-## Deployment Names
-- bundles/amp-osm.js 
-    ==x PLANNED BY NOT YET ==>  https://scripts.jixie.io/jxamp.min.js
+# More info
+- read the gulpfile.js : lines 1 - 150 should say it all.
 
-- bundles/hbrenderer.js 
-    - ===> https://scripts.jixie.io/jxhbrenderer.1.1.min.js
-    
-- bundles/osm.js 
-    - ===> LIVE AS https://scripts.jixie.io/jxosm.1.0.min.js
+# deployment snipplets to give to the publisher:
+```
+      <!-- this div is styled by the publisher . it is the publisher who wants this fixed height thing -->
+      <div class="ads-partner-wrap osmloc osmplaceonsite" style="min-height: 400px;max-width:100%">
+      <p></p>
+      </div>
 
-- bundles/ulite.js 
-    - ==x PLANNED BUT NOT YET : replace https://scripts.jixie.io/jxfriendly1.3.min.js from universal repo
+        <!-- if you want two OSM units, fine: another one somewhere else on the page -->
+      <div class="ads-partner-wrap osmloc1 osmplaceonsite" style="min-height: 400px;max-width:100%">
+      <p></p>
+      </div>
+      
+                            <!-- NO LONGER NEEDED <div id="osmdiv11111" style="display: none; visibility: hidden;"> -->
+                               <script>
+                                    window._jxoutstreammgrq = window._jxoutstreammgrq || [];
 
-- bundles/videoadsdk-standalone.js 
-    - ==x not yet ==> https://universal.jixie.io/js/jxvideo.1.3.min.js"
-    - i.e. when i feel ready, likely I will just have the contents of the jxvideo.1.3.min.js will be replaced by the new stuff
-    - used mainly by publisher - the Kompas MASTER HEAD campaigns
-
-- bundles/videoadsdk.js
-    - ===> LIVE AS https://scripts.jixie.io/jxvideocr.1.0.min.js"
-    - This is loaded by the renderers e.g jxosm.1.0.min.js / HB renderer, Univer renderer to play video type creatives
-
-- bundles/videosdk.js
-    - ===> LIVE AS https://scripts.jixie.io/jxvideo2.1.min.js
-
+                                    //the first unit
+                                    window._jxoutstreammgrq.push({
+                                      unit: "1000008-iT3q5Ci4Ry",
+                                      selectors: [".osmloc p:last"], //<--- this refers to that first div
+                                      //not needed anymore managerdiv: "osmdiv",
+                                      fixedheight: 400,
+                                      excludedheight: 100
+                                  });
+                                  //second unit
+                                    window._jxoutstreammgrq.push({
+                                      unit: "1000116-VQEYBh645k", //usually should be a different unit.
+                                      selectors: [".osmloc1 p:last"], //<--- this refers to the second div (destination for ad)
+                                      // not need anymore managerdiv: "osmdiv",
+                                      //You can use this to force creatives waterfall: creativeids: 1631, //1166,
+                                      fixedheight: 400,
+                                      excludedheight: 100
+                                  });
+                               </script>
+                               <script type="text/javascript" src="https://scripts.jixie.media/jxosm.1.0.min.js" defer></script> 
+```
 
 ### What is this repository for? ###
 * Quick summary
