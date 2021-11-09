@@ -254,6 +254,10 @@ function createObject_(options, ampIntegration) {
             return; //this is erorr not emitted from the playerWrapper but
             //but looks like emitted e.g. cannot read DAM API etc.
         }
+        if (v && v.videoid == specialVideoId_) {
+            //special tests videos.
+            return; 
+        }
         let diffTime = 0;
         let DateNow = Date.now();
         if (action == 'ready' || action == 'creativeView') {
@@ -712,7 +716,7 @@ function createObject_(options, ampIntegration) {
         }
     }
     
-    const specialVideoId_ = 230945023482390829048;
+    const specialVideoId_ = 230945023482390829048;  //this is to support the loadTest mode whereby a streamURL is given.
 
      JXPlayerInt.prototype.loadVideoById = function(videoId, startOffset, playEndCB, forcePlatform) {
         _load(true, [videoId], (playEndCB === undefined ? null: playEndCB), 
@@ -738,9 +742,9 @@ function createObject_(options, ampIntegration) {
      }
      //this is a request at a later stage of our development.
     //so we continue to use the _videos[] construct.
-    loadPlaylistByData
-    JXPlayerInt.prototype.loadByStreamURL = function(param) {
-        param = 'https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8';
+    //loadTest
+    JXPlayerInt.prototype.loadTest = function(param) {
+        //param = 'https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8';
         /*
         Live Akamai m3u8
         https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8
@@ -764,31 +768,33 @@ function createObject_(options, ampIntegration) {
         // this param can be either an array or an object.
         // if it is a string, then 
         _fakeLocalDam = []; //reset it.
-        let idx = 0;
-        let arrFakeVideoIds = [];
+        let arrFakeVideoIds = [];//oh well, for now Vincent only wants 1 video. so this will be a singleton array
         if (!Array.isArray(param)) {
             param = [param];
         }
         param.forEach(function(elt) {
             let o = { 
-                metadata: {
-                duration: 1000,
+                metadata: {},
+                //duration: 1000,
                 network: "wifi",
-                segment: "hw-timer"
-            }};
+                segment: "hw-timer" //it does not matter, just to fill in something to prevent programme errors
+                //no trackers will be sent anyways
+            };
             if (typeof elt === 'string') {
                 o.streams = [ {type: 'HLS', url: elt}];
             }
             else if (elt.url) {
-                o.streams = [ {type: 'HLS', url: elt}];
+                o.streams = [ {type: 'HLS', url: elt.url}];
                 if (elt.thumbnail) {
                     o.metadata.thumbnail = elt.thumbnail;
                 }
+                if (elt.network) {
+                    o.network = elt.network;
+                }
             }
             if (o.streams) {
-                o.video_id = 1;
-                o.fakeid = specialVideoId_ + idx;
-                arrFakeVideoIds.push(o.fakeid);
+                o.video_id = specialVideoId_;
+                arrFakeVideoIds.push(o.video_id);
                 _fakeLocalDam.push(o);
             }
         });
@@ -1635,13 +1641,6 @@ function createObject_(options, ampIntegration) {
         if (vData.id) {
             //this is Jixie ID: real videos in our system
             srcHLS = vData.hls;
-            /*
-            Live Akamai m3u8
-https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8
-Live Akamai m3u8
-https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
-            */
-            srcHLS = 'https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8';
             srcFallback = vData.fallback;
             // Now we try to pick a sensible thumbnail and hope the video area does not
             // suddenly change drastically after we made the choice :)
@@ -1915,8 +1914,8 @@ https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
     function _fetchNPlay1VP(vId) {
         // this is the case whereby a hardcoded HLS stream is given to us.
         // there is no DAM to call. we just fake a dam result so we use as much common code as possible.
-        if (vId >= specialVideoId_) {
-            let found = _fakeLocalDam.find((e) => e.fakeid = vId);
+        if (vId == specialVideoId_) {
+            let found = _fakeLocalDam.find((e) => e.video_id == vId);
             let jxId = _commonDigestDamResult(vId, found);
             //the fetch of info cannot fail as we do not fetch
             if (jxId != -1)

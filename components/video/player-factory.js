@@ -1071,7 +1071,6 @@ window.jxPromisePolyfill        = 'none';
         //if it starts playing
 
         function _onPlayheadUpdateCB() {
-            console.log(`#### _ ${_vid.currentTime} #### ${_accumulatedTime}`);
             if (_manualPaused) {
                 let diff1 = _vid.currentTime- this.lastPlayhead;
                 //console.log(`##_ ${diff1} _onPlayheadUpdateCB setting manualPaused to false`);

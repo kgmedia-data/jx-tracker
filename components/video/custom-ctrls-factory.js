@@ -24,7 +24,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   else {
     cOptions = {};
   }
-
+  var _showTimeCtrls = true;
   var _vectorFcn = null;
   var _container = null;
   var _thumbnailImg = null;
@@ -155,6 +155,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   // these concerns those items which will be recreated for each video as video changes
   // in the player instance:
   FactoryOneCustomControls.prototype.reset = function () {
+    _showTimeCtrls = true;
     _ctrlsVis = false;
     _waitingOnBigPlayBtnStart = false;
     // then the thing is gone then
@@ -212,7 +213,9 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       _vectorFcn.reportClickToStart();
     }
     [_overlayBackwardBtn, _overlayFastForwardBtn].forEach(function(x) {
-      if (x) x.classList.remove(styles.hide)
+      if (_showTimeCtrls) {
+        if (x) x.classList.remove(styles.hide)
+      }
     });
     if (_thumbnailImg) _thumbnailImg.classList.add(styles.hide);
 
@@ -315,8 +318,7 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     _midIcon = _byClass(styles.volMid);
     _highIcon = _byClass(styles.volHigh);
     _timeElapsed = _byId(`${'timeElapsedId'+randNumb}`);
-   // _timeElapsed.setAttribute('visibility', 'hidden'); //RENEE
-    _timeElapsed.style.visibility = "hidden";
+   // _timeElapsed.style.visibility = "hidden";
 
     if (!common.isIOS()) {
       // then you wrong then?!
@@ -571,7 +573,20 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       //_showVisibility(_overlayBackwardBtn);
       //_showVisibility(_overlayFastForwardBtn);
 
-      const videoDuration = Math.round(meta.duration);
+      let videoDuration = Math.round(meta.duration);
+      //if there is no normal value being given here.
+      if (isNaN(videoDuration) || typeof videoDuration === 'undefined') {
+        // this could be a self-supplied stream.
+        if (videoObj.duration < 86400) {
+            // it is a sensible value; so just use it
+            videoDuration = videoObj.duration;
+        }
+        else {
+          videoDuration = -1;
+          _showTimeCtrls = false;
+        }
+      }
+
       const time = _formatTime(videoDuration);
       const volume = _vectorFcn.getVolume();
       const speed = videoObj.playbackRate;
@@ -581,18 +596,14 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
       const selectedPlaybackValue = _qsa(`.${styles.speedMenu} div[data-playback~="${speed}"]`);
   
       durationText.innerText = `${time.minutes}:${time.seconds}`;
-      let visstr = ((videoDuration < 0 || videoDuration > 86400 )? 'hidden': 'visible'); //RENEE
-      durationText.style.visibility = visstr; //RENEE
-      _timeElapsed.style.visibility = visstr; //RENEE
+      let visstr = (_showTimeCtrls ? 'visible': 'hidden'); 
+      durationText.style.visibility = visstr; 
+      _timeElapsed.style.visibility = visstr; 
       
       _progressBarInput.setAttribute('max', videoDuration);
       _progressBar.setAttribute('max', videoDuration);
-      //I think need to hide the progress bar
-      //and hide the elapsed time
-      //_progressBarInput.setAttribute('visibility', 'hidden'); //RENEE
-      //_progressBar.setAttribute('visibility', 'hidden'); //RENEE
-      _progressBarInput.style.visibility = visstr; //RENEE
-      _progressBar.style.visibility = visstr; //RENEE
+      _progressBarInput.style.visibility = visstr; 
+      _progressBar.style.visibility = visstr; 
       
       if (_overlayVolumeRange) _overlayVolumeRange.setAttribute('data-volume', volume);
       _updateVolumeIcon(true, volume);
@@ -835,8 +846,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_bigPlayBtn && _waitingOnBigPlayBtnStart) {
       _bigPlayB4StartClickCB();
     } else {
-      _showVisibility(_overlayBackwardBtn);
-      _showVisibility(_overlayFastForwardBtn);
+      if (_showTimeCtrls) {
+        _showVisibility(_overlayBackwardBtn);
+        _showVisibility(_overlayFastForwardBtn);
+      }
       if (_thumbnailImg) {
         _thumbnailImg.classList.add(styles.hide);
         _thumbnailImg = null; //aiyo can we just get rid of it .
@@ -923,8 +936,10 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
     if (_videoControls) _videoControls.classList.add(styles.hide);
   };
   FactoryOneCustomControls.prototype.setTimer = function (currTime) {
-    //if it is live stream then no need to do this:
-    _updateTimeElapsed(currTime);
+    if (_showTimeCtrls) {
+      //if it is live stream then no need to do this:
+      _updateTimeElapsed(currTime);
+    }
   };
   FactoryOneCustomControls.prototype.videoMetaReady = function (videoObj) {
     _initVideoInfo(videoObj);
