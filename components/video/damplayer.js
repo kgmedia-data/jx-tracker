@@ -796,8 +796,8 @@ function createObject_(options, ampIntegration) {
             if (typeof elt === 'string') {
                 o.streams = [ {type: 'HLS', url: elt}];
             }
-            else if (elt.url) {
-                o.streams = [ {type: 'HLS', url: elt.url}];
+            else if (elt.hls) {
+                o.streams = [ {type: 'HLS', url: elt.hls}];
                 if (elt.thumbnail) {
                     o.metadata.thumbnail = elt.thumbnail;
                 }
