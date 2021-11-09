@@ -67,6 +67,7 @@ const animationDelays = [
      */
     //ok we need to 
     function MakeOneSoundIndicator_(container, config) {
+        var _showRTime = true;
         var _lastRemainingTime = -1;
         var _soundInd = null;
         var _boundIndClicked = null;
@@ -100,8 +101,16 @@ const animationDelays = [
                 _soundInd.style.display = "table";
             }
         };       
+        FactoryOneSoundIndicator.prototype.getShowRemainingTime = function() {
+            return _showRTime;
+        }
         
-
+        FactoryOneSoundIndicator.prototype.setShowRemainingTime = function(isShow) {
+            _showRTime = isShow;
+            if (_timeRemainElt) {
+                _timeRemainElt.style.visibility = (isShow ? 'visible': 'hidden'); 
+            }
+        }
         FactoryOneSoundIndicator.prototype.setRemainingTime = function(remainingTime) {
             if (_timeRemainElt) {
                 remainingTime = Math.floor(remainingTime);
@@ -332,10 +341,11 @@ const animationDelays = [
             /********* FOR NOW NOT SUPPORTED else if (config.style == 'speaker') {
                 _soundInd = _makeSpeaker(position, color, bgColor);
             }*********/
-            else if (config.style == 'timeleft') {
+            else if (config.style == 'timer' || config.style == 'timeleft') {
+                //actually there is no timeleft from the DAM, it is timer ...
                 _soundInd = _makeTimeLeft(position, text, color, bgColor);
             }
-            else {
+            else {//silly
                 _soundInd = _makeTimeLeft(position, text, color, bgColor);
             }
             _soundInd.style.display = showImmediately ? "table": "none";
