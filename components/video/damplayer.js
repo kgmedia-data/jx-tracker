@@ -50,7 +50,6 @@ function createObject_(options, ampIntegration) {
         if (options.restrictions.maxwidth > 0) 
             DAMApiBase_ += '&max-width=' + options.restrictions.maxwidth;
     }
-
     var _dbgCountOOS = 0;
     var _dbgCountLoad = 0;
     var _dbgL1VP = 0;
@@ -59,7 +58,11 @@ function createObject_(options, ampIntegration) {
     
     var _vInfoMap = null;
     var _ampIntegration = ampIntegration; //so could be null
-    let _videos = [];
+    var _videos = [];
+    var _fakeLocalDam = []; //this is to support the mode of caller using loadTest to force a HLS stream (rather than going thru DAM)
+                            //Used in conjunction with this specialVideoId_
+    const specialVideoId_ = 230945023482390829048;  //this is to support the loadTest mode whereby a streamURL is given.
+    
     var _options = {}; // a copy of the stuff from the user.
 
     //this is config at our level:
@@ -252,6 +255,10 @@ function createObject_(options, ampIntegration) {
         if ((!v || !v.videoid) && (action != 'creativeView')) { 
             return; //this is erorr not emitted from the playerWrapper but
             //but looks like emitted e.g. cannot read DAM API etc.
+        }
+        if (v && v.videoid == specialVideoId_) {
+            //special tests videos.
+            return; 
         }
         let diffTime = 0;
         let DateNow = Date.now();
@@ -710,6 +717,16 @@ function createObject_(options, ampIntegration) {
             _fetchNPlay1VP(vid2Fetch);
         }
     }
+    
+    
+    /**
+     * The follow are our player's main entry points 
+     * The loadJx and load are the older ones here for sake of compatiability
+     * @param {*} videoId 
+     * @param {*} startOffset 
+     * @param {*} playEndCB 
+     * @param {*} forcePlatform 
+     */
      JXPlayerInt.prototype.loadVideoById = function(videoId, startOffset, playEndCB, forcePlatform) {
         _load(true, [videoId], (playEndCB === undefined ? null: playEndCB), 
             (forcePlatform === undefined? null:forcePlatform), 
@@ -732,6 +749,70 @@ function createObject_(options, ampIntegration) {
      JXPlayerInt.prototype.loadPlaylistByPartnerId = function(param, playEndCB, forcePlatform) {
         _load(false, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
      }
+     /**
+      * This is for internal testing use only: caller directly specifies a stream url.
+      * @param {*} param 
+      * this is a request at a later stage of our development.
+      * so we continue to use the _videos[] construct.
+      * params can be a string (stream url)
+      * or it can be an object: must have url property. In addition can also have thumbnail and network
+      */
+    JXPlayerInt.prototype.loadTest = function(param) {
+        //https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8
+        //https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
+        /*
+        data:
+            conf: nothing
+            metadata: 
+                duration
+                thumbnail (string)
+            network "wifi"
+            segment "hw-timer"
+            streams: [
+                {type: HLS, url: ""},
+                ...
+            ]
+            video_id: 
+        */
+        _fakeLocalDam = []; //reset it.
+        let arrFakeVideoIds = [];
+        if (!Array.isArray(param)) {
+            param = [param];
+        }
+        if (param.length > 1) {
+            //ok currently we only do 1 video.
+            param.length = 1;
+        }
+        param.forEach(function(elt) {
+            let o = { 
+                metadata: {
+                    title: ' '
+                },
+                //duration: 1000, we will not "pre-know" the duration then. we will just detect it when the video is loaded.
+                network: "wifi",
+                segment: "hw-timer" //it does not matter, just to fill in something to prevent programme errors
+                //no trackers will be sent anyways
+            };
+            if (typeof elt === 'string') {
+                o.streams = [ {type: 'HLS', url: elt}];
+            }
+            else if (elt.url) {
+                o.streams = [ {type: 'HLS', url: elt.url}];
+                if (elt.thumbnail) {
+                    o.metadata.thumbnail = elt.thumbnail;
+                }
+                if (elt.network) {
+                    o.network = elt.network;
+                }
+            }
+            if (o.streams) {
+                o.video_id = specialVideoId_;
+                arrFakeVideoIds.push(o.video_id);
+                _fakeLocalDam.push(o);
+            }
+        });
+       _load(true, arrFakeVideoIds, (null), (null), -1);
+    }
 
      /***
       * START OF LAZY LOAD LOGIC BLOCK 
@@ -1493,6 +1574,7 @@ function createObject_(options, ampIntegration) {
      * @param {*} type 
      * @param {*} vId 
      * @returns 
+     * Not sure if anybody still use this:
      */
     function _getDevOverrideMaybe(type, vId) {
         if (_options.dev_hls_overrides && type == 'hls') {
@@ -1786,9 +1868,59 @@ function createObject_(options, ampIntegration) {
      * video ids or the jixie one
      * if using the Partnersystem of ids _vidFetchAcctId will be set properly and we call the API variant
      * for partner video ids.
-     * @param {*} vId 
+     * @param {*} result json object
+     * If the data is enough that it can try to launch the player with that stream info
+     * then it returns boolean true, otherwise false 
      */
+    function _commonDigestDamResult(vId, data) {
+        let jxId = -1;//the internal id of the video.
+        //console.log(`__JXTIMING script checking DAM response ` + (Date.now() - basetime_));
+        //from this point onwards everything uses the jixie internal id of this video
+        //i.e. data.id property.
+        jxId = data.video_id; //internal ID!
+        let blob = JSON.parse(JSON.stringify(data));
+        blob.segment = data.segment;
+        blob.extid = vId; //whatever they call load or loadJx with.
+        blob.id = data.video_id;
+        let tmp = data.streams.find((e)=> e.type == 'MP4');
+        blob.fallback = (tmp && tmp.url ? tmp.url : null);
+        tmp = data.streams.find((e)=> e.type == 'HLS');
+        if (tmp && tmp.url) 
+            blob.hls = tmp.url;
+        else
+            jxId = -1; //This is the min we need but it is not there. So declare error !
+        if (jxId > -1) {
+            _vInfoMap[jxId] = blob;
+        }    
+        return jxId;
+    }
+    /*
+    data:
+        conf: nothing
+        metadata: 
+            duration
+            thumbnail (string)
+            network "wifi"
+            segment "hw-timer"
+        streams: [
+            {type: HLS, url: ""},
+            ...
+        ]
+        video_id: 
+
+    */
     function _fetchNPlay1VP(vId) {
+        // this is the case whereby a hardcoded HLS stream is given to us.
+        // there is no DAM to call. we just fake a dam result so we use as much common code as possible.
+        if (vId == specialVideoId_) {
+            let found = _fakeLocalDam.find((e) => e.video_id == vId);
+            let jxId = _commonDigestDamResult(vId, found);
+            //the fetch of info cannot fail as we do not fetch
+            if (jxId != -1)
+                _launch1VP(_vInfoMap[jxId]);
+            return;
+        }
+        
         var xhr = new XMLHttpRequest();
         //xhr.withCredentials = true;
         //won't work for IE
@@ -1799,13 +1931,11 @@ function createObject_(options, ampIntegration) {
                 { code: errCodeDAMApiError_ } //error object
             );
         };
-       
         xhr.addEventListener("readystatechange", function() {
             //is this safe enough? (to get the whole response?)
             if(this.readyState === XMLHttpRequest.DONE) {
-                let jxId = -1;//the internal id of the video.
-                var status = xhr.status;
                 let result = null;
+                var status = xhr.status;
                 if (this.responseText) {
                     try {
                         result = JSON.parse(this.responseText);
@@ -1813,55 +1943,19 @@ function createObject_(options, ampIntegration) {
                     catch (err) {}
                 }
                 if ((status === 0 || (status >= 200 && status < 400)) && result && result.success) {
-                    //console.log(`__JXTIMING script checking DAM response ` + (Date.now() - basetime_));
-                    //from this point onwards everything uses the jixie internal id of this video
-                    //i.e. data.id property.
-                    jxId = result.data.video_id; //internal ID!
-                    let blob = JSON.parse(JSON.stringify(result.data));
-                    blob.segment = result.data.segment;
-                    blob.extid = vId; //whatever they call load or loadJx with.
-                    blob.id = result.data.video_id;
-                    let tmp = _getDevOverrideMaybe(fallbackTech_, vId);
-                    if (tmp) {
-                        blob.fallback = tmp;
-                    }
-                    else {
-                        tmp = result.data.streams.find((e)=> e.type == 'MP4');
-                        blob.fallback = (tmp && tmp.url ? tmp.url : null);
-                    }
-                    tmp = _getDevOverrideMaybe('hls', vId);
-                    if (tmp) {
-                        blob.hls = tmp;
-                    }
-                    else {
-                        tmp = result.data.streams.find((e)=> e.type == 'HLS');
-                        if (tmp && tmp.url) 
-                            blob.hls = tmp.url;
-                        else
-                            jxId = -1; //This is the min we need but it is not there. So declare error !
-                    }
-                    
-                    if (jxId > -1) {
-                        _vInfoMap[jxId] = blob;
-                    }    
-                }
-                else { //see if we can salvage anything (info as to what went wrong)
-                    if (result) {
-                        console.log("DAM API error message:");
-                        console.log(result);
+                    let jxId = _commonDigestDamResult(vId, result.data);
+                    if (jxId != -1) {
+                        _launch1VP(_vInfoMap[jxId]);
+                        return; 
                     }
                 }
-                if (jxId != -1) {
-                    _launch1VP(_vInfoMap[jxId]);
-                }
-                else {
-                    _routeEvent("video", "error", 
-                        { extid: vId }, //video info object
-                        { code: errCodeDAMApiError_ } //error object
-                    );
-                }
+                _routeEvent("video", "error", 
+                    { extid: vId }, //video info object
+                    { code: errCodeDAMApiError_ } //error object
+                );
             }
         });
+        
         let url = DAMApiBase_;
         if (_vidFetchAcctId) {
             url += '&partner_id=' + vId +

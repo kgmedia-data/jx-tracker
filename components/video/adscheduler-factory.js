@@ -104,6 +104,8 @@ let MakeOneAdScheduler_ = function(adscfg) {
     }
     //So when the time comes, we still do a last minute check:
     FactoryOneAdScheduler.prototype.canPlayAd = function(playhead, duration) {
+        //notes: it seems for livestream this duration will be a huge number (many years)
+        // so this comparison will succeed always then.
         if (duration - playhead < _minTimeLeft) {
             //if haven't played the first ad, then ok can go ahead even though we 
             //start play near the end of the video

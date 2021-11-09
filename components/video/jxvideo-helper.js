@@ -403,6 +403,10 @@ function MakeOneHelperObj_() {
         if (options.amp) tmp += '&device=amp';
         return tmp;
     }
+    FactoryOneHelper.prototype.guessIsVODByDuration = function(dur) {
+        return (!isNaN(dur) && dur >= 0 && dur < 86400);
+    }
+    
     FactoryOneHelper.prototype.getJxDocBodyId = function() {
         return '_jxfklfjdls';
     }
