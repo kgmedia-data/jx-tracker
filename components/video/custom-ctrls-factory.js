@@ -600,10 +600,8 @@ function MakeOneNewPlayerControlsObj(container, vectorFcn) {
   
       durationText.innerText = `${time.minutes}:${time.seconds}`;
       let visstr = (_showTimeCtrls ? 'visible': 'hidden'); 
-      //durationText.style.visibility = visstr; 
-      //_timeElapsed.style.visibility = visstr; 
       _timeDisplay.style.visibility = visstr;
-      
+
       _progressBarInput.setAttribute('max', videoDuration);
       _progressBar.setAttribute('max', videoDuration);
       _progressBarInput.style.visibility = visstr; 
