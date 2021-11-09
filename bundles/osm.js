@@ -18,6 +18,8 @@ const mpjixie       = require('../components/osmpartners/jixie');
 const mpsm          = require('../components/osmpartners/selectmedia');
 const mpteads       = require('../components/osmpartners/teads');
 const mpunruly      = require('../components/osmpartners/unruly');
+const mpr2b2        = require('../components/osmpartners/r2b2');
+
 
 const osmWorkingDivId_ = 'osmdiv';
 
@@ -76,7 +78,8 @@ function start(options) {
             jixie: mpjixie,
             selectmedia: mpsm,
             teads: mpteads,
-            unruly: mpunruly
+            unruly: mpunruly,
+            r2b2: mpr2b2
     });
     instMap.set(hashStr, osmInst);
 }
