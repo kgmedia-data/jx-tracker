@@ -56,7 +56,7 @@ function common_(rtjson) {
         style: "all:initial;"
     };
 }
-//<div id="AdTrackGenericOutstreamDesktop"></div><script type="text/javascript" src="https://delivery.r2b2.io/get/kompas.com/generic/outstream"></script>
+
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     dbjson.adparameters =  {"div_id": "AdTrackGenericOutstreamDesktop", "script_src": "https://delivery.r2b2.io/get/kompas.com/generic/outstream"};
     common_(rtjson);

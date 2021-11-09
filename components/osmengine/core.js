@@ -167,8 +167,12 @@
                 //alert(`JX OSM RECEIVED MSG ${e.data}`);
                 //return;
             //}
-
+            if(typeof e.data == 'string' ) {
+                if ( e.data.indexOf('r2b2') > -1) 
+                    console.log(`###_ ${e.data}`);
+            }
             if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
+                console.log(`___+ ${e.data}`);
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_msgListener (e.data=${e.data})`);
                 }
