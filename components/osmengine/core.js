@@ -316,13 +316,22 @@
                 fixedHeightBlob: fixedHeightBlob
             });
             */
+            /*
             _jsonObj = _partner.makeNormalizedObj({
                 dbjson: _jsonObj, 
                 instID: _instID, 
                 getPageSlotFcn: getPageSlotFcn,
                 fixedHeightBlob: fixedHeightBlob
-            });
+            }); */
+             _jsonObj = _partner.makeNormalizedObj(
+                _jsonObj, 
+                _instID, 
+                getPageSlotFcn,
+                fixedHeightBlob
+            );
+           
             
+
             if (_jsonObj.valid) keep = true;
             else {
                 //not valid:

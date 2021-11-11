@@ -1,65 +1,14 @@
-const defaultPTimeout_ = -1;
+const modulesmgr            = require('../basic/modulesmgr');
 
-var getAdSlotAttachNode_ = function(dbjson, getPageSelectorFcn) {
-    if (dbjson.adparameters.selectors) {
-        let selectors = dbjson.adparameters.selectors;
-        for (var i = 0; i < selectors.length; i++) {
-            let sel = null;
-            try {
-                sel = jxsel(selectors[i]);
-            } catch (er) {}
-            if (sel && sel.length >= 1 && sel[0] &&
-                (sel[0].nodeName == 'DIV' || sel[0].nodeName == 'P')) {
-                return {
-                    node: sel[0],
-                    selector: selectors[i]
-                }
-            }
-        } //for
-    }
-    if (getPageSelectorFcn) {
-        let out = getPageSelectorFcn();
-        if (out)
-            return out;
-    }
-}
+const mpcommon              = modulesmgr.get('osmpartners/common');
 
-function makeNormalizedObj_({
-    dbjson,
-    instID,
-    getPageSlotFcn,
-    fixedHeightBlob
-}) {
-    //rtjson prepared.
-    let rtjson = {
-        timeout: dbjson.timeout ? dbjson.timeout : defaultPTimeout_,
-        partner: dbjson.subtype, //for debug printout only
-        trackers: dbjson.trackers,
-        stackidx: dbjson.stackidx,
-        stackdepth: dbjson.stackdepth,
-        instID: instID,
-        valid: false
-    }; {
-        if (makeNormalizedObj__(dbjson, rtjson, getPageSlotFcn, fixedHeightBlob)) {
-            delete dbjson.trackers;
-            rtjson.valid = true;
-            return rtjson;
-        }
-    }
-    return rtjson;
-}
-
-function common_(rtjson) {
-    rtjson.customfcns = {};
-    rtjson.scriptdiv = {
-        id: "scriptdiv" + rtjson.instID,
-        style: "all:initial;"
-    };
+// this is a bit stupid, but not changing it b4 my trip 20211111 renee note
+function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob) {
+    return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, makeNormalizedObj__);
 }
 
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
-    common_(rtjson);
-
+    
     rtjson.msgs = {
         //I stupid last time
         hasad: `jxosm_hasad_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
@@ -72,7 +21,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     */
     rtjson.scriptb =
         `<script type="text/javascript" class="teads" src="//a.teads.tv/page/${dbjson.adparameters.pageId}/tag" async="true"></script>`;
-    let aNode = getAdSlotAttachNode_(dbjson, getPageSelectorFcn);
+    let aNode = mpcommon.getAdSlotAttachNode(dbjson, getPageSelectorFcn);
     //let's try something different to try to solve the teads problem.
     if (false) {
         //we try this new approach

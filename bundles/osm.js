@@ -14,6 +14,9 @@ modulesmgr.set('basic/common',     common);
 const univelements  = require('../components/renderer/univelements-stub');
 modulesmgr.set('renderer/univelements',         univelements);
 
+const mpcommon      = require('../components/osmpartners/common');
+modulesmgr.set('osmpartners/common',         mpcommon);
+
 const mpjixie       = require('../components/osmpartners/jixie');
 const mpsm          = require('../components/osmpartners/selectmedia');
 const mpteads       = require('../components/osmpartners/teads');
