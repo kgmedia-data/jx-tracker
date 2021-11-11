@@ -1,67 +1,14 @@
+const modulesmgr            = require('../basic/modulesmgr');
+
+const mpcommon              = modulesmgr.get('osmpartners/common');
+
 // under docs/selectmedia subfolder
 // There is some info and screenshots about the org
 // of the SelectMedia floating player in the DOM
 
-const defaultPTimeout_ = -1; //;
-
-var getAdSlotAttachNode_ = function(dbjson, getPageSelectorFcn) {
-    /* if (dbjson.adparameters.selectors) {
-         let selectors = dbjson.adparameters.selectors;
-         for (var i = 0; i < selectors.length; i++ ) {
-             let sel = null;
-             try {
-                 sel = jxsel(selectors[i]);
-             }
-             catch (er) {}
-             if (sel && sel.length >= 1 && sel[0] && 
-                 (sel[0].nodeName == 'DIV' || sel[0].nodeName == 'P')) {
-                 return {
-                     node: sel[0],
-                     selector: selectors[i]
-                 }
-             }
-         }//for
-     }*/
-    if (getPageSelectorFcn) {
-        let out = getPageSelectorFcn();
-        if (out)
-            return out;
-    }
-}
-
-function makeNormalizedObj_({
-    dbjson,
-    instID,
-    getPageSlotFcn,
-    fixedHeightBlob
-}) {
-    //rtjson prepared.
-    let rtjson = {
-        timeout: dbjson.timeout ? dbjson.timeout : defaultPTimeout_,
-        partner: dbjson.subtype, //for debug printout only
-        trackers: dbjson.trackers,
-        stackidx: dbjson.stackidx,
-        stackdepth: dbjson.stackdepth,
-        instID: instID,
-        valid: false
-    };
-
-    {
-        if (makeNormalizedObj__(dbjson, rtjson, getPageSlotFcn, fixedHeightBlob)) {
-            delete dbjson.trackers;
-            rtjson.valid = true;
-            return rtjson;
-        }
-    }
-    return rtjson;
-}
-
-function common_(rtjson) {
-    rtjson.customfcns = {};
-    rtjson.scriptdiv = {
-        id: "scriptdiv" + rtjson.instID,
-        style: "all:initial;"
-    };
+// this is a bit stupid, but not changing it b4 my trip 20211111 renee note
+function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob) {
+    return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, makeNormalizedObj__);
 }
 
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
@@ -69,7 +16,6 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     //was injected and then the script will create this aniplayer_selectJS640305376 div
     //(i.e. the div name is derived from the script "id")
 
-    common_(rtjson);
     if (dbjson.adparameters.placing === 'fixed') {
         rtjson.scriptdiv = {
             id: "scriptdiv" + rtjson.instID,
@@ -92,7 +38,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         //then JXOSM needs to inject the SM script at where our publisher
         //wants the ad to show up:
         //-----------Other things to set up to give generic instructions to jxosmcore_ layer:
-        let aNode = getAdSlotAttachNode_(dbjson, getPageSelectorFcn);
+        let aNode = mpcommon.getAdSlotAttachNode(dbjson, getPageSelectorFcn);
         if (!aNode) {
             return false;
         }

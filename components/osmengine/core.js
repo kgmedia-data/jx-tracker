@@ -167,7 +167,10 @@
                 //alert(`JX OSM RECEIVED MSG ${e.data}`);
                 //return;
             //}
-
+            if(typeof e.data == 'string' ) {
+                if ( e.data.indexOf('r2b2') > -1) 
+                    console.log(`###_ ${e.data}`);
+            }
             if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_msgListener (e.data=${e.data})`);
@@ -312,13 +315,22 @@
                 fixedHeightBlob: fixedHeightBlob
             });
             */
+            /*
             _jsonObj = _partner.makeNormalizedObj({
                 dbjson: _jsonObj, 
                 instID: _instID, 
                 getPageSlotFcn: getPageSlotFcn,
                 fixedHeightBlob: fixedHeightBlob
-            });
+            }); */
+             _jsonObj = _partner.makeNormalizedObj(
+                _jsonObj, 
+                _instID, 
+                getPageSlotFcn,
+                fixedHeightBlob
+            );
+           
             
+
             if (_jsonObj.valid) keep = true;
             else {
                 //not valid:
