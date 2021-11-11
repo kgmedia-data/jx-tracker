@@ -1,5 +1,4 @@
 const modulesmgr            = require('../basic/modulesmgr');
-
 const mpcommon              = modulesmgr.get('osmpartners/common');
 
 // this is a bit stupid, but not changing it b4 my trip 20211111 renee note
@@ -8,75 +7,39 @@ function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob)
 }
 
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
-    
     rtjson.msgs = {
-        //I stupid last time
-        hasad: `jxosm_hasad_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
-        noad: `jxosm_noad_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
-        imp: `jxosm_imp_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
-        timeout: `jxosm_timeout_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}` //`jxosm_noad_teads`,
+        noad: 'jxosm_noad_r2b2', 
+        imp: 'jxosm_imp_r2b2', 
+        timeout: 'jxosm_timeout_r2b2'
     };
-    /*
-    javascript
-    */
-    rtjson.scriptb =
-        `<script type="text/javascript" class="teads" src="//a.teads.tv/page/${dbjson.adparameters.pageId}/tag" async="true"></script>`;
+    rtjson.scriptb = `<script type="text/javascript" src="${dbjson.adparameters.script_src}></script>`;
     let aNode = mpcommon.getAdSlotAttachNode(dbjson, getPageSelectorFcn);
-    //let's try something different to try to solve the teads problem.
-    if (false) {
-        //we try this new approach
-        //we do not create a new DIV .
-        //we just put the div ID onto that thing (a paragraph) identified by the selector.
-        if (!aNode) {
-            return false;
-        }
-        let slotid = dbjson.adparameters.pageId == '126472' ? 'divid_jxosm_teads' : `divid_jxosm_teads_${dbjson.adparameters.pageId}`;
-        if (!aNode.node.id) {
-            aNode.node.id = slotid;
-        }
-        //we do not create any slot
-        //we merely attach the id to the paragraph
-        rtjson.visibilityslot = {
-            selector: `#${slotid}`,
-            node: null
-        };
-    }
     if (true) {
-        //WE DUN COME INTO HERE. WE TRY SOMETHING ELSE NOW.
-        // we are always, so-called integrated.
-        //else the solution cannot work.
         if (!aNode) return false;
         /**
-         * in the integrated case, the adslot unruly is set up to
-         * lookup a div divid_jxosm_teads and put in the ad into that div.
-         * This div does NOT exist originally on the page.
-         * What happens is JXOSM go thru the selectors and find a node
-         * that is present on the page. Then JXOSM create the div with id
-         * divid_jxosm_teads as a child of it (and jxosmunrulyid will take the
-         * width of that node)
-         * This is a good way coz there is a definite slot to observe, as it
-         * it controlled by JXOSM to be unique.
-         * There can be multiple selectors specified but JXOSM will pick one that
-         * really corresponds to something on the page.
+         * well, the partner dictates to put the ad in a certain div
+         * so we just put the div in div_id of the adparameters
+         * Here will be create the div in the osm slot then
+         * 
+         * Foreseeable problem is that they are fixed using 1 div id
+         * ..... what if the page has several of their scripts (hope that will not happen)
          */
         rtjson.createslot = {};
         rtjson.createslot.parent = aNode;
-        //this old stupid one I did wrongly!
-        let sslot = dbjson.adparameters.pageId == '126472' ? 'divid_jxosm_teads' : `divid_jxosm_teads_${dbjson.adparameters.pageId}`;
         rtjson.createslot.div = {
-            id: sslot,
+            id: `${dbjson.adparameters.div_id}`,
             css: `width:100%;`,
             node: null
         };
         rtjson.visibilityslot = {
-            selector: `#${sslot}`,
+            selector: `#${dbjson.adparameters.div_id}`,
             node: null
         };
     }
     return true;
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;
-module.exports.name = 'teads';
+module.exports.name = 'r2b2';
 
 /* 
  ************** module: osmpartners/teads **************************************************

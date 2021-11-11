@@ -244,7 +244,7 @@ window.jxPromisePolyfill        = 'none';
         }
 
         function setupMilestones() {
-            if (!_milestones && _vid.duration > 0) {
+            if (!_milestones && jxvhelper.guessIsVODByDuration(_vid.duration)) {
                 //set up then we can compare more easily in the playhead update
                 //no need everytime do a calculation ...
                 //calculate once 
@@ -769,6 +769,7 @@ window.jxPromisePolyfill        = 'none';
                     return _vid.currentTime;
                 },
                 setVideoPlayhead: function(time) {
+                    //we only allow that if not live stream TODO
                     _vid.currentTime = time;
                 },
                 isPaused: function() {
@@ -1067,7 +1068,6 @@ window.jxPromisePolyfill        = 'none';
         //if it starts playing
 
         function _onPlayheadUpdateCB() {
-            
             if (_manualPaused) {
                 let diff1 = _vid.currentTime- this.lastPlayhead;
                 //console.log(`##_ ${diff1} _onPlayheadUpdateCB setting manualPaused to false`);
@@ -1089,6 +1089,7 @@ window.jxPromisePolyfill        = 'none';
             else if (this.soundind == 'before' && _accumulatedTime >= 0 && _vid.muted) {
                 this.soundind = 'during';
                 _createSoundIndMaybe();
+                _soundIndObj.setShowRemainingTime(jxvhelper.guessIsVODByDuration(_vid.duration) ? true: false);
                 _soundIndObj.start(function() {
                     //well it also depends on the ad?
                     //if the ad starts then also need to hide bah.
@@ -1114,7 +1115,7 @@ window.jxPromisePolyfill        = 'none';
                     this.soundind = null;
                     _soundIndObj.stop();
                 }
-                else {
+                else if (_soundIndObj.getShowRemainingTime()) {
                     _soundIndObj.setRemainingTime(_vid.duration - currentTime);
                 }
             }
@@ -1265,6 +1266,7 @@ window.jxPromisePolyfill        = 'none';
         // }
         var _createSoundIndMaybe = function() {
             //a configuration exists
+            //it is a bit of a hack.
             if (!_soundIndObj) {
                 _soundIndObj = MakeOneSoundIndicator(_container, _cfg.soundind);
             }
