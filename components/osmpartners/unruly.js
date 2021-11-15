@@ -1,68 +1,14 @@
-const defaultPTimeout_ = -1;
+const modulesmgr            = require('../basic/modulesmgr');
 
-var getAdSlotAttachNode_ = function(dbjson, getPageSelectorFcn) {
-    if (dbjson.adparameters.selectors) {
-        let selectors = dbjson.adparameters.selectors;
-        for (var i = 0; i < selectors.length; i++) {
-            let sel = null;
-            try {
-                sel = jxsel(selectors[i]);
-            } catch (er) {}
-            if (sel && sel.length >= 1 && sel[0] &&
-                (sel[0].nodeName == 'DIV' || sel[0].nodeName == 'P')) {
-                return {
-                    node: sel[0],
-                    selector: selectors[i]
-                }
-            }
-        } //for
-    }
-    if (getPageSelectorFcn) {
-        let out = getPageSelectorFcn();
-        if (out)
-            return out;
-    }
+const mpcommon              = modulesmgr.get('osmpartners/common');
+
+
+function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob) {
+    return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, makeNormalizedObj__);
 }
-
-function makeNormalizedObj_({
-    dbjson,
-    instID,
-    getPageSlotFcn,
-    fixedHeightBlob
-}) {
-    //rtjson prepared.
-    let rtjson = {
-        timeout: dbjson.timeout ? dbjson.timeout : defaultPTimeout_,
-        partner: dbjson.subtype, //for debug printout only
-        trackers: dbjson.trackers,
-        stackidx: dbjson.stackidx,
-        stackdepth: dbjson.stackdepth,
-        instID: instID,
-        valid: false
-    };
-
-    {
-        if (makeNormalizedObj__(dbjson, rtjson, getPageSlotFcn, fixedHeightBlob)) {
-            delete dbjson.trackers;
-            rtjson.valid = true;
-            return rtjson;
-        }
-    }
-    return rtjson;
-}
-
-function common_(rtjson) {
-    rtjson.customfcns = {};
-    rtjson.scriptdiv = {
-        id: "scriptdiv" + rtjson.instID,
-        style: "all:initial;"
-    };
-}
-
-
 
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
-    common_(rtjson);
+    //common_(rtjson);
 
     let instID = rtjson.instID;
     rtjson.msgs = {
@@ -143,7 +89,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
             iframe.contentWindow.document.close();
             </script>
             `;
-    let aNode = getAdSlotAttachNode_(dbjson, getPageSelectorFcn);
+    let aNode = mpcommon.getAdSlotAttachNode(dbjson, getPageSelectorFcn);
     if (true) { //dbjson.adparameters.integrated) {
         if (!aNode) return false;
         /**
