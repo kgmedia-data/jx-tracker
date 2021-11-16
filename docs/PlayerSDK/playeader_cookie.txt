@@ -1,0 +1,70 @@
+>> Written on 15/11/2021 in response to this:
+[4:06 pm] Vincent Martin
+Hello, where do we store the last second viewed from a user on a video? I mean which cookie and its format. Moview wants to use that information for their portal.
+
+===============
+Name of cookie: "_jxvideopos"
+
+It is a string e.g. "[{"id":32458,"t":53},{"id":32324,"t":8}]"
+
+-we only keep 7 videos
+-Every time the string is updated, it is set to live for 1 day
+-per subdomain basis
+-this string is the stringified form of this array of objects:
+-id (videoID), t (playhead: seconds)
+
+myArray = 
+[
+	{
+		"id":32458,
+		"t":53
+	},
+	{	
+		"id":32324,
+		"t":8
+	}
+]
+
+===JSON.stringify(myArray)===> "[{"id":32458,"t":53},{"id":32324,"t":8}]"
+
+means when you read the cookie, then you need to change it back to an array:
+This little sample function reads the cookie and then try to change it back to an array like the 
+example above:
+
+function _getStoredVPlayheads() {
+        let destringified = null;
+        let tmp = [];
+        try {
+            var ca = document.cookie.split(';');
+            for(var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(playheadCookieName_) == 0) {
+                    destringified = c.substring(playheadCookieName_.length+1, c.length);
+                    break;
+                }
+            }//for
+            tmp = JSON.parse((destringified));
+        }
+        catch (eee) {
+            tmp = [];
+        }
+        if (!Array.isArray(tmp)) {
+            tmp = [];
+        }
+        let corrupted = false;
+        for (var i = 0; i < tmp.length; i++) {
+            let o = tmp[i];
+            if (o.id  && typeof o.id === 'number' && o.hasOwnProperty('t') && typeof o.t === 'number') {
+
+            }
+            else {
+                corrupted = true;
+            }
+        }
+        if (corrupted) tmp = [];
+        return tmp;
+    };
+

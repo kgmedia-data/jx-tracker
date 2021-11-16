@@ -12,7 +12,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         imp: 'jxosm_imp_r2b2', 
         timeout: 'jxosm_timeout_r2b2'
     };
-    rtjson.scriptb = `<script type="text/javascript" src="${dbjson.adparameters.script_src}></script>`;
+    rtjson.scriptb = `<script type="text/javascript" src="${dbjson.adparameters.script_src}"></script>`;
     let aNode = mpcommon.getAdSlotAttachNode(dbjson, getPageSelectorFcn);
     if (true) {
         if (!aNode) return false;
