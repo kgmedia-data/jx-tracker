@@ -758,6 +758,9 @@ function createObject_(options, ampIntegration) {
       * or it can be an object: must have url property. In addition can also have thumbnail and network
       */
     JXPlayerInt.prototype.loadTest = function(param) {
+        //param = {
+          //  mp4url: 'https://video.jixie.media/1002/32719/32719_240p.mp4'
+        //};
         //https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8
         //https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
         /*
@@ -785,6 +788,7 @@ function createObject_(options, ampIntegration) {
         }
         param.forEach(function(elt) {
             let o = { 
+                streams: [],
                 metadata: {
                     title: ' '
                 },
@@ -796,8 +800,11 @@ function createObject_(options, ampIntegration) {
             if (typeof elt === 'string') {
                 o.streams = [ {type: 'HLS', url: elt}];
             }
-            else if (elt.url) {
-                o.streams = [ {type: 'HLS', url: elt.url}];
+            else {
+                if (elt.hls) 
+                    o.streams.push({type: 'HLS', url: elt.hls});
+                if (elt.mp4) 
+                    o.streams.push({type: 'MP4', url: elt.mp4});
                 if (elt.thumbnail) {
                     o.metadata.thumbnail = elt.thumbnail;
                 }
@@ -805,7 +812,7 @@ function createObject_(options, ampIntegration) {
                     o.network = elt.network;
                 }
             }
-            if (o.streams) {
+            if (o.streams.length > 0) {
                 o.video_id = specialVideoId_;
                 arrFakeVideoIds.push(o.video_id);
                 _fakeLocalDam.push(o);
@@ -1887,7 +1894,7 @@ function createObject_(options, ampIntegration) {
         tmp = data.streams.find((e)=> e.type == 'HLS');
         if (tmp && tmp.url) 
             blob.hls = tmp.url;
-        else
+        else if (!blob.fallback)
             jxId = -1; //This is the min we need but it is not there. So declare error !
         if (jxId > -1) {
             _vInfoMap[jxId] = blob;
