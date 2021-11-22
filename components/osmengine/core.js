@@ -1115,10 +1115,13 @@
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_init');
             }
-            if (p.fixedheight || p.excludedheight) {
+            if (p.fixedheight || p.excludedheight || p.maxheight) {
                 _fixedHeight = {}; //p.fixedheight;
                 if (p.fixedheight) {
                     _fixedHeight.fixedheight = p.fixedheight;
+                }
+                if (p.maxheight) {
+                    _fixedHeight.maxheight = p.maxheight;
                 }
                 if (p.excludedheight) {
                     _fixedHeight.excludedheight = p.excludedheight;
