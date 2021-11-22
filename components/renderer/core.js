@@ -1202,6 +1202,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             case 'iframe':                
                 jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
                 jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
+                //jxbnScaleDiv.style.transformOrigin = 'top center';
+                
                 if (!c.fixedHeight) {
                     jxbnDiv.style.height = newH + 'px';
                 }
@@ -1608,7 +1610,7 @@ const thresholdDiff_ = 120;
         let w_ = params.width ? params.width: 640; 
         let h_ = params.height ? params.height: 360;
         let mw_ = params.maxwidth ? params.maxwidth: 0;
-        let mh_ = params.maxheigth ? params.maxheight : 0;
+        let mh_ = params.maxheight ? params.maxheight : 0;
     
         let AR = crSizeRange.aspectratio;
         if (!AR) { 
@@ -1645,6 +1647,12 @@ const thresholdDiff_ = 120;
                     w_ = l;
                 }
                 h_ = w_/AR;
+                l = Math.min(params.maxheight ? params.maxheight: bigHeight_, crSizeRange.maxheight);
+                if (h_ > l) {
+                    h_ = l;
+                    w_ = l*AR;
+                }
+
             }
             mh_ = h_;//so we won't have funny thing to trigger scaling at our level
             mw_ = w_;
