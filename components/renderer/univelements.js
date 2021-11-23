@@ -112,6 +112,7 @@ let MakeOneUniversalMgr_ = function() {
             if (jxTitleDiv.innerHTML) attachNode.insertBefore(jxTitleDiv, attachNode.firstChild);
             attachNode.appendChild(jxActionsDiv);
             newheight = 30;
+            newheight = jxTitleDiv.offsetHeight + jxActionsDiv.offsetHeight;
     
         } else { // Nested, then we display the information button on top of the creative
             jxActionsDiv.style.overflow = 'auto';
@@ -125,6 +126,7 @@ let MakeOneUniversalMgr_ = function() {
                     'jxButtonBlock');
             }
             attachNode.appendChild(jxActionsDiv);
+            newheight = jxActionsDiv.offsetHeight;
         }
         return {
             height: newheight,
