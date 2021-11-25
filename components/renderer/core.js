@@ -839,6 +839,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                         window.clearInterval(jxinter);
                         var ns = document.createElement("script");
                         ns.src = blob.scripturl;
+                        jxiframeDoc.body.style.margin = '0px';
                         jxiframeDoc.body.appendChild(ns);
                     }
                 },500);
@@ -1067,8 +1068,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
 
         //is this causing the problem of UNIV
         if (normCrParams.maxheight) {
-        //    jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
-          //  jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
+            jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
+            jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
         
         jxbnDiv.style.height = normCrParams.height + 'px';
@@ -1106,7 +1107,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
         jxCoreElt.id = destContainerPrefix_ + id; //<==== ==== ==== ====
         jxCoreElt.style.cssText = 'maxwidth:none!important;maxheight:none!important;position:absolute;left:0;top:0;background-color:white;border:none;width:' + normCrParams.width + 'px;height:' + normCrParams.height + 'px;'
-        
+         
         jxCoreElt.style.maxWidth = 'none !important'; 
         jxCoreElt.style.maxHeight = 'none !important';
         jxCoreElt.style.position = 'absolute';
@@ -1114,6 +1115,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         jxCoreElt.style.top = '0';
         jxCoreElt.style.backgroundColor = 'white';
         jxCoreElt.style.border = 'none';
+        
         jxCoreElt.style.width = normCrParams.width + 'px';
         
         jxCoreElt.style.height = normCrParams.height + 'px';
@@ -1343,6 +1345,10 @@ const thresholdDiff_ = 120;
         let tmp = this.divObjs.outerDiv;
         if (tmp && tmp.parentNode) {
             tmp.parentNode.removeChild(tmp);    
+        }
+        if (this.c.gamslotheight) {
+            window.frameElement.height = 1;
+            window.frameElement.parentElement.parentElement.style.height = 1 + 'px';
         }
     }
     /**
@@ -1758,6 +1764,10 @@ const thresholdDiff_ = 120;
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
             doDiffScroll:       c.doDiffScroll
         };
+        if (jxParams.gam) {
+            out.gamslotwidth = c.maxwidth > 0 ? Math.min(c.maxwidth, c.width): c.width;
+            out.gamslotheight = c.maxheight > 0 ? Math.min(c.maxheight, c.height): c.height;
+        }
         
         if (JX_FLOAT_COND_COMPILE) {
             if (jxParams.doFloat) {
@@ -2172,6 +2182,8 @@ const thresholdDiff_ = 120;
                 ampReqSize(ampReqSizeAnsResolveFcn, _jxParams.pgwidth, normCrParams.height, normCrParams.fixedHeight);
             }
 
+            
+
             let prom1_stdCrHandshake    = null;
             let prom2_crHasAd           = null;
             let prom3_evtSDKHandshake   = null;
@@ -2301,6 +2313,15 @@ const thresholdDiff_ = 120;
                     throw new Error('jxnoad');
                 }
 
+                if (_jxParams.gam) {
+                    try {
+                    window.frameElement.height = normCrParams.gamslotheight;
+                    window.frameElement.width = normCrParams.gamslotwidth;
+                    window.frameElement.parentElement.parentElement.style.height = normCrParams.gamslotheight + 'px';
+                    }
+                    catch(ebug){}
+                }
+               
                 /**
                  * Set up resize handlers
                  */
@@ -2361,11 +2382,18 @@ const thresholdDiff_ = 120;
          * 
          * Do any minor repair and stubbing with default if needed.
          * @param {*} params 
+         * let the frame info be passed to here by the code.
+         * gam: default none, safeframe friendlyframe
          */
         function _assembleParams(params) {
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
-                
+                if (top != self) {
+                    //we will do it properly tmr
+                    //to identify GAM-ness.
+                    //coz the publisher has not added the extra property yet:
+                    _jxParams.gam = 'friendly';
+                }  
                 if (_jxParams.excludedheight) {
                     _jxParams.excludedHeight = _jxParams.excludedheight;
                 }
@@ -2381,7 +2409,17 @@ const thresholdDiff_ = 120;
                     _jxParams.maxheight = _jxParams.fixedheight;
                 }
                 //_jxParams.nested = parseInt(_jxParams.nested) || 0;
-
+                if (_jxParams.gam == 'friendly') {
+                    let a = 300;
+                    try {
+                    a = window.frameElement.parentElement.parentElement.offsetWidth;
+                    }catch(ebug) {}
+                    _jxParams.pgwidth = a; //640;//one for mobile one for desktop
+                    if (!_jxParams.maxwidth) //if it was specified explicitly
+                        _jxParams.maxwidth = a; //_jxParams.pgwidth;
+                        //there could be a maxheight set in the params though.
+                    //then the height we do not restrict then.
+                }
                 _jxParams.creativeid = parseInt(_jxParams.creativeid) || null;
                 
                 //but this stuff really no body use ah?!

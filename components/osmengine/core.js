@@ -22,6 +22,14 @@
     //if(window.jxoutstreammgr) {
       //  return;
     //}
+    function defaultSelector(selector) {
+        //for use in GAM scenarios.
+        let ans = document.getElementById( selector.replace("#", ""));
+        if (ans) {
+            return [ans];
+        }
+        return null;
+    }
 
     injectCssRules();//it will be run only once.
 
@@ -41,6 +49,14 @@
     }
     else { 
         window.jxsellib = false;
+        if (top != self) {
+            //temprary hack
+            //this is the GAM use case
+            window.jxsellib = true;
+            window.jxsel = defaultSelector;
+
+        }
+        else {
         //https://www.kirupa.com/html5/running_your_code_at_the_right_time.htm
         //we have to load this Sizzle thing then
         //This one will make sure our stuff works always
@@ -54,6 +70,7 @@
         };
         sizScript.src = 'https://cdn.jsdelivr.net/npm/sizzle@2.3.6/dist/sizzle.min.js';
         document.body.appendChild(sizScript); 
+        }
     }
 
 
@@ -1115,8 +1132,12 @@
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_init');
             }
-            if (p.fixedheight || p.excludedheight || p.maxheight) {
+            //pardon the bad variable naming for now. will fix
+            if (p.fixedheight || p.excludedheight || p.maxheight || p.gam) {
                 _fixedHeight = {}; //p.fixedheight;
+                if (p.gam) {
+                    _fixedHeight.gam = p.gam;
+                }
                 if (p.fixedheight) {
                     _fixedHeight.fixedheight = p.fixedheight;
                 }
