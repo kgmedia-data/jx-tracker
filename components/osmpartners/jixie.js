@@ -54,6 +54,8 @@ const mpcommon              = modulesmgr.get('osmpartners/common');
             rtjson.scriptcfg = {
                 responsive: 1, 
                 container: `jxOutstream${instID}`, 
+                maxwidth: fixedHeightBlob && fixedHeightBlob.maxwidth ? fixedHeightBlob.maxwidth: 0,
+
                 maxheight: fixedHeightBlob && fixedHeightBlob.maxheight ? fixedHeightBlob.maxheight: 0,
                 pgwidth: aNode.node.offsetWidth ? aNode.node.offsetWidth: 300,
                 fixedheight: fixedHeightBlob && fixedHeightBlob.fixedheight ? fixedHeightBlob.fixedheight: 0,

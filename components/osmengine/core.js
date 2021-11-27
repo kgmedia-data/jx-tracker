@@ -1133,7 +1133,7 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            if (p.fixedheight || p.excludedheight || p.maxheight || p.gam) {
+            if (p.fixedheight || p.excludedheight || p.maxwidth || p.maxheight || p.gam) {
                 _fixedHeight = {}; //p.fixedheight;
                 if (p.gam) {
                     _fixedHeight.gam = p.gam;
@@ -1143,6 +1143,9 @@
                 }
                 if (p.maxheight) {
                     _fixedHeight.maxheight = p.maxheight;
+                }
+                if (p.maxwidth) {
+                    _fixedHeight.maxwidth = p.maxwidth;
                 }
                 if (p.excludedheight) {
                     _fixedHeight.excludedheight = p.excludedheight;
