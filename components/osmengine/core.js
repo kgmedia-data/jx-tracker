@@ -120,6 +120,7 @@
                     //will be hung as children of this div
         var _parentID = "none";
         var _loggerInst = null;
+        var _fcnVector = null;
 
         var _inArticleAdSlotNode = null; //the DOM node (the actual object, not id)pointed to by the selector
         //Only added recently coz we need to fire those "make up creativeview" events so e.g.
@@ -301,6 +302,162 @@
             }
 
         };
+        
+////        var ____container = null;
+        /////var ____childNode = null;
+
+        //waterfall level always listening. but if there is nothing, then dun bother to run all the code
+        //if there is current node is not null, then do scrollHeight check
+        //once there is a non null response, then set this thing up if fixed height.
+        //do a this for it loh.
+/*****
+        var _scrollListener = function(event, windowHeight = null, BCR = null) {
+            const thresholdDiff_ = 120;     
+
+            let c = {
+                excludedHeight: 102,
+                creativeH: 368,
+                containerH : 200
+            };
+            ////////let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
+            let diff = c.containerH - c.creativeH; 
+            //console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH: ${c.creativeH}`);
+            
+            //for AMP we get this from the first parameter
+            let winH = windowHeight ? windowHeight: top.innerHeight;
+            let containerBCR = BCR ? BCR: ____container.getBoundingClientRect();
+    
+            // The whole job of this function, is to calculate offset:
+            let offset = 0;
+    
+            let delta = c.excludedHeight; 
+            let vertOffsetToOurFrame = 0;
+    
+            if (!BCR) {
+                //the non-AMP case (AMP base the params windowHeight & BCR would be set)
+                //if friendly iframes, we still have to work out the top offset with
+                //respect to the top of the viewport.
+                let currW = window;
+                while (currW !== top) {
+                    var rect = currW.frameElement.getBoundingClientRect();
+                    vertOffsetToOurFrame += rect.top;
+                    currW = currW.parent;
+                }
+            }
+            let containerBCR_top = containerBCR.top - delta + vertOffsetToOurFrame;
+            let containerBCR_bottom = containerBCR.bottom - delta + vertOffsetToOurFrame;
+            winH = winH - delta;
+            //console.log(`ad=${c.creativeH} osm=${c.containerH} vp=${winH} bcrtop=${containerBCR.top} bcrbot=${containerBCR.bottom}`);
+            if (c.containerH > winH) {
+                if (containerBCR_top < 0) {
+                    // special case of a very short viewport (shorter than the container). 
+                    if (c.creativeH < winH) {
+                        // creative height is shorter than that of viewport
+                        //console.log(`kicked in ${0 - containerBCR.top} ${diff}`);
+                        offset = Math.min(0 - (containerBCR_top), diff);
+                    }
+                    else {
+                        // creative height is longer than that of viewport.
+                        offset = ((0-containerBCR_top)*(diff))/(c.containerH-winH);
+                        // the Math.min one is when creative is taller than container
+                        // the Math.max is when creative is shorter .
+                        offset = (offset >= 0 ? Math.min(offset, diff): Math.max(offset, diff));
+                    }
+                }
+            }
+            else {
+                // The more common whereby the container height is < viewport height:
+                if (diff < 0) {
+                    // creative is taller than container: This is the most common case:
+                    if (containerBCR_bottom <= winH) {
+                        //console.log(`____ diff=${diff} val=${((winH - containerBCR_bottom)*(diff))/(winH-c.containerH)}`);
+                        offset = Math.max(
+                            diff, //negative
+                            ((winH - containerBCR_bottom)*(diff))/(winH-c.containerH)
+                        );
+                    }
+                }
+                else {
+                    // container is taller than creative
+                    if (containerBCR_top < 0) {
+                        if (diff > thresholdDiff_) {
+                            offset = Math.min(diff, 0 - containerBCR_top);
+                        }
+                    }
+                }
+            }
+            //console.log(`____ ----> OFFSET ${offset}`)
+            //if (offset != this.savedoffset) 
+            {
+                //we set the top= offset only if it is different from last set.
+               // this.savedoffset = offset;
+               // jxbnScaleDiv.style.top = offset + 'px';
+            }
+            ____childNode.style.top = offset + 'px';
+
+        }
+        function ____addListener(e, event, h) {
+            if(e.addEventListener) {
+                e.addEventListener(event, h, false);
+            } else if(e.attachEvent) {
+                e.attachEvent('on' + event, h);
+            } else {
+                e['on' + event] = h;
+            }
+        };
+        *****/
+        /******
+        var _doFixedHeight = function(fixedHeight, parentNode, divId, _jsonObj) {
+            //if do fixed height
+            //divid_jxosm_teads_128408_outer
+            //give a height limit and also does not allow anything to spill out
+        
+            // > divid_jxosm_teads_128408
+            // height is set to auto so it will just fit to whatever is stuck inside
+            // absolute positioning
+            // so that we can set the offset of it relative to the outer
+        
+       
+            if (fixedHeight > 0) {
+                let childNodeO = document.createElement("div");
+                childNodeO.id = divId + "_outer";
+                childNodeO.style.height = fixedHeight + 'px'; //<-- the configured fixed height
+                childNodeO.style.width = '100%';
+
+                childNodeO.style.position = 'relative';
+                childNodeO.style.display = 'inline-block';
+                childNodeO.style.background = "transparent";
+                
+                childNodeO.style.overflow = 'hidden';
+        
+                let childNode = document.createElement("div");
+                childNode.id = divId;
+                childNode.style.height = 'auto'; //you can fill it like you want to, Teads.
+                childNode.style.width = '100%';
+                childNode.style.position = "absolute";
+                childNode.style.inset = "0px";
+                childNode.style.top = "0px"; 
+                ____container = childNodeO;
+                ____childNode = childNode;
+
+                
+        
+                childNodeO.appendChild(childNode);
+                parentNode.appendChild(childNodeO);
+                //console.log("ABCDEFGHIJ");
+                
+                _jsonObj.createslot.div.node = childNode;
+
+                ____addListener(window, 'scroll', __handleScrollEvent);
+                console.log("STILL ABCDEF");
+
+            }
+            else {
+
+            }
+        }
+        *****/
+
         //var _pdbgprint = function(fcnname) {
           //  //it is that stupid window also loh
             //_loggerInst.prPartner(`f=${fcnname}`, _jsonObj? _jsonObj.stackidx: -1); 
@@ -314,12 +471,13 @@
          * _fcnTriggerNextLayer (private member; a pointer to a function)
          * which should have been set from the init(...)
          */
-        var _start = function(getPageSlotFcn, fixedHeightBlob) {
+        var _start = function(/* getPageSlotFcn, fixedHeightBlob */) {
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_start');
             }
             let keep = true;
-            let tmp = getPageSlotFcn(); //see above note related to FES122
+
+            let tmp = _fcnVector.getPgSelector(); //see above note related to FES122
             if (tmp && tmp.node) {
                 _inArticleAdSlotNode = tmp.node;
             }
@@ -342,12 +500,11 @@
              _jsonObj = _partner.makeNormalizedObj(
                 _jsonObj, 
                 _instID, 
-                getPageSlotFcn,
-                fixedHeightBlob
+                _fcnVector.getPgSelector,
+                //getPageSlotFcn,
+                _fcnVector.getCommonCfg()
+                ///fixedHeightBlob
             );
-           
-            
-
             if (_jsonObj.valid) keep = true;
             else {
                 //not valid:
@@ -372,6 +529,52 @@
                 }
                 if(parentNode) {
                     _jsonObj.createslot.parent.node = parentNode;
+                    //<-------
+                    let cn = null;
+                    let fh = _fcnVector.getCommonCfg().fixedheight;
+                    if (fh > 0) {//also that we want it
+                        let cnO = document.createElement("div");
+                        cnO.id = _jsonObj.createslot.div.id + "_outer";
+                        cnO.style.height = fh + 'px'; //<-- the configured fixed height
+                        cnO.style.width = '100%';
+        
+                        cnO.style.position = 'relative';
+                        cnO.style.display = 'inline-block';
+                        cnO.style.background = "transparent";
+                        
+                        cnO.style.overflow = 'hidden';
+                
+                        cn = document.createElement("div");
+                        cn.id = _jsonObj.createslot.div.id;
+                        cn.style.height = 'auto'; //you can fill it like you want to, Teads.
+                        cn.style.width = '100%';
+                        cn.style.position = "absolute";
+                        cn.style.inset = "0px";
+                        cn.style.top = "0px"; 
+                        
+                        cnO.appendChild(cn);
+                        parentNode.appendChild(cnO);
+                        ///// do below: _jsonObj.createslot.div.node = cn;
+                        _fcnVector.setScrollMgmt(true, cnO, cn);
+                        
+                    }
+                    else {
+                        _fcnVector.setScrollMgmt(false);
+                        cn = getAnElt('#' + _jsonObj.createslot.div.id, parentNode);
+                        if(!cn) {
+                            cn = document.createElement("div");
+                            cn.id = _jsonObj.createslot.div.id;
+                            if (_jsonObj.createslot.div.css) {
+                                cn.style.cssText = _jsonObj.createslot.div.css;
+                            }
+                            //console.log(`## (_start partner=${_jsonObj.partner}) OSM APPENDING childNode.id=${childNode.id} to parentNode.id=${parentNode.id}`);
+                            parentNode.appendChild(cn);
+                        }
+                    }
+                    //-->
+                    _jsonObj.createslot.div.node = cn;
+                    /*
+                    _jsonObj.createslot.parent.node = parentNode;
                     let childNode = getAnElt('#' + _jsonObj.createslot.div.id, parentNode);
                     if(!childNode) {
                         childNode = document.createElement("div");
@@ -388,6 +591,7 @@
                         }
                         _jsonObj.createslot.div.node = childNode;
                     }
+                    */
                 }
                 else {
                     ////if (_sendDbg && !keep) {
@@ -583,7 +787,9 @@
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_startAllHooks');
             }
+            //Jixie one how ah
             window.addEventListener('message', _msgListener, false);
+            //window.addEventListener('scroll', _scrollListener, false);
 
             //---- SELF DESTRUCT TIMER: -------------------
             //if there is another item under in in the waterfall, then
@@ -694,11 +900,12 @@
          * @param {*} parentID <-- This is the DIV from into which this layer can inject script 
          * @param {*} loggerInst <-- The logger object we can use to spit out info
          */      
-        function OneOSMLayer(partner, msWFInit, parentID, loggerInst) {
+        function OneOSMLayer(partner, msWFInit, parentID, loggerInst, fcnVector) {
             _partner = partner;
             _msWFInit = msWFInit;
             _parentID = parentID; //THIS IS A DIV
             _loggerInst = loggerInst;
+            _fcnVector = fcnVector;
         }
         /**
          * @param {*} fcnGetPgSelector <--A function to find a Node (to show the ad)
@@ -712,7 +919,8 @@
          * msWFInit is fixed, parentID , fcnGetPgSelector are all fixed
          */
         OneOSMLayer.prototype.init = function(
-            fcnGetPgSelector, fixedHeightBlob,
+            //fcnVector,
+            /////////fcnGetPgSelector, fixedHeightBlob,
             jsonObj, 
             syntheticCVList,
             fcnTriggerNextLayer) {
@@ -724,8 +932,7 @@
             _syntheticCVList = JSON.parse(JSON.stringify(syntheticCVList));
             _instID = "OSMLayer_" + _msLayerInit;
             _jsonObj = jsonObj;
-
-            if (!_start(fcnGetPgSelector, fixedHeightBlob)) { //if return false means no good lah.
+            if (!_start(/* fcnGetPgSelector, fixedHeightBlob */)) { //if return false means no good lah.
                 _fireTrackingEvent('error', 'errorcode=999');
                 _prepareGoNext();
                 _fcnTriggerNextLayer(_syntheticCVList);
@@ -975,12 +1182,16 @@
         /**
          * "Private" Members (data)
          */
+        var _commonCfg = {};
+        var _scrollObj = {};
+        var _bfScrollHandler = null;
         var _msWFInit = null;
         var _loggerInst = null;
+        var _fcnVector = null;
         var _creativesArray = 0;
         var _ctrID = null;
         var _pgSelectors = [];
-        var _fixedHeight = null;
+        // get ready to get rid of it var _fixedHeight = null;
         var _pgNode = null;
         var _bottomReached = true; //at first is true, then if got waterfall (from adserver)
         //to do, then set to false, then when exhausted, set to true.
@@ -1051,9 +1262,14 @@
                     let thisCr = _creativesArray.shift();
                     let partner = _partners[thisCr.subtype];
 
-                    let oneLayerInst = new OneOSMLayer(partner, _msWFInit, _ctrID, _loggerInst);
+                    //access fixed height and other parameters.
+                    
+                    let oneLayerInst = new OneOSMLayer(partner, _msWFInit, _ctrID, _loggerInst, _fcnVector);
                     oneLayerInst.init(
-                        _getPgSelector, _fixedHeight,
+                        //whatever function vector.
+                        //getPgSelector, commonCfg, setScrollMgmt
+                        //_getPgSelector, _fixedHeight,
+                        //_fcnVector,
                         thisCr,
                         syntheticCVList,
                         _startOneLayer);
@@ -1067,7 +1283,10 @@
                 _bottomReached = true;
             }
         };
-        
+        // for the individual waterfall layers to call.
+        var _getCommonCfg = function() {
+            return _commonCfg;
+        }
         var _oneOffNonsense = function(p) {
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_oneOffNonsense');
@@ -1122,6 +1341,104 @@
             //so far also no use ....
             return _bottomReached;
         };
+        
+        var _scrollHandler = function(event, windowHeight = null, BCR = null) {
+            if (!this.cNode || this.cNode.scrollHeight < 30) return; //nothing to do
+            //this.c.excludedHeight, this.c.containerH this.cNode
+            let c = this;
+            let creativeH = this.cNode.scrollHeight;
+            console.log(`#### ${c.containerH} ${c.excludedHeight} ${this.cNode.scrollHeight}`);
+            const thresholdDiff_ = 120;     
+            let diff = c.containerH - creativeH; 
+            //console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH: ${c.creativeH}`);
+                
+            //for AMP we get this from the first parameter
+            let winH = windowHeight ? windowHeight: top.innerHeight;
+            let containerBCR = BCR ? BCR: this.container.getBoundingClientRect();
+        
+            // The whole job of this function, is to calculate offset:
+            let offset = 0;
+        
+            let delta = c.excludedHeight; 
+            let vertOffsetToOurFrame = 0;
+        
+            if (!BCR) {
+                //the non-AMP case (AMP base the params windowHeight & BCR would be set)
+                //if friendly iframes, we still have to work out the top offset with
+                //respect to the top of the viewport.
+                let currW = window;
+                while (currW !== top) {
+                    var rect = currW.frameElement.getBoundingClientRect();
+                    vertOffsetToOurFrame += rect.top;
+                    currW = currW.parent;
+                }
+            }
+            let containerBCR_top = containerBCR.top - delta + vertOffsetToOurFrame;
+            let containerBCR_bottom = containerBCR.bottom - delta + vertOffsetToOurFrame;
+            winH = winH - delta;
+            //console.log(`ad=${c.creativeH} osm=${c.containerH} vp=${winH} bcrtop=${containerBCR.top} bcrbot=${containerBCR.bottom}`);
+            if (c.containerH > winH) {
+                if (containerBCR_top < 0) {
+                    // special case of a very short viewport (shorter than the container). 
+                    if (c.creativeH < winH) {
+                        // creative height is shorter than that of viewport
+                        //console.log(`kicked in ${0 - containerBCR.top} ${diff}`);
+                        offset = Math.min(0 - (containerBCR_top), diff);
+                    }
+                    else {
+                        // creative height is longer than that of viewport.
+                        offset = ((0-containerBCR_top)*(diff))/(c.containerH-winH);
+                        // the Math.min one is when creative is taller than container
+                        // the Math.max is when creative is shorter .
+                        offset = (offset >= 0 ? Math.min(offset, diff): Math.max(offset, diff));
+                    }
+                }
+            }
+            else {
+                // The more common whereby the container height is < viewport height:
+                if (diff < 0) {
+                    // creative is taller than container: This is the most common case:
+                    if (containerBCR_bottom <= winH) {
+                        //console.log(`____ diff=${diff} val=${((winH - containerBCR_bottom)*(diff))/(winH-c.containerH)}`);
+                        offset = Math.max(
+                            diff, //negative
+                            ((winH - containerBCR_bottom)*(diff))/(winH-c.containerH)
+                        );
+                    }
+                }
+                else {
+                    // container is taller than creative
+                    if (containerBCR_top < 0) {
+                        if (diff > thresholdDiff_) {
+                            offset = Math.min(diff, 0 - containerBCR_top);
+                        }
+                    }
+                }
+            }
+            console.log(`######____ ----> OFFSET ${offset}`)
+            if (offset != this.savedoffset) {
+                this.savedoffset = offset;
+                this.cNode.style.top = offset + 'px';
+            }
+        }
+       
+                        
+        var _setScrollMgmt = function(doAttach, container, creativeNode) {
+            if (!doAttach) {
+                _scrollObj.cNode = null;
+                return;
+            }
+            _scrollObj.cNode = creativeNode;
+            _scrollObj.container = container;
+
+            if (!_bfScrollHandler) {
+                _scrollObj.containerH = _commonCfg.fixedheight;
+                _scrollObj.excludedHeight = _commonCfg.excludedheight;
+                // bound to an object, so it can retrieve whatever is in there.
+                _bfScrollHandler = _scrollHandler.bind(_scrollObj);
+                window.addEventListener('scroll', _bfScrollHandler, false);
+            }
+        }
         /**
          * p is passed in from the page where our JX OSM script is embedded
          * @param {*} p 
@@ -1133,6 +1450,20 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
+            ['fixedheight','excludedheight','maxwidth','maxheight','gam'].forEach(function(prop){
+                if (p[prop]) {
+                    _commonCfg[prop] = p[prop];
+                }
+            });
+            _commonCfg.fixedheight = 240; //HACK
+            //exposed to each layer to call.
+            _fcnVector = {
+                getPgSelector: _getPgSelector,
+                getCommonCfg: function() { return _commonCfg; },
+                setScrollMgmt: _setScrollMgmt
+            };
+
+            /*
             if (p.fixedheight || p.excludedheight || p.maxwidth || p.maxheight || p.gam) {
                 _fixedHeight = {}; //p.fixedheight;
                 if (p.gam) {
@@ -1151,6 +1482,7 @@
                     _fixedHeight.excludedheight = p.excludedheight;
                 }
             }
+            */
             if (p.selectors && p.selectors.length > 0) {
                 _pgSelectors = p.selectors;
                 for (var i = 0; i < _pgSelectors.length; i++) {
