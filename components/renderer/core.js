@@ -2401,6 +2401,8 @@ const thresholdDiff_ = 120;
                 _jxParams.pgwidth = parseInt(_jxParams.pgwidth) || 0;
                 _jxParams.maxwidth = parseInt(_jxParams.maxwidth) || 0;
                 if (_jxParams.pgwidth && !_jxParams.maxwidth) {
+                    //hack. will fix it tomrrow
+                    if (!_jxParams.gam)
                     _jxParams.maxwidth = _jxParams.pgwidth;
                 }
                 _jxParams.maxheight = parseInt(_jxParams.maxheight) || 0;
