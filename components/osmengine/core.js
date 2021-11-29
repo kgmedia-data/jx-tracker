@@ -481,29 +481,11 @@
             if (tmp && tmp.node) {
                 _inArticleAdSlotNode = tmp.node;
             }
-            //the thing is morphed from the dbjson to rtjson
-            /*
-            _jsonObj = window.jxosmpartners.init({
-                dbjson: _jsonObj, 
-                instID: _instID, 
-                getPageSlotFcn: getPageSlotFcn,
-                fixedHeightBlob: fixedHeightBlob
-            });
-            */
-            /*
-            _jsonObj = _partner.makeNormalizedObj({
-                dbjson: _jsonObj, 
-                instID: _instID, 
-                getPageSlotFcn: getPageSlotFcn,
-                fixedHeightBlob: fixedHeightBlob
-            }); */
              _jsonObj = _partner.makeNormalizedObj(
                 _jsonObj, 
                 _instID, 
                 _fcnVector.getPgSelector,
-                //getPageSlotFcn,
                 _fcnVector.getCommonCfg()
-                ///fixedHeightBlob
             );
             if (_jsonObj.valid) keep = true;
             else {
@@ -529,13 +511,25 @@
                 }
                 if(parentNode) {
                     _jsonObj.createslot.parent.node = parentNode;
-                    //<-------
+                    //<------- if there is a fixed height or there is a max height
+                    // then we should have this.
                     let cn = null;
                     let fh = _fcnVector.getCommonCfg().fixedheight;
-                    if (fh > 0) {//also that we want it
+                    let mh = _fcnVector.getCommonCfg().maxheight;
+                    
+                    if (fh > 0 && _jsonObj.createslot.diffscroll) {//also that we want it
                         let cnO = document.createElement("div");
                         cnO.id = _jsonObj.createslot.div.id + "_outer";
-                        cnO.style.height = fh + 'px'; //<-- the configured fixed height
+                        // if it is fixed height, then this.
+                        if (fh> 0)
+                            cnO.style.height = fh + 'px'; //<-- the configured fixed height
+                        else {
+                            //???
+                            cnO.style.height = mh + 'px';
+                            //cnO.style.maxHeight = mh + 'px'; //<-- the configured fixed height
+                        }                            
+                        // if it is max height, then the other ?
+
                         cnO.style.width = '100%';
         
                         cnO.style.position = 'relative';
@@ -546,17 +540,19 @@
                 
                         cn = document.createElement("div");
                         cn.id = _jsonObj.createslot.div.id;
+                        //cn.style.overflow = 'auto';
                         cn.style.height = 'auto'; //you can fill it like you want to, Teads.
+                        //this actually does not change.
                         cn.style.width = '100%';
                         cn.style.position = "absolute";
                         cn.style.inset = "0px";
                         cn.style.top = "0px"; 
+                        cn.style.textAlign = "center";
                         
                         cnO.appendChild(cn);
                         parentNode.appendChild(cnO);
-                        ///// do below: _jsonObj.createslot.div.node = cn;
                         _fcnVector.setScrollMgmt(true, cnO, cn);
-                        
+
                     }
                     else {
                         _fcnVector.setScrollMgmt(false);
@@ -627,12 +623,12 @@
                     if (JX_PARTNER_TEST) {
                         _dbgprint(`**Added ${_jsonObj.partner} script to page: ${scriptBody}`, true);
                     }
-                    if (scriptBody) {
+                    if (scriptBody) { //hack
                         //console.log(`## (_start partner=${_jsonObj.partner}) OSM appending ContextualFragment to injectedDiv.id=${_injectedDiv.id}`);
                         _injectedDiv.appendChild(range.createContextualFragment(scriptBody));
                     }
-                    else {//only partner Jixie has this. //so if this function is not there. then bye
-                        _partner.runCreative(_jsonObj.scriptcfg);
+                    else {//jixie and gptpassback:
+                        _partner.runCreative(_jsonObj.scriptcfg, _jsonObj.createslot.div.node); 
                     }
                     let parent = hangScriptDiv ? hangScriptDiv : document.getElementById(_parentID); //TODO HACK
                     if(parent) {
@@ -754,6 +750,15 @@
                 //console.log(`## (_prepareGoNext partner=${_jsonObj.partner}) Removing injectedDiv.id=${_injectedDiv.id} From parent.id${_injectedDiv.parentNode.id}`);
                 _injectedDiv.parentNode.removeChild(_injectedDiv);
             }
+            //outeer div
+            //if there is an outer one called "outer", then we do that.
+            //you already opened the fixed height thing.
+            
+            //TODOTODO
+            //this is just because the adx tag (the only one that can do
+            //the fixedheight thing) is the bottom so no need to worry about
+            //waterfalling:
+            //_jsonObj.createslot.div.node.parentNode.style.height = '1px';//HACK
             if (_jsonObj.removedivclass) {
                 //This is an invention just for SelectMedia.
                 //console.log(`__##### ${_jsonObj.removedivclass}`);
@@ -1341,13 +1346,23 @@
             //so far also no use ....
             return _bottomReached;
         };
-        
+        //fixed height always has something to do possibly
+        //max height only got work to do when exceeding.
+        //either is fixed height or there is a maxheight then we might need this. let's do that later lah.
         var _scrollHandler = function(event, windowHeight = null, BCR = null) {
             if (!this.cNode || this.cNode.scrollHeight < 30) return; //nothing to do
             //this.c.excludedHeight, this.c.containerH this.cNode
             let c = this;
-            let creativeH = this.cNode.scrollHeight;
-            console.log(`#### ${c.containerH} ${c.excludedHeight} ${this.cNode.scrollHeight}`);
+            //the scroll height is just the fixed height
+            let creativeH = this.cNode.scrollHeight; //HACK
+            //it does not work at all.
+
+            //let creativeH = this.cNode.lastChild ? this.cNode.lastChild.clientHeight: this.cNode.scrollHeight;
+            if (c.maxheight) {
+                //this is just a max height type.
+                if (creativeH < c.maxheight) return; //nothing to do lah
+            }
+            //console.log(`#### ${c.containerH} ${c.excludedHeight} ${this.cNode.scrollHeight}`);
             const thresholdDiff_ = 120;     
             let diff = c.containerH - creativeH; 
             //console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH: ${c.creativeH}`);
@@ -1359,7 +1374,7 @@
             // The whole job of this function, is to calculate offset:
             let offset = 0;
         
-            let delta = c.excludedHeight; 
+            let delta = c.excludedheight; 
             let vertOffsetToOurFrame = 0;
         
             if (!BCR) {
@@ -1415,7 +1430,6 @@
                     }
                 }
             }
-            console.log(`######____ ----> OFFSET ${offset}`)
             if (offset != this.savedoffset) {
                 this.savedoffset = offset;
                 this.cNode.style.top = offset + 'px';
@@ -1432,8 +1446,9 @@
             _scrollObj.container = container;
 
             if (!_bfScrollHandler) {
-                _scrollObj.containerH = _commonCfg.fixedheight;
-                _scrollObj.excludedHeight = _commonCfg.excludedheight;
+                _scrollObj.containerH = _commonCfg.fixedheight ? _commonCfg.fixedheight : _commonCfg.maxheight,
+                _scrollObj.excludedheight = _commonCfg.excludedheight;
+                _scrollObj.maxheight = _commonCfg.maxheight;
                 // bound to an object, so it can retrieve whatever is in there.
                 _bfScrollHandler = _scrollHandler.bind(_scrollObj);
                 window.addEventListener('scroll', _bfScrollHandler, false);
@@ -1455,7 +1470,6 @@
                     _commonCfg[prop] = p[prop];
                 }
             });
-            _commonCfg.fixedheight = 240; //HACK
             //exposed to each layer to call.
             _fcnVector = {
                 getPgSelector: _getPgSelector,
