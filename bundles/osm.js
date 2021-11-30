@@ -108,11 +108,14 @@ var JxOSMQ = function () {
 
 // get the existing _jxoutstreammgrq array
 var _old_jxoutstreammgrq = window._jxoutstreammgrq;
+if (!_old_jxoutstreammgrq) {
+    _old_jxoutstreammgrq = window._jxosm;
+}
 // create a new object
 window._jxoutstreammgrq = new JxOSMQ(); //actually no need object, just cloned from some website's snipplet .. :-)
+window._jxosm = _jxoutstreammgrq;
 // execute all of the queued up events - apply() turns the array entries into individual arguments
 if (_old_jxoutstreammgrq) {
     window._jxoutstreammgrq.push.apply(window._jxoutstreammgrq, _old_jxoutstreammgrq);
 }
-
 
