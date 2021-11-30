@@ -1066,8 +1066,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //if (normCrParams.maxwidth)
             jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
 
-        //is this causing the problem of UNIV
-        if (normCrParams.maxheight) {
+         //is this causing the problem of UNIV
+         if (normCrParams.maxheight && !normCrParams.fixedHeight) {
             jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
             jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
