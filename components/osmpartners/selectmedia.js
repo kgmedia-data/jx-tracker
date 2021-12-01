@@ -69,11 +69,19 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         node: null
     };
    
-    //HACK: some  wrong config on their side:
+    //on the SM side, turns out that those postMessage stuff are all inside "files"
+    //e.g. https://play.selectmedia.asia/58fcbed1073ef420086c9d08/604cf5d5374e2240d0749637/kompas.com_osm_pass.txt
+    //Which has only 1 line and it is this:
+    //parent.postMessage("jxosm_noad_selectmediaJS417849795", "*");
+    //So... it is too messy to expect them to keep many different files
+    //so all the e.g. impression messages (no matter what the siteID is) is
+    //JS417849795 
+    // Assuming that there is only 1 such on the page, then it should be quite safe...
     let script_id = (dbjson.adparameters.msg_script_id ?
         dbjson.adparameters.msg_script_id : dbjson.adparameters.script_id);
     let sid = script_id.replace('select', ''); //selectJS417849795
     sid = 'JS417849795'; //due to their problem, everything is this!!!
+    
     rtjson.msgs = {
         noad: `jxosm_noad_selectmedia${sid}`,
         imp: `jxosm_imp_selectmedia${sid}`,
@@ -89,8 +97,6 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     rtjson.removedivclass = dbjson.adparameters.script_id;
     
     //-->
-
-    //jxosm_noad_selectmediaJS417849795
     return true;
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;

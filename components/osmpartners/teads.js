@@ -59,7 +59,9 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
          * There can be multiple selectors specified but JXOSM will pick one that
          * really corresponds to something on the page.
          */
-        rtjson.createslot = {};
+        rtjson.createslot = {
+            diffscroll: true
+        };
         rtjson.createslot.parent = aNode;
         //this old stupid one I did wrongly!
         let sslot = dbjson.adparameters.pageId == '126472' ? 'divid_jxosm_teads' : `divid_jxosm_teads_${dbjson.adparameters.pageId}`;

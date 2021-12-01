@@ -8,8 +8,6 @@ function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob)
 }
 
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
-    //common_(rtjson);
-
     let instID = rtjson.instID;
     rtjson.msgs = {
         noad: `jxosm_noad_unruly${instID}`,
@@ -105,7 +103,9 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
          * There can be multiple selectors specified but JXOSM will pick one that
          * really corresponds to something on the page.
          */
-        rtjson.createslot = {};
+        rtjson.createslot = {
+            diffscroll: true
+        };
         rtjson.createslot.parent = aNode;
         //let destdivid = (dbjson.adparameters.siteId === 226678 ? "jxunrulydivid_226678": jxDefaultUnrulyDivId_);
         let destdivid = (dbjson.adparameters.siteId === 226678 ? "jxunrulydivid_226678" : `divid_jxosm_unruly_${dbjson.adparameters.siteId}`);

@@ -1922,20 +1922,21 @@ const thresholdDiff_ = 120;
   <script>
     window.googletag = window.googletag || {cmd: []};
     googletag.cmd.push(function() {
-        googletag.defineSlot('/31800665/KOMPAS.COM_Mobile_Web/osmjixie', [[300,600],[300,250],[320,100]], 'div-gpt-ad-12345-0').setTargeting('Pos',['osmkompas']).addService(googletag.pubads());
+        googletag.defineSlot('/31800665/KOMPAS.COM_Mobile_AMP/osmjixie', [[300,600],[300,250],[320,100]], 'div-gpt-ad-12345-0').setTargeting('Pos',['osmkompas']).addService(googletag.pubads());
         googletag.pubads().addEventListener('slotRenderEnded', function(event) {
             if (event.isEmpty) {
                 parent.postMessage('jxadended', '*');
                 return;
             }
             parent.postMessage('jxmsg::' + JSON.stringify({'type': 'size',params: {'height': window.document.body.scrollHeight}}), '*');
-        });          
+        }); 
+        googletag.pubads().set('page_url', 'https://amp.kompas.com/megapolitan/read/2021/05/28/05334261/update-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257');
         googletag.enableServices();
         googletag.display('div-gpt-ad-12345-0'); 
     });
   </script>
-</div>`;
-                        console.log(sbody); */
+</div>`;*/
+                        console.log(sbody); 
                         assumeHasAd = true; //<== !!!
                         out[trusted? 'div':'iframe'] = { scriptbody: sbody };
                         if (c.adparameters && c.adparameters.jxeventssdk) {
