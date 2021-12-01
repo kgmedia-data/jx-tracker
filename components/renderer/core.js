@@ -66,6 +66,8 @@ const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 
 var gUnivMgr = null;
+
+/*
 function addGAMNoAdNotifyMaybe(str) {
     //also need to give it some time to act ah.
     //means we fire the has ad after a while.
@@ -86,6 +88,7 @@ function addGAMNoAdNotifyMaybe(str) {
     }
     return str;
 }
+*/
 
 var MakeOneFloatingUnit = function() { return null; };
 
@@ -840,6 +843,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                         window.clearInterval(jxinter);
                         var ns = document.createElement("script");
                         ns.src = blob.scripturl;
+                        jxiframeDoc.body.style.margin = '0px';
                         jxiframeDoc.body.appendChild(ns);
                     }
                 },500);
@@ -1059,17 +1063,16 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //sorry for the mess here:
         //this following stuff uses the creative's sizing info:
         //this is what is new!!!
-        //if (normCrParams.maxwidth)
         jxmasterDiv.style.maxWidth = normCrParams.maxwidth + 'px';
         //else            
         //    jxmasterDiv.style.width = normCrParams.width + 'px';
         //if (normCrParams.maxwidth)
-            jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
+        jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
 
-        //is this causing the problem of UNIV
-        if (normCrParams.maxheight) {
-        //    jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
-          //  jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
+         //is this causing the problem of UNIV
+         if (normCrParams.maxheight && !normCrParams.fixedHeight && !normCrParams.varsize) {
+            jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
+            jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
         
         jxbnDiv.style.height = normCrParams.height + 'px';
@@ -1107,7 +1110,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
         jxCoreElt.id = destContainerPrefix_ + id; //<==== ==== ==== ====
         jxCoreElt.style.cssText = 'maxwidth:none!important;maxheight:none!important;position:absolute;left:0;top:0;background-color:white;border:none;width:' + normCrParams.width + 'px;height:' + normCrParams.height + 'px;'
-        
+         
         jxCoreElt.style.maxWidth = 'none !important'; 
         jxCoreElt.style.maxHeight = 'none !important';
         jxCoreElt.style.position = 'absolute';
@@ -1115,6 +1118,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         jxCoreElt.style.top = '0';
         jxCoreElt.style.backgroundColor = 'white';
         jxCoreElt.style.border = 'none';
+        
         jxCoreElt.style.width = normCrParams.width + 'px';
         
         jxCoreElt.style.height = normCrParams.height + 'px';
@@ -1153,7 +1157,13 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         let c = this.c;
         let jxbnDiv = this.divObjs.jxbnDiv;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
-    
+        if (c.varsize) {
+            //those 1x1 google tags , so far.
+            //the creative starts with height =1 , but then later will issue a size message
+            //to change the height.
+            c.creativeH = c.height;
+            return;
+        }
         /*
             Renee new idea:
             suppose the maxwidth and maxheight given is not useful.
@@ -1457,6 +1467,7 @@ const thresholdDiff_ = 120;
             w = 640;
             h = 360;
         }
+        
         let crAR = w/h;
         if (cr.scaling == 'creative' && onlyARMatterTypes_.indexOf(cr.type)> -1) {
             w = 0;// to facilate the below calculations
@@ -1767,8 +1778,8 @@ const thresholdDiff_ = 120;
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
         doSizeMgmt(jxParams, c);
-
         let out = { 
+            varsize:            (c.height == 1),  
             nested:             nested,
             type:               c.type,
             clickurl:           c.clickurl, 
@@ -1930,10 +1941,26 @@ const thresholdDiff_ = 120;
                             //need to handle properly.
                         } //TODO
                         //GAM type is able to detect no ad.
-                        let sbody1 = addGAMNoAdNotifyMaybe(sbody);
-                        if (sbody1) {
-                            sbody = sbody1;
-                        }
+/* sbody = `<script src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+<div id='div-gpt-ad-12345-0'>
+  <script>
+    window.googletag = window.googletag || {cmd: []};
+    googletag.cmd.push(function() {
+        googletag.defineSlot('/31800665/KOMPAS.COM_Mobile_AMP/osmjixie', [[300,600],[300,250],[320,100]], 'div-gpt-ad-12345-0').setTargeting('Pos',['osmkompas']).addService(googletag.pubads());
+        googletag.pubads().addEventListener('slotRenderEnded', function(event) {
+            if (event.isEmpty) {
+                parent.postMessage('jxadended', '*');
+                return;
+            }
+            parent.postMessage('jxmsg::' + JSON.stringify({'type': 'size',params: {'height': window.document.body.scrollHeight}}), '*');
+        }); 
+        googletag.pubads().set('page_url', 'https://amp.kompas.com/megapolitan/read/2021/05/28/05334261/update-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257');
+        googletag.enableServices();
+        googletag.display('div-gpt-ad-12345-0'); 
+    });
+  </script>
+</div>`;*/
+                        console.log(sbody); 
                         assumeHasAd = true; //<== !!!
                         out[trusted? 'div':'iframe'] = { scriptbody: sbody };
                         if (c.adparameters && c.adparameters.jxeventssdk) {
@@ -2139,6 +2166,13 @@ const thresholdDiff_ = 120;
        */
       function ampReqSize(resolveFcn, x,y, fixedheight) {
           //here the fixedheight is our current height of the unit
+          if (y == 1) {
+              //somethingx1 type which is used to model 1x1 variable size slots 
+              //in google; for this type, the height will be changed later
+              //thru "size" messages posted from the creative iframe.
+            resolveFcn("fixedheight");
+            return;
+          }
           if (y < fixedheight) {
               //no need to request resize
               //we have already enough real estate
@@ -2201,6 +2235,8 @@ const thresholdDiff_ = 120;
                 //fixedheight (differential scrolling)
                 ampReqSize(ampReqSizeAnsResolveFcn, _jxParams.pgwidth, normCrParams.height, normCrParams.fixedHeight);
             }
+
+            
 
             let prom1_stdCrHandshake    = null;
             let prom2_crHasAd           = null;
@@ -2392,12 +2428,12 @@ const thresholdDiff_ = 120;
          * 
          * Do any minor repair and stubbing with default if needed.
          * @param {*} params 
+         * let the frame info be passed to here by the code.
+         * gam: default none, safeframe friendlyframe
          */
         function _assembleParams(params) {
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
-                _jxParams.excludedheight = 47; //HACK
-
                 if (_jxParams.excludedheight) {
                     _jxParams.excludedHeight = _jxParams.excludedheight;
                 }
@@ -2414,7 +2450,6 @@ const thresholdDiff_ = 120;
                     _jxParams.maxheight = _jxParams.fixedheight;
                 }
                 //_jxParams.nested = parseInt(_jxParams.nested) || 0;
-
                 _jxParams.creativeid = parseInt(_jxParams.creativeid) || null;
                 
                 //but this stuff really no body use ah?!
