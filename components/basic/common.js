@@ -87,6 +87,24 @@ function MakeOneHelperObj_() {
     FactoryOneHelper.prototype.isIOS = function() {
         return (/iPad|iPhone|iPod/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
     }
+    FactoryOneHelper.prototype.sendTracker = function(getUrl) {
+        if (window &&
+            window.navigator &&
+            typeof window.navigator.sendBeacon === "function" &&
+            typeof window.Blob === "function") {
+            try {
+                if (window.navigator.sendBeacon(url, str)) {
+                    // sendBeacon was successful!
+                    return;
+                }
+            } catch (e) {
+                // fallback below
+            }
+        }
+        return fetch(getUrl , {
+            method: 'GET'
+        });
+    }
     /*
     FactoryOneHelper.prototype.qs = function(selector, container = null) {
         if (!container) {

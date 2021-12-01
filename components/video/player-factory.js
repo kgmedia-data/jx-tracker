@@ -41,6 +41,8 @@ const JXPlayerID                = "JXPlayer"; //Is purely internal stuff no need
 
 window.jxPromisePolyfill        = 'none';
 
+const _aggStep = jxvhelper.getStep();
+
 /**
     /**
      * The most important object in this whole file. The one doing the real work
@@ -97,6 +99,7 @@ window.jxPromisePolyfill        = 'none';
         var _gestureReportCB = function() {}; //donothing now. Can be overwritten
         var _defaultReportInfoBlob = null;
         var _accumulatedTime = 0;
+        var _accuUnreported = 0;
         var _playheadCB = null; //for doing the save playhead in cookie
         var _adCountdownMgrFcn = null;
 
@@ -410,6 +413,7 @@ window.jxPromisePolyfill        = 'none';
             //even if we do no do fade-into-ad, we still will be using styles.hideOpacity to hide the content and not styles.hide)
             
             _accumulatedTime = 0;
+            _accuUnreported = 0;
             _thumbnailURL = null;
 
             _manualPaused = false;
@@ -1144,8 +1148,17 @@ window.jxPromisePolyfill        = 'none';
                 let diff = currentTime- this.lastPlayhead;
                 if (diff < 0) diff = 0 - diff;
                 if(diff <= 2) {
+                    //else there might have been some jump!
                     _accumulatedTime += diff;
+                    _accuUnreported += diff;
                 }
+                if (_accuUnreported > _aggStep) {
+                    //no need to do that math each time bah.
+                    _accuUnreported -= _aggStep;
+                    _reportCB('video', 'agg', _makeCurrInfoBlob(this.videoid));
+                }
+
+
 
                 //if we allow for midrolls, then everybody has delayed ads then.
                 if(_nextAdSlotTime != -1 && _accumulatedTime >= _nextAdSlotTime) {
