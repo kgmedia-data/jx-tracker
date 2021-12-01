@@ -2,6 +2,14 @@
  * partner type is Google (GAM) tag. passback
  * Needs to be served inside iframe (so it does not get interfered from the gpt settings on the main page)
  * 
+ * CURRENTLY IT IS NOT USED. ANd not packed into an JS
+ * We have some ADX tags from KG's Ridho.
+ * We implement them as type=display, subtype=script,
+ * and width = 320, height = 1
+ * With that, then we take care of all of desktop/mobile/AMP
+ * 
+ * Using this way below, we only take care of desktop/mobile but not AMP
+ * 
  * 
  */
 const modulesmgr            = require('../basic/modulesmgr');

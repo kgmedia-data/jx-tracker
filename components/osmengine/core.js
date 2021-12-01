@@ -22,14 +22,16 @@
     //if(window.jxoutstreammgr) {
       //  return;
     //}
-    function defaultSelector(selector) {
+    /** earlier we added this for the case our this OSM script runs inside iframe
+     * (associated with GAM) but turns out not necessary. 
+     * function defaultSelector(selector) {
         //for use in GAM scenarios.
         let ans = document.getElementById( selector.replace("#", ""));
         if (ans) {
             return [ans];
         }
         return null;
-    }
+    }**/
 
     injectCssRules();//it will be run only once.
 
@@ -49,14 +51,14 @@
     }
     else { 
         window.jxsellib = false;
-        if (top != self) {
+        /* if (top != self) {
             //temprary hack
             //this is the GAM use case
             window.jxsellib = true;
             window.jxsel = defaultSelector;
 
         }
-        else {
+        else */ {
         //https://www.kirupa.com/html5/running_your_code_at_the_right_time.htm
         //we have to load this Sizzle thing then
         //This one will make sure our stuff works always
@@ -73,11 +75,6 @@
         }
     }
 
-
-
-
-    
-
     //special Debug
     var _sendDbg = null; //for almost everybody it is turned off
     function sendTkr(partialUrl, action, strMaybe = null) {
@@ -85,7 +82,6 @@
     }
         
     const   idJXOSMDiv_       = 'jxosmdiv'; //injected via the GTM TOO
-    //////var     idsutils          = require('jixie-ids-common');
 
     ///////window.jxoutstreammgr = {};
   //https://www.sitepoint.com/comprehensive-jquery-selectors/
@@ -181,14 +177,7 @@
             //TODO: may be still catch the teads hasad 
             //so that next time if we turn on the timeout thing
             //we won't kill it if an ad is waiting to be shown (not shown due to slot not in view)
-            //if(typeof e.data == 'string' && e.data.startsWith('jx') && e.data.indexOf('select') > -1) {
-                //alert(`JX OSM RECEIVED MSG ${e.data}`);
-                //return;
-            //}
-            if(typeof e.data == 'string' ) {
-                if ( e.data.indexOf('r2b2') > -1) 
-                    console.log(`###_ ${e.data}`);
-            }
+          
             if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_msgListener (e.data=${e.data})`);
@@ -214,8 +203,8 @@
                     }
 
                 }
-                if(e.data == _jsonObj.msgs.imp || e.data == 'jxosm_imp_selectmedia_selectJS417849795' ||
-                    e.data == 'jxosm_imp_selectmediaJS417849795') {
+                if(e.data == _jsonObj.msgs.imp /*  || e.data == 'jxosm_imp_selectmedia_selectJS417849795' ||
+                    e.data == 'jxosm_imp_selectmediaJS417849795' */) {
                     //this stuff is ... because the SelectMedia way of doing things
                     //even when no ad, their window will pop up for a bit
                     //before JXOSM detect their noad and shut them down.
@@ -353,46 +342,33 @@
                 //this is relatively new stuff:
                 //we do a kind of differential scroll at the OSM (partners tag)
                 //level (earlier it is renderer/core.js only)
-                //This is because Ridho asked for diff scroll for ADX tag (gptpassback)
-                //so that he can serve 300x600 stuff in there.
-                //Ok this is far from simple and we are not totally out of the woods yet
-                //we only trigger this when the partner says so
-                //here we check
-                //_jsonObj.createslot.diffscroll
-                //only true currently for gptpassback
+                //For partner=jixie , it is done at the jixie's own rendering level
+                //(thus with jixie diffscroll is false)
                 if(parentNode) {
-                    _jsonObj.createslot.parent.node = parentNode;
-                    //<------- if there is a fixed height or there is a max height
-                    // then we should have this.
-                    let cn = null;
                     let fh = _fcnVector.getCommonCfg().fixedheight;
-                    let mh = _fcnVector.getCommonCfg().maxheight;
-                    
-                    if (fh > 0 && _jsonObj.createslot.diffscroll) {//also that we want it
-                        let cnO = document.createElement("div");
-                        cnO.id = _jsonObj.createslot.div.id + "_outer";
-                        // if it is fixed height, then this.
-                        if (fh> 0)
+                    let cnO = null;
+                    if (fh && _jsonObj.createslot.diffscroll) { //we need to do fixed height.
+                        cnO = parentNode.querySelector(".jxfhhelper");
+                        //under a given parentNode (there should only be 1, corr to the selector
+                        //specified by the publisher), just at most 1 jx fixed height helper div then.
+                        if (!cnO) { //make one then.
+                            cnO = document.createElement("div");
+                            cnO.classList.add("jxfhhelper");
                             cnO.style.height = fh + 'px'; //<-- the configured fixed height
-                        else {
-                            //when not fixedheight but maxheight
-                            //cannot work yet
-                            //???
-                            cnO.style.height = mh + 'px';
-                            //cnO.style.maxHeight = mh + 'px'; //<-- the configured fixed height
-                        }                            
-
-                        cnO.style.width = '100%';
-        
-                        cnO.style.position = 'relative';
-                        cnO.style.display = 'inline-block';
-                        cnO.style.background = "transparent";
-                        
-                        cnO.style.overflow = 'hidden';
-                
+                            cnO.style.width = '100%';
+                            cnO.style.position = 'relative';
+                            cnO.style.display = 'inline-block';
+                            cnO.style.background = "transparent";
+                            cnO.style.overflow = 'hidden';
+                            parentNode.appendChild(cnO);
+                        }//  if !cnO
+                    }
+                    _jsonObj.createslot.parent.node = parentNode;
+                    let cn = null;
+                    if (cnO) {
+                        //fixed height case.
                         cn = document.createElement("div");
                         cn.id = _jsonObj.createslot.div.id;
-                        //cn.style.overflow = 'auto';
                         cn.style.height = 'auto'; //you can fill it like you want to, Teads.
                         //this actually does not change.
                         cn.style.width = '100%';
@@ -400,11 +376,8 @@
                         cn.style.inset = "0px";
                         cn.style.top = "0px"; 
                         cn.style.textAlign = "center";
-                        
                         cnO.appendChild(cn);
-                        parentNode.appendChild(cnO);
                         _fcnVector.setScrollMgmt(true, cnO, cn);
-
                     }
                     else {
                         _fcnVector.setScrollMgmt(false);
@@ -421,7 +394,7 @@
                     }
                     //-->
                     _jsonObj.createslot.div.node = cn;
-                }
+                }// if (parentNode)
                 else {
                     ////if (_sendDbg && !keep) {
                         ////sendTkr(_sendDbg, "keepfail2",  _jsonObj.partner);
@@ -456,7 +429,7 @@
                     if (JX_PARTNER_TEST) {
                         _dbgprint(`**Added ${_jsonObj.partner} script to page: ${scriptBody}`, true);
                     }
-                    if (scriptBody) { //hack
+                    if (scriptBody) { 
                         //console.log(`## (_start partner=${_jsonObj.partner}) OSM appending ContextualFragment to injectedDiv.id=${_injectedDiv.id}`);
                         _injectedDiv.appendChild(range.createContextualFragment(scriptBody));
                     }
@@ -562,7 +535,10 @@
                 });
             }
           };
-        
+        /**
+         * Clean up whatever needs cleanup with this layer of the waterfall
+         * before we go to the next layer
+         */
         var _prepareGoNext = function() {
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_prepareGoNext');
@@ -583,15 +559,7 @@
                 //console.log(`## (_prepareGoNext partner=${_jsonObj.partner}) Removing injectedDiv.id=${_injectedDiv.id} From parent.id${_injectedDiv.parentNode.id}`);
                 _injectedDiv.parentNode.removeChild(_injectedDiv);
             }
-            //outeer div
-            //if there is an outer one called "outer", then we do that.
-            //you already opened the fixed height thing.
             
-            //TODOTODO
-            //this is just because the adx tag (the only one that can do
-            //the fixedheight thing) is the bottom so no need to worry about
-            //waterfalling:
-            //_jsonObj.createslot.div.node.parentNode.style.height = '1px';//HACK
             if (_jsonObj.removedivclass) {
                 //This is an invention just for SelectMedia.
                 //console.log(`__##### ${_jsonObj.removedivclass}`);
@@ -625,10 +593,8 @@
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_startAllHooks');
             }
-            //Jixie one how ah
             window.addEventListener('message', _msgListener, false);
-            //window.addEventListener('scroll', _scrollListener, false);
-
+            
             //---- SELF DESTRUCT TIMER: -------------------
             //if there is another item under in in the waterfall, then
             //set a self-destruct thing.
@@ -1131,35 +1097,7 @@
             pDiv.id = _ctrID;
             //console.log(`## (_oneOffNonsense) OSM APPENDING pDiv.id=${pDiv.id} to pCtr.id=${pCtr.id}`);
             pCtr.appendChild(pDiv);
-        };
-        var _doctor = function(qparams, creativesArray) {
-            if (JX_PARTNER_TEST) {
-                //they would have used creativeids;
-                //partner: creativeid loh. The test one
-                let partner = qparams.get('partner');
-                //https://hooks.slack.com/services/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
-                //fake it totally.
-                _bottomReached = false;
-                let blob = _creativesArray[0];
-                if (!partner || blob.subtype != partner) {
-                    alert("Partner mismatch");
-                }
-                switch (partner) {
-                    case "teads":
-                        blob.adparameters.pageId = qparams.get('pageId');
-                        break;
-                    //case "spotx":
-                      //  break;
-                    case "selectmedia":
-                        blob.adparameters.script_id = qparams.get('script_id');
-                        blob.adparameters.script_src = qparams.get('script_src');
-                        break;
-                    case "unruly":
-                        blob.adparameters.siteId = qparams.get('siteId');
-                        break;
-                }//switch
-            } //
-        };
+        }
 
         OneOSMWaterfall.prototype.cleanup = function() {
             //delete whatever junk we have added
@@ -1300,42 +1238,9 @@
                 setScrollMgmt: _setScrollMgmt
             };
 
-            /*
-            if (p.fixedheight || p.excludedheight || p.maxwidth || p.maxheight || p.gam) {
-                _fixedHeight = {}; //p.fixedheight;
-                if (p.gam) {
-                    _fixedHeight.gam = p.gam;
-                }
-                if (p.fixedheight) {
-                    _fixedHeight.fixedheight = p.fixedheight;
-                }
-                if (p.maxheight) {
-                    _fixedHeight.maxheight = p.maxheight;
-                }
-                if (p.maxwidth) {
-                    _fixedHeight.maxwidth = p.maxwidth;
-                }
-                if (p.excludedheight) {
-                    _fixedHeight.excludedheight = p.excludedheight;
-                }
-            }
-            */
+            
             if (p.selectors && p.selectors.length > 0) {
                 _pgSelectors = p.selectors;
-                for (var i = 0; i < _pgSelectors.length; i++) {
-                    //20210423: 
-                    //this is a temp fix I need to let live for a while
-                    //coz it seems even though they say it is fixed, but I still
-                    //seem to see the old way in some of the older pages (how can??)
-                    //else our Unruly ad or teads will get served inside the IVS thumbnail <p>
-                    if (_pgSelectors[i] == '.read__content p:last') {
-                        _pgSelectors[i] = '.read__content > p:last';
-                    }
-                    else if (_pgSelectors[i] == '.contentArticle p:last') {
-                        _pgSelectors[i] = '.contentArticle > p:last';
-                    }
-                } 
-
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(JSON.stringify(p.selectors, null, 2));
                 }
@@ -1389,9 +1294,6 @@
                         }
                         _bottomReached = false;
                         _creativesArray = JSON.parse(JSON.stringify(responseJson.creatives)); 
-                        if (JX_PARTNER_TEST) {
-                            _doctor(_creativesArray);
-                        }
                         _oneOffNonsense(p); 
                         _startOneLayer();
                     }

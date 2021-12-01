@@ -19,7 +19,7 @@ while (top != currW)  {
 }//while
 if (gIframe && !gIsUFif) gIsFifs = true;
 
-function get_() {
+function get_(options) {
     if (false) { //TODO
         //TMP
         return {
@@ -39,6 +39,9 @@ function get_() {
             pagedomain = win.location.hostname;
             ttl = win.document.title;
             keywords = win.document.querySelector('meta[name="keywords"]');
+            if (!keywords && options && options.keywordsmeta) {
+                keywords = win.document.querySelector(`meta[name="${options.keywordsmeta}"]`);
+            }
             if (keywords) {
                 keywords = keywords.content;
             }

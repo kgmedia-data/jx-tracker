@@ -65,6 +65,7 @@ const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 
+/*
 function addGAMNoAdNotifyMaybe(str) {
     //also need to give it some time to act ah.
     //means we fire the has ad after a while.
@@ -85,6 +86,7 @@ function addGAMNoAdNotifyMaybe(str) {
     }
     return str;
 }
+*/
 
 var MakeOneFloatingUnit = function() { return null; };
 
@@ -1059,15 +1061,14 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //sorry for the mess here:
         //this following stuff uses the creative's sizing info:
         //this is what is new!!!
-        //if (normCrParams.maxwidth)
         jxmasterDiv.style.maxWidth = normCrParams.maxwidth + 'px';
         //else            
         //    jxmasterDiv.style.width = normCrParams.width + 'px';
         //if (normCrParams.maxwidth)
-            jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
+        jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
 
          //is this causing the problem of UNIV
-         if (normCrParams.maxheight && !normCrParams.fixedHeight) {
+         if (normCrParams.maxheight && !normCrParams.fixedHeight && !normCrParams.varsize) {
             jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
             jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
@@ -1147,7 +1148,13 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         let c = this.c;
         let jxbnDiv = this.divObjs.jxbnDiv;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
-    
+        if (c.varsize) {
+            //those 1x1 google tags , so far.
+            //the creative starts with height =1 , but then later will issue a size message
+            //to change the height.
+            c.creativeH = c.height;
+            return;
+        }
         /*
             Renee new idea:
             suppose the maxwidth and maxheight given is not useful.
@@ -1346,10 +1353,6 @@ const thresholdDiff_ = 120;
         if (tmp && tmp.parentNode) {
             tmp.parentNode.removeChild(tmp);    
         }
-        if (this.c.gamslotheight) {
-            window.frameElement.height = 1;
-            window.frameElement.parentElement.parentElement.style.height = 1 + 'px';
-        }
     }
     /**
      *  END OF : POSITION AND SIZE MANIPULATION FUNCTIONS. 
@@ -1440,6 +1443,7 @@ const thresholdDiff_ = 120;
             w = 640;
             h = 360;
         }
+        
         let crAR = w/h;
         if (cr.scaling == 'creative' && onlyARMatterTypes_.indexOf(cr.type)> -1) {
             w = 0;// to facilate the below calculations
@@ -1750,8 +1754,8 @@ const thresholdDiff_ = 120;
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
         doSizeMgmt(jxParams, c);
-
         let out = { 
+            varsize:            (c.height == 1),  
             nested:             nested,
             type:               c.type,
             clickurl:           c.clickurl, 
@@ -1764,10 +1768,6 @@ const thresholdDiff_ = 120;
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
             doDiffScroll:       c.doDiffScroll
         };
-        if (jxParams.gam) {
-            out.gamslotwidth = c.maxwidth > 0 ? Math.min(c.maxwidth, c.width): c.width;
-            out.gamslotheight = c.maxheight > 0 ? Math.min(c.maxheight, c.height): c.height;
-        }
         
         if (JX_FLOAT_COND_COMPILE) {
             if (jxParams.doFloat) {
@@ -1917,10 +1917,26 @@ const thresholdDiff_ = 120;
                             //need to handle properly.
                         } //TODO
                         //GAM type is able to detect no ad.
-                        let sbody1 = addGAMNoAdNotifyMaybe(sbody);
-                        if (sbody1) {
-                            sbody = sbody1;
-                        }
+/* sbody = `<script src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+<div id='div-gpt-ad-12345-0'>
+  <script>
+    window.googletag = window.googletag || {cmd: []};
+    googletag.cmd.push(function() {
+        googletag.defineSlot('/31800665/KOMPAS.COM_Mobile_AMP/osmjixie', [[300,600],[300,250],[320,100]], 'div-gpt-ad-12345-0').setTargeting('Pos',['osmkompas']).addService(googletag.pubads());
+        googletag.pubads().addEventListener('slotRenderEnded', function(event) {
+            if (event.isEmpty) {
+                parent.postMessage('jxadended', '*');
+                return;
+            }
+            parent.postMessage('jxmsg::' + JSON.stringify({'type': 'size',params: {'height': window.document.body.scrollHeight}}), '*');
+        }); 
+        googletag.pubads().set('page_url', 'https://amp.kompas.com/megapolitan/read/2021/05/28/05334261/update-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257');
+        googletag.enableServices();
+        googletag.display('div-gpt-ad-12345-0'); 
+    });
+  </script>
+</div>`;*/
+                        console.log(sbody); 
                         assumeHasAd = true; //<== !!!
                         out[trusted? 'div':'iframe'] = { scriptbody: sbody };
                         if (c.adparameters && c.adparameters.jxeventssdk) {
@@ -2120,6 +2136,13 @@ const thresholdDiff_ = 120;
        */
       function ampReqSize(resolveFcn, x,y, fixedheight) {
           //here the fixedheight is our current height of the unit
+          if (y == 1) {
+              //somethingx1 type which is used to model 1x1 variable size slots 
+              //in google; for this type, the height will be changed later
+              //thru "size" messages posted from the creative iframe.
+            resolveFcn("fixedheight");
+            return;
+          }
           if (y < fixedheight) {
               //no need to request resize
               //we have already enough real estate
@@ -2313,15 +2336,6 @@ const thresholdDiff_ = 120;
                     throw new Error('jxnoad');
                 }
 
-                if (_jxParams.gam) {
-                    try {
-                    window.frameElement.height = normCrParams.gamslotheight;
-                    window.frameElement.width = normCrParams.gamslotwidth;
-                    window.frameElement.parentElement.parentElement.style.height = normCrParams.gamslotheight + 'px';
-                    }
-                    catch(ebug){}
-                }
-               
                 /**
                  * Set up resize handlers
                  */
@@ -2388,12 +2402,6 @@ const thresholdDiff_ = 120;
         function _assembleParams(params) {
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
-                if (top != self) {
-                    //we will do it properly tmr
-                    //to identify GAM-ness.
-                    //coz the publisher has not added the extra property yet:
-                    _jxParams.gam = 'friendly';
-                }  
                 if (_jxParams.excludedheight) {
                     _jxParams.excludedHeight = _jxParams.excludedheight;
                 }
@@ -2401,8 +2409,6 @@ const thresholdDiff_ = 120;
                 _jxParams.pgwidth = parseInt(_jxParams.pgwidth) || 0;
                 _jxParams.maxwidth = parseInt(_jxParams.maxwidth) || 0;
                 if (_jxParams.pgwidth && !_jxParams.maxwidth) {
-                    //hack. will fix it tomrrow
-                    if (!_jxParams.gam)
                     _jxParams.maxwidth = _jxParams.pgwidth;
                 }
                 _jxParams.maxheight = parseInt(_jxParams.maxheight) || 0;
@@ -2411,17 +2417,6 @@ const thresholdDiff_ = 120;
                     _jxParams.maxheight = _jxParams.fixedheight;
                 }
                 //_jxParams.nested = parseInt(_jxParams.nested) || 0;
-                if (_jxParams.gam == 'friendly') {
-                    let a = 300;
-                    try {
-                    a = window.frameElement.parentElement.parentElement.offsetWidth;
-                    }catch(ebug) {}
-                    _jxParams.pgwidth = a; //640;//one for mobile one for desktop
-                    if (!_jxParams.maxwidth) //if it was specified explicitly
-                        _jxParams.maxwidth = a; //_jxParams.pgwidth;
-                        //there could be a maxheight set in the params though.
-                    //then the height we do not restrict then.
-                }
                 _jxParams.creativeid = parseInt(_jxParams.creativeid) || null;
                 
                 //but this stuff really no body use ah?!

@@ -24,7 +24,9 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
          * Foreseeable problem is that they are fixed using 1 div id
          * ..... what if the page has several of their scripts (hope that will not happen)
          */
-        rtjson.createslot = {};
+        rtjson.createslot = {
+            diffscroll: true
+        };
         rtjson.createslot.parent = aNode;
         rtjson.createslot.div = {
             id: `${dbjson.adparameters.div_id}`,

@@ -3,10 +3,10 @@
 // The line of params is per publisher
 // The minified code above is common to all
 
-(
-    function(t,e){try{let a=top,n=top.document,r=0,i=null,l=window.frameElement,m=a.googletag.pubads().getSlots();for(;++r<5;)if(l&&(l=l.parentElement),l&&l.id)for(var s=0;s<m.length;s++)if(m[s].getSlotElementId()==l.id){i=l,r=100;break}if(!i)throw new Error("cannot find gpt div");a._jxoutstreammgrq=a._jxoutstreammgrq||[];let g={unit:t,selectors:["#"+i.id]};Object.assign(g,e),a._jxoutstreammgrq.push(g),i.style.height="auto",i.style.width="100%";var o=n.createElement("script");o.src="https://scripts.jixie.media/jxosm.1.0.min.js",i.appendChild(o)}catch(t){console.log("adops jx osm GAM snipplet integration issue : "+JSON.stringify(t.stack))}}
-    )(
-    "1000168-KeeuBaxQKQ", {maxheight: 400}
+(function(t,e,o){try{let s=top,l=top.document,r=0,a=null,d=window.frameElement,c=s.googletag.pubads().getSlots();for(;++r<5;)if(d&&(d=d.parentElement),d&&d.id)for(var n=0;n<c.length;n++)if(c[n].getSlotElementId()==d.id){a=d,r=100;break}if(!a)throw new Error("cannot find gpt div");s._jxosm=s._jxosm||[];let g={unit:t,selectors:["#"+a.id]};Object.assign(g,e),s._jxosm.push(g),a.style.height="auto",a.style.width="100%";var i=l.createElement("script");i.src=o,a.appendChild(i)}catch(t){console.log("adops jx osm GAM snipplet integration issue : "+JSON.stringify(t.stack))}})(
+    "1000168-KeeuBaxQKQ",  
+    {},  
+    "https://scripts.jixie.media/jxosm.1.0.min.js"
 );
 
 /* Note: 
@@ -29,8 +29,8 @@ you can specify the following properties in that object:
  // let ggSlots = window.googletag.pubads().getSlots();
  
 (
-    function(jxunit, whParams) { 
-    try {
+    function(jxUnit, whParams, osmScript) { 
+        try {
         // Assumption is that this code runs inside friendly iframe created by GAM
         // divA > divB > friendlyiframe
         // The divA was planted by publisher onto the page.
@@ -68,24 +68,28 @@ you can specify the following properties in that object:
                 } //for 
             }
         }// while
+        //_jxoutstreammgrq
         if (!gptCtr) throw new Error("cannot find gpt div");
-        win._jxoutstreammgrq = win._jxoutstreammgrq || [];
+        win._jxosm = win._jxosm || [];
         let o = {
-            unit: jxunit, 
+            unit: jxUnit, 
             selectors: ['#'+gptCtr.id]
         };
         Object.assign(o, whParams);
-        win._jxoutstreammgrq.push(o);
+        win._jxosm.push(o);
         gptCtr.style.height = 'auto';
         gptCtr.style.width = '100%';
         var newScript = doc.createElement("script");
-        newScript.src = "https://scripts.jixie.media/jxosm.1.0.min.js";
+        newScript.src = osmScript; 
         gptCtr.appendChild(newScript);
     }
     catch(e) {
         console.log("adops jx osm GAM snipplet integration issue : " + JSON.stringify(e.stack));
     }
 }
-)("1000168-KeeuBaxQKQ", {maxheight: 400});
+)(  "1000168-KeeuBaxQKQ", 
+    {},
+    "https://scripts.jixie.media/jxosm.1.0.min.js"
+    );
 
 
