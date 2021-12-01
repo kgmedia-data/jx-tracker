@@ -1158,8 +1158,6 @@ const _aggStep = jxvhelper.getStep();
                     _reportCB('video', 'agg', _makeCurrInfoBlob(this.videoid));
                 }
 
-
-
                 //if we allow for midrolls, then everybody has delayed ads then.
                 if(_nextAdSlotTime != -1 && _accumulatedTime >= _nextAdSlotTime) {
                     if (_adScheduler.canPlayAd(currentTime, _vid.duration)) {

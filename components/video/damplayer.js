@@ -248,9 +248,9 @@ function createObject_(options, ampIntegration) {
      */
     function _sendAgg(v) {
         //videoid, ownerid publisher id (accountid)
-        let url = _evtsHelperBlock.aggTrackerBase + '&videoid=' + v.videoid + 
+        let url = _evtsHelperBlock.aggTrackerBase + '&action=agg&videoid=' + v.videoid + 
             '&owernid=' + v.videoid +  '&rendition=' + v.w + 'x' + v.h;
-        common.sendTracker(url);
+        common.sendBeacon(url);
     }
     function _sendVTracker(action, v, errBlob) {
         let dbgProp = _dbgVersion + "_OOS_" + _dbgCountOOS + "_L_" + _dbgCountLoad + "_LVP_" + _dbgL1VP;
@@ -356,14 +356,7 @@ function createObject_(options, ampIntegration) {
             _msLastErrorTracker = DateNow;
         }
         //let's say we do not bother!
-        common.sendTracker(url+delta);
-        /*
-        fetch(url +delta, {
-            method: 'get',
-            credentials: 'include' 
-        })
-        .catch((error) => {
-        }); */ 
+        common.sendBeacon(url+delta);
     }
 
     /*

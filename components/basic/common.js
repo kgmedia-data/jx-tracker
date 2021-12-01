@@ -87,7 +87,7 @@ function MakeOneHelperObj_() {
     FactoryOneHelper.prototype.isIOS = function() {
         return (/iPad|iPhone|iPod/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
     }
-    FactoryOneHelper.prototype.sendTracker = function(getUrl) {
+    FactoryOneHelper.prototype.sendBeacon = function(getUrl) {
         if (window &&
             window.navigator &&
             typeof window.navigator.sendBeacon === "function" &&
@@ -101,9 +101,10 @@ function MakeOneHelperObj_() {
                 // fallback below
             }
         }
-        return fetch(getUrl , {
+        fetch(getUrl , {
             method: 'GET'
-        });
+        })
+        .catch((e) => {});
     }
     /*
     FactoryOneHelper.prototype.qs = function(selector, container = null) {
