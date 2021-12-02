@@ -9,7 +9,7 @@ const modulesmgr    = require('../components/basic/modulesmgr');
 const common                       = require('../components/basic/common');
 modulesmgr.set('basic/common',     common);
  
-const univelements  = require('../components/renderer/univelements-stub');
+const univelements  = require('../components/renderer/univelements');
 modulesmgr.set('renderer/univelements',         univelements);
  
 const mpjixie       = require('../components/osmpartners/amp-jixie');
