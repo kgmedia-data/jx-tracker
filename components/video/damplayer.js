@@ -245,12 +245,14 @@ function createObject_(options, ampIntegration) {
      * @param {*} v 
      * @param {*} errBlob 
      * @returns 
+     * _vInfoMap[jxId]
      */
     function _sendAgg(v) {
         //videoid, ownerid publisher id (accountid)
+
         let url = _evtsHelperBlock.aggTrackerBase + '&action=agg&videoid=' + v.videoid + 
-            '&owernid=' + v.videoid +  '&rendition=' + v.w + 'x' + v.h;
-        common.sendBeacon(url);
+            '&owernid=' + _vInfoMap[v.videoid].owner_id +  '&rendition=' + v.w + 'x' + v.h;
+        //common.sendBeacon(url);
     }
     function _sendVTracker(action, v, errBlob) {
         let dbgProp = _dbgVersion + "_OOS_" + _dbgCountOOS + "_L_" + _dbgCountLoad + "_LVP_" + _dbgL1VP;

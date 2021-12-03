@@ -808,6 +808,7 @@ const _aggStep = jxvhelper.getStep();
                     //console.log("--------->>>");
                     let cfg = _playerCfgMgr.getNewCfgMaybe(track ? track.height: 0);
                     _shakaPlayer.configure(cfg);
+                    //console.log(`##### C ${JSON.stringify(cfg, null, 2)}`);
                     if (track) {
                         _shakaPlayer.selectVariantTrack(track, true);
                     }
@@ -1130,9 +1131,11 @@ const _aggStep = jxvhelper.getStep();
             }
             else this.spacer10++; 
             if (this.spacer10 == 10 && _shakaPlayer) {
+                // this is the one called most frequently: (periodic)
                 let cfg = _playerCfgMgr.getNewCfgMaybe();
                 if (cfg) {
                     _shakaPlayer.configure(cfg);
+                    //console.log(`##### D ${JSON.stringify(cfg, null, 2)}`);
                 }
                 this.spacer10 = 0;
             }
@@ -1319,6 +1322,7 @@ const _aggStep = jxvhelper.getStep();
             shakaPlayer = new shaka.Player(video);
             let o = _playerCfgMgr.getNewCfgMaybe(0, true); //true as this is for init phase
             shakaPlayer.configure(o);
+            //console.log(`##### A : ${JSON.stringify(o, null, 2)}`);
             return shakaPlayer;       
         }   
 
@@ -1906,6 +1910,8 @@ const _aggStep = jxvhelper.getStep();
                         bufferingGoal: 10
                     },
                 });
+                //console.log(`##### B : bufferingGoal 10`);
+            
             }
         }
 
