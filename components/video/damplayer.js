@@ -245,7 +245,15 @@ function createObject_(options, ampIntegration) {
      * @param {*} v 
      * @param {*} errBlob 
      * @returns 
+     * _vInfoMap[jxId]
      */
+    function _sendAgg(v) {
+        //videoid, ownerid publisher id (accountid)
+
+        let url = _evtsHelperBlock.aggTrackerBase + '&action=agg&videoid=' + v.videoid + 
+            '&owernid=' + _vInfoMap[v.videoid].owner_id +  '&rendition=' + v.w + 'x' + v.h;
+        //common.sendBeacon(url);
+    }
     function _sendVTracker(action, v, errBlob) {
         let dbgProp = _dbgVersion + "_OOS_" + _dbgCountOOS + "_L_" + _dbgCountLoad + "_LVP_" + _dbgL1VP;
         if (!_evtsHelperBlock) {
@@ -349,13 +357,8 @@ function createObject_(options, ampIntegration) {
         if (action == 'error') {
             _msLastErrorTracker = DateNow;
         }
-        fetch(url +delta, {
-            method: 'get',
-            credentials: 'include' 
-        })
-        .catch((error) => {
-        }); 
-        
+        //let's say we do not bother!
+        common.sendBeacon(url+delta);
     }
 
     /*
@@ -672,7 +675,8 @@ function createObject_(options, ampIntegration) {
             _evtsHelperBlock = JSON.parse(JSON.stringify(unfiredOneTimeEvtsSeed_));
             _evtsHelperBlock.trackerBase = jxvhelper.getTrackerBase(_options) + '&accountid=' + _options.accountid + 
                      (_options.customid ? '&customid='+ _options.customid: '') +
-                     '&autoplay=' + _options.autoplay,
+                     '&autoplay=' + _options.autoplay;
+            _evtsHelperBlock.aggTrackerBase = jxvhelper.getAggTrackerBase() + '&accountid=' + _options.accountid;
             _evtsHelperBlock.vposition = -1;
         }
         
@@ -1259,6 +1263,10 @@ function createObject_(options, ampIntegration) {
     var _evtsHelperBlock = null; // JSON.parse(JSON.stringify(unfiredOneTimeEvtsSeed_));
     
     function _routeEvent(type, eName, videoInfoObj, errObj) {
+        if (eName == 'agg') {
+            //quick Do quick go.
+            return _sendAgg(videoInfoObj);
+        }
         
         //if the video id does not match the current video
         //then suppress the emission of the event
