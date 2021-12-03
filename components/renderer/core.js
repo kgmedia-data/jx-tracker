@@ -65,6 +65,8 @@ const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 
+
+/*
 function addGAMNoAdNotifyMaybe(str) {
     //also need to give it some time to act ah.
     //means we fire the has ad after a while.
@@ -85,6 +87,7 @@ function addGAMNoAdNotifyMaybe(str) {
     }
     return str;
 }
+*/
 
 var MakeOneFloatingUnit = function() { return null; };
 
@@ -839,6 +842,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                         window.clearInterval(jxinter);
                         var ns = document.createElement("script");
                         ns.src = blob.scripturl;
+                        jxiframeDoc.body.style.margin = '0px';
                         jxiframeDoc.body.appendChild(ns);
                     }
                 },500);
@@ -1058,17 +1062,16 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //sorry for the mess here:
         //this following stuff uses the creative's sizing info:
         //this is what is new!!!
-        //if (normCrParams.maxwidth)
         jxmasterDiv.style.maxWidth = normCrParams.maxwidth + 'px';
         //else            
         //    jxmasterDiv.style.width = normCrParams.width + 'px';
         //if (normCrParams.maxwidth)
-            jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
+        jxbnDiv.style.maxWidth = normCrParams.maxwidth + 'px';
 
-        //is this causing the problem of UNIV
-        if (normCrParams.maxheight) {
-        //    jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
-          //  jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
+         //is this causing the problem of UNIV
+         if (normCrParams.maxheight && !normCrParams.fixedHeight && !normCrParams.varsize) {
+            jxmasterDiv.style.maxHeight = normCrParams.maxheight + 'px';
+            jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
         
         jxbnDiv.style.height = normCrParams.height + 'px';
@@ -1080,7 +1083,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //jxbnScaleDiv.style.zIndex = 99999999;
         jxbnScaleDiv.style.height = (normCrParams.height ) + 'px';
 
-        //FANCYSCROLL
+        //differential scroll:
         /**
          * if we have the fixed height, we need to set the master div and bn div to be 100% height
          * and for the scaled div need to have absolute position, coz we will move the creative within the window by setting the top position of scaled div
@@ -1106,7 +1109,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         }
         jxCoreElt.id = destContainerPrefix_ + id; //<==== ==== ==== ====
         jxCoreElt.style.cssText = 'maxwidth:none!important;maxheight:none!important;position:absolute;left:0;top:0;background-color:white;border:none;width:' + normCrParams.width + 'px;height:' + normCrParams.height + 'px;'
-        
+         
         jxCoreElt.style.maxWidth = 'none !important'; 
         jxCoreElt.style.maxHeight = 'none !important';
         jxCoreElt.style.position = 'absolute';
@@ -1114,6 +1117,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         jxCoreElt.style.top = '0';
         jxCoreElt.style.backgroundColor = 'white';
         jxCoreElt.style.border = 'none';
+        
         jxCoreElt.style.width = normCrParams.width + 'px';
         
         jxCoreElt.style.height = normCrParams.height + 'px';
@@ -1142,10 +1146,21 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
      * scaling)
      */    
     function __handleResize() {
+        // here we think of all the constraints and get the height of the universal elements.
+        //total fixed height.
+        //universal is occupying even more space.
+        //so we need to subtract.
+
         let c = this.c;
         let jxbnDiv = this.divObjs.jxbnDiv;
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
-    
+        if (c.varsize) {
+            //those 1x1 google tags , so far.
+            //the creative starts with height =1 , but then later will issue a size message
+            //to change the height.
+            c.creativeH = c.height;
+            return;
+        }
         /*
             Renee new idea:
             suppose the maxwidth and maxheight given is not useful.
@@ -1190,9 +1205,14 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //the thing should be scaled to 250x500px
         //i.e. the challenge is to show 500px height of stuff within a 400px box.
         //this seems to work fine.
+        
+        //here we calculate.
+
         if (c.fixedHeight && c.doDiffScroll) {
+            //this is one way
             ratio = jxbnDiv.offsetWidth/c.width;
             c.creativeH = c.height*ratio;
+
             //console.log(`_WOO_ H=${c.creativeH} h=${c.height} r=${ratio}`);
         }
         switch(c.type) {
@@ -1202,6 +1222,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             case 'iframe':                
                 jxbnScaleDiv.style.transform = 'scale(' + ratio + ') translate3d(0px, 0px, 0px)';
                 jxbnScaleDiv.style.transformOrigin = '0px 0px 0px';
+                //jxbnScaleDiv.style.transformOrigin = 'top center';
+                
                 if (!c.fixedHeight) {
                     jxbnDiv.style.height = newH + 'px';
                 }
@@ -1238,6 +1260,23 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //if (this.cb) this.cb();
     //}
 
+    // univ elements will be invariant under differential scrolling but they 
+    // do eat into the "window" of the diff scroll, so we account for that here:
+    // e.g. if fixedHeight is 400px, and if the height of the univ element is 90,
+    // then really the bnDiv we need to constrain it to 400-90
+    // this is related to the implementation of the fixedHeight/diff scroll mechanism.
+    function __handleUnivHeight(height) {
+        if (this.fixedHeight) {
+            let h = this.fixedHeight - height;
+            if (!isNaN(h) && h > 0) {
+                //for the fixed height case, the uni stuff will eat into the space for 
+                //the creative.
+                this.divObjs.jxbnDiv.style.maxHeight = h + 'px';
+                this.divObjs.jxbnDiv.style.minHeight = h + 'px';
+            }
+        }
+    }
+
 // For Differential scroll (fixeHeight)
 // This logic of this differential you can find in docs/
 // differentialScroll_RendererCore.pptx
@@ -1256,9 +1295,10 @@ const thresholdDiff_ = 120;
             c.creativeH = c.height;
             c.containerH = c.fixedHeight;
         }
+        let containerH = c.containerH - this.univmgr.getHeight();
 
         let jxbnScaleDiv = this.divObjs.jxbnScaleDiv;
-        let diff = c.containerH - c.creativeH; 
+        let diff = containerH - c.creativeH; 
         //console.log(`__handleScroll diff: ${diff} containerH: ${c.containerH} creativeH: ${c.creativeH}`);
         
         //for AMP we get this from the first parameter
@@ -1286,7 +1326,7 @@ const thresholdDiff_ = 120;
         let containerBCR_bottom = containerBCR.bottom - delta + vertOffsetToOurFrame;
         winH = winH - delta;
         //console.log(`ad=${c.creativeH} osm=${c.containerH} vp=${winH} bcrtop=${containerBCR.top} bcrbot=${containerBCR.bottom}`);
-        if (c.containerH > winH) {
+        if (containerH > winH) {
             if (containerBCR_top < 0) {
                 // special case of a very short viewport (shorter than the container). 
                 if (c.creativeH < winH) {
@@ -1296,7 +1336,7 @@ const thresholdDiff_ = 120;
                 }
                 else {
                     // creative height is longer than that of viewport.
-                    offset = ((0-containerBCR_top)*(diff))/(c.containerH-winH);
+                    offset = ((0-containerBCR_top)*(diff))/(containerH-winH);
                     // the Math.min one is when creative is taller than container
                     // the Math.max is when creative is shorter .
                     offset = (offset >= 0 ? Math.min(offset, diff): Math.max(offset, diff));
@@ -1311,7 +1351,7 @@ const thresholdDiff_ = 120;
                     //console.log(`____ diff=${diff} val=${((winH - containerBCR_bottom)*(diff))/(winH-c.containerH)}`);
                     offset = Math.max(
                         diff, //negative
-                        ((winH - containerBCR_bottom)*(diff))/(winH-c.containerH)
+                        ((winH - containerBCR_bottom)*(diff))/(winH-containerH)
                     );
                 }
             }
@@ -1324,12 +1364,11 @@ const thresholdDiff_ = 120;
                 }
             }
         }
-        //console.log(`____ ----> OFFSET ${offset}`)
         //if (offset != this.savedoffset) 
         {
             //we set the top= offset only if it is different from last set.
             this.savedoffset = offset;
-            jxbnScaleDiv.style.top = offset + 'px';
+            jxbnScaleDiv.style.top = offset +  'px'; 
         }
     }
 
@@ -1432,6 +1471,7 @@ const thresholdDiff_ = 120;
             w = 640;
             h = 360;
         }
+        
         let crAR = w/h;
         if (cr.scaling == 'creative' && onlyARMatterTypes_.indexOf(cr.type)> -1) {
             w = 0;// to facilate the below calculations
@@ -1608,7 +1648,7 @@ const thresholdDiff_ = 120;
         let w_ = params.width ? params.width: 640; 
         let h_ = params.height ? params.height: 360;
         let mw_ = params.maxwidth ? params.maxwidth: 0;
-        let mh_ = params.maxheigth ? params.maxheight : 0;
+        let mh_ = params.maxheight ? params.maxheight : 0;
     
         let AR = crSizeRange.aspectratio;
         if (!AR) { 
@@ -1645,6 +1685,12 @@ const thresholdDiff_ = 120;
                     w_ = l;
                 }
                 h_ = w_/AR;
+                l = Math.min(params.maxheight ? params.maxheight: bigHeight_, crSizeRange.maxheight);
+                if (h_ > l) {
+                    h_ = l;
+                    w_ = l*AR;
+                }
+
             }
             mh_ = h_;//so we won't have funny thing to trigger scaling at our level
             mw_ = w_;
@@ -1699,18 +1745,19 @@ const thresholdDiff_ = 120;
      * @returns a normalized creative params object
      */
     function getNormalizedCreativeParams(jxParams, c) {
-        //debugger;
         /** FANCYSCROLL:
          * if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
          * this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
+         * 
+         * OK this is no longer true.20211202 note. 
          */
         let nested = jxParams.nested;
 
-        if (!isNaN(jxParams.fixedHeight)) {
-            fixedHeight = parseInt(jxParams.fixedHeight);
+        /* dun need this any more if (!isNaN(jxParams.fixedHeight)) {
+            fixedHeight = parseInt(jxParams.fixedHeight); //gosh forgot to declare var
             if (fixedHeight > 0)
                 nested = -1;
-        }
+        }*/
         
         //this is the case whereby the creative itself will not manage the tracker firing
         //so WE HERE need to do it.
@@ -1736,8 +1783,8 @@ const thresholdDiff_ = 120;
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
         doSizeMgmt(jxParams, c);
-
         let out = { 
+            varsize:            (c.height == 1),  
             nested:             nested,
             type:               c.type,
             clickurl:           c.clickurl, 
@@ -1857,7 +1904,6 @@ const thresholdDiff_ = 120;
                 break;    
             case 'video': 
                 trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
-                //c.adparameters.trusted = true; //HACK
                 if (c.adparameters.trusted) {
                     trusted = true;
                     out.crSig = jxScriptUrls_.video.signature
@@ -1899,10 +1945,26 @@ const thresholdDiff_ = 120;
                             //need to handle properly.
                         } //TODO
                         //GAM type is able to detect no ad.
-                        let sbody1 = addGAMNoAdNotifyMaybe(sbody);
-                        if (sbody1) {
-                            sbody = sbody1;
-                        }
+/* sbody = `<script src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+<div id='div-gpt-ad-12345-0'>
+  <script>
+    window.googletag = window.googletag || {cmd: []};
+    googletag.cmd.push(function() {
+        googletag.defineSlot('/31800665/KOMPAS.COM_Mobile_AMP/osmjixie', [[300,600],[300,250],[320,100]], 'div-gpt-ad-12345-0').setTargeting('Pos',['osmkompas']).addService(googletag.pubads());
+        googletag.pubads().addEventListener('slotRenderEnded', function(event) {
+            if (event.isEmpty) {
+                parent.postMessage('jxadended', '*');
+                return;
+            }
+            parent.postMessage('jxmsg::' + JSON.stringify({'type': 'size',params: {'height': window.document.body.scrollHeight}}), '*');
+        }); 
+        googletag.pubads().set('page_url', 'https://amp.kompas.com/megapolitan/read/2021/05/28/05334261/update-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257');
+        googletag.enableServices();
+        googletag.display('div-gpt-ad-12345-0'); 
+    });
+  </script>
+</div>`;*/
+                        console.log(sbody); 
                         assumeHasAd = true; //<== !!!
                         out[trusted? 'div':'iframe'] = { scriptbody: sbody };
                         if (c.adparameters && c.adparameters.jxeventssdk) {
@@ -1954,14 +2016,22 @@ const thresholdDiff_ = 120;
         }
         if (c.adparameters && c.adparameters.jxeventssdk)
             out.jxeventssdk = 1;
-        if (out.fixedHeight > 0) {
+        //we no longer have this restrictions            
+        //if (out.fixedHeight > 0) {
             //if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
             //this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
-            out.nested = -1;
-        }
+         //   out.nested = -1;
+        //}
         if (c.universal) {
             out.universal = c.universal;//??
         }
+        /* just for ease of local testing:
+        out.universal = {
+            "title":"OSM demo video",
+        "thumbnail":"https://creatives.jixie.media/MN168F6uZj/459/1708/mnc_youtube.jpg",
+        "description":"This is a demo video for testing OSM solution from Jixie."
+         }; 
+         */
         out.assumeHasAd = assumeHasAd;
         return out;
     }
@@ -1984,7 +2054,7 @@ const thresholdDiff_ = 120;
      * @param {*} divObjs 
      * @param {*} cxtFcns 
      */    
-    function HooksMgr(container, normCrParams, divObjs, cxtFcns) {
+    function HooksMgr(container, normCrParams, divObjs, cxtFcns, univmgr) {
         this.needcallresize = true; //typically we will have this called after the hasad signal
         //but with amp, this might be too early and can cause problems.
 
@@ -2006,6 +2076,7 @@ const thresholdDiff_ = 120;
         this.bf_heightchange = __handleCreativeHeightChange.bind({divObjs:this.divObjs, c: this.c});
         this.bf_resize = __handleResize.bind({divObjs:this.divObjs, c: this.c });
         this.bf_scroll = __handleScrollEvent.bind({
+            univmgr:        univmgr,
             savedoffset:    0,
             //creativeH : normCrParams.height,
             //containerH : normCrParams.fixedHeight,
@@ -2102,6 +2173,13 @@ const thresholdDiff_ = 120;
        */
       function ampReqSize(resolveFcn, x,y, fixedheight) {
           //here the fixedheight is our current height of the unit
+          if (y == 1) {
+              //somethingx1 type which is used to model 1x1 variable size slots 
+              //in google; for this type, the height will be changed later
+              //thru "size" messages posted from the creative iframe.
+            resolveFcn("fixedheight");
+            return;
+          }
           if (y < fixedheight) {
               //no need to request resize
               //we have already enough real estate
@@ -2164,6 +2242,8 @@ const thresholdDiff_ = 120;
                 ampReqSize(ampReqSizeAnsResolveFcn, _jxParams.pgwidth, normCrParams.height, normCrParams.fixedHeight);
             }
 
+            
+
             let prom1_stdCrHandshake    = null;
             let prom2_crHasAd           = null;
             let prom3_evtSDKHandshake   = null;
@@ -2184,7 +2264,7 @@ const thresholdDiff_ = 120;
                 divObjs = createOuterContainer(instId, jxContainer, normCrParams);
                 createMainContainer(divObjs, normCrParams);//these can be called earlier too
 
-                hooksMgr = new HooksMgr(jxContainer, normCrParams, divObjs, cxtFcns);
+                hooksMgr = new HooksMgr(jxContainer, normCrParams, divObjs, cxtFcns, univmgr);
 
                 //
                 //STEPS:
@@ -2298,12 +2378,12 @@ const thresholdDiff_ = 120;
                  */
                 hooksMgr.hookResize();
                 
-                univmgr.init(divObjs.jxmasterDiv, 
+                univmgr.init(divObjs.jxmasterDiv, //attachNode
+                    __handleUnivHeight.bind({fixedHeight: normCrParams.fixedHeight, divObjs: divObjs}),
                     _jxParams, 
                     normCrParams.universal, 
                     normCrParams.clickurl, 
                     normCrParams.clicktrackerurl);
-                    
                 
                 hooksMgr.callHandleResize();
 
@@ -2353,11 +2433,12 @@ const thresholdDiff_ = 120;
          * 
          * Do any minor repair and stubbing with default if needed.
          * @param {*} params 
+         * let the frame info be passed to here by the code.
+         * gam: default none, safeframe friendlyframe
          */
         function _assembleParams(params) {
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
-                
                 if (_jxParams.excludedheight) {
                     _jxParams.excludedHeight = _jxParams.excludedheight;
                 }
@@ -2368,12 +2449,12 @@ const thresholdDiff_ = 120;
                     _jxParams.maxwidth = _jxParams.pgwidth;
                 }
                 _jxParams.maxheight = parseInt(_jxParams.maxheight) || 0;
+                
                 if (_jxParams.fixedheight) {
                     _jxParams.fixedHeight = _jxParams.fixedheight;
                     _jxParams.maxheight = _jxParams.fixedheight;
                 }
                 //_jxParams.nested = parseInt(_jxParams.nested) || 0;
-
                 _jxParams.creativeid = parseInt(_jxParams.creativeid) || null;
                 
                 //but this stuff really no body use ah?!

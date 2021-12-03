@@ -32,7 +32,7 @@ let MakeOneUniversalMgr_ = function() {
         return o;
     }
     
-    function attachUniversalBlob_(attachNode, jxParams, universal, clickurl, clicktrackerurl) {
+    function attachUniversalBlob_(attachNode, cb, jxParams, universal, clickurl, clicktrackerurl) {
         let newheight = 0;
         let merged = mergeSettings(jxParams, universal ? universal : {});
         merged.clickurl = clickurl;
@@ -46,11 +46,16 @@ let MakeOneUniversalMgr_ = function() {
                 });
             };
         }
+        if (!(merged.thumbnail || merged.title || merged.description)) {
+            //if there is none of these items, then we do not bother!
+            return; 
+        }
         const _jxTitleStyle = ".jxTitleContainer{overflow:auto;text-align:left;margin-bottom:5px;display:table;font-family:Arial;font-size:14px;}.jxImgBlock{float:left; max-width:70px;min-width:40px;margin-right:10px;}.jxImg{max-width: 100%;height: auto;width: auto;}.jxBlockTitle {margin-top:5px;display:table-cell;vertical-align:middle;}.jxBlockActions{margin-top:5px;margin-bottom:5px;}.jxInfo{float:left;height:15px;width:15px;border:2px solid #bbb;color:#bbb;border-radius:50%;display:table;font-size:10px;}.jxInfo a{text-decoration:none;color:#bbb;}.jxInfo a:hover{text-decoration:none;color:#bbb;}.jxInfo a:visited{text-decoration:none;color:#bbb;}.jxButtonBlock{float:right;margin-right:5px;}.jxTitle {display: inline;}" + ".jxTitle a:link,.jxTitle a:visited{" + merged.titleCSS + "}.jxTitle a:hover{" + merged.titleCSSHover + "}.jxDescription{" + merged.descriptionCSS + "}.jxButton {font-family: Arial, Helvetica, sans-serif;font-size: 11px;color: #494949 !important;background: #ffffff;padding: 5px;border: 2px solid #494949 !important;border-radius: 6px;display: inline-block;transition: all 0.3s ease 0s;}.jxButton:hover {color: #494949 !important;border-radius: 50px;border-color: #494949 !important;transition: all 0.3s ease 0s;}";
         common.acss(_jxTitleStyle, 'jxTitleStyle');
         let jxImgBlock, jxInfo, jxBlockTitle, jxButtonBlock;
         let jxTitleDiv = document.createElement('div');
-        let jxActionsDiv = document.createElement('div');
+
+        let jxActionsDiv = null; 
         let id = '' + Math.floor(Math.random() * 100) + 1;//id not so important actually. Dunno what for.
         //we dun bother with the id really.
         jxTitleDiv.id = "jxt_" + id;
@@ -58,8 +63,11 @@ let MakeOneUniversalMgr_ = function() {
         jxTitleDiv.style.textAlign = 'left';
         jxTitleDiv.className = 'jxTitleContainer';
     
-        jxActionsDiv.id = "jxa_" + id;
-        jxActionsDiv.style.cssText = "all:initial;text-align:center;display:block;margin-bottom:10px;"
+        if (false) {
+            jxActionsDiv = document.createElement('div');
+            jxActionsDiv.id = "jxa_" + id;
+            jxActionsDiv.style.cssText = "all:initial;text-align:center;display:block;margin-bottom:10px;"
+        }// if (false)
     
         if (merged.nested == 0) {
             if (merged.thumbnail) {
@@ -93,6 +101,7 @@ let MakeOneUniversalMgr_ = function() {
                 jxDescription = common.newDiv(jxBlockTitle, 'p', merged.description, 'jxDescription');
             }
     
+            if (false) {
             // Configuring the action block
             jxActionsDiv.style.overflow = 'auto';
             jxActionsDiv.className = 'jxBlockActions';
@@ -108,12 +117,16 @@ let MakeOneUniversalMgr_ = function() {
                     merged.click();
                 });
             }
+            } //if (false)
     
             if (jxTitleDiv.innerHTML) attachNode.insertBefore(jxTitleDiv, attachNode.firstChild);
-            attachNode.appendChild(jxActionsDiv);
-            newheight = 30;
+            if (jxActionsDiv) {
+                attachNode.appendChild(jxActionsDiv);
+            }
+            newheight = jxTitleDiv.offsetHeight + (jxActionsDiv ? jxActionsDiv.offsetHeight: 0);
     
         } else { // Nested, then we display the information button on top of the creative
+            if (false) {
             jxActionsDiv.style.overflow = 'auto';
             jxActionsDiv.className = 'jxBlockActions';
             if (merged.nested > 0) { // if nested is negative then we don't display anything
@@ -125,7 +138,13 @@ let MakeOneUniversalMgr_ = function() {
                     'jxButtonBlock');
             }
             attachNode.appendChild(jxActionsDiv);
+            newheight = jxActionsDiv.offsetHeight + 5;
+            }//if (jxActionsDiv)
         }
+        if (cb) {
+            cb(newheight);
+        }
+
         return {
             height: newheight,
             jxActionsDiv: jxActionsDiv,
@@ -148,8 +167,8 @@ let MakeOneUniversalMgr_ = function() {
         }
     };
     FactoryOneUniveralMgr.prototype.init = function(
-        attachNode, jxParams, universal, clickurl) {
-        _univEltsObj = attachUniversalBlob_(attachNode, jxParams, universal, clickurl);
+        attachNode, cb, jxParams, universal, clickurl) {
+        _univEltsObj = attachUniversalBlob_(attachNode, cb, jxParams, universal, clickurl);
         if (_univEltsObj)
             _height = _univEltsObj.height;
     };
@@ -164,8 +183,9 @@ module.exports = MakeOneUniversalMgr_;
 * module.exports:
     - a function which will make a universal manager object
     - When run, an object will be created which has the following functions:
-        init( attachNode, jxParams, universal, clickurl)
+        init( attachNode, callback, jxParams, universal, clickurl)
             -attachNode is where the created stuff will be attached  (should be the "master div")
+            -callback supplied by the caller . Will be called after the attachment of the universal elements and when the height is determinable
             -jxparams is the "p" var of the calling of the renderer
                 If it contains any from this: then they will be used
                 (we search jxparam, if not then see from universal object)

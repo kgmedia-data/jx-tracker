@@ -34,8 +34,9 @@ function MakeOnePlayerCfgMgr_(container) {
     }
 
     function _getChangedSize(mustReturnObj = false) {
+
         if (mustReturnObj || (_container.offsetWidth != _lastwidth)) {
-            //console.log(`_### !!!! GET CHANGED SIZE ${_container.offsetWidth} ${_container.offsetHeight}`);
+            //console.log(`_### !!!! mRO=${mustReturnObj} GET CHANGED SIZE ${_container.offsetWidth} ${_container.offsetHeight}`);
             _lastwidth = _container.offsetWidth;
             _lastheight = _container.offsetHeight;
             return {width: _container.offsetWidth, height: _container.offsetHeight};
@@ -91,7 +92,7 @@ function MakeOnePlayerCfgMgr_(container) {
      * @param {*} forInit : the init phase of 
      * @returns 
      */
-    FactoryOneHelper.prototype.getNewCfgMaybe = function(forceHeightMaybe, forInit = false) {
+    FactoryOneHelper.prototype.getNewCfgMaybe = function(forceHeightMaybe = 0, forInit = false) {
         // write the answer into out.
         // will be based on everything.
         if (forceHeightMaybe > 0) {
@@ -100,10 +101,11 @@ function MakeOnePlayerCfgMgr_(container) {
         if (forceHeightMaybe == 0) {
             _scheme = 'auto';
         }
-        let dim = _getChangedSize(forInit || forceHeightMaybe == undefined || forceHeightMaybe == 0);
+        let dim = _getChangedSize(forInit); // || forceHeightMaybe == undefined || forceHeightMaybe == 0);
         if (!dim) {
-            if (forceHeightMaybe == undefined) 
-                return null; //no change then nothing to do.
+            return null;
+            //if (forceHeightMaybe == undefined) 
+              //  return null; //no change then nothing to do.
         }
         let skrobj = null;
         // the vheight should also take into account the strips (black strips)    
@@ -124,7 +126,7 @@ function MakeOnePlayerCfgMgr_(container) {
             skrobj = { abr: {}};
         }
         skrobj.abr.enabled = _scheme == 'user' ? false: true; 
-        if (_scheme == 'auto' && !forInit) {
+        if (_scheme == 'auto') {
             //at init we do not restrict them
             skrobj.abr.restrictions = {
                 maxHeight : _getClosestDamHLSHeight(dim.height)

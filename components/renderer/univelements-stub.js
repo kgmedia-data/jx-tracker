@@ -8,7 +8,7 @@ let MakeOneUniversalMgr_ = function() {
     };
     FactoryOneUniveralMgr.prototype.hide = function() {
     };
-    FactoryOneUniveralMgr.prototype.init = function(jxParams, clickurl, universal, attachNode) {
+    FactoryOneUniveralMgr.prototype.init = function(jxParams, callback, clickurl, universal, attachNode) {
     };        
     let ret = new FactoryOneUniveralMgr();
     return ret;
@@ -24,8 +24,9 @@ module.exports = MakeOneUniversalMgr_;
     
     - a function which will make a universal manager object
     - When run, an object will be created which has the following functions:
-        init( attachNode, jxParams, universal, clickurl)
+        init( attachNode, callback, jxParams, universal, clickurl)
             -attachNode is where the created stuff will be attached  (should be the "master div")
+            -callback supplied by the caller . Will be called after the attachment of the universal elements and when the height is determinable
             -jxparams is the "p" var of the calling of the renderer
                 If it contains any from this: then they will be used
                 (we search jxparam, if not then see from universal object)

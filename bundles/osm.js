@@ -11,7 +11,7 @@ const modulesmgr    = require('../components/basic/modulesmgr');
 const common                       = require('../components/basic/common');
 modulesmgr.set('basic/common',     common);
 
-const univelements  = require('../components/renderer/univelements-stub');
+const univelements  = require('../components/renderer/univelements');
 modulesmgr.set('renderer/univelements',         univelements);
 
 const mpcommon      = require('../components/osmpartners/common');
@@ -22,6 +22,8 @@ const mpsm          = require('../components/osmpartners/selectmedia');
 const mpteads       = require('../components/osmpartners/teads');
 const mpunruly      = require('../components/osmpartners/unruly');
 const mpr2b2        = require('../components/osmpartners/r2b2');
+//const mpgpt         = require('../components/osmpartners/gptpassback');
+
 
 
 const osmWorkingDivId_ = 'osmdiv';
@@ -73,7 +75,7 @@ function start(options) {
     const ids = mids.get();
     //check if the options has the keywords.
     
-    const pginfo = mpginfo.get();
+    const pginfo = mpginfo.get(options);
     // if options has pagekeywords, then it will win over whatever pginfo gets.
     let merged = Object.assign({}, ids, pginfo, options);
     
@@ -83,6 +85,7 @@ function start(options) {
             teads: mpteads,
             unruly: mpunruly,
             r2b2: mpr2b2
+            //gptpassback: mpgpt
     });
     instMap.set(hashStr, osmInst);
 }
@@ -105,11 +108,14 @@ var JxOSMQ = function () {
 
 // get the existing _jxoutstreammgrq array
 var _old_jxoutstreammgrq = window._jxoutstreammgrq;
+if (!_old_jxoutstreammgrq) {
+    _old_jxoutstreammgrq = window._jxosm;
+}
 // create a new object
 window._jxoutstreammgrq = new JxOSMQ(); //actually no need object, just cloned from some website's snipplet .. :-)
+window._jxosm = _jxoutstreammgrq;
 // execute all of the queued up events - apply() turns the array entries into individual arguments
 if (_old_jxoutstreammgrq) {
     window._jxoutstreammgrq.push.apply(window._jxoutstreammgrq, _old_jxoutstreammgrq);
 }
-
 
