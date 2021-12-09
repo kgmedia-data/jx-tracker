@@ -251,7 +251,7 @@ function createObject_(options, ampIntegration) {
         //videoid, ownerid publisher id (accountid)
 
         let url = _evtsHelperBlock.aggTrackerBase + '&action=agg&videoid=' + v.videoid + 
-            '&owernid=' + _vInfoMap[v.videoid].owner_id +  '&rendition=' + v.w + 'x' + v.h;
+            '&ownerid=' + _vInfoMap[v.videoid].owner_id +  '&rendition=' + v.w + 'x' + v.h;
         //common.sendBeacon(url);
     }
     function _sendVTracker(action, v, errBlob) {
@@ -319,6 +319,7 @@ function createObject_(options, ampIntegration) {
         if (v) {
             url = _evtsHelperBlock.trackerBase + 
             '&videoid=' + v.videoid + 
+            '&ownerid=' + _vInfoMap[v.videoid].owner_id +
             '&vposition=' + (_evtsHelperBlock.vposition < 0 ? 0: _evtsHelperBlock.vposition) +
             '&startmode=' + _evtsHelperBlock.video.lastgesture +
             '&playhead=' + v.playhead +
