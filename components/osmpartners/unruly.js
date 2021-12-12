@@ -104,7 +104,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
          * really corresponds to something on the page.
          */
         rtjson.createslot = {
-            diffscroll: true
+            diffscroll: false
         };
         rtjson.createslot.parent = aNode;
         //let destdivid = (dbjson.adparameters.siteId === 226678 ? "jxunrulydivid_226678": jxDefaultUnrulyDivId_);

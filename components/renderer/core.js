@@ -2022,9 +2022,9 @@ const thresholdDiff_ = 120;
             //this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
          //   out.nested = -1;
         //}
-        if (c.universal) {
-            out.universal = c.universal;//??
-        }
+        //if (c.universal) {
+          //  out.universal = c.universal;//??
+        //}
         /* just for ease of local testing:
         out.universal = {
             "title":"OSM demo video",

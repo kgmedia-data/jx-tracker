@@ -380,6 +380,10 @@
                         _fcnVector.setScrollMgmt(true, cnO, cn);
                     }
                     else {
+                        //let cnO_ = parentNode.querySelector(".jxfhhelper");
+                        //if (cnO_) {
+                          //  cnO_.style.height = '1px';
+                        //}
                         _fcnVector.setScrollMgmt(false);
                         cn = getAnElt('#' + _jsonObj.createslot.div.id, parentNode);
                         if(!cn) {
