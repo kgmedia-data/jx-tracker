@@ -329,9 +329,18 @@
         //However, if the content was already paused (coz the stupid ad took such a long time to come)
         //then here we should also 
     }
+    //for app, then revert asap
     var _onAdEvent = function(evt) {
+        //console.log(`##### ${evt.type}`);
         if (!_adsManager) return; //in case closed shop
         let ad = evt.getAd();
+        /* if (evt.type != google.ima.AdEvent.Type.AD_PROGRESS) {
+        console.log(`###1# ${ad.getAdId()}`);
+        console.log(`###2# ${ad.getAdSystem()}`);
+        console.log(`###3# ${ad.getAdvertiserName()}`);
+        console.log(`###4# ${ad.getCreativeAdId()}`);
+        console.log(`###5# ${JSON.stringify(ad.getWrapperAdIds())}`);
+        }*/
 
         if (_eventsCallback) {
             let jxEvtName = _subscribedEvents[evt.type];
@@ -407,6 +416,7 @@
                 break;
             case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
                 _handleContentPauseReq(true); 
+                _leftoverEvents['contentresume'] = 1; //with pause then can resume
                  break;
             case google.ima.AdEvent.Type.LOADED:     
                 //confusing when this is fired!        
@@ -454,10 +464,13 @@
 
     function _onAdError(adErrorEvent) {
         let errcode = -1;
+        let adE = null;
         if (adErrorEvent) {
-            let adE = adErrorEvent.getError();
+            adE = adErrorEvent.getError();
             if (adE) {
                 errcode = adE.getErrorCode();
+                //console.log(`##### 1.1 ${adE.getMessage()}`);
+                //console.log(`##### 1.2 ${adE.toString()}`);
                 /***** if (true) {
                     _harvestErrorInfo(adE);
                 }*****/
@@ -466,11 +479,50 @@
         _pFcnVector.report('error', {errorcode: errcode}); 
         if (this.resolveFcn)
             this.resolveFcn("jxaderrored");
+        if (_leftoverEvents['triggerend']) {
+            let errStr = null;
+            delete _leftoverEvents['triggerend'];
+            _pFcnVector.hideSpinner();
+            try {
+                //errStr = 'at1';
+                _adsManager.stop();
+                //errStr = 'at2';
+                _fireReportMaybe('slotended', { slotduration: 0});
+                //errStr = 'at3';
+                _fireReportMaybe('ended'); 
+                //errStr = 'at4';
+                if (_leftoverEvents['contentresume']) {
+                    //errStr = 'at5';
+                    delete _leftoverEvents['contentresume'];
+                    //errStr = 'at6';
+                    _handleContentResumeReq();
+                    //errStr = 'at7';
+                }
+                //else {
+                  //  errStr = 'at4b';
+                //}
+                //errStr = 'allpass';
+            }
+            catch (ex) {
+                //errStr += "--" + ex.toString();
+            }
+            /* if (errStr) {
+                errStr += "--X-" + adE.toString() + "--XX-" + adE.getMessage();
+            }
+            if (errStr && window.reneeDbg == 1) {
+                try {
+                    let data = JSON.stringify({text: errStr});
+                    let xhr = new XMLHttpRequest();
+                    xhr.open("POST", `https://hooks.slack.com/services/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?text=dbgg`);
+                    xhr.send(data);
+                }
+                catch (error) {
+                }
+            }*/
+        }
         return; 
     }
 
-
-    
     var _onNoAd = function(e) {
         /********* _harvestErrorInfo2(e);    *******/
         _adLoaderOutcome = "jxnoad";
@@ -548,7 +600,9 @@
         //var e = new Event('jxhasad');
         //window.dispatchEvent(e);
 
-        _leftoverEvents = { 
+        _leftoverEvents = {
+            //when later there is the content paused event, then we will add 'contentresume' = 1
+            'triggerend': 1, 
             'started': 1,
             'ended': 1,
             'slotended': 1
@@ -671,6 +725,15 @@
     }
 
     function _makeAdRequestP(adURL, adXML, autoplayFlag, mutedFlag) {
+        /* if (adURL && adURL.indexOf('1000114-aFHHNeXdkP') > -1) {
+            let myarray = [
+                23, 1038, 799, 691, 884, 1120
+            ]
+            let  myidx = Math.floor(Math.random() * 6);
+            let cid = myarray[myidx];
+            window.reneeDbg = 1;
+            adURL = `https://content.jixie.io/v1/video?maxnumcreatives=13&source=jxplayer&client_id=52471830-e2f4-11ea-b5e9-f301ddda9414&sid=1639439102-52471830-e2f4-11ea-b5e9-f301ddda9414&pageurl=https%3A%2F%2Fmegapolitan.kompas.com%2Fread%2F2021%2F05%2F28%2F05334261%2Fupdate-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257&domain=megapolitan.kompas.com&unit=1000114-qEgXGqRpBy&creativeid=` + cid;
+        }*/
         _width = _container.offsetWidth;
         _height = _container.offsetHeight;
         
