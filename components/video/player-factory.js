@@ -99,7 +99,7 @@ const _aggStep = jxvhelper.getStep();
         var _gestureReportCB = function() {}; //donothing now. Can be overwritten
         var _defaultReportInfoBlob = null;
         var _accumulatedTime = 0;
-        var _accuUnreported = 0;
+        var _nextAggSend = _aggStep;
         var _playheadCB = null; //for doing the save playhead in cookie
         var _adCountdownMgrFcn = null;
 
@@ -212,7 +212,8 @@ const _aggStep = jxvhelper.getStep();
                 realtech: _pbMethod,
                 videoid: videoid,
                 volume: 0,
-                playhead: 0
+                playhead: 0,
+                step: _aggStep
             };
         }
         function _makeCurrInfoBlob(videoid) {
@@ -229,6 +230,7 @@ const _aggStep = jxvhelper.getStep();
                 realtech: _pbMethodReal,
                 videoid: _videoID,
                 volume: (_savedMuted ? 0: parseInt(_savedVolume * 100)),
+                step: _aggStep,
                 playhead: Math.round(_vid.currentTime) //should be the playhead ah Math.round(_accumulatedTime),
             };
         }
@@ -413,7 +415,7 @@ const _aggStep = jxvhelper.getStep();
             //even if we do no do fade-into-ad, we still will be using styles.hideOpacity to hide the content and not styles.hide)
             
             _accumulatedTime = 0;
-            _accuUnreported = 0;
+            _nextAggSend = _aggStep;
             _thumbnailURL = null;
 
             _manualPaused = false;
@@ -1028,7 +1030,9 @@ const _aggStep = jxvhelper.getStep();
             //play time and not absolute time.
             //let's also not have too many timers flying around
             //oh coz fetch ad also taken time lah.
-            let remaining = Math.floor(adCountdownSec_ + this.addTime  + this.adReqTime - accuTime );
+            //OLD WRONG let remaining = Math.floor(adCountdownSec_ + this.addTime  + this.adReqTime - accuTime );
+            let remaining = Math.floor(adCountdownSec_ - (accuTime - this.accuTime0 )); 
+            
             if(remaining <= 0) {
                 _adCountdownMgrFcn = null; //self-removal so that the playhead update will not be calling it.
                 _stripMessageDiv.classList.add(styles.hide);
@@ -1153,14 +1157,17 @@ const _aggStep = jxvhelper.getStep();
                 if(diff <= 2) {
                     //else there might have been some jump!
                     _accumulatedTime += diff;
-                    _accuUnreported += diff;
+                    //_nextAggSend starts at 5s 
+                    // at play: send 5
+                    // at 5: send 5
+                    // at 10: send 5
+                    if (_accumulatedTime > _nextAggSend) {
+                        //how much we have.
+                        //duration 
+                        _reportCB('video', 'agg', _makeCurrInfoBlob(this.videoid));
+                        _nextAggSend += _aggStep;    
+                    }
                 }
-                if (_accuUnreported > _aggStep) {
-                    //no need to do that math each time bah.
-                    _accuUnreported -= _aggStep;
-                    _reportCB('video', 'agg', _makeCurrInfoBlob(this.videoid));
-                }
-
                 //if we allow for midrolls, then everybody has delayed ads then.
                 if(_nextAdSlotTime != -1 && _accumulatedTime >= _nextAdSlotTime) {
                     if (_adScheduler.canPlayAd(currentTime, _vid.duration)) {
@@ -1936,9 +1943,8 @@ const _aggStep = jxvhelper.getStep();
                 if(outcome == 'jxhasad') {
                     //we use accumulated time to also manage the countdown but since time is taken up
                     //between adRequest and hasad (adsMgrloaded), I need to factor that in also.
-                    let wastedTime = _accumulatedTime - startAccuTime;
                     return new Promise(function(resolve) {
-                        _adCountdownMgrFcn = __adCountdownMgrFcn.bind({adReqTime: _accumulatedTime, addTime: wastedTime, resolveFcn: resolve});
+                        _adCountdownMgrFcn = __adCountdownMgrFcn.bind({accuTime0: _accumulatedTime, resolveFcn: resolve});
                         _createStripMessage(adCountdownSec_);
                     });
                 }

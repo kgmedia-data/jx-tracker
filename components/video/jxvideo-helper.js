@@ -406,7 +406,7 @@ function MakeOneHelperObj_() {
         return tmp;
     }
     FactoryOneHelper.prototype.getAggTrackerBase = function() {
-        return 'https://traid.jixie.io/sync/video?x=1&step=5';
+        return 'https://traid.jixie.io/sync/video?x=1';
     }
     FactoryOneHelper.prototype.getStep = function() {
         //if you change this, remember to change the function above! (getAggTrackerBase)

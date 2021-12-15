@@ -249,13 +249,14 @@ function createObject_(options, ampIntegration) {
      */
     function _sendAgg(v) {
         //videoid, ownerid publisher id (accountid)
-
-        let url = _evtsHelperBlock.aggTrackerBase + '&action=agg&videoid=' + v.videoid + 
+        let timeleft = _vInfoMap[v.videoid].metadata.duration - v.playhead;
+        timeleft = timeleft < v.step ? Math.round(timeleft): v.step;
+        let url = _evtsHelperBlock.aggTrackerBase + '&step=' + timeleft + '&action=duragg&videoid=' + v.videoid + 
             '&ownerid=' + _vInfoMap[v.videoid].owner_id +  '&rendition=' + v.w + 'x' + v.h;
-        //common.sendBeacon(url);
+        common.sendBeacon(url);
     }
     function _sendVTracker(action, v, errBlob) {
-        let dbgProp = _dbgVersion + "_OOS_" + _dbgCountOOS + "_L_" + _dbgCountLoad + "_LVP_" + _dbgL1VP;
+        let dbgProp = _dbgVersion; // + "_OOS_" + _dbgCountOOS + "_L_" + _dbgCountLoad + "_LVP_" + _dbgL1VP;
         if (!_evtsHelperBlock) {
             return;
         }
@@ -342,8 +343,12 @@ function createObject_(options, ampIntegration) {
             '&viewability=' + vab2 +
             '&debug=' + dbgProp;
         }        
+
         if (action == 'hlserror' && errBlob){
             url += '&debug=' + encodeURIComponent(errBlob.details); //errBlob: details 
+        }
+        if (action == 'play') {
+            url += '&step=' + jxvhelper.getStep();
         }
         //if (action.startsWith('play') || action == 'start') {
           //  console.log(`S_S_S_S_S_S_sendTracker: action=${action} diffTime = ${diffTime}`);
@@ -1907,6 +1912,7 @@ function createObject_(options, ampIntegration) {
             jxId = -1; //This is the min we need but it is not there. So declare error !
         if (jxId > -1) {
             _vInfoMap[jxId] = blob;
+            
         }    
         return jxId;
     }
