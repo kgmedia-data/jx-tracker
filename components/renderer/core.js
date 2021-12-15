@@ -1275,6 +1275,16 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 this.divObjs.jxbnDiv.style.minHeight = h + 'px';
             }
         }
+        let currMH = this.divObjs.jxmasterDiv.style.maxHeight;
+        if (currMH) {
+            try {
+            let x = parseInt(currMH.replace('px', '')) + height;
+            //not some rubbish value::
+            if (x > 0 && x < 1000)
+                this.divObjs.jxmasterDiv.style.maxHeight = x +"px";
+            }
+            catch(e){}
+        }
     }
 
 // For Differential scroll (fixeHeight)
@@ -2022,16 +2032,17 @@ const thresholdDiff_ = 120;
             //this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
          //   out.nested = -1;
         //}
-        //if (c.universal) {
-          //  out.universal = c.universal;//??
-        //}
-        /* just for ease of local testing:
-        out.universal = {
+        if (c.universal) {
+            out.universal = c.universal;//??
+        }
+        /* just for ease of local testing: */
+        /* out.universal = {
             "title":"OSM demo video",
         "thumbnail":"https://creatives.jixie.media/MN168F6uZj/459/1708/mnc_youtube.jpg",
         "description":"This is a demo video for testing OSM solution from Jixie."
-         }; 
-         */
+         };
+         */ 
+        
         out.assumeHasAd = assumeHasAd;
         return out;
     }
