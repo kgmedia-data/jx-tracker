@@ -433,6 +433,26 @@
                 */
                 break;
             case google.ima.AdEvent.Type.STARTED:
+                //<--
+/****** yes this works:
+var selectionCriteria = new google.ima.CompanionAdSelectionSettings();
+selectionCriteria.resourceType = google.ima.CompanionAdSelectionSettings.ResourceType.STATIC;
+selectionCriteria.creativeType = google.ima.CompanionAdSelectionSettings.CreativeType.IMAGE;
+selectionCriteria.sizeCriteria = google.ima.CompanionAdSelectionSettings.SizeCriteria.IGNORE;
+// Get a list of companion ads for an ad slot size and CompanionAdSelectionSettings
+var companionAds = ad.getCompanionAds(300, 250, selectionCriteria);
+var companionAd = companionAds[0];
+// Get HTML content from the companion ad.
+var content = companionAd.getContent();
+console.log(content);
+console.log("---------");
+// Write the content to the companion ad slot.
+//var div = document.getElementById('companion-ad-300-250');
+//div.innerHTML = content;
+//break;
+the companion ad info in content is an HTML snipplet.
+******/
+                //-->
                 if (_callOnceUponStarted) {
                     _callOnceUponStarted(ad, this.resolveFcn);
                 }
@@ -772,6 +792,93 @@
                 // adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=937';
                 //adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=1120';
                 //adURL = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=' + Date.now();
+                /*
+                adURL = null;
+                adXML = `<VAST version="3.0">
+                <Ad id="20004">
+                    <InLine>
+                        <AdSystem version="4.0">iabtechlab</AdSystem>
+            
+                        <AdTitle>
+                            <![CDATA[VAST 4.0 Pilot - Scenario 5]]>
+                        </AdTitle>
+                        <Description>
+                            <![CDATA[This is sample companion ad tag with Linear ad tag. This tag while showing video ad on the player, will show a companion ad beside the player where it can be fitted. At most 3 companion ads can be placed. Modify accordingly to see your own content.]]>
+                        </Description>
+            
+                        <Pricing model="cpm" currency="USD">
+                            <![CDATA[ 25.00 ]]>
+                        </Pricing>
+            
+                        <Error>http://example.com/error</Error>
+                        <Impression id="Impression-ID">http://example.com/track/impression</Impression>
+            
+                        <Creatives>
+                            <Creative id="5480" sequence="1">
+                                <CompanionAds>
+                                    <Companion id="1232" width="300" height="250" assetWidth="250" assetHeight="200" expandedWidth="350" expandedHeight="250">
+                                           <StaticResource creativeType="image/png">
+                                            <![CDATA[https://www.iab.com/wp-content/uploads/2014/09/iab-tech-lab-6-644x290.png]]>
+                                            </StaticResource>
+                                            <CompanionClickThrough>
+                                                <![CDATA[https://iabtechlab.com]]>
+                                            </CompanionClickThrough>
+                                    </Companion>
+                                </CompanionAds>
+                            </Creative>
+                            <Creative id="5480" sequence="1">
+                                <Linear>
+                                    <Duration>00:00:16</Duration>
+                                    <TrackingEvents>
+                                        <Tracking event="start">http://example.com/tracking/start</Tracking>
+                                        <Tracking event="firstQuartile">http://example.com/tracking/firstQuartile</Tracking>
+                                        <Tracking event="midpoint">http://example.com/tracking/midpoint</Tracking>
+                                        <Tracking event="thirdQuartile">http://example.com/tracking/thirdQuartile</Tracking>
+                                        <Tracking event="complete">http://example.com/tracking/complete</Tracking>
+                                        <Tracking event="progress" offset="00:00:10">http://example.com/tracking/progress-10</Tracking>
+                                    </TrackingEvents>
+            
+                                    <VideoClicks>
+                                        <ClickTracking id="blog">
+                                            <![CDATA[https://iabtechlab.com]]>
+                                        </ClickTracking>
+                                    </VideoClicks>
+            
+                                    <MediaFiles>
+                                        <MediaFile id="5241" delivery="progressive" type="video/mp4" bitrate="500" width="400" height="300" minBitrate="360" maxBitrate="1080" scalable="1" maintainAspectRatio="1" codec="0">
+                                            <![CDATA[https://iab-publicfiles.s3.amazonaws.com/vast/VAST-4.0-Short-Intro.mp4]]>
+                                        </MediaFile>
+                                    </MediaFiles>
+                                </Linear>
+                            </Creative>
+            
+                        </Creatives>
+                        <Extensions>
+                            <Extension type="iab-Count">
+                                <total_available>
+                                    <![CDATA[ 2 ]]>
+                                </total_available>
+                            </Extension>
+                        </Extensions>
+                    </InLine>
+                </Ad>
+            </VAST>
+            `;
+            This is what we get from the getContent
+
+            <a target="_blank" id="1232" href="https://iabtechlab.com"><div class="overlayContainer"><img src="https://www.iab.com/wp-content/uploads/2014/09/iab-tech-lab-6-644x290.png" height="250" width="300"><div class="overlayTextAttribution"></div></div></a>
+            
+
+            var el = document.createElement( 'html' );
+            el.innerHTML = `<a target="_blank" id="1232" href="https://iabtechlab.com"><div class="overlayContainer"><img src="https://www.iab.com/wp-content/uploads/2014/09/iab-tech-lab-6-644x290.png" height="250" width="300"><div class="overlayTextAttribution"></div></div></a>`;
+            
+            let x = el.getElementsByTagName( 'a' ); // Live NodeList of your anchor elements
+            let y = el.getElementsByTagName( 'img' ); // Live NodeList of your anchor elements
+            x[0].href
+'https://iabtechlab.com/'
+y[0].src
+'https://www.iab.com/wp-content/uploads/2014/09/iab-tech-lab-6-644x290.png'
+                    */
                 if (adURL) 
                     adsRequest.adTagUrl = adURL;
                 else if (adXML) {
