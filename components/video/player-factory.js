@@ -98,6 +98,9 @@ const _aggStep = jxvhelper.getStep();
         var _gestureReportCB = function() {}; //donothing now. Can be overwritten
         var _defaultReportInfoBlob = null;
         var _accumulatedTime = 0;
+        var _tsPaused = 0;
+        var _msNoCntPlay = 0;
+        
         var _nextAggSend = _aggStep;
         var _playheadCB = null; //for doing the save playhead in cookie
         var _adCountdownMgrFcn = null;
@@ -225,6 +228,7 @@ const _aggStep = jxvhelper.getStep();
                 w: _vid.videoWidth,
                 h: _vid.videoHeight,
                 accutime: _accumulatedTime,
+                mspaused: _msNoCntPlay,
                 origtech: _pbMethod,
                 realtech: _pbMethodReal,
                 videoid: _videoID,
@@ -414,6 +418,8 @@ const _aggStep = jxvhelper.getStep();
             //even if we do no do fade-into-ad, we still will be using styles.hideOpacity to hide the content and not styles.hide)
             
             _accumulatedTime = 0;
+            _tsPaused = 0;
+            _msNoCntPlay = 0;
             _nextAggSend = _aggStep;
             _thumbnailURL = null;
 
@@ -920,6 +926,9 @@ const _aggStep = jxvhelper.getStep();
             _reportCB('video', 'ended', _makeCurrInfoBlob(this.videoid));
         }
         var _onPausedCB = function(param) {
+            _tsPaused = Date.now();
+            console.log(`# _tsPaused is set to now`);
+  
             if (_ctrls) {
                 _ctrls.setPlayBtn();
             }
@@ -971,6 +980,11 @@ const _aggStep = jxvhelper.getStep();
             return; //we go the init path first
         }
         function _onPlayingCB(param) {
+            if (_tsPaused) {
+                _msNoCntPlay += Date.now() - _tsPaused;
+                console.log(`# _msNoCntPlay is now = ${_msNoCntPlay}`);
+                _tsPaused = 0;
+            }
             //if (_manualPaused) {
                 //console.log(`##_ _onPlayingCB setting manualPaused to false`);
             //}
