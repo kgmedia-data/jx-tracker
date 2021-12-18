@@ -30,7 +30,6 @@ const _jxPlaybackOverride       = "shaka";
 const initialState_             = 'content';
 const remainSecEventsSeed_      = [15, 5, 2];
 
-const adCountdownSec_           = 3;
 const defaultCountDownToAdMsg   = "Ad starts in %%SECONDS%% s";
 
 const delayedSetOffsetPBMethods_ = [ fallbackTech_, "native"];
@@ -71,7 +70,7 @@ const _aggStep = jxvhelper.getStep();
         var _soundFallback = false;
         var _forceAutoplayWithSound = false; 
         
-        var _nextAdSlotTime = 999999;
+        var _nextAdSlot = null;
         var _currToken = null;
         var _isConfigSet = false;
         var _genInitP = null; //general init promise (resolved means the general init of the player done)
@@ -372,7 +371,7 @@ const _aggStep = jxvhelper.getStep();
             _remainSecEvents = JSON.parse(JSON.stringify(remainSecEventsSeed_));
             if (_adScheduler) {
                 _adScheduler.reset();
-                _nextAdSlotTime = _adScheduler.getFirstNonPreroll();
+                _nextAdSlot = _adScheduler.getFirstNonPreroll();
             }
             if (_ctrls)
                 _ctrls.reset();
@@ -455,8 +454,9 @@ const _aggStep = jxvhelper.getStep();
             logoCfg, soundIndCfg = null, sound = "off") {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
+            _cfg.ads.delay = 5;
             _adScheduler = MakeOneAdScheduler(_cfg.ads);
-            _nextAdSlotTime = _adScheduler.getFirstNonPreroll();
+            _nextAdSlot = _adScheduler.getFirstNonPreroll();
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
@@ -1031,7 +1031,7 @@ const _aggStep = jxvhelper.getStep();
             //let's also not have too many timers flying around
             //oh coz fetch ad also taken time lah.
             //OLD WRONG let remaining = Math.floor(adCountdownSec_ + this.addTime  + this.adReqTime - accuTime );
-            let remaining = Math.floor(adCountdownSec_ - (accuTime - this.accuTime0 )); 
+            let remaining = Math.round(this.playTime - accuTime);
             
             if(remaining <= 0) {
                 _adCountdownMgrFcn = null; //self-removal so that the playhead update will not be calling it.
@@ -1169,16 +1169,17 @@ const _aggStep = jxvhelper.getStep();
                     }
                 }
                 //if we allow for midrolls, then everybody has delayed ads then.
-                if(_nextAdSlotTime != -1 && _accumulatedTime >= _nextAdSlotTime) {
+                if(_nextAdSlot && _accumulatedTime >= _nextAdSlot.reqTime) {
                     if (_adScheduler.canPlayAd(currentTime, _vid.duration)) {
                         _adScheduler.useSlot(_accumulatedTime);
-                        _nextAdSlotTime = _adScheduler.getNext(_accumulatedTime);
-                        _fetchMidrollWithCountdownP(_accumulatedTime, 
+                        let airtime = _nextAdSlot.playTime;
+                        _nextAdSlot = _adScheduler.getNext(_accumulatedTime);
+                        _fetchMidrollWithCountdownP(airtime,
                             _adScheduler.getAdIdx()== 0? _cfg.ads.adtagurl : _cfg.ads.adtagurl2); //this will kick off a promise chain.
                     }
                     else {
                         //not enough remaining time to justify an ad. So we are done
-                        _nextAdSlotTime = -1; //we are done with ad playing (midrolls also)
+                        _nextAdSlot = null;
                     }
                 }
 
@@ -1927,7 +1928,7 @@ const _aggStep = jxvhelper.getStep();
          * This is called by the playhead update callback function when the time is ripe
          * @param {*} startAccuTime. When this function is called what is the accumulated play time.
          */
-        function _fetchMidrollWithCountdownP(startAccuTime, adUrl) {
+        function _fetchMidrollWithCountdownP(ad2AirTime, adUrl) {
             if (common.isIOS() && !_vid.muted) {
                 console.log(`is IOS and the thing is not muted. so we dun want to play an ad.`);
                 //on iOS we are not able to start the ad with sound (will hang)
@@ -1943,10 +1944,17 @@ const _aggStep = jxvhelper.getStep();
                 if(outcome == 'jxhasad') {
                     //we use accumulated time to also manage the countdown but since time is taken up
                     //between adRequest and hasad (adsMgrloaded), I need to factor that in also.
-                    return new Promise(function(resolve) {
-                        _adCountdownMgrFcn = __adCountdownMgrFcn.bind({accuTime0: _accumulatedTime, resolveFcn: resolve});
-                        _createStripMessage(adCountdownSec_);
-                    });
+                    let cd = Math.ceil(ad2AirTime - _accumulatedTime);
+                    if (cd >= 1) {
+                        return new Promise(function(resolve) {
+                            // This (adCountdownMgrFcn) gets called in the playhead update function:
+                            _adCountdownMgrFcn = __adCountdownMgrFcn.bind({playTime: ad2AirTime, resolveFcn: resolve});
+                            _createStripMessage(cd);
+                        });
+                    }
+                    else {
+                        return Promise.resolve();
+                    }
                 }
                 else {
                     return Promise.reject("jxnoad");//go to the catch clause then
