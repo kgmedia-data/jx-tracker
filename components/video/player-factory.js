@@ -9,7 +9,7 @@ const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
 const MakeOnePlayerCfgMgr       = modulesmgr.get('video/playercfgmgr-factory');
-     
+const MakeOneHotspot            = modulesmgr.get('video/hotspotmgr-factory');
 
 const defaultPBMethod_          = 'shaka';
 const defaultVolume_            = 0.5;
@@ -22,6 +22,16 @@ const startModeSDKApi_          = consts.startModeSDKApi;
 const startModeSDKClick_        = consts.startModeSDKClick;
 const startModeSDKAutoplay_     = consts.startModeSDKAutoplay;
 const startModeSDKAuto_         = consts.startModeSDKAuto;
+
+const hotspotDummy = {
+    img_url: 'https://thumbs.gfycat.com/AcclaimedBossyBeauceron-size_restricted.gif',
+    clickurl: 'https://google.com',
+    position: 'top-left',
+    width: 450,
+    height: 75,
+    // maxwidth: 300,
+    // maxheight: 50,
+};
 
 
 const _jxPreloadOverride        = null;
@@ -183,6 +193,8 @@ const _aggStep = jxvhelper.getStep();
         //we need to do some heuristics to help us know whether the current pausing or playing
         //is due to user action or just our internal mechanism (intersectionObserver etc)
         var _manualPaused = false;
+
+        var _hotspotObj = null;
         
         function FactoryPlayerWrapper(container) {
             //one off init: the synchronous stuff.
@@ -408,6 +420,9 @@ const _aggStep = jxvhelper.getStep();
             if (_adObject) {
                 _adObject.reset();
             }
+            if (_hotspotObj) {
+                _hotspotObj.reset();
+            }
             _contentDiv.classList.remove(styles.hide); //this is important. Coz if video is switched while ad is playing, 
             //then the content div at that time would be hidden!
             _contentDiv.classList.remove(styles.hideOpacity); //this is important. Coz if video is switched while ad is playing, 
@@ -452,7 +467,7 @@ const _aggStep = jxvhelper.getStep();
         }
         FactoryPlayerWrapper.prototype.setConfig = function(
             adsCfg, //the tags are also inside this obj: adtagurl and adtagurl2
-            logoCfg, soundIndCfg = null, sound = "off") {
+            logoCfg, soundIndCfg = null, sound = "off", hotspotCfg) {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
             _adScheduler = MakeOneAdScheduler(_cfg.ads);
@@ -467,6 +482,7 @@ const _aggStep = jxvhelper.getStep();
             //only for the first video
             _forceAutoplayWithSound = (( sound == 'on' || sound == 'fallback') ? true: false);
             _soundFallback = sound == 'fallback' ? true: false;
+            _cfg.hotspot = hotspotCfg ? JSON.parse(JSON.stringify(hotspotCfg)) : null;
         }   
         var _showSpinner = function() {
             if (_spinner) _spinner.show();
@@ -583,7 +599,8 @@ const _aggStep = jxvhelper.getStep();
                       //  _soundIndObj.showMaybe();
                     //then the state will be set to content in the onPlayingCB....
                     _ctrls.showCtrl();
-                    _ctrls.overlaysChanged(); 
+                    _ctrls.overlaysChanged();
+                    if (_hotspotObj) _hotspotObj.trigger(null, _accumulatedTime);
                 },
                 onAdPlaying: function() {
                     // nothing to do anymore
@@ -1187,6 +1204,10 @@ const _aggStep = jxvhelper.getStep();
                     _changeShakaBuffering = null;
                     tmp(_shakaPlayer);
                 }
+
+                if (_hotspotObj && _hotspotObj.isHSReady() && _hotspotObj.playheadUpdateCB) {
+                    _hotspotObj.playheadUpdateCB(_accumulatedTime);
+                }
                   
 
                 /** Get the diff between playheads then check whether it make senses to take it as an accumulated time
@@ -1321,9 +1342,26 @@ const _aggStep = jxvhelper.getStep();
             if (!_adObject) {
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
                 _adObject.setVpaidSecure(false);
+
+                if (_cfg.hotspot) _createHostpotObjMaybe();
             }
             return _adObject;
         };
+
+        var _createHostpotObjMaybe = function() {
+            if (!_hotspotObj) {
+                _hotspotObj = MakeOneHotspot(_container, _contentDiv, _cfg.hotspot, _makeFcnVectorForHotspot());
+            }
+            return _hotspotObj;
+        };
+
+        var _makeFcnVectorForHotspot = function() {
+            return {
+                getAccumulatedTime: function() {
+                    return _accumulatedTime;
+                },
+            };
+        }
   
         function _newAShakaPlayer(video) {
             shakaPlayer = new shaka.Player(video);

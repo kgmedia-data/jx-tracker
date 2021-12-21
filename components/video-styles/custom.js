@@ -58,7 +58,8 @@ const allClasses = [
   "vidProgInput",
   "ffwrdBtnCtr",
   "bwrdBtnCtr",
-  "timeDispCtr"
+  "timeDispCtr",
+  "oHotspot"
 ];
 
 function makeCssClsnames_(hash) {
@@ -247,7 +248,13 @@ function makeCssCustomControls_(css_, o) {
     '.'+css_.bwrdBtnCtr+' svg{transform:rotateY(180deg);}',
     '.'+css_.ffwrdBtnCtr+'{order:3;}',
     '.'+css_.ffwrdBtnCtr+' span, .'+css_.bwrdBtnCtr+' span{position:absolute;color:'+o.buttonsColor+';font-size:10px;top:55%;left:50%;transform:translate(-50%, -50%)}',
-    '.'+css_.timeDispCtr+' span{font:normal normal normal 12px/14px '+o.font+';}'
+    '.'+css_.timeDispCtr+' span{font:normal normal normal 12px/14px '+o.font+';}',
+    '.'+css_.oHotspot+'{position:absolute;margin:0;display:flex;justify-content:center;align-items:center;cursor:pointer;z-index:2;}',
+    '.'+css_.oHotspot+' img{max-width:100%;max-height:100%;pointer-events:auto;overflow:hidden;opacity:1;z-index:1;}',
+    '.'+css_.oHotspot+'.top-right{top:5px;right:5px;left:5px;}',
+    '.'+css_.oHotspot+'.top-left{top:5px;left:5px;right:5px;}',
+    '.'+css_.oHotspot+'.bottom-right{bottom:5px;right:5px;left:5px;}',
+    '.'+css_.oHotspot+'.bottom-left{bottom:5px;left:5px;right:5px;}',
   ].join("\n");
 }
 

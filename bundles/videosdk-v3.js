@@ -47,6 +47,9 @@ modulesmgr.set('video/admgr-factory',   admgr_fact);
 const ctrls_fact                        = require('../components/video/custom-ctrls-factory');
 modulesmgr.set('video/ctrls-factory',   ctrls_fact);
 
+const hotspot_fact                       = require('../components/video/hotspotmgr-factory');
+modulesmgr.set('video/hotspotmgr-factory',  hotspot_fact);
+
 const soundind_fact                     = require('../components/video/soundind-factory');
 modulesmgr.set('video/soundind-factory',soundind_fact);
 
