@@ -1,11 +1,8 @@
-/*
-GR 13: GR-54 and GR-82
-*/
-
-const defaultLongDuration = 60;
-const modulesmgr                = require('../basic/modulesmgr');
-const common                    = modulesmgr.get('basic/common');
+const modulesmgr             = require('../basic/modulesmgr');
+const common                 = modulesmgr.get('basic/common');
 const cssmgr                 = modulesmgr.get('video/cssmgr');
+
+
 /**
  * 
  * @param {*} config 
@@ -18,43 +15,56 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
  *       maxslots: Maximum number of hotspots
  * @returns 
  */
-  function MakeOneHotspotMgr_(container, hsContainer, config, vectorFcn) {
+ const msMaxElapsed_ = 100000;
+  function MakeOneHotspotMgr_(container, hsContainer, config, fcnVector) {
     var _styles = cssmgr.getRealCls(container);
+    var _getAccTime = null;
+    var _getCompHotspot = null;
+    var _cfg = null;
+    var _hsCtr = null;
+    var _szObs = null;
+    var _ovlDiv = null;
+    var _hsJson = null;
+    var _inProg = false; //whether a hotspot is in progress (this includes fetching)
 
-    var _vectorFcn = null;
-    var _hsConfig = null;
-    var _hsDetails = null;
-    
-    var _hsContainer = null;
-    var _resizeObserver = null;
-    var _overlayDiv = null;
-    
-    var _defaultStartTime = 0;
-    var _isPlaying = false;
-    var _isHSReady = false;
-
-    var _prepareData = function() {
-      _hsConfig.start  = _hsConfig.delay > 0 ? (_hsConfig.delay + _defaultStartTime) : _defaultStartTime;
-      _hsConfig.stop = (_hsConfig.duration + _hsConfig.start);
-      _isHSReady = true;
+    //the admgr side captures the hotspot info as HTML fragment.
+    //we convert it to JSON here.
+    var _extractHotspot = function(innerHTML) {
+      let json = null;
+      try {
+        var el = document.createElement( 'html' );
+        el.innerHTML = innerHTML;
+        let url = el.getElementsByTagName('img')[0].src;
+        let idx = url.indexOf('jxhotspot=');
+        json = JSON.parse(decodeURIComponent(url.substring(idx+10)));
+        json.url = url.substring(0, idx-1);
+        json.clickurl = el.getElementsByTagName('a')[0].href;
+      }
+      catch(e) {
+          console.log(e.stack);
+          return null;
+      }
+      console.log(json);
+      return json;
     }
 
-    var _resizeHotspotFcn = function() {
-      let x = _hsContainer.offsetWidth;
-      let y = _hsContainer.offsetHeight;
-      let imgAR = _hsDetails.width / _hsDetails.height;
+    //handling the hotspot when the video area is changed
+    var _resize = function() {
+      let x = _hsCtr.offsetWidth;
+      let y = _hsCtr.offsetHeight;
+      let imgAR = _hsJson.width / _hsJson.height;
       let containerAR = x / y;
 
       let newHeight, newWidth;
-      if (x >= _hsDetails.width && y >= _hsDetails.height) {
-        newWidth = _hsDetails.width;
+      if (x >= _hsJson.width && y >= _hsJson.height) {
+        newWidth = _hsJson.width;
         newHeight= newWidth / imgAR;
       } else {
         if (imgAR > containerAR) {
           newWidth = x;
           newHeight = newWidth / imgAR;
         } else {
-          newWidth = _hsDetails.width;
+          newWidth = _hsJson.width;
           newHeight = newWidth / imgAR;
 
           if (newHeight > y) {
@@ -63,64 +73,66 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
           }
         }
       }
-
-      if (newHeight > _hsDetails.maxheight && _hsDetails.maxheight > 0) {
-        newHeight = _hsDetails.maxheight;
+      if (_hsJson.maxheight > 0 && newHeight > _hsJson.maxheight) {
+        newHeight = _hsJson.maxheight;
         newWidth = newHeight*imgAR;
       }
-
-      _overlayDiv.style.width = newWidth + 'px';
-      _overlayDiv.style.height = newHeight + 'px';
-
+      _ovlDiv.style.width = newWidth + 'px';
+      _ovlDiv.style.height = newHeight + 'px';
     }
-
     var _setupResizeListeners = function() {
-      _resizeObserver = new ResizeObserver(_resizeHotspotFcn);
-      _resizeObserver.observe(_hsContainer);
+      _szObs = new ResizeObserver(_resize);
+      _szObs.observe(_hsCtr);
     }
     var _clearResizeListeners = function() {
-      if (_resizeObserver) {
-        _resizeObserver.unobserve(_hsContainer);
-        _resizeObserver = null;
+      if (_szObs) {
+        _szObs.unobserve(_hsCtr);
+        _szObs = null;
       }
     }
 
-    var _createOverlay = function(config) {
-      if (!_overlayDiv) {
-        _overlayDiv = document.createElement('div');
-        _overlayDiv.className = `${_styles.oHotspot} ${config.position ? config.position : 'top-left'}`;
+    // one hotspot: (will be torn down when the time for that hotspot is finished)
+    var _createOverlay = function() {
+      if (!_ovlDiv) {
+        _ovlDiv = document.createElement('div');
+        _ovlDiv.className = `${_styles.oHotspot} ${_hsJson.position ? _hsJson.position : 'top-left'}`;
 
-        // if (config.width && Number(config.width) > 0) _overlayDiv.style.width = config.width + 'px';
-        // if (config.height && Number(config.height) > 0) _overlayDiv.style.height = config.height + 'px';
-        // if (config.maxwidth && Number(config.maxwidth) > 0) _overlayDiv.style.maxWidth = config.maxwidth + 'px';
-        // if (config.maxheight && Number(config.maxheight) > 0) _overlayDiv.style.maxHeight = config.maxheight + 'px';
+        // if (config.width && Number(config.width) > 0) _ovlDiv.style.width = config.width + 'px';
+        // if (config.height && Number(config.height) > 0) _ovlDiv.style.height = config.height + 'px';
+        // if (config.maxwidth && Number(config.maxwidth) > 0) _ovlDiv.style.maxWidth = config.maxwidth + 'px';
+        // if (config.maxheight && Number(config.maxheight) > 0) _ovlDiv.style.maxHeight = config.maxheight + 'px';
 
         var img = document.createElement('img');
-        img.src = config.img_url;
+        img.src = _hsJson.url;
 
-        if (config.clickurl) {
-          common.addListener(_overlayDiv, 'click', function(e) {
-            window.open(config.clickurl, '_blank');
+        if (_hsJson.clickurl) {
+          common.addListener(_ovlDiv, 'click', function(e) {
+            window.open(_hsJson.clickurl, '_blank');
             e.stopPropagation();
           });
         }
 
-        _overlayDiv.appendChild(img);
-        _hsContainer.appendChild(_overlayDiv);
+        _ovlDiv.appendChild(img);
+        _hsCtr.appendChild(_ovlDiv);
 
         _setupResizeListeners();
       }
     }
 
     var _destroyOverlay = function() {
-      if (_overlayDiv) {
-        _hsContainer.removeChild(_overlayDiv);
-        _overlayDiv = null;
-        _isHSReady = false;
+      _inProg = false;
+      if (_ovlDiv) {
+        _hsCtr.removeChild(_ovlDiv);
+        _ovlDiv = null;
+        _hsJson = null;
+        _clearResizeListeners();
       }
     }
-
-    var _fetchHostpot = function(url) {
+   
+    //we fix this later. 
+    //can we not use fetch ? 
+    //Anyways No need of this feature for a long time
+    /* var _fetchHostpot = function(url) {
       var xhr = new XMLHttpRequest();
       xhr.ontimeout = function (e) {
         console.log('timeout reached when trying to get a hotspot')
@@ -144,115 +156,94 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
       xhr.open("GET", url);
       xhr.timeout = 20000;
       xhr.send();
+    }*/
+    var _fetchHotspot = function() {
+      return Promise.reject();
     }
-
-    //the cb is a function furnished by the caller . well something to turn on the sound loh...
-    FactHSMgr.prototype.setVisibility = function(makeVisible) {
-        // i'd imagine sometimes when the next ad (midroll) comes on, then
-        // we need to hide the hotspot ah
+    
+    //Manage the lifetime of a hotspot:
+    //we are trying something different for hotspot
+    //it runs its own timing and only get the accumulated time as it wishes.
+    //so the playhead update in the main player code does not have to do
+    //so many things.
+    //we can be more coarse grained here (duration is not too important to be super exact)
+    //Here it is 2sec
+    //
+    //in future, if we just go by elapsed time and not accumulated time, then then dun even 
+    //need to care about accumulated time.
+    var _runHotspot = function() {
+      let startAcc = _getAccTime() + _cfg.delay;
+      let endAcc = startAcc + _cfg.duration;
+      let started = false;
+      let msElapsed = 0;
+      let iTimer = setInterval(function() {
+        if (msElapsed > msMaxElapsed_) {
+          //if the video is paused (no progression of accumulated time), we also takedown the hotspot after a while
+          //to prevent the interval timer running for too long.
+          clearInterval(iTimer);
+          _destroyOverlay();
+        }
+        if (!started) {
+          if (_getAccTime() > startAcc) {
+            //console.log(`START __${_getAccTime()}`);
+            started = true;
+            _createOverlay();
+          }
+        }
+        else { //started, then check if it is time to take the hotspot down.
+          if (_getAccTime() > endAcc) {
+            //console.log(`FINI __${_getAccTime()}`);
+            clearInterval(iTimer);
+            _destroyOverlay();
+          }
+        }
+        msElapsed += 2000; 
+      }, 2000);
     }
-
-    FactHSMgr.prototype.playheadUpdateCB = function(playhead) {
-      console.log(playhead, _hsConfig)
-      if (playhead >= _hsConfig.start && playhead < _hsConfig.stop) {
-        _createOverlay(_hsDetails);
-      } else if ((playhead >= _hsConfig.stop || playhead < _hsConfig.start)) {
-        _destroyOverlay();
+    //to trigger the fetching and then display of a hotspot.
+    FactHSMgr.prototype.trigger = function() {
+      if (_inProg) {
+        //if hotspot is in progress (that includes fetching) then do not this.
+        return;
       }
-    }
-
-    FactHSMgr.prototype.isHSReady = function() {
-      return _isHSReady;
-    }
-
-    FactHSMgr.prototype.isPlaying = function() {
-      // boolean: is it having something to show right now
-      return _isPlaying;
-    }
-    /*
-    what is in the "details" of a hotspot ? 
-    There is not much info about this thing currently.
-
-    I guess we need to let it evolve as Fery you actually implements the thing
-    The simple one (just a picture):
-    
-    -URL of the graphic file (at start hotspot just a graphic file; perhaps animated gif;
-          but any animation is in the file itself)
-
-    -click link (I am thinking let this be a click proxy then:
-        i.e. it will be a traid link which then redirects to the product webpage
-        then we don't need 2 links one for product one for reporting)
-
-    position (which corner) top-left, top-right, bottom-left, bottom-right
-    i am thinking (just me), the hotspot does not necessary is a horizontal strip,
-    it could be a vertical one .
-    
-    -what is unclear is the scalability (coz video area can vary)
-        i.e. should we specificy its width (or height) as a percentage of the video width (or height)
-
-    -may be a maxwidth or maxheight of the thing
-    
-    -Also whether we need the width and height of the image (or we can wait till it is loaded then we know)
-
-    -Or simpler...... just do the natural size of the hotspot graphic (if video area is large enough)
-    and only "shrink" if necessary (video cannot fit it)
-
-    ----
-    Checklist for things to be careful about:
-    - if the hotspot is there and video size changes what will happen (esp big in article -> small)
-    - if change video, make sure nothing is dangling there
-    - frankly it is not clear to me how to coexist with the sound indicator
-
-    and ... we also need to know the growth of accumulated time ... aaah .
-    so need some other api too. accutime change.
-    or the player side give us a function to query the accumuated time
-    (then this hotspot thing can do so lazily with a loose timer)
-        
-    */
-    // Currently will be called by player code when the ad ended:
-    FactHSMgr.prototype.trigger = function(hsDetails = null) {
-      /*
-      if hsDetails is there, then use it
-      Else need to call adserver to get the hotspot (the support is not there yet)
-          To Fery: don't worry about this for now, just hard code hsDetails to do your development
-      If there is nothing to play then just do nothing then.
-      Else after the "delay", then let the hotspot appear then.
-      */
-     _defaultStartTime = _vectorFcn.getAccumulatedTime();
-      if (hsDetails) {
-        _hsDetails = hsDetails;
-        _prepareData();
-      } else {
-        console.log('calling hstagurl');
-        if (_hsConfig.hstagurl) _fetchHostpot(_hsConfig.hstagurl);
+      _inProg = true;
+      let hsHTML = _getCompHotspot();
+      if (hsHTML) {
+        let json = _extractHotspot(hsHTML);
+        if (json) {
+          _hsJson = json;
+          _runHotspot();
+          return;
+        }
       }
-    }
-    // dunno. just have it just in case for now.
-    FactHSMgr.prototype.forceStop = function() {
+      //nothing to show from the instream ad just now; then call to try fetch a hotspot then.
+      let jsonProm =  _fetchHotspot(_cfg.hstagurl);
+      jsonProm.then(function(json){
+        _hsJson = json;
+        _runHotspot();
+      })
+      .catch(function(e) {
+        _inProg = false;
+      });
     }
     // called between video change:
     FactHSMgr.prototype.reset = function() {
-      if (_overlayDiv) _hsContainer.removeChild(_overlayDiv);
-      _clearResizeListeners();
-
-      _isHSReady = false;
-      _isPlaying = false;
-      _hsDetails = null;
-      _overlayDiv = null;
+      _destroyOverlay();
     }
-    function FactHSMgr(container, hsContainer, config, vectorFcn) {
-      _hsContainer = hsContainer;
-      _hsConfig = config;
-      _vectorFcn = vectorFcn;
-      _defaultStartTime = 0;
+    function FactHSMgr(ctr, hsCtr, cfg, fcnVector) {
+      _hsCtr = hsCtr;
+      _cfg = cfg;
+      _getAccTime = fcnVector.getAccTime;
+      _getCompHotspot = fcnVector.getCompHotspot;
     }
-    let ret = new FactHSMgr(container, hsContainer, config, vectorFcn);
+    let ret = new FactHSMgr(container, hsContainer, config, fcnVector);
     return ret;
   }
 module.exports = MakeOneHotspotMgr_;
+  
 
 /* 
- ************** module: video/soundind-factory*********************************************
+ ************** module: video/hotspotmgr-factory*********************************************
 
 * module.exports:
     - function which will make one hotspot object

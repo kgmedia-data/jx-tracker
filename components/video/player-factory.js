@@ -23,25 +23,6 @@ const startModeSDKClick_        = consts.startModeSDKClick;
 const startModeSDKAutoplay_     = consts.startModeSDKAutoplay;
 const startModeSDKAuto_         = consts.startModeSDKAuto;
 
-const hotspotDummy = {
-    img_url: 'https://creatives.ivideosmart.com/hotspots/TokoIOT_1.gif',
-    clickurl: 'https://google.com',
-    position: 'top-right',
-    width: 300,
-    height: 600,
-};
-
-// const hotspotDummy = {
-//     img_url: 'https://thumbs.gfycat.com/AcclaimedBossyBeauceron-size_restricted.gif',
-//     clickurl: 'https://google.com',
-//     position: 'top-left',
-//     width: 450,
-//     height: 75,
-//     maxwidth: 300,
-//     maxheight: 50,
-// };
-
-
 const _jxPreloadOverride        = null;
 const _jxPlaybackOverride       = "shaka";
 
@@ -608,7 +589,8 @@ const _aggStep = jxvhelper.getStep();
                     //then the state will be set to content in the onPlayingCB....
                     _ctrls.showCtrl();
                     _ctrls.overlaysChanged();
-                    if (_hotspotObj) _hotspotObj.trigger(hotspotDummy, _accumulatedTime);
+                    _createHotspotObjMaybe();
+                    _hotspotObj.trigger();
                 },
                 onAdPlaying: function() {
                     // nothing to do anymore
@@ -1213,9 +1195,9 @@ const _aggStep = jxvhelper.getStep();
                     tmp(_shakaPlayer);
                 }
 
-                if (_hotspotObj && _hotspotObj.isHSReady() && _hotspotObj.playheadUpdateCB) {
-                    _hotspotObj.playheadUpdateCB(_accumulatedTime);
-                }
+                //if (_hotspotObj && _hotspotObj.isHSReady() && _hotspotObj.playheadUpdateCB) {
+                  //  _hotspotObj.playheadUpdateCB(_accumulatedTime);
+                //}
                   
 
                 /** Get the diff between playheads then check whether it make senses to take it as an accumulated time
@@ -1351,26 +1333,24 @@ const _aggStep = jxvhelper.getStep();
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
                 _adObject.setVpaidSecure(false);
 
-                if (_cfg.hotspot) _createHostpotObjMaybe();
+                //if (_cfg.hotspot) _createHostpotObjMaybe();
             }
             return _adObject;
         };
 
-        var _createHostpotObjMaybe = function() {
+        var _createHotspotObjMaybe = function() {
             if (!_hotspotObj) {
-                _hotspotObj = MakeOneHotspot(_container, _contentDiv, _cfg.hotspot, _makeFcnVectorForHotspot());
+                _hotspotObj = MakeOneHotspot(_container, _contentDiv, _cfg.hotspot, {
+                    getAccTime: function() {
+                        return _accumulatedTime;
+                    },
+                    getCompHotspot: function() {
+                        return (_adObject ? _adObject.getCompHotspot(): null);
+                    }});
             }
             return _hotspotObj;
         };
 
-        var _makeFcnVectorForHotspot = function() {
-            return {
-                getAccumulatedTime: function() {
-                    return _accumulatedTime;
-                },
-            };
-        }
-  
         function _newAShakaPlayer(video) {
             shakaPlayer = new shaka.Player(video);
             let o = _playerCfgMgr.getNewCfgMaybe(0, true); //true as this is for init phase
