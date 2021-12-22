@@ -799,8 +799,9 @@
                 cr23_450x70
                 cr23_790x80
                 cr1526_204x50
+                cr1526_728x90
                 */
-                adURL = 'https://jixieamptest.kompas.com/api/vastgen?filename=cr1526_204x50';
+                adURL = 'https://jixieamptest.kompas.com/api/vastgen?filename=cr23_729x80';
                 if (adURL) 
                     adsRequest.adTagUrl = adURL;
                 else if (adXML) {
