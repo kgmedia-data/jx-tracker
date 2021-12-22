@@ -43,15 +43,32 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
       let x = _hsContainer.offsetWidth;
       let y = _hsContainer.offsetHeight;
       let imgAR = _hsDetails.width / _hsDetails.height;
+      let containerAR = x / y;
 
       let newHeight, newWidth;
       if (x >= _hsDetails.width && y >= _hsDetails.height) {
         newWidth = _hsDetails.width;
         newHeight= newWidth / imgAR;
       } else {
-        newWidth = (x - 10);
-        newHeight = newWidth / imgAR;
+        if (imgAR > containerAR) {
+          newWidth = x;
+          newHeight = newWidth / imgAR;
+        } else {
+          newWidth = _hsDetails.width;
+          newHeight = newWidth / imgAR;
+
+          if (newHeight > y) {
+            newHeight = y;
+            newWidth = newHeight*imgAR;
+          }
+        }
       }
+
+      if (newHeight > _hsDetails.maxheight && _hsDetails.maxheight > 0) {
+        newHeight = _hsDetails.maxheight;
+        newWidth = newHeight*imgAR;
+      }
+
       _overlayDiv.style.width = newWidth + 'px';
       _overlayDiv.style.height = newHeight + 'px';
 
@@ -73,10 +90,10 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
         _overlayDiv = document.createElement('div');
         _overlayDiv.className = `${_styles.oHotspot} ${config.position ? config.position : 'top-left'}`;
 
-        if (config.width && Number(config.width) > 0) _overlayDiv.style.width = config.width + 'px';
-        if (config.height && Number(config.height) > 0) _overlayDiv.style.height = config.height + 'px';
-        if (config.maxwidth && Number(config.maxwidth) > 0) _overlayDiv.style.maxWidth = config.maxwidth + 'px';
-        if (config.maxheight && Number(config.maxheight) > 0) _overlayDiv.style.maxHeight = config.maxheight + 'px';
+        // if (config.width && Number(config.width) > 0) _overlayDiv.style.width = config.width + 'px';
+        // if (config.height && Number(config.height) > 0) _overlayDiv.style.height = config.height + 'px';
+        // if (config.maxwidth && Number(config.maxwidth) > 0) _overlayDiv.style.maxWidth = config.maxwidth + 'px';
+        // if (config.maxheight && Number(config.maxheight) > 0) _overlayDiv.style.maxHeight = config.maxheight + 'px';
 
         var img = document.createElement('img');
         img.src = config.img_url;

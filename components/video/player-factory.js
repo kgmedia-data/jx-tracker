@@ -24,14 +24,22 @@ const startModeSDKAutoplay_     = consts.startModeSDKAutoplay;
 const startModeSDKAuto_         = consts.startModeSDKAuto;
 
 const hotspotDummy = {
-    img_url: 'https://thumbs.gfycat.com/AcclaimedBossyBeauceron-size_restricted.gif',
+    img_url: 'https://creatives.ivideosmart.com/hotspots/TokoIOT_1.gif',
     clickurl: 'https://google.com',
-    position: 'top-left',
-    width: 450,
-    height: 75,
-    // maxwidth: 300,
-    // maxheight: 50,
+    position: 'top-right',
+    width: 300,
+    height: 600,
 };
+
+// const hotspotDummy = {
+//     img_url: 'https://thumbs.gfycat.com/AcclaimedBossyBeauceron-size_restricted.gif',
+//     clickurl: 'https://google.com',
+//     position: 'top-left',
+//     width: 450,
+//     height: 75,
+//     maxwidth: 300,
+//     maxheight: 50,
+// };
 
 
 const _jxPreloadOverride        = null;
@@ -600,7 +608,7 @@ const _aggStep = jxvhelper.getStep();
                     //then the state will be set to content in the onPlayingCB....
                     _ctrls.showCtrl();
                     _ctrls.overlaysChanged();
-                    if (_hotspotObj) _hotspotObj.trigger(null, _accumulatedTime);
+                    if (_hotspotObj) _hotspotObj.trigger(hotspotDummy, _accumulatedTime);
                 },
                 onAdPlaying: function() {
                     // nothing to do anymore
