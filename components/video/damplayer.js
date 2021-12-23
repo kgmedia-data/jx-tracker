@@ -1658,11 +1658,7 @@ function createObject_(options, ampIntegration) {
             repairMissingOptions(_options);
             
             prepareAdsObj(_options);
-            _options.hotspot = {
-                delay: 5,
-                duration: 10,
-                hstagurl: 'https://content.jixie.io/v1/universal?source=outstream&creativeid=23'
-            }
+            //_options.hotspot might not be there. it is ok.
             _pInst.setConfig(
                 _options.ads,
                 _options.logo, _options.soundindicator, _options.sound, _options.hotspot); //_options.sound (on, off, fallback)
