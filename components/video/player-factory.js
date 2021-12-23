@@ -464,6 +464,7 @@ const _aggStep = jxvhelper.getStep();
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
+            _cfg.hotspot = hotspotCfg ? JSON.parse(JSON.stringify(hotspotCfg)) : null;
             //if (!mute) {
                 //this is regarding autoplay:
               //  _forceAutoplayWithSound = true;
@@ -471,7 +472,6 @@ const _aggStep = jxvhelper.getStep();
             //only for the first video
             _forceAutoplayWithSound = (( sound == 'on' || sound == 'fallback') ? true: false);
             _soundFallback = sound == 'fallback' ? true: false;
-            _cfg.hotspot = hotspotCfg ? JSON.parse(JSON.stringify(hotspotCfg)) : null;
         }   
         var _showSpinner = function() {
             if (_spinner) _spinner.show();
@@ -1195,11 +1195,6 @@ const _aggStep = jxvhelper.getStep();
                     tmp(_shakaPlayer);
                 }
 
-                //if (_hotspotObj && _hotspotObj.isHSReady() && _hotspotObj.playheadUpdateCB) {
-                  //  _hotspotObj.playheadUpdateCB(_accumulatedTime);
-                //}
-                  
-
                 /** Get the diff between playheads then check whether it make senses to take it as an accumulated time
                  * the timeupdate handler didn't take longer than 250ms or 0.25 to run. refer to https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/timeupdate_event
                  * if the diff is longer than 500ms for example, so we can assume that users has seeked the video to certain playhead
@@ -1333,7 +1328,6 @@ const _aggStep = jxvhelper.getStep();
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
                 _adObject.setVpaidSecure(false);
 
-                //if (_cfg.hotspot) _createHostpotObjMaybe();
             }
             return _adObject;
         };
