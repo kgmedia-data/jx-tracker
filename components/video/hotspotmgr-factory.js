@@ -216,6 +216,7 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
           return;
         }
       }
+      return; //we do not support the general type yet
       //nothing to show from the instream ad just now; then call to try fetch a hotspot then.
       let jsonProm =  _fetchHotspot(_cfg.hstagurl);
       jsonProm.then(function(json){
@@ -232,7 +233,13 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
     }
     function FactHSMgr(ctr, hsCtr, cfg, fcnVector) {
       _hsCtr = hsCtr;
+      // we do not get the cfg from anywhere yet. That's for a later ticket
       _cfg = cfg;
+      if (!_cfg) {
+        _cfg = {};
+      }
+      if (!_cfg.delay) _cfg.delay = 5;
+      if (!_cfg.duration) _cfg.duration = 10;
       _getAccTime = fcnVector.getAccTime;
       _getCompHotspot = fcnVector.getCompHotspot;
     }
