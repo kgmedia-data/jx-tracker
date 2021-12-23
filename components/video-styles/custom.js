@@ -250,7 +250,7 @@ function makeCssCustomControls_(css_, o) {
     '.'+css_.ffwrdBtnCtr+' span, .'+css_.bwrdBtnCtr+' span{position:absolute;color:'+o.buttonsColor+';font-size:10px;top:55%;left:50%;transform:translate(-50%, -50%)}',
     '.'+css_.timeDispCtr+' span{font:normal normal normal 12px/14px '+o.font+';}',
     '.'+css_.oHotspot+'{position:absolute;margin:0;display:flex;justify-content:center;align-items:center;cursor:pointer;z-index:2;}',
-    '.'+css_.oHotspot+' img{max-width:100%;max-height:100%;pointer-events:auto;overflow:hidden;opacity:1;z-index:1;}',
+    '.'+css_.oHotspot+' img{width:100%;height:100%;max-width:100%;max-height:100%;pointer-events:auto;overflow:hidden;opacity:1;z-index:1;}',
     '.'+css_.oHotspot+'.top-right{top:0;right:0;left:0;}',
     '.'+css_.oHotspot+'.top-left{top:0;left:0;right:0;}',
     '.'+css_.oHotspot+'.bottom-right{bottom:0;right:0;left:0;}',
