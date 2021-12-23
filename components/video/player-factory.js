@@ -9,7 +9,7 @@ const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
 const MakeOnePlayerCfgMgr       = modulesmgr.get('video/playercfgmgr-factory');
-     
+const MakeOneHotspot            = modulesmgr.get('video/hotspotmgr-factory');
 
 const defaultPBMethod_          = 'shaka';
 const defaultVolume_            = 0.5;
@@ -22,7 +22,6 @@ const startModeSDKApi_          = consts.startModeSDKApi;
 const startModeSDKClick_        = consts.startModeSDKClick;
 const startModeSDKAutoplay_     = consts.startModeSDKAutoplay;
 const startModeSDKAuto_         = consts.startModeSDKAuto;
-
 
 const _jxPreloadOverride        = null;
 const _jxPlaybackOverride       = "shaka";
@@ -99,7 +98,7 @@ const _aggStep = jxvhelper.getStep();
         var _gestureReportCB = function() {}; //donothing now. Can be overwritten
         var _defaultReportInfoBlob = null;
         var _accumulatedTime = 0;
-        var _accuUnreported = 0;
+        var _nextAggSend = _aggStep;
         var _playheadCB = null; //for doing the save playhead in cookie
         var _adCountdownMgrFcn = null;
 
@@ -183,6 +182,8 @@ const _aggStep = jxvhelper.getStep();
         //we need to do some heuristics to help us know whether the current pausing or playing
         //is due to user action or just our internal mechanism (intersectionObserver etc)
         var _manualPaused = false;
+
+        var _hotspotObj = null;
         
         function FactoryPlayerWrapper(container) {
             //one off init: the synchronous stuff.
@@ -212,7 +213,8 @@ const _aggStep = jxvhelper.getStep();
                 realtech: _pbMethod,
                 videoid: videoid,
                 volume: 0,
-                playhead: 0
+                playhead: 0,
+                step: _aggStep
             };
         }
         function _makeCurrInfoBlob(videoid) {
@@ -229,6 +231,7 @@ const _aggStep = jxvhelper.getStep();
                 realtech: _pbMethodReal,
                 videoid: _videoID,
                 volume: (_savedMuted ? 0: parseInt(_savedVolume * 100)),
+                step: _aggStep,
                 playhead: Math.round(_vid.currentTime) //should be the playhead ah Math.round(_accumulatedTime),
             };
         }
@@ -406,6 +409,9 @@ const _aggStep = jxvhelper.getStep();
             if (_adObject) {
                 _adObject.reset();
             }
+            if (_hotspotObj) {
+                _hotspotObj.reset();
+            }
             _contentDiv.classList.remove(styles.hide); //this is important. Coz if video is switched while ad is playing, 
             //then the content div at that time would be hidden!
             _contentDiv.classList.remove(styles.hideOpacity); //this is important. Coz if video is switched while ad is playing, 
@@ -413,7 +419,7 @@ const _aggStep = jxvhelper.getStep();
             //even if we do no do fade-into-ad, we still will be using styles.hideOpacity to hide the content and not styles.hide)
             
             _accumulatedTime = 0;
-            _accuUnreported = 0;
+            _nextAggSend = _aggStep;
             _thumbnailURL = null;
 
             _manualPaused = false;
@@ -450,7 +456,7 @@ const _aggStep = jxvhelper.getStep();
         }
         FactoryPlayerWrapper.prototype.setConfig = function(
             adsCfg, //the tags are also inside this obj: adtagurl and adtagurl2
-            logoCfg, soundIndCfg = null, sound = "off") {
+            logoCfg, soundIndCfg = null, sound = "off", hotspotCfg) {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
             _adScheduler = MakeOneAdScheduler(_cfg.ads);
@@ -458,6 +464,7 @@ const _aggStep = jxvhelper.getStep();
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
+            _cfg.hotspot = hotspotCfg ? JSON.parse(JSON.stringify(hotspotCfg)) : null;
             //if (!mute) {
                 //this is regarding autoplay:
               //  _forceAutoplayWithSound = true;
@@ -581,7 +588,9 @@ const _aggStep = jxvhelper.getStep();
                       //  _soundIndObj.showMaybe();
                     //then the state will be set to content in the onPlayingCB....
                     _ctrls.showCtrl();
-                    _ctrls.overlaysChanged(); 
+                    _ctrls.overlaysChanged();
+                    _createHotspotObjMaybe();
+                    _hotspotObj.trigger();
                 },
                 onAdPlaying: function() {
                     // nothing to do anymore
@@ -1028,7 +1037,9 @@ const _aggStep = jxvhelper.getStep();
             //play time and not absolute time.
             //let's also not have too many timers flying around
             //oh coz fetch ad also taken time lah.
-            let remaining = Math.floor(adCountdownSec_ + this.addTime  + this.adReqTime - accuTime );
+            //OLD WRONG let remaining = Math.floor(adCountdownSec_ + this.addTime  + this.adReqTime - accuTime );
+            let remaining = Math.floor(adCountdownSec_ - (accuTime - this.accuTime0 )); 
+            
             if(remaining <= 0) {
                 _adCountdownMgrFcn = null; //self-removal so that the playhead update will not be calling it.
                 _stripMessageDiv.classList.add(styles.hide);
@@ -1153,14 +1164,17 @@ const _aggStep = jxvhelper.getStep();
                 if(diff <= 2) {
                     //else there might have been some jump!
                     _accumulatedTime += diff;
-                    _accuUnreported += diff;
+                    //_nextAggSend starts at 5s 
+                    // at play: send 5
+                    // at 5: send 5
+                    // at 10: send 5
+                    if (_accumulatedTime > _nextAggSend) {
+                        //how much we have.
+                        //duration 
+                        _reportCB('video', 'agg', _makeCurrInfoBlob(this.videoid));
+                        _nextAggSend += _aggStep;    
+                    }
                 }
-                if (_accuUnreported > _aggStep) {
-                    //no need to do that math each time bah.
-                    _accuUnreported -= _aggStep;
-                    _reportCB('video', 'agg', _makeCurrInfoBlob(this.videoid));
-                }
-
                 //if we allow for midrolls, then everybody has delayed ads then.
                 if(_nextAdSlotTime != -1 && _accumulatedTime >= _nextAdSlotTime) {
                     if (_adScheduler.canPlayAd(currentTime, _vid.duration)) {
@@ -1180,7 +1194,6 @@ const _aggStep = jxvhelper.getStep();
                     _changeShakaBuffering = null;
                     tmp(_shakaPlayer);
                 }
-                  
 
                 /** Get the diff between playheads then check whether it make senses to take it as an accumulated time
                  * the timeupdate handler didn't take longer than 250ms or 0.25 to run. refer to https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/timeupdate_event
@@ -1314,10 +1327,24 @@ const _aggStep = jxvhelper.getStep();
             if (!_adObject) {
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
                 _adObject.setVpaidSecure(false);
+
             }
             return _adObject;
         };
-  
+
+        var _createHotspotObjMaybe = function() {
+            if (!_hotspotObj) {
+                _hotspotObj = MakeOneHotspot(_container, _contentDiv, _cfg.hotspot, {
+                    getAccTime: function() {
+                        return _accumulatedTime;
+                    },
+                    getCompHotspot: function() {
+                        return (_adObject ? _adObject.getCompHotspot(): null);
+                    }});
+            }
+            return _hotspotObj;
+        };
+
         function _newAShakaPlayer(video) {
             shakaPlayer = new shaka.Player(video);
             let o = _playerCfgMgr.getNewCfgMaybe(0, true); //true as this is for init phase
@@ -1936,9 +1963,8 @@ const _aggStep = jxvhelper.getStep();
                 if(outcome == 'jxhasad') {
                     //we use accumulated time to also manage the countdown but since time is taken up
                     //between adRequest and hasad (adsMgrloaded), I need to factor that in also.
-                    let wastedTime = _accumulatedTime - startAccuTime;
                     return new Promise(function(resolve) {
-                        _adCountdownMgrFcn = __adCountdownMgrFcn.bind({adReqTime: _accumulatedTime, addTime: wastedTime, resolveFcn: resolve});
+                        _adCountdownMgrFcn = __adCountdownMgrFcn.bind({accuTime0: _accumulatedTime, resolveFcn: resolve});
                         _createStripMessage(adCountdownSec_);
                     });
                 }

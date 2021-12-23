@@ -71,6 +71,7 @@
     var _vpaidSecure = true;
 
     var _delayedAd = false;
+    var _hotspotHTML = null;
 
 
     /**
@@ -121,6 +122,7 @@
     var _knownCurrentTime = -1;
     
     FactoryOneAd.prototype.reset = function() {
+        _hotspotHTML = null;
         _reallyProgressed = false;
         _knownCurrentTime = -1;
 
@@ -329,9 +331,18 @@
         //However, if the content was already paused (coz the stupid ad took such a long time to come)
         //then here we should also 
     }
+    //for app, then revert asap
     var _onAdEvent = function(evt) {
+        //console.log(`##### ${evt.type}`);
         if (!_adsManager) return; //in case closed shop
         let ad = evt.getAd();
+        /* if (evt.type != google.ima.AdEvent.Type.AD_PROGRESS) {
+        console.log(`###1# ${ad.getAdId()}`);
+        console.log(`###2# ${ad.getAdSystem()}`);
+        console.log(`###3# ${ad.getAdvertiserName()}`);
+        console.log(`###4# ${ad.getCreativeAdId()}`);
+        console.log(`###5# ${JSON.stringify(ad.getWrapperAdIds())}`);
+        }*/
 
         if (_eventsCallback) {
             let jxEvtName = _subscribedEvents[evt.type];
@@ -407,6 +418,7 @@
                 break;
             case google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED:
                 _handleContentPauseReq(true); 
+                _leftoverEvents['contentresume'] = 1; //with pause then can resume
                  break;
             case google.ima.AdEvent.Type.LOADED:     
                 //confusing when this is fired!        
@@ -426,6 +438,7 @@
                 if (_callOnceUponStarted) {
                     _callOnceUponStarted(ad, this.resolveFcn);
                 }
+                _extractHotspot(ad);
                 break;
             case google.ima.AdEvent.Type.COMPLETE:
             case google.ima.AdEvent.Type.SKIPPED:
@@ -454,10 +467,13 @@
 
     function _onAdError(adErrorEvent) {
         let errcode = -1;
+        let adE = null;
         if (adErrorEvent) {
-            let adE = adErrorEvent.getError();
+            adE = adErrorEvent.getError();
             if (adE) {
                 errcode = adE.getErrorCode();
+                //console.log(`##### 1.1 ${adE.getMessage()}`);
+                //console.log(`##### 1.2 ${adE.toString()}`);
                 /***** if (true) {
                     _harvestErrorInfo(adE);
                 }*****/
@@ -466,11 +482,50 @@
         _pFcnVector.report('error', {errorcode: errcode}); 
         if (this.resolveFcn)
             this.resolveFcn("jxaderrored");
+        if (_leftoverEvents['triggerend']) {
+            let errStr = null;
+            delete _leftoverEvents['triggerend'];
+            _pFcnVector.hideSpinner();
+            try {
+                //errStr = 'at1';
+                _adsManager.stop();
+                //errStr = 'at2';
+                _fireReportMaybe('slotended', { slotduration: 0});
+                //errStr = 'at3';
+                _fireReportMaybe('ended'); 
+                //errStr = 'at4';
+                if (_leftoverEvents['contentresume']) {
+                    //errStr = 'at5';
+                    delete _leftoverEvents['contentresume'];
+                    //errStr = 'at6';
+                    _handleContentResumeReq();
+                    //errStr = 'at7';
+                }
+                //else {
+                  //  errStr = 'at4b';
+                //}
+                //errStr = 'allpass';
+            }
+            catch (ex) {
+                //errStr += "--" + ex.toString();
+            }
+            /* if (errStr) {
+                errStr += "--X-" + adE.toString() + "--XX-" + adE.getMessage();
+            }
+            if (errStr && window.reneeDbg == 1) {
+                try {
+                    let data = JSON.stringify({text: errStr});
+                    let xhr = new XMLHttpRequest();
+                    xhr.open("POST", `https://hooks.slack.com/services/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?text=dbgg`);
+                    xhr.send(data);
+                }
+                catch (error) {
+                }
+            }*/
+        }
         return; 
     }
 
-
-    
     var _onNoAd = function(e) {
         /********* _harvestErrorInfo2(e);    *******/
         _adLoaderOutcome = "jxnoad";
@@ -548,7 +603,9 @@
         //var e = new Event('jxhasad');
         //window.dispatchEvent(e);
 
-        _leftoverEvents = { 
+        _leftoverEvents = {
+            //when later there is the content paused event, then we will add 'contentresume' = 1
+            'triggerend': 1, 
             'started': 1,
             'ended': 1,
             'slotended': 1
@@ -600,7 +657,24 @@
             this.resolveFcn("jxhasad");
         }
     };
-    
+    var _extractHotspot = function(ad) {
+        if (ad.getAdSystem() != 'JXADSERVER') { 
+            return null;
+        }
+        var ss = new google.ima.CompanionAdSelectionSettings();
+        ss.resourceType = google.ima.CompanionAdSelectionSettings.ResourceType.STATIC;
+        ss.creativeType = google.ima.CompanionAdSelectionSettings.CreativeType.IMAGE;
+        ss.sizeCriteria = google.ima.CompanionAdSelectionSettings.SizeCriteria.IGNORE;
+        // Get a list of companion ads for an ad slot size and CompanionAdSelectionSettings
+        let companionAds = ad.getCompanionAds(0, 0, ss);//no need the size stuff.
+        //let companionAds = ad.getCompanionAds(300, 250, ss);
+        let companionAd = companionAds[0];
+        let content = companionAd.getContent();
+        _hotspotHTML = content;
+    }
+    FactoryOneAd.prototype.getCompHotspot = function() {
+        return _hotspotHTML;
+    }
     var _sizeCheck = function() {
         if (_forceWidth || _forceHeight) {
             return;
@@ -671,6 +745,15 @@
     }
 
     function _makeAdRequestP(adURL, adXML, autoplayFlag, mutedFlag) {
+        /* if (adURL && adURL.indexOf('1000114-aFHHNeXdkP') > -1) {
+            let myarray = [
+                23, 1038, 799, 691, 884, 1120
+            ]
+            let  myidx = Math.floor(Math.random() * 6);
+            let cid = myarray[myidx];
+            window.reneeDbg = 1;
+            adURL = `https://content.jixie.io/v1/video?maxnumcreatives=13&source=jxplayer&client_id=52471830-e2f4-11ea-b5e9-f301ddda9414&sid=1639439102-52471830-e2f4-11ea-b5e9-f301ddda9414&pageurl=https%3A%2F%2Fmegapolitan.kompas.com%2Fread%2F2021%2F05%2F28%2F05334261%2Fupdate-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257&domain=megapolitan.kompas.com&unit=1000114-qEgXGqRpBy&creativeid=` + cid;
+        }*/
         _width = _container.offsetWidth;
         _height = _container.offsetHeight;
         
@@ -709,6 +792,16 @@
                 // adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=937';
                 //adURL = 'https://ad.jixie.io/v1/video?source=jxplayer&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=1120';
                 //adURL = 'https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinearvpaid2js&correlator=' + Date.now();
+                /*
+                cr23_300x250
+                cr23_300x600
+                cr23_320x50
+                cr23_450x70
+                cr23_790x80
+                cr1526_204x50
+                cr1526_728x90
+                */
+                //adURL = 'https://jixieamptest.kompas.com/api/vastgen?filename=cr23_729x80';
                 if (adURL) 
                     adsRequest.adTagUrl = adURL;
                 else if (adXML) {
