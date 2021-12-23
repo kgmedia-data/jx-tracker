@@ -514,7 +514,8 @@ function createObject_(options, ampIntegration) {
 		    {sub:'ads', p:'delay',d: defaultAdDelay_},
 		    {sub:'ads', p:'prerolltimeout',d: 5000},
 	    ].forEach(function(one) {
-		    o = one.sub? options[one.sub]: options;
+            //here o is like a pointer to point to the right place in the options object.
+		    var o = one.sub? options[one.sub]: options;
 		    if (o && !o.hasOwnProperty(one.p)) {
 			    o[one.p] = one.d;
 		    }
