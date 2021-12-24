@@ -16,6 +16,8 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
  */
  const msMaxElapsed_ = 100000;
  const longDuration_ = 60*60;
+ const defaultPosition_ = 'top-left';
+
   function MakeOneHotspotMgr_(container, hsContainer, config, fcnVector) {
     var _styles = cssmgr.getRealCls(container);
     var _getAccTime = null;
@@ -24,6 +26,7 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
     var _hsCtr = null;
     var _szObs = null;
     var _ovlDiv = null;
+    var _ovlPos = null;
     var _hsJson = null;
     var _iTimer = null;
     var _inProg = false; //whether a hotspot is in progress (this includes fetching)
@@ -113,6 +116,9 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
         w = mult*w;
         h = mult*h;
       }
+      _ovlPos.split('-').map(function(pos) {
+        if (pos !== 'center') _ovlDiv.style[pos] = found.margin + 'px';
+      });
       _ovlDiv.style.width = Math.round(w) + 'px';
       _ovlDiv.style.height = Math.round(h) + 'px';
     }
@@ -130,8 +136,9 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
     // one hotspot: (will be torn down when the time for that hotspot is finished)
     var _createOverlay = function() {
       if (!_ovlDiv) {
+        _ovlPos = _hsJson.position ? _hsJson.position : defaultPosition_;
         _ovlDiv = document.createElement('div');
-        _ovlDiv.className = `${_styles.oHotspot} ${_hsJson.position ? _hsJson.position : 'top-left'}`;
+        _ovlDiv.className = `${_styles.oHotspot} ${_ovlPos}`;
 
         // if (config.width && Number(config.width) > 0) _ovlDiv.style.width = config.width + 'px';
         // if (config.height && Number(config.height) > 0) _ovlDiv.style.height = config.height + 'px';
@@ -161,6 +168,7 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
         _hsCtr.removeChild(_ovlDiv);
         _ovlDiv = null;
         _hsJson = null;
+        _ovlPos = null;
         _clearResizeListeners();
       }
     }
