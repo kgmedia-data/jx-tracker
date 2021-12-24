@@ -1608,7 +1608,9 @@ const _aggStep = jxvhelper.getStep();
            */
         function _initChainDoAdsP(getAdMode, adProm) {
             if (getAdMode == 'noprefetch') {
-                adProm = _adObject.makeAdRequestP(_cfg.ads.adtagurl, 
+                let entry = (Array.isArray(_cfg.ads.creativeids) ? _cfg.ads.creativeids : []).find((e)=>e.videoid == _videoID);
+                adProm = _adObject.makeAdRequestP(
+                    _cfg.ads.adtagurl + (entry && !isNaN(entry.creativeid) ? '&creativeid=' + entry.creativeid: ''),
                     _startModePW == startModePWClick_ ? false: true,
                     _savedMuted);
             }
@@ -1867,7 +1869,9 @@ const _aggStep = jxvhelper.getStep();
                     _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
                     _ctrls.hideSpinner();
                     if(getAdMode == 'prefetch') {
-                        adPromise = _adObject.makeAdRequestP(_cfg.ads.adtagurl, 
+                        let entry = (Array.isArray(_cfg.ads.creativeids) ? _cfg.ads.creativeids : []).find((e)=>e.videoid == _videoID);
+                        adPromise = _adObject.makeAdRequestP(
+                            _cfg.ads.adtagurl + (entry && !isNaN(entry.creativeid) ? '&creativeid=' + entry.creativeid: ''),
                             _startModePW == startModePWClick_? false: true, //autoplay Flag (best effort lah)
                             _savedMuted); //muted flag (best effort lah)
                     }

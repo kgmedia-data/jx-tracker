@@ -4,14 +4,8 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
 
 /**
  * 
- * @param {*} config 
- * assume the config could have the follow things:
- *  unit, delay, duration, limit
- *      hstagurl: the url to call (adserver) to try to get a hotspot to play
- *      (it is similar to adtagurl but the unit would be different etc; the response would be some json then)
- *      delay: the delay between a video ad and a hotspot
- *       duration: the duration to display the hotspot
- *       maxslots: Maximum number of hotspots
+ * @param {*} fcnVector: exposes some function so we can get some info from video player
+ * config is not really used now
  * @returns 
  */
  const msMaxElapsed_ = 100000;
@@ -216,7 +210,7 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
     //in future, if we just go by elapsed time and not accumulated time, then then dun even 
     //need to care about accumulated time.
     var _runHotspot = function() {
-      let startAcc = _getAccTime() + (_hsJson.delay ? _hsJson.delay: 0);
+      let startAcc = _getAccTime() + (_hsJson.time ? _hsJson.time: 0);
       let endAcc = startAcc + (_hsJson.duration ? _hsJson.duration: longDuration_);
       let started = false;
       let msElapsed = 0;
