@@ -1324,6 +1324,13 @@ const _aggStep = jxvhelper.getStep();
             }
         };
         ********/
+        var doctorAdTag = function(adtag) {
+            let entry = (Array.isArray(_cfg.ads.creativeids) ? _cfg.ads.creativeids : []).find((e)=>e.videoid == _videoID);
+            if (entry && !isNaN(entry.creativeid)) {
+                return adtag + '&creativeid=' + entry.creativeid;
+            }
+            return adtag;                
+        }
         var _createAdObjMaybe = function(makeNew) {
             if (!_adObject) {
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
@@ -1608,9 +1615,8 @@ const _aggStep = jxvhelper.getStep();
            */
         function _initChainDoAdsP(getAdMode, adProm) {
             if (getAdMode == 'noprefetch') {
-                let entry = (Array.isArray(_cfg.ads.creativeids) ? _cfg.ads.creativeids : []).find((e)=>e.videoid == _videoID);
                 adProm = _adObject.makeAdRequestP(
-                    _cfg.ads.adtagurl + (entry && !isNaN(entry.creativeid) ? '&creativeid=' + entry.creativeid: ''),
+                    doctorAdTag(_cfg.ads.adtagurl),
                     _startModePW == startModePWClick_ ? false: true,
                     _savedMuted);
             }
@@ -1869,9 +1875,8 @@ const _aggStep = jxvhelper.getStep();
                     _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
                     _ctrls.hideSpinner();
                     if(getAdMode == 'prefetch') {
-                        let entry = (Array.isArray(_cfg.ads.creativeids) ? _cfg.ads.creativeids : []).find((e)=>e.videoid == _videoID);
                         adPromise = _adObject.makeAdRequestP(
-                            _cfg.ads.adtagurl + (entry && !isNaN(entry.creativeid) ? '&creativeid=' + entry.creativeid: ''),
+                            doctorAdTag(_cfg.ads.adtagurl),
                             _startModePW == startModePWClick_? false: true, //autoplay Flag (best effort lah)
                             _savedMuted); //muted flag (best effort lah)
                     }
@@ -1962,7 +1967,8 @@ const _aggStep = jxvhelper.getStep();
             _createAdObjMaybe();
             if (_hotspotObj) _hotspotObj.reset();
             //autoplay how you decide leh.
-            _adObject.makeAdRequestP(adUrl,
+            _adObject.makeAdRequestP(
+                doctorAdTag(adUrl),
                 _startModePW == startModePWClick_ ? false: true,
                 _vid.muted)
             .then(function(outcome) {
