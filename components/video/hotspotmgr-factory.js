@@ -39,46 +39,75 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
         json = JSON.parse(decodeURIComponent(url.substring(idx+10)));
         json.url = url.substring(0, idx-1);
         json.clickurl = el.getElementsByTagName('a')[0].href;
+        
+        /*  Sorry some testing...
+        json.url = 'https://www.iab.com/wp-content/uploads/2014/09/iab-tech-lab-6-644x290.png';
+        json.width = 300;
+        json.height = 250;
+        
+        json.url = 'https://jx-creatives.s3.ap-southeast-1.amazonaws.com/demo/assets/hotspots/Lazada_animated_gif_500x112.gif';
+        json.width = 500;
+        json.height = 112;
+        
+        json.url = 'https://creatives.ivideosmart.com/hotspots/TokoIOT_1.gif',
+        json.width = 300;
+        json.height = 600;
+        json.position = 'bottom-left';
+        */
       }
       catch(e) {
           console.log(e.stack);
           return null;
       }
-      console.log(json);
       return json;
     }
 
-    //handling the hotspot when the video area is changed
+    //handling the hotspot when the video area is set or changed
     var _resize = function() {
       let x = _hsCtr.offsetWidth;
       let y = _hsCtr.offsetHeight;
       let imgAR = _hsJson.width / _hsJson.height;
       let containerAR = x / y;
 
-      let newHeight, newWidth;
+      let w, h;
       if (x >= _hsJson.width && y >= _hsJson.height) {
-        newWidth = _hsJson.width;
-        newHeight= newWidth / imgAR;
+        //totally fitting in
+        w = _hsJson.width;
+        h= _hsJson.height;
       } else {
         if (imgAR > containerAR) {
-          newWidth = x;
-          newHeight = newWidth / imgAR;
+          w = x;
+          h = w / imgAR;
         } else {
-          newWidth = _hsJson.width;
-          newHeight = newWidth / imgAR;
-
-          if (newHeight > y) {
-            newHeight = y;
-            newWidth = newHeight*imgAR;
+          w = _hsJson.width;
+          h = _hsJson.height;
+          if (h > y) {
+            h = y;
+            w = h*imgAR;
           }
         }
       }
-      if (_hsJson.maxheight > 0 && newHeight > _hsJson.maxheight) {
-        newHeight = _hsJson.maxheight;
-        newWidth = newHeight*imgAR;
+      //next time we have different set based on aspect ratio of the video
+      const maxPcts_ = [
+        // I mean ... we can get more fine grained of course....
+        //Meaning: if ar > [2], then we impose that the [height] of the hotspot cannot exceed [15%] of the height of the video
+        { ar: 2, pct: 0.15, x: 0},
+        //Meaning: if ar < 2 but ar > 1, then ...
+        { ar: 0.8, pct: 0.2, x: 0},
+        //Meaning: if ar < 0.8 but ar > 0.5, then ...
+        { ar: 0, pct: 0.2, x: 1}
+      ];
+      let found = maxPcts_.find((e) => imgAR >= e.ar);  
+      //sure have one that describes our lineup well:
+      let val = (found.x ? w : h);
+      let maxval = (found.x ? x*found.pct : y*found.pct);
+      let mult = maxval/val; 
+      if (mult < 1) { //then you need to shrink then coz exceeded 
+        w = mult*w;
+        h = mult*h;
       }
-      _ovlDiv.style.width = newWidth + 'px';
-      _ovlDiv.style.height = newHeight + 'px';
+      _ovlDiv.style.width = Math.round(w) + 'px';
+      _ovlDiv.style.height = Math.round(h) + 'px';
     }
     var _setupResizeListeners = function() {
       _szObs = new ResizeObserver(_resize);
