@@ -91,6 +91,7 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
       const maxPcts_ = [
         // I mean ... we can get more fine grained of course....
         //Meaning: if ar > [2], then we impose that the [height] of the hotspot cannot exceed [15%] of the height of the video
+        { ar: 3, pct: 0.22, x: 0},
         { ar: 2, pct: 0.15, x: 0},
         //Meaning: if ar < 2 but ar > 1, then ...
         { ar: 0.8, pct: 0.2, x: 0},
