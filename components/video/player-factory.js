@@ -93,6 +93,7 @@ const _aggStep = jxvhelper.getStep();
         var _oneOffInitDone = false; //after doing a first video, then this is set to true
         //some init we only need to do once.
         var _adObject = null;
+        var _adScheduler = null;
 
         var _reportCB = function() {}; //donothing now. Can be overwritten
         var _gestureReportCB = function() {}; //donothing now. Can be overwritten
