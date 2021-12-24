@@ -214,6 +214,11 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
       let endAcc = startAcc + (_hsJson.duration ? _hsJson.duration: longDuration_);
       let started = false;
       let msElapsed = 0;
+      if (_getAccTime() >= startAcc) {
+        //console.log(`START __${_getAccTime()}`);
+        started = true;
+        _createOverlay();
+      }
       _iTimer = setInterval(function() {
         if (msElapsed > msMaxElapsed_) {
           //if the video is paused (no progression of accumulated time), we also takedown the hotspot after a while
