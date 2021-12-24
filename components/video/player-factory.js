@@ -1956,6 +1956,7 @@ const _aggStep = jxvhelper.getStep();
                 return; 
             }
             _createAdObjMaybe();
+            if (_hotspotObj) _hotspotObj.reset();
             //autoplay how you decide leh.
             _adObject.makeAdRequestP(adUrl,
                 _startModePW == startModePWClick_ ? false: true,

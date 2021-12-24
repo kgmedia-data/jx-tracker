@@ -2,7 +2,6 @@ const modulesmgr             = require('../basic/modulesmgr');
 const common                 = modulesmgr.get('basic/common');
 const cssmgr                 = modulesmgr.get('video/cssmgr');
 
-
 /**
  * 
  * @param {*} config 
@@ -16,6 +15,7 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
  * @returns 
  */
  const msMaxElapsed_ = 100000;
+ const longDuration_ = 60*60;
   function MakeOneHotspotMgr_(container, hsContainer, config, fcnVector) {
     var _styles = cssmgr.getRealCls(container);
     var _getAccTime = null;
@@ -25,6 +25,7 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
     var _szObs = null;
     var _ovlDiv = null;
     var _hsJson = null;
+    var _iTimer = null;
     var _inProg = false; //whether a hotspot is in progress (this includes fetching)
 
     //the admgr side captures the hotspot info as HTML fragment.
@@ -32,8 +33,8 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
     var _extractHotspot = function(innerHTML) {
       let json = null;
       try {
-        var el = document.createElement( 'html' );
-        el.innerHTML = innerHTML;
+        let parser = new DOMParser();
+        var el = parser.parseFromString(innerHTML, 'text/html');
         let url = el.getElementsByTagName('img')[0].src;
         let idx = url.indexOf('jxhotspot=');
         json = JSON.parse(decodeURIComponent(url.substring(idx+10)));
@@ -87,15 +88,21 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
           }
         }
       }
-      //next time we have different set based on aspect ratio of the video
+      //this set of rules applies to video of 16:9
+      //we will have another set of rules for other video shapes
       const maxPcts_ = [
         // I mean ... we can get more fine grained of course....
-        //Meaning: if ar > [2], then we impose that the [height] of the hotspot cannot exceed [15%] of the height of the video
-        { ar: 2, pct: 0.15, x: 0},
-        //Meaning: if ar < 2 but ar > 1, then ...
-        { ar: 0.8, pct: 0.2, x: 0},
-        //Meaning: if ar < 0.8 but ar > 0.5, then ...
-        { ar: 0, pct: 0.2, x: 1}
+        
+        //Meaning: if ar > 7, then we impose that the [height] of the hotspot cannot exceed [22%] of the height of the video
+        //x:0 means we compare "not x (widht), but y (height)"
+        { ar: 7, pct: 0.22, x: 0, margin: 0},
+
+        //Meaning: if 7 >= ar > 1.2, then we impose that the [height] of the hotspot cannot exceed [15%] of the height of the video
+        { ar: 1.2, pct: 0.15, x: 0, margin: 5},
+
+        // similar explanations...
+        { ar: 0.8, pct: 0.3, x: 0, margin: 5},
+        { ar: 0, pct: 0.15, x: 1, margin: 5}
       ];
       let found = maxPcts_.find((e) => imgAR >= e.ar);  
       //sure have one that describes our lineup well:
@@ -201,29 +208,27 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
     //in future, if we just go by elapsed time and not accumulated time, then then dun even 
     //need to care about accumulated time.
     var _runHotspot = function() {
-      let startAcc = _getAccTime() + _cfg.delay;
-      let endAcc = startAcc + _cfg.duration;
+      let startAcc = _getAccTime() + (_hsJson.delay ? _hsJson.delay: 0);
+      let endAcc = startAcc + (_hsJson.duration ? _hsJson.duration: longDuration_);
       let started = false;
       let msElapsed = 0;
-      let iTimer = setInterval(function() {
+      _iTimer = setInterval(function() {
         if (msElapsed > msMaxElapsed_) {
           //if the video is paused (no progression of accumulated time), we also takedown the hotspot after a while
           //to prevent the interval timer running for too long.
-          clearInterval(iTimer);
-          _destroyOverlay();
+          reset_();
         }
         if (!started) {
-          if (_getAccTime() > startAcc) {
+          if (_getAccTime() >= startAcc) {
             //console.log(`START __${_getAccTime()}`);
             started = true;
             _createOverlay();
           }
         }
         else { //started, then check if it is time to take the hotspot down.
-          if (_getAccTime() > endAcc) {
+          if (_getAccTime() >= endAcc) {
             //console.log(`FINI __${_getAccTime()}`);
-            clearInterval(iTimer);
-            _destroyOverlay();
+            reset_();
           }
         }
         msElapsed += 2000; 
@@ -246,6 +251,7 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
         }
       }
       return; //we do not support the general type yet
+      /*
       //nothing to show from the instream ad just now; then call to try fetch a hotspot then.
       let jsonProm =  _fetchHotspot(_cfg.hstagurl);
       jsonProm.then(function(json){
@@ -255,10 +261,19 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
       .catch(function(e) {
         _inProg = false;
       });
+      */
     }
     // called between video change:
+    var reset_ = function() {
+      if (_iTimer) {
+        clearInterval(_iTimer);
+       _iTimer = null;
+      }
+     _destroyOverlay();
+     _inProg = false;
+    }
     FactHSMgr.prototype.reset = function() {
-      _destroyOverlay();
+      reset_();
     }
     function FactHSMgr(ctr, hsCtr, cfg, fcnVector) {
       _hsCtr = hsCtr;
@@ -267,8 +282,6 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
       if (!_cfg) {
         _cfg = {};
       }
-      if (!_cfg.delay) _cfg.delay = 5;
-      if (!_cfg.duration) _cfg.duration = 10;
       _getAccTime = fcnVector.getAccTime;
       _getCompHotspot = fcnVector.getCompHotspot;
     }
