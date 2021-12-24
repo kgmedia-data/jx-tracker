@@ -89,15 +89,6 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
       //we will have another set of rules for other video shapes
       const maxPcts_ = [
         // I mean ... we can get more fine grained of course....
-<<<<<<< HEAD
-        //Meaning: if ar > [2], then we impose that the [height] of the hotspot cannot exceed [15%] of the height of the video
-        { ar: 3, pct: 0.22, x: 0},
-        { ar: 2, pct: 0.15, x: 0},
-        //Meaning: if ar < 2 but ar > 1, then ...
-        { ar: 0.8, pct: 0.2, x: 0},
-        //Meaning: if ar < 0.8 but ar > 0.5, then ...
-        { ar: 0, pct: 0.2, x: 1}
-=======
         
         //Meaning: if ar > 7, then we impose that the [height] of the hotspot cannot exceed [22%] of the height of the video
         //x:0 means we compare "not x (widht), but y (height)"
@@ -109,7 +100,6 @@ const cssmgr                 = modulesmgr.get('video/cssmgr');
         // similar explanations...
         { ar: 0.8, pct: 0.3, x: 0, margin: 5},
         { ar: 0, pct: 0.15, x: 1, margin: 5}
->>>>>>> feat/hotspot
       ];
       let found = maxPcts_.find((e) => imgAR >= e.ar);  
       //sure have one that describes our lineup well:
