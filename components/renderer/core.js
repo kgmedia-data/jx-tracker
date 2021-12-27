@@ -92,7 +92,7 @@ function addGAMNoAdNotifyMaybe(str) {
 var MakeOneFloatingUnit = function() { return null; };
 
 if (JX_FLOAT_COND_COMPILE) {
-MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univmgr) {
+MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univmgr, originalHeight, fixedHeight) {
     const JXFloatingClsName = 'jxfloating';
     const JXCloseBtnClsName = 'jxfloating-close-button';
     const JXFloatingStyleID = 'JXFloatingStyle';
@@ -103,22 +103,29 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     var _container = null;
     var _parentContainer = null;
     var _placeholderDiv = null;
+    var jxbnScaleDiv = null;
 
     var _initialHeight = 0;
+    var _originalHeight = 0;
+    var _fixedHeight = 0;
     
     var _floating = false;
     var _pm2CreativeFcn = null;
     
-    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn, univmgr) {
+    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn, univmgr, originalHeight, fixedHeight) {
         _univmgr = univmgr;
         var _innerDiv = divObjs.innerDiv;
         var _outterDiv = divObjs.outerDiv;
+        jxbnScaleDiv = divObjs.jxbnScaleDiv;
 
         _parentContainer = container;
         _floatParams = JSON.parse(JSON.stringify(params));
         _floatParams.isFloat = true;
         _container = _outterDiv;
         _pm2CreativeFcn = pm2CreativeFcn;
+
+        _originalHeight = originalHeight;
+        _fixedHeight = fixedHeight;
 
         _initialHeight = Math.max(_innerDiv.offsetHeight, _innerDiv.offsetHeight);
 
@@ -185,7 +192,12 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             _container.classList.add(JXFloatingClsName);
             var ctrStyle = _container.style;
             ctrStyle.background = _floatParams.floatBackground;
-            ctrStyle.height = "auto";
+
+            if (_fixedHeight > 0) {
+                ctrStyle.height = _originalHeight + "px";
+                jxbnScaleDiv.style.top = 0 + "px";
+            } else ctrStyle.height = "auto";
+
             ctrStyle.width = _floatParams.floatWidth + "px";
         
             _setContainerStyle(ctrStyle);
@@ -240,7 +252,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     FactoryOneFloating.prototype.cleanup = function() {
         _cleanUpElement();
     }
-    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn, univmgr);
+    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn, univmgr, originalHeight, fixedHeight);
     return floatUnit;   
 }
 }
@@ -339,6 +351,14 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
                 if (event == 'scroll' || event == 'resize') {
                     boundCB();
                 }
+            }
+        },
+        removeListener: function(allhooks, target, event, boundCB) {
+            if (['scroll'].indexOf(event) > -1) {
+                if (event == 'scroll') {
+                    target = top;
+                }
+                common.removeListener(target, event, boundCB);
             }
         },
         teardown(allhooks) {
@@ -2132,6 +2152,9 @@ const thresholdDiff_ = 120;
       HooksMgr.prototype.hookDifferentialScroll = function() {
         this.cxtFcns.addListener(this.allhooks, null, "scroll", this.bf_scroll);
       }
+      HooksMgr.prototype.unhookDifferentialScroll = function() {
+        this.cxtFcns.removeListener(this.allhooks, null, "scroll", this.bf_scroll);
+      }
       HooksMgr.prototype.hookResize = function() {
         this.cxtFcns.addListener(this.allhooks, window, "resize", this.bf_resize);
       }
@@ -2400,7 +2423,7 @@ const thresholdDiff_ = 120;
 
                 if (JX_FLOAT_COND_COMPILE) {
                     if (normCrParams.floatParams) {
-                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative, univmgr);
+                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative, univmgr, normCrParams.height, normCrParams.fixedHeight);
                     }
                 }
 
@@ -2412,10 +2435,14 @@ const thresholdDiff_ = 120;
                     if (_floatInst) { 
                         if (vis) {
                             _floatInst.stopFloat();
+                            hooksMgr.hookDifferentialScroll();
                             boundPM2Creative('jxvisible');
                         } else {
                             if (!_floatInst.shouldFloat(this.firstViewed, vis) || !this.lastPgVis) boundPM2Creative('jxnotvisible');
-                            else _floatInst.startFloat(this.firstViewed);
+                            else {
+                                hooksMgr.unhookDifferentialScroll();
+                                _floatInst.startFloat(this.firstViewed);
+                            } 
                         }
                     } else {
                         boundPM2Creative(vis ? 'jxvisible': 'jxnotvisible');
