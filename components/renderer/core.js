@@ -64,7 +64,7 @@ window.jxrenderercore = {
 const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
-
+const u_ = "universal";
 
 /*
 function addGAMNoAdNotifyMaybe(str) {
@@ -92,160 +92,155 @@ function addGAMNoAdNotifyMaybe(str) {
 var MakeOneFloatingUnit = function() { return null; };
 
 if (JX_FLOAT_COND_COMPILE) {
-MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univmgr, originalSizeObj, fixedHeight) {
+MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univmgr) {
     const JXFloatingClsName = 'jxfloating';
-    const JXCloseBtnClsName = 'jxfloating-close-button';
+    const cbn_ = 'jxfloating-close-button';
     const JXFloatingStyleID = 'JXFloatingStyle';
     var _univmgr = null;
-    var _floatParams = null;
+    var _fP = null; //params
     var _closeBtn = null;
-    
-    var _container = null;
-    var _parentContainer = null;
-    var _placeholderDiv = null;
-    var jxbnScaleDiv = null;
+    var _ctr = null;//container
+    var _parentCtr = null;//parent container
+    var _placeholderDiv = null; //placeholder. acc to fery, needed for non fixed height
+    var jxbnScaleDiv = null; //arrgh ugly ... ... fixedheight ...
 
     var _initialHeight = 0;
-    var _originalSizeObj = null;
-    var _fixedHeight = 0;
-    
-    var _floating = false;
+    var _floating = false;//current state.
     var _pm2CreativeFcn = null;
+    var _userClosed = false; //if the user has closed the floating unit already
     
-    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn, univmgr, originalSizeObj, fixedHeight) {
+    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn, univmgr) { 
         _univmgr = univmgr;
-        var _innerDiv = divObjs.innerDiv;
-        var _outterDiv = divObjs.outerDiv;
         jxbnScaleDiv = divObjs.jxbnScaleDiv;
 
-        _parentContainer = container;
-        _floatParams = JSON.parse(JSON.stringify(params));
-        _floatParams.isFloat = true;
-        _container = _outterDiv;
+        _parentCtr = container;
+        
+        _ctr = divObjs.outerDiv;
         _pm2CreativeFcn = pm2CreativeFcn;
 
-        _originalSizeObj = originalSizeObj;
-        _fixedHeight = fixedHeight;
+        //<--- if it is not from the publisher nor the creative, then we assume some defaults.
+        params.type = params.type || 'always';
+        //the right way to merge maxwidth is take the most conservative.
+        params.maxwidth = params.maxwidth || (common.isMobile() ? 100:200);
+        params.position = params.position || 'bottom-right';
+        params.marginX = params.hasOwnProperty('marginX') ? params.marginX : 10;
+        params.marginY = params.hasOwnProperty('marginY') ? params.marginY : 0;
+        params.background = params.background || 'transparent';
+        //--->
+        _fP = params;
+        let elt = divObjs.jxCoreElt;
 
-        _initialHeight = Math.max(_innerDiv.offsetHeight, _innerDiv.offsetHeight);
+        _fP.width = _fP.maxwidth < elt.offsetWidth ? _fP.maxwidth: elt.offsetWidth;
+        _fP.height = _fP.width *elt.offsetHeight/elt.offsetWidth;
+        
+        _initialHeight = Math.max(divObjs.innerDiv.offsetHeight, divObjs.innerDiv.offsetHeight);
 
         _prepareFloatingUnits();
     }
 
     var _prepareFloatingUnits = function() {
-        var stylesArr = [
-            "."+JXCloseBtnClsName+"{position: absolute;box-sizing: border-box;display: block;left: -12px;bottom: auto;top: 15px;right: auto;cursor:pointer;z-index: 99;}",
-            "."+JXCloseBtnClsName+":before,."+JXCloseBtnClsName+":after{width: 20px;height: 5px;transform: rotate(-45deg);content: '';position: absolute;display: block;background-color: #000;transition: all 0.2s ease-out;top: 50%;left: 50%;}",
-            "."+JXCloseBtnClsName+":after{transform: rotate(45deg);}",
-            "."+JXCloseBtnClsName+":hover:after{transform: rotate(-45deg);}",
-            "."+JXCloseBtnClsName+":hover:before{transform: rotate(45deg);}",
-            "."+JXCloseBtnClsName+".left{position: absolute;box-sizing: border-box;display: block;right: 2px;bottom: auto;top: 18px;left: auto;cursor:pointer;z-index: 99;}",
+        let stylesArr = [
+            "."+cbn_+"{position: absolute;box-sizing: border-box;display: block;left: -12px;bottom: auto;top: 15px;right: auto;cursor:pointer;z-index: 99;}",
+            "."+cbn_+":before,."+cbn_+":after{width: 20px;height: 5px;transform: rotate(-45deg);content: '';position: absolute;display: block;background-color: #000;transition: all 0.2s ease-out;top: 50%;left: 50%;}",
+            "."+cbn_+":after{transform: rotate(45deg);}",
+            "."+cbn_+":hover:after{transform: rotate(-45deg);}",
+            "."+cbn_+":hover:before{transform: rotate(45deg);}",
+            "."+cbn_+".left{position: absolute;box-sizing: border-box;display: block;right: 2px;bottom: auto;top: 18px;left: auto;cursor:pointer;z-index: 99;}",
             "."+JXFloatingClsName+"{position:fixed;height:auto;opacity:1;z-index:9999}",
         ].join("\n");
         common.acss(stylesArr, JXFloatingStyleID);
 
         _closeBtn = document.createElement('a');
-        _closeBtn.className = JXCloseBtnClsName;
+        _closeBtn.className = cbn_;
 
-        if (_floatParams.floatLocation == "bottom left" || _floatParams.floatLocation == "top left") _closeBtn.classList.add('left');
+        if (_fP.position.indexOf('left') > -1) _closeBtn.classList.add('left');
         _closeBtn.onclick = function() {
             _stopFloat();
-            _floatParams.isFloat = false;
+            _userClosed = true;
             _pm2CreativeFcn("jxnotvisible");
         }
 
-        _container.appendChild(_closeBtn);
-        _hideCloseBtn();
+        _ctr.appendChild(_closeBtn);
+        _showHideCloseBtn(false);
     }
 
-    var _setContainerStyle = function(elmStyle) {
-        if (["bottom right","bottom left","bottom"].includes(_floatParams.floatLocation)) elmStyle.top = "auto";
-        if (["top right","top left","top"].includes(_floatParams.floatLocation)) elmStyle.top = _floatParams.floatVMargin + "px";
-
-        if (["bottom right","top right"].includes(_floatParams.floatLocation)) elmStyle.left = "auto"; 
-        if (["bottom left","top left"].includes(_floatParams.floatLocation)) elmStyle.left = _floatParams.floatHMargin + "px"; 
-
-        if (["top","top right", "top left"].includes(_floatParams.floatLocation)) elmStyle.bottom = "auto"; 
-        if (["bottom right","bottom left","bottom"].includes(_floatParams.floatLocation)) elmStyle.bottom = _floatParams.floatVMargin + "px";
-
-        if (["bottom left", "top left"].includes(_floatParams.floatLocation)) elmStyle.right = "auto"; 
-        if (["bottom right","bottom","top right"].includes(_floatParams.floatLocation)) elmStyle.right = _floatParams.floatHMargin + "px";
-
-        if (["bottom","top"].includes(_floatParams.floatLocation)) {
-            elmStyle.right = "0px";
-            elmStyle.left = "0px";
-            elmStyle.margin = "auto";
-        } else elmStyle.margin  = "0px 10px 10px";
+    var _setContainerStyle = function(s) {
+        let pos = _fP.position;
+        if (["bottom-right","bottom-left","bottom"].includes(pos)) {
+            s.top = "auto";
+            s.bottom = _fP.marginY + "px";
+        }
+        else {
+            s.top = _fP.marginY + "px";
+            s.bottom = "auto"; 
+        }
+        if (["bottom-right","top-right"].includes(pos)) s.left = "auto"; 
+        if (["bottom-left","top-left"].includes(pos)) s.left = _fP.marginX + "px"; 
+        if (["bottom-left", "top-left"].includes(pos)) s.right = "auto"; 
+        if (["bottom-right","bottom","top-right"].includes(pos)) s.right = _fP.marginX + "px";
+        if (["bottom","top"].includes(pos)) {
+            s.right = "0px";
+            s.left = "0px";
+            s.margin = "auto";
+        } else s.margin  = "0px 10px 10px";
     }
-
+    
     var _setPlaceholderDiv = function() {
         if (!_placeholderDiv) {
-            _placeholderDiv = common.newDiv(_parentContainer, 'div');
+            _placeholderDiv = common.newDiv(_parentCtr, 'div');
             _placeholderDiv.style.cssText = "display:block;width:100%;clear:both;height:" + _initialHeight + "px";
         } else _placeholderDiv.style.display = "block";
     }
     var _hidePlaceholderDiv = function() {
         if (_placeholderDiv) _placeholderDiv.style.display = "none";
     }
-    var _startFloat = function(hasBeenViewed) {
-            _floating = true;
-            _container.classList.add(JXFloatingClsName);
-            var ctrStyle = _container.style;
-            ctrStyle.background = _floatParams.floatBackground;
+    var _startFloat = function(crViewed) {
+        _floating = true;
+        _ctr.classList.add(JXFloatingClsName);
+        let sty = _ctr.style;
+        sty.background = _fP.background;
 
-            if (_fixedHeight > 0) {
-                const newH = ((_originalSizeObj.height / _originalSizeObj.width) * _floatParams.floatWidth);
-                ctrStyle.height = newH + "px";
-                jxbnScaleDiv.style.top = 0 + "px";
-            } else ctrStyle.height = "auto";
-
-            ctrStyle.width = _floatParams.floatWidth + "px";
+        if (_fP.fixedHeight > 0) {
+            sty.height = _fP.height + "px";
+            jxbnScaleDiv.style.top = 0 + "px";//wah liao!
+        } else sty.height = "auto";
+        sty.width = _fP.width + "px";
+        //console.log(`_startfloat: ${sty.width} ${sty.height}`);
         
-            _setContainerStyle(ctrStyle);
-            _showCloseBtn();
-            _univmgr.hide();
-            window.dispatchEvent(new Event('resize'));
+        _setContainerStyle(sty);
+        if (_closeBtn) _showHideCloseBtn(true);
+        _univmgr.hide();
+        window.dispatchEvent(new Event('resize'));
 
-            _setPlaceholderDiv();
-            if (_floatParams.floatType == "always" && !hasBeenViewed) _pm2CreativeFcn("jxvisible");
+        _setPlaceholderDiv();
+        if (_fP.floatType == "always" && !crViewed) _pm2CreativeFcn("jxvisible");
     }
 
     var _stopFloat = function() {
-            if (_floating && _floatParams.isFloat) {
-                _container.classList.remove(JXFloatingClsName);
-                _container.style.cssText = "";
-                _container.style.height = _initialHeight + "px";
-                _hidePlaceholderDiv();
-                if (_closeBtn) _hideCloseBtn();
-                _univmgr.show();
-                window.dispatchEvent(new Event('resize'));
-            }
+        if (_floating) {
+            _floating = false;
+            _ctr.classList.remove(JXFloatingClsName);
+            _ctr.style.cssText = "";
+            _ctr.style.height = _initialHeight + "px";
+            _hidePlaceholderDiv();
+            if (_closeBtn) _showHideCloseBtn(false);
+            _univmgr.show();
+            window.dispatchEvent(new Event('resize'));
+        }
     }
-    var _hideCloseBtn = function() {
-        if (_closeBtn) _closeBtn.style.display = "none";
+    var _showHideCloseBtn = function(show) {
+        if (_closeBtn) _closeBtn.style.display = show ? "block": "none";
     }
-
-    var _showCloseBtn = function() {
-        if (_closeBtn) _closeBtn.style.display = "block";
-    }
-
-    var _shouldFloat = function(hasBeenViewed, isVisible) {
-        if (_floatParams.isFloat && ((_floatParams.floatType == "always" && !isVisible) || (_floatParams.floatType == "view" && hasBeenViewed && !isVisible)))
-            return true;
-        else 
-            return false;
-    }
-
     var _cleanUpElement = function() {
         if (_placeholderDiv && _placeholderDiv.parentNode) _placeholderDiv.parentNode.removeChild(_placeholderDiv);
-        _placeholderObs = null;
+        //????? what is this? _placeholderObs = null;
         _floating = false;
     }
-    FactoryOneFloating.prototype.startFloat = function(hasBeenViewed) {
-        _startFloat(hasBeenViewed);
+    FactoryOneFloating.prototype.startFloat = function(crViewed) {
+        _startFloat(crViewed);
     }
-    FactoryOneFloating.prototype.shouldFloat = function(hasBeenViewed, isVisible) {
-        return _shouldFloat(hasBeenViewed, isVisible);
+    FactoryOneFloating.prototype.shouldFloat = function(crViewed, visible) {
+        return (!_userClosed && ((_fP.type == "always" && !visible) || (_fP.type == "view" && crViewed && !visible)));
     }
     FactoryOneFloating.prototype.stopFloat = function() {
         _stopFloat();
@@ -253,7 +248,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     FactoryOneFloating.prototype.cleanup = function() {
         _cleanUpElement();
     }
-    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn, univmgr, originalSizeObj, fixedHeight);
+    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn, univmgr);
     return floatUnit;   
 }
 }
@@ -1287,6 +1282,14 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     // then really the bnDiv we need to constrain it to 400-90
     // this is related to the implementation of the fixedHeight/diff scroll mechanism.
     function __handleUnivHeight(height) {
+        if (height == 0) {
+            //univ has nothing ...
+            this.divObjs.jxmasterDiv.style.maxHeight = 'none';
+            this.divObjs.jxbnDiv.style.maxHeight = 'none';
+            this.divObjs.jxbnDiv.style.minHeight = '0px';
+            return;
+        }
+        
         if (this.fixedHeight) {
             let h = this.fixedHeight - height;
             if (!isNaN(h) && h > 0) {
@@ -1422,8 +1425,8 @@ const thresholdDiff_ = 120;
      const bigHeight_ = 999;
 
      function noDiffScroll(cr) {
-         if (cr.universal && cr.universal.hasOwnProperty('diffscroll') &&
-         !cr.universal.diffscroll) return true;
+         if (cr[u_] && cr[u_].hasOwnProperty('diffscroll') &&
+         !cr[u_].diffscroll) return true;
         return cr.type == 'video' || cr.subtype == 'video+banner';
     }
 
@@ -1435,11 +1438,11 @@ const thresholdDiff_ = 120;
      */
      function creativeSizeRangeRepair(cr) {
          let scaling = 'none';
-         if (cr.assets && cr.assets.universal) {
-            scaling = cr.assets.universal.scaling;
+         if (cr.assets && cr.assets[u_]) {
+            scaling = cr.assets[u_].scaling;
          }
-         if (cr.universal && cr.universal.scaling) {
-            scaling = cr.universal.scaling;
+         if (cr[u_] && cr[u_].scaling) {
+            scaling = cr[u_].scaling;
          }
          if (scaling != 'creative'  && scaling != 'renderer') {
             if (cr.type == 'video') {
@@ -1528,7 +1531,7 @@ const thresholdDiff_ = 120;
             crMinH = h;
         }
         else {
-            let u = crDetails.universal; 
+            let u = crDetails[u_]; 
             //init to 0 0 0 0
             //do the max first:
             if (u && !u.maxwidth && u.maxheight) {
@@ -1577,7 +1580,7 @@ const thresholdDiff_ = 120;
         if (scaling != 'none') {
             // if it is not responsive, then crMaxW and crMinW = width of creative
             // ditto for height, nothing much to further calculate then:
-            let u = crDetails.universal; 
+            let u = crDetails[u_]; 
             //make the max W and H specified in the creative be consistent
             //with aspect ratio
             let maxW = u && u.maxwidth ? u.maxwidth: 0;
@@ -1775,6 +1778,7 @@ const thresholdDiff_ = 120;
      * @param {*} c - creative object from adserver
      * @returns a normalized creative params object
      */
+    
     function getNormalizedCreativeParams(jxParams, c) {
         /** FANCYSCROLL:
          * if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
@@ -1806,10 +1810,10 @@ const thresholdDiff_ = 120;
         // the thing is they actually better to follow the width of the container
         // It is better for such stuff to really occupy the full width of the article
         //So here we do just that.
-        if (!isNaN(jxParams.fixedHeight) && c.universal && c.universal.scaling == 'article') {
+        if (!isNaN(jxParams.fixedHeight) && c[u_] && c[u_].scaling == 'article') {
             c.width = jxParams.maxwidth-1;
             c.height = jxParams.maxheight-1;
-            c.universal.scaling = 'none';
+            c[u_].scaling = 'none';
         }
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
@@ -1830,15 +1834,30 @@ const thresholdDiff_ = 120;
         };
         
         if (JX_FLOAT_COND_COMPILE) {
-            if (jxParams.doFloat) {
-                out.floatParams = {
-                    floatType:          jxParams.floatType,
-                    floatLocation:      jxParams.floatLocation,
-                    floatWidth:         jxParams.floatWidth,
-                    floatVMargin:       jxParams.floatVMargin,
-                    floatHMargin:       jxParams.floatHMargin,
-                    floatBackground:    jxParams.floatBackground,
-                };
+            let device = (common.isMobile() ? 'mobile': 'desktop');
+            //jxParams.floating = 'always'; //HACK
+            if (jxParams.floating == 'always' || jxParams.floating == 'creative' && c[u_] && c[u_].floating) {
+                //if there are any things:
+                let srvCfg = (c[u_] && c[u_].floatparams ? c[u_].floatparams: {});
+                if (srvCfg[device]) { 
+                    srvCfg = Object.assign(srvCfg, srvCfg[device]);
+                }
+                let brwCfg = (jxParams.floatparams ? jxParams.floatparams: {});
+                let smw = srvCfg.maxwidth > 0 ? srvCfg.maxwidth : 9999;
+                let cmw = brwCfg.maxwidth > 0 ? brwCfg.maxwidth : 9999;
+                //we take the more conservative maxwidth
+                let t = Math.min(cmw, smw);
+                if (t != 9999) tmp.maxwidth = t;
+                
+                if (brwCfg[device]) { 
+                    brwCfg = Object.assign(brwCfg, brwCfg[device]);
+                }
+                let tmp = Object.assign({}, srvCfg, brwCfg);
+                if (jxParams.fixedHeight) {
+                    tmp.fixedHeight = jxParams.fixedHeight;
+                }
+                tmp.floating = jxParams.floating;
+                out.floatParams = tmp;
             }
         }
 
@@ -2053,16 +2072,16 @@ const thresholdDiff_ = 120;
             //this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
          //   out.nested = -1;
         //}
-        if (c.universal) {
-            out.universal = c.universal;//??
+        if (c[u_]) {
+            out[u_] = c[u_];//??
         }
         /* just for ease of local testing: */
-        /* out.universal = {
+        out[u_] = {
             "title":"OSM demo video",
         "thumbnail":"https://creatives.jixie.media/MN168F6uZj/459/1708/mnc_youtube.jpg",
         "description":"This is a demo video for testing OSM solution from Jixie."
          };
-         */ 
+        
         
         out.assumeHasAd = assumeHasAd;
         return out;
@@ -2416,7 +2435,7 @@ const thresholdDiff_ = 120;
                 univmgr.init(divObjs.jxmasterDiv, //attachNode
                     __handleUnivHeight.bind({fixedHeight: normCrParams.fixedHeight, divObjs: divObjs}),
                     _jxParams, 
-                    normCrParams.universal, 
+                    normCrParams[u_], 
                     normCrParams.clickurl, 
                     normCrParams.clicktrackerurl);
                 
@@ -2424,7 +2443,12 @@ const thresholdDiff_ = 120;
 
                 if (JX_FLOAT_COND_COMPILE) {
                     if (normCrParams.floatParams) {
-                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative, univmgr, { width: normCrParams.width, height: normCrParams.height }, normCrParams.fixedHeight);
+                        try {
+                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative, univmgr); //, normCrParams.height, normCrParams.fixedHeight);
+                        }
+                        catch (x) {
+                            console.log(x.stack);
+                        }
                     }
                 }
 
@@ -2504,18 +2528,11 @@ const thresholdDiff_ = 120;
                 let ctr = null;
 
                 if (JX_FLOAT_COND_COMPILE) {
-                    _jxParams.doFloat = params.float || false;
-                    _jxParams.floatType = "view";
-                    _jxParams.floatLocation = "bottom right";
-    
-                    if (_jxParams.doFloat) {
-                        if (params.floatType && ["view","always"].includes(params.floatType)) _jxParams.floatType = params.floatType;
-                        if (params.floatLocation && ["top","bottom","top right","top left","bottom right","bottom left"].includes(params.floatLocation)) _jxParams.floatLocation = params.floatLocation;
-                        _jxParams.floatWidth = parseInt(params.floatWidth) || 300;
-                        _jxParams.floatVMargin = parseInt(params.floatVMargin) || 0;
-                        _jxParams.floatHMargin = parseInt(params.floatHMargin) || 10;
-                        _jxParams.floatBackground = params.floatBackground || "transparent";
+                    if (_jxParams.floating == 'none' || !_jxParams.floating) {
+                        delete _jxParams.floatparams; //even if there is, delete.
                     }
+                    //the other options are: always, creative (default)
+                    //for those we would have kept the floatparams already.
                 }
 
                 if (params.container) {

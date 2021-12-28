@@ -3,6 +3,8 @@ const common     = modulesmgr.get('basic/common');
 
 let MakeOneUniversalMgr_ = function() {
     let _height = 0;
+    let _cb = null;
+    let _shown = true;
     let _univEltsObj = null;
 
     function FactoryOneUniveralMgr() {}
@@ -34,6 +36,7 @@ let MakeOneUniversalMgr_ = function() {
     
     function attachUniversalBlob_(attachNode, cb, jxParams, universal, clickurl, clicktrackerurl) {
         let newheight = 0;
+        _cb = cb;
         let merged = mergeSettings(jxParams, universal ? universal : {});
         merged.clickurl = clickurl;
         if (clickurl) {
@@ -141,8 +144,8 @@ let MakeOneUniversalMgr_ = function() {
             newheight = jxActionsDiv.offsetHeight + 5;
             }//if (jxActionsDiv)
         }
-        if (cb) {
-            cb(newheight);
+        if (_cb) {
+            _cb(newheight);
         }
 
         return {
@@ -152,19 +155,23 @@ let MakeOneUniversalMgr_ = function() {
         };
     }
     FactoryOneUniveralMgr.prototype.getHeight = function() {
-        return _height;
+        return _shown ? _height: 0;
     };
     FactoryOneUniveralMgr.prototype.show = function() {
+        _shown = true;
         if (_univEltsObj) {
             if (_univEltsObj.jxActionsDiv) _univEltsObj.jxActionsDiv.style.display = 'block';
             if (_univEltsObj.jxTitleDiv) _univEltsObj.jxTitleDiv.style.display = 'block';
         }
+        _cb(_height);
     };
     FactoryOneUniveralMgr.prototype.hide = function() {
+        _shown = false;
         if (_univEltsObj) {
             if (_univEltsObj.jxActionsDiv) _univEltsObj.jxActionsDiv.style.display = 'none';
             if (_univEltsObj.jxTitleDiv) _univEltsObj.jxTitleDiv.style.display = 'none';
         }
+        _cb(0);
     };
     FactoryOneUniveralMgr.prototype.init = function(
         attachNode, cb, jxParams, universal, clickurl) {
