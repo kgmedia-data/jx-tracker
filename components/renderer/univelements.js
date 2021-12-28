@@ -156,14 +156,14 @@ let MakeOneUniversalMgr_ = function() {
     };
     FactoryOneUniveralMgr.prototype.show = function() {
         if (_univEltsObj) {
-            _univEltsObj.jxActionsDiv.style.display = 'block';
-            _univEltsObj.jxTitleDiv.style.display = 'block';
+            if (_univEltsObj.jxActionsDiv) _univEltsObj.jxActionsDiv.style.display = 'block';
+            if (_univEltsObj.jxTitleDiv) _univEltsObj.jxTitleDiv.style.display = 'block';
         }
     };
     FactoryOneUniveralMgr.prototype.hide = function() {
         if (_univEltsObj) {
-            _univEltsObj.jxActionsDiv.style.display = 'none';
-            _univEltsObj.jxTitleDiv.style.display = 'none';
+            if (_univEltsObj.jxActionsDiv) _univEltsObj.jxActionsDiv.style.display = 'none';
+            if (_univEltsObj.jxTitleDiv) _univEltsObj.jxTitleDiv.style.display = 'none';
         }
     };
     FactoryOneUniveralMgr.prototype.init = function(
