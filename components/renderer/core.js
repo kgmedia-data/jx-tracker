@@ -92,7 +92,7 @@ function addGAMNoAdNotifyMaybe(str) {
 var MakeOneFloatingUnit = function() { return null; };
 
 if (JX_FLOAT_COND_COMPILE) {
-MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univmgr, originalHeight, fixedHeight) {
+MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univmgr, originalSizeObj, fixedHeight) {
     const JXFloatingClsName = 'jxfloating';
     const JXCloseBtnClsName = 'jxfloating-close-button';
     const JXFloatingStyleID = 'JXFloatingStyle';
@@ -106,13 +106,13 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     var jxbnScaleDiv = null;
 
     var _initialHeight = 0;
-    var _originalHeight = 0;
+    var _originalSizeObj = null;
     var _fixedHeight = 0;
     
     var _floating = false;
     var _pm2CreativeFcn = null;
     
-    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn, univmgr, originalHeight, fixedHeight) {
+    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn, univmgr, originalSizeObj, fixedHeight) {
         _univmgr = univmgr;
         var _innerDiv = divObjs.innerDiv;
         var _outterDiv = divObjs.outerDiv;
@@ -124,7 +124,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         _container = _outterDiv;
         _pm2CreativeFcn = pm2CreativeFcn;
 
-        _originalHeight = originalHeight;
+        _originalSizeObj = originalSizeObj;
         _fixedHeight = fixedHeight;
 
         _initialHeight = Math.max(_innerDiv.offsetHeight, _innerDiv.offsetHeight);
@@ -194,7 +194,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
             ctrStyle.background = _floatParams.floatBackground;
 
             if (_fixedHeight > 0) {
-                ctrStyle.height = _originalHeight + "px";
+                const newH = ((_originalSizeObj.height / _originalSizeObj.width) * _floatParams.floatWidth);
+                ctrStyle.height = newH + "px";
                 jxbnScaleDiv.style.top = 0 + "px";
             } else ctrStyle.height = "auto";
 
@@ -252,7 +253,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     FactoryOneFloating.prototype.cleanup = function() {
         _cleanUpElement();
     }
-    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn, univmgr, originalHeight, fixedHeight);
+    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn, univmgr, originalSizeObj, fixedHeight);
     return floatUnit;   
 }
 }
@@ -2423,7 +2424,7 @@ const thresholdDiff_ = 120;
 
                 if (JX_FLOAT_COND_COMPILE) {
                     if (normCrParams.floatParams) {
-                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative, univmgr, normCrParams.height, normCrParams.fixedHeight);
+                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative, univmgr, { width: normCrParams.width, height: normCrParams.height }, normCrParams.fixedHeight);
                     }
                 }
 
