@@ -151,12 +151,12 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
 
     var _prepareFloatingUnits = function() {
         let stylesArr = [
-            "."+cbn_+"{position: absolute;box-sizing: border-box;display: block;left: -12px;bottom: auto;top: 15px;right: auto;cursor:pointer;z-index: 99;}",
+            "."+cbn_+"{position: absolute;box-sizing: border-box;display: block;left: -12px;bottom: auto;top: 3px;right: auto;cursor:pointer;z-index: 99;}",
             "."+cbn_+":before,."+cbn_+":after{width: 20px;height: 5px;transform: rotate(-45deg);content: '';position: absolute;display: block;background-color: #000;transition: all 0.2s ease-out;top: 50%;left: 50%;}",
             "."+cbn_+":after{transform: rotate(45deg);}",
             "."+cbn_+":hover:after{transform: rotate(-45deg);}",
             "."+cbn_+":hover:before{transform: rotate(45deg);}",
-            "."+cbn_+".left{position: absolute;box-sizing: border-box;display: block;right: 2px;bottom: auto;top: 18px;left: auto;cursor:pointer;z-index: 99;}",
+            "."+cbn_+".left{position: absolute;box-sizing: border-box;display: block;right: 5px;bottom: auto;top: 3px;left: auto;cursor:pointer;z-index: 99;}",
             "."+JXFloatingClsName+"{position:fixed;height:auto;opacity:1;z-index:9999}",
         ].join("\n");
         common.acss(stylesArr, JXFloatingStyleID);
