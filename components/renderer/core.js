@@ -121,17 +121,26 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         //<--- if it is not from the publisher nor the creative, then we assume some defaults.
         params.type = params.type || 'always';
         //the right way to merge maxwidth is take the most conservative.
-        params.maxwidth = params.maxwidth || (common.isMobile() ? 100:200);
+        let elt = divObjs.jxCoreElt;
+
+        let ar = elt.offsetWidth/elt.offsetHeight;
+        
+        //set to all the reasonable values first: 
+        params.maxwidth = params.maxwidth || (common.isMobile() ? 200:600);
+        params.maxheight = params.maxheight || (common.isMobile() ? 300:400);
+        //translate it into maxwidth also: if whatever from the maxheight is stricter, then update the maxwidht
+        let tmp = ar*params.maxheight;
+        if (tmp < params.maxwidth) params.maxwidth = tmp; 
+        
         params.position = params.position || 'bottom-right';
         params.marginX = params.hasOwnProperty('marginX') ? params.marginX : 10;
         params.marginY = params.hasOwnProperty('marginY') ? params.marginY : 0;
         params.background = params.background || 'transparent';
         //--->
         _fP = params;
-        let elt = divObjs.jxCoreElt;
 
         _fP.width = _fP.maxwidth < elt.offsetWidth ? _fP.maxwidth: elt.offsetWidth;
-        _fP.height = _fP.width *elt.offsetHeight/elt.offsetWidth;
+        _fP.height = _fP.width/ar;
         
         _initialHeight = Math.max(divObjs.innerDiv.offsetHeight, divObjs.innerDiv.offsetHeight);
 
