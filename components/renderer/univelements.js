@@ -2,8 +2,10 @@ const modulesmgr = require('../basic/modulesmgr');
 const common     = modulesmgr.get('basic/common');
 
 let MakeOneUniversalMgr_ = function() {
-    let _height = 0;
-    let _univEltsObj = null;
+    let _height = 0;// 
+    let _cb = null; //whenver this univ elements is hideen or shown then a callback of the main renderer would be called.
+    let _shown = true; //if floating state, then shown would be false
+    let _uElts = null;
 
     function FactoryOneUniveralMgr() {}
     function mergeSettings(p, u) {
@@ -14,19 +16,15 @@ let MakeOneUniversalMgr_ = function() {
         else if (ntd == 1) o.nested = 1;
         else if (ntd == -1) o.nested = -1;
     
-        o.title = p.title ? p.title : (u.title ? u.title : null);
-        o.thumbnail = p.thumbnail ? p.thumbnail : (u.thumbnail ? u.thumbnail : null);
-        o.thumbnailurl = p.thumbnailurl ? p.thumbnailurl : (u.thumbnailurl ? u.thumbnailurl : null);
-        o.description = p.description ? p.description : (u.description ? u.description : null);
         o.buttonLabel = p.buttonLabel || "Learn more";
-    
-        o.titleCSS = "text-decoration:none;" + (p.titleCSS ? p.titleCSS : (u.titleCSS ? u.titleCSS : ""));
-        o.titleCSSHover = p.titleCSSHover ? p.titleCSSHover : (u.titleCSSHover ? u.titleCSSHover : "");
-        o.descriptionCSS = "margin-top:0px;" + (p.descriptionCSS ? p.descriptionCSS : (u.descriptionCSS ? u.descriptionCSS : ""));
+        ['title','thumbnail','thumbnailurl','description','buttonLabel','titleCSS','titleCSSHover','descriptionCSS'].forEach(function(prop){
+            o[prop] = p[prop] ? p[prop] : (u[prop] ? u[prop] : (prop.indexOf('CSS')>-1? "":null));
+        });
+
         // add !important for overriding CSS style with CSS coming from universal object
-        o.titleCSS = o.titleCSS.split(';').join(' !important;');
+        o.titleCSS = ("text-decoration:none;" + o.titleCSS).split(';').join(' !important;');
         o.titleCSSHover = o.titleCSSHover.split(';').join(' !important;');
-        o.descriptionCSS = o.descriptionCSS.split(';').join(' !important;');
+        o.descriptionCSS = ("margin-top:0px;" + o.descriptionCSS).split(';').join(' !important;');
         if (!o.hasOwnProperty('nested'))
             o.nested = 0;
         return o;
@@ -34,6 +32,7 @@ let MakeOneUniversalMgr_ = function() {
     
     function attachUniversalBlob_(attachNode, cb, jxParams, universal, clickurl, clicktrackerurl) {
         let newheight = 0;
+        _cb = cb;
         let merged = mergeSettings(jxParams, universal ? universal : {});
         merged.clickurl = clickurl;
         if (clickurl) {
@@ -50,33 +49,35 @@ let MakeOneUniversalMgr_ = function() {
             //if there is none of these items, then we do not bother!
             return; 
         }
+        //jxTitleContainer, jxImgBlock, jxImg, jxBlockTitle, jxBlockAction, jxInfo, jxTitle, jxDescription
+        //the following classes names 
         const _jxTitleStyle = ".jxTitleContainer{overflow:auto;text-align:left;margin-bottom:5px;display:table;font-family:Arial;font-size:14px;}.jxImgBlock{float:left; max-width:70px;min-width:40px;margin-right:10px;}.jxImg{max-width: 100%;height: auto;width: auto;}.jxBlockTitle {margin-top:5px;display:table-cell;vertical-align:middle;}.jxBlockActions{margin-top:5px;margin-bottom:5px;}.jxInfo{float:left;height:15px;width:15px;border:2px solid #bbb;color:#bbb;border-radius:50%;display:table;font-size:10px;}.jxInfo a{text-decoration:none;color:#bbb;}.jxInfo a:hover{text-decoration:none;color:#bbb;}.jxInfo a:visited{text-decoration:none;color:#bbb;}.jxButtonBlock{float:right;margin-right:5px;}.jxTitle {display: inline;}" + ".jxTitle a:link,.jxTitle a:visited{" + merged.titleCSS + "}.jxTitle a:hover{" + merged.titleCSSHover + "}.jxDescription{" + merged.descriptionCSS + "}.jxButton {font-family: Arial, Helvetica, sans-serif;font-size: 11px;color: #494949 !important;background: #ffffff;padding: 5px;border: 2px solid #494949 !important;border-radius: 6px;display: inline-block;transition: all 0.3s ease 0s;}.jxButton:hover {color: #494949 !important;border-radius: 50px;border-color: #494949 !important;transition: all 0.3s ease 0s;}";
         common.acss(_jxTitleStyle, 'jxTitleStyle');
         let jxImgBlock, jxInfo, jxBlockTitle, jxButtonBlock;
-        let jxTitleDiv = document.createElement('div');
+        let titDiv = document.createElement('div');
 
-        let jxActionsDiv = null; 
+        let actDiv = null; 
         let id = '' + Math.floor(Math.random() * 100) + 1;//id not so important actually. Dunno what for.
         //we dun bother with the id really.
-        jxTitleDiv.id = "jxt_" + id;
-        jxTitleDiv.style.overflow = 'auto';
-        jxTitleDiv.style.textAlign = 'left';
-        jxTitleDiv.className = 'jxTitleContainer';
+        titDiv.id = "jxt_" + id;
+        titDiv.style.overflow = 'auto';
+        titDiv.style.textAlign = 'left';
+        titDiv.className = 'jxTitleContainer';
     
         if (false) {
-            jxActionsDiv = document.createElement('div');
-            jxActionsDiv.id = "jxa_" + id;
-            jxActionsDiv.style.cssText = "all:initial;text-align:center;display:block;margin-bottom:10px;"
+            actDiv = document.createElement('div');
+            actDiv.id = "jxa_" + id;
+            actDiv.style.cssText = "all:initial;text-align:center;display:block;margin-bottom:10px;"
         }// if (false)
     
         if (merged.nested == 0) {
             if (merged.thumbnail) {
                 if (merged.thumbnailurl) {
-                    jxImgBlock = common.newDiv(jxTitleDiv, 'div',
+                    jxImgBlock = common.newDiv(titDiv, 'div',
                         '<a href="' + merged.thumbnailurl + '" target="_blank"><img src="' + merged.thumbnail + '" class="jxImg"/></a>',
                         'jxImgBlock');
                 } else {
-                    jxImgBlock = common.newDiv(jxTitleDiv, 'div',
+                    jxImgBlock = common.newDiv(titDiv, 'div',
                         '<a href="' + merged.clickurl + '" target="_blank"><img src="' + merged.thumbnail + '" class="jxImg"/></a>',
                         'jxImgBlock');
                     common.addListener(jxImgBlock, 'click', (e) => {
@@ -88,7 +89,7 @@ let MakeOneUniversalMgr_ = function() {
             if (merged.title) {
                 jxBlockTitle = document.createElement('div');
                 jxBlockTitle.className = 'jxBlockTitle';
-                jxTitleDiv.appendChild(jxBlockTitle);
+                titDiv.appendChild(jxBlockTitle);
     
                 jxTitle = common.newDiv(jxBlockTitle, 'h3',
                     '<a href="' + merged.clickurl + '" target="_blank">' + merged.title + '</a>',
@@ -103,14 +104,14 @@ let MakeOneUniversalMgr_ = function() {
     
             if (false) {
             // Configuring the action block
-            jxActionsDiv.style.overflow = 'auto';
-            jxActionsDiv.className = 'jxBlockActions';
-            jxInfo = common.newDiv(jxActionsDiv, 'div',
+            actDiv.style.overflow = 'auto';
+            actDiv.className = 'jxBlockActions';
+            jxInfo = common.newDiv(actDiv, 'div',
                 '<div style="display: table-cell;vertical-align: middle;"><a href="https://www.jixie.io/privacy-policy/" target="_blank">i</a></div>',
                 'jxInfo');
     
             if (merged.clickurl && merged.buttonLabel) {
-                jxButtonBlock = common.newDiv(jxActionsDiv, 'div',
+                jxButtonBlock = common.newDiv(actDiv, 'div',
                     '<a href="' + merged.clickurl + '" class="jxButton" target="_blank">' + merged.buttonLabel + '</a>',
                     'jxButtonBlock');
                 common.addListener(jxButtonBlock, 'click', (e) => {
@@ -119,58 +120,61 @@ let MakeOneUniversalMgr_ = function() {
             }
             } //if (false)
     
-            if (jxTitleDiv.innerHTML) attachNode.insertBefore(jxTitleDiv, attachNode.firstChild);
-            if (jxActionsDiv) {
-                attachNode.appendChild(jxActionsDiv);
+            if (titDiv.innerHTML) attachNode.insertBefore(titDiv, attachNode.firstChild);
+            if (actDiv) {
+                attachNode.appendChild(actDiv);
             }
-            newheight = jxTitleDiv.offsetHeight + (jxActionsDiv ? jxActionsDiv.offsetHeight: 0);
+            newheight = titDiv.offsetHeight + (actDiv ? actDiv.offsetHeight: 0);
     
         } else { // Nested, then we display the information button on top of the creative
             if (false) {
-            jxActionsDiv.style.overflow = 'auto';
-            jxActionsDiv.className = 'jxBlockActions';
+            actDiv.style.overflow = 'auto';
+            actDiv.className = 'jxBlockActions';
             if (merged.nested > 0) { // if nested is negative then we don't display anything
-                jxInfo = common.newDiv(jxActionsDiv, 'div',
+                jxInfo = common.newDiv(actDiv, 'div',
                     '<div style="display: table-cell;vertical-align: middle;"><a href="https://inside.kompas.com/policy" target="_blank">i</a></div>',
                     'jxInfo');
-                jxButtonBlock = common.newDiv(jxActionsDiv, 'div',
+                jxButtonBlock = common.newDiv(actDiv, 'div',
                     '<div style="padding-top: 10px;color:grey;font-family:Arial;font-size:10px;">Advertisement</div>',
                     'jxButtonBlock');
             }
-            attachNode.appendChild(jxActionsDiv);
-            newheight = jxActionsDiv.offsetHeight + 5;
-            }//if (jxActionsDiv)
+            attachNode.appendChild(actDiv);
+            newheight = actDiv.offsetHeight + 5;
+            }//if (actDiv)
         }
-        if (cb) {
-            cb(newheight);
+        if (_cb) {
+            _cb(newheight);
         }
-
         return {
             height: newheight,
-            jxActionsDiv: jxActionsDiv,
-            jxTitleDiv: jxTitleDiv
+            actDiv: actDiv,
+            titDiv: titDiv
         };
     }
     FactoryOneUniveralMgr.prototype.getHeight = function() {
-        return _height;
+        return _shown ? _height: 0;
     };
     FactoryOneUniveralMgr.prototype.show = function() {
-        if (_univEltsObj) {
-            if (_univEltsObj.jxActionsDiv) _univEltsObj.jxActionsDiv.style.display = 'block';
-            if (_univEltsObj.jxTitleDiv) _univEltsObj.jxTitleDiv.style.display = 'block';
+        _shown = true;
+        if (_uElts) {
+            if (_uElts.actDiv) _uElts.actDiv.style.display = 'block';
+            if (_uElts.titDiv) _uElts.titDiv.style.display = 'block';
         }
+        _cb(_height);
     };
     FactoryOneUniveralMgr.prototype.hide = function() {
-        if (_univEltsObj) {
-            if (_univEltsObj.jxActionsDiv) _univEltsObj.jxActionsDiv.style.display = 'none';
-            if (_univEltsObj.jxTitleDiv) _univEltsObj.jxTitleDiv.style.display = 'none';
+        _shown = false;
+        if (_uElts) {
+            if (_uElts.actDiv) _uElts.actDiv.style.display = 'none';
+            if (_uElts.titDiv) _uElts.titDiv.style.display = 'none';
         }
+        _cb(0);
     };
     FactoryOneUniveralMgr.prototype.init = function(
         attachNode, cb, jxParams, universal, clickurl) {
-        _univEltsObj = attachUniversalBlob_(attachNode, cb, jxParams, universal, clickurl);
-        if (_univEltsObj)
-            _height = _univEltsObj.height;
+        _uElts = attachUniversalBlob_(attachNode, cb, jxParams, universal, clickurl);
+        if (_uElts)
+            _height = _uElts.height;
     };
     let ret = new FactoryOneUniveralMgr();
     return ret;
