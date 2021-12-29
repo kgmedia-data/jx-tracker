@@ -134,12 +134,12 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
 
     var _prepareFloatingUnits = function() {
         var stylesArr = [
-            "."+JXCloseBtnClsName+"{position: absolute;box-sizing: border-box;display: block;left: -12px;bottom: auto;top: 15px;right: auto;cursor:pointer;z-index: 99;}",
+            "."+JXCloseBtnClsName+"{position: absolute;box-sizing: border-box;display: block;left: -12px;bottom: auto;top: 3px;right: auto;cursor:pointer;z-index: 99;}",
             "."+JXCloseBtnClsName+":before,."+JXCloseBtnClsName+":after{width: 20px;height: 5px;transform: rotate(-45deg);content: '';position: absolute;display: block;background-color: #000;transition: all 0.2s ease-out;top: 50%;left: 50%;}",
             "."+JXCloseBtnClsName+":after{transform: rotate(45deg);}",
             "."+JXCloseBtnClsName+":hover:after{transform: rotate(-45deg);}",
             "."+JXCloseBtnClsName+":hover:before{transform: rotate(45deg);}",
-            "."+JXCloseBtnClsName+".left{position: absolute;box-sizing: border-box;display: block;right: 2px;bottom: auto;top: 18px;left: auto;cursor:pointer;z-index: 99;}",
+            "."+JXCloseBtnClsName+".left{position: absolute;box-sizing: border-box;display: block;right: 5px;bottom: auto;top: 3px;left: auto;cursor:pointer;z-index: 99;}",
             "."+JXFloatingClsName+"{position:fixed;height:auto;opacity:1;z-index:9999}",
         ].join("\n");
         common.acss(stylesArr, JXFloatingStyleID);
