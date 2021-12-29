@@ -92,7 +92,7 @@ function addGAMNoAdNotifyMaybe(str) {
 var MakeOneFloatingUnit = function() { return null; };
 
 if (JX_FLOAT_COND_COMPILE) {
-MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univmgr) {
+MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     const JXFloatingClsName = 'jxfloating';
     const cbn_ = 'jxfloating-close-button';
     const JXFloatingStyleID = 'JXFloatingStyle';
@@ -102,27 +102,28 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     var _ctr = null;//container
     var _parentCtr = null;//parent container
     var _placeholderDiv = null; //placeholder. acc to fery, needed for non fixed height
-    var jxbnScaleDiv = null; //arrgh ugly ... ... fixedheight ...
+    var _scaleDiv = null; //arrgh ugly ... ... fixedheight ...
 
     var _initialHeight = 0;
     var _floating = false;//current state.
-    var _pm2CreativeFcn = null;
+    var _dismissCB = null;
     var _userClosed = false; //if the user has closed the floating unit already
     
-    function FactoryOneFloating(container, params, divObjs, pm2CreativeFcn, univmgr) { 
+    function FactoryOneFloating(container, params, divObjs, dismissCB, univmgr) { 
         _univmgr = univmgr;
-        jxbnScaleDiv = divObjs.jxbnScaleDiv;
+        _scaleDiv = divObjs.jxbnScaleDiv;
 
         _parentCtr = container;
-        
         _ctr = divObjs.outerDiv;
-        _pm2CreativeFcn = pm2CreativeFcn;
+        _dismissCB = dismissCB;
 
         //<--- if it is not from the publisher nor the creative, then we assume some defaults.
-        params.type = params.type || 'always';
+        // The parameters of the float are from publisher setting  and creative setting.
+        // By the time we reach here, the publisher and creative setting are already mixed.
+        // Now if anything is still not set, then we fill in with a sensible default.
+        params.type = params.type || 'view';
         //the right way to merge maxwidth is take the most conservative.
         let elt = divObjs.jxCoreElt;
-
         let ar = elt.offsetWidth/elt.offsetHeight;
         
         //set to all the reasonable values first: 
@@ -134,9 +135,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         
         params.position = params.position || 'bottom-right';
         params.marginX = params.hasOwnProperty('marginX') ? params.marginX : 10;
-        params.marginY = params.hasOwnProperty('marginY') ? params.marginY : 0;
+        params.marginY = params.marginY || 0;
         params.background = params.background || 'transparent';
         //--->
+
         _fP = params;
 
         _fP.width = _fP.maxwidth < elt.offsetWidth ? _fP.maxwidth: elt.offsetWidth;
@@ -161,14 +163,12 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
 
         _closeBtn = document.createElement('a');
         _closeBtn.className = cbn_;
-
         if (_fP.position.indexOf('left') > -1) _closeBtn.classList.add('left');
         _closeBtn.onclick = function() {
             _stopFloat();
             _userClosed = true;
-            _pm2CreativeFcn("jxnotvisible");
+            _dismissCB();
         }
-
         _ctr.appendChild(_closeBtn);
         _showHideCloseBtn(false);
     }
@@ -204,26 +204,27 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
         if (_placeholderDiv) _placeholderDiv.style.display = "none";
     }
     var _startFloat = function(crViewed) {
-        _floating = true;
-        _ctr.classList.add(JXFloatingClsName);
-        let sty = _ctr.style;
-        sty.background = _fP.background;
+        if (!_floating) {
+            _floating = true;
+            _ctr.classList.add(JXFloatingClsName);
+            let sty = _ctr.style;
+            sty.background = _fP.background;
 
-        if (_fP.fixedHeight > 0) {
-            sty.height = _fP.height + "px";
-            jxbnScaleDiv.style.top = 0 + "px";//wah liao!
-        } else sty.height = "auto";
-        sty.width = _fP.width + "px";
-        //console.log(`_startfloat: ${sty.width} ${sty.height}`);
+            if (_fP.fixedHeight > 0) {
+                sty.height = _fP.height + "px";
+                _scaleDiv.style.top = 0 + "px";//wah liao!
+            } else sty.height = "auto";
+            sty.width = _fP.width + "px";
+            //console.log(`_startfloat: ${sty.width} ${sty.height}`);
         
-        _setContainerStyle(sty);
-        if (_closeBtn) _showHideCloseBtn(true);
-        _univmgr.hide();
-        window.dispatchEvent(new Event('resize'));
-
-        _setPlaceholderDiv();
-        if (_fP.floatType == "always" && !crViewed) _pm2CreativeFcn("jxvisible");
+            _setContainerStyle(sty);
+            if (_closeBtn) _showHideCloseBtn(true);
+            _univmgr.hide();
+            window.dispatchEvent(new Event('resize'));
+            _setPlaceholderDiv();
+        }
     }
+    //if the floating is closed and the whatever is not yet in viewport then it is invisible
 
     var _stopFloat = function() {
         if (_floating) {
@@ -248,6 +249,12 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     FactoryOneFloating.prototype.startFloat = function(crViewed) {
         _startFloat(crViewed);
     }
+    FactoryOneFloating.prototype.isShowing = function() {
+        return _floating;
+    }
+    FactoryOneFloating.prototype.startFloat = function(crViewed) {
+        _startFloat(crViewed);
+    }
     FactoryOneFloating.prototype.shouldFloat = function(crViewed, visible) {
         return (!_userClosed && ((_fP.type == "always" && !visible) || (_fP.type == "view" && crViewed && !visible)));
     }
@@ -257,7 +264,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
     FactoryOneFloating.prototype.cleanup = function() {
         _cleanUpElement();
     }
-    let floatUnit = new FactoryOneFloating(container, params, divObjs,  pm2CreativeFcn, univmgr);
+    let floatUnit = new FactoryOneFloating(container, params, divObjs, dismissCB, univmgr);
     return floatUnit;   
 }
 }
@@ -1331,6 +1338,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, pm2CreativeFcn, univm
 //
 const thresholdDiff_ = 120;     
      function __handleScrollEvent(event, windowHeight = null, BCR = null) {
+        if (this.floatmgr && this.floatmgr.isShowing()) {
+            //when float unit is there, then no differential scroll behaviour.
+            return;
+        }
         //console.log(`windowHeight=${windowHeight} BCR=${BCR}`);
         let c = this.c;
         if (!c.hasOwnProperty('creativeH') || !c.hasOwnProperty('containerH')) {
@@ -2115,7 +2126,7 @@ const thresholdDiff_ = 120;
      * @param {*} divObjs 
      * @param {*} cxtFcns 
      */    
-    function HooksMgr(container, normCrParams, divObjs, cxtFcns, univmgr) {
+    function HooksMgr(container, normCrParams, divObjs, cxtFcns) { //}, univmgr) {
         this.needcallresize = true; //typically we will have this called after the hasad signal
         //but with amp, this might be too early and can cause problems.
 
@@ -2136,16 +2147,13 @@ const thresholdDiff_ = 120;
         this.bf_cleanup = __cleanup.bind({divObjs:this.divObjs, c: this.c });
         this.bf_heightchange = __handleCreativeHeightChange.bind({divObjs:this.divObjs, c: this.c});
         this.bf_resize = __handleResize.bind({divObjs:this.divObjs, c: this.c });
-        this.bf_scroll = __handleScrollEvent.bind({
+        /* this.bf_scroll = __handleScrollEvent.bind({
             univmgr:        univmgr,
             savedoffset:    0,
-            //creativeH : normCrParams.height,
-            //containerH : normCrParams.fixedHeight,
             containerElt:   this.ctr,
-            //excludedH:      normCrParams.excludedHeight,
             divObjs:        this.divObjs,
             c:              this.c
-        }); 
+        });*/ 
         this.msghandlers['jxadended'] = this.bf_cleanup;
         this.msghandlers['jxchangeheight'] =  this.bf_heightchange;
         this.msghandlers['resize'] = this.bf_resize;
@@ -2178,13 +2186,20 @@ const thresholdDiff_ = 120;
         let bf = __handleBlur.bind({divObjs:this.divObjs, trackers: this.trackers });
         this.cxtFcns.addListener(this.allhooks, window, "blur", bf);
       } 
-
-      HooksMgr.prototype.hookDifferentialScroll = function() {
-        this.cxtFcns.addListener(this.allhooks, null, "scroll", this.bf_scroll);
+      HooksMgr.prototype.hookDifferentialScroll = function(univmgr, floatmgr) {
+            this.bf_scroll = __handleScrollEvent.bind({
+                univmgr:        univmgr,
+                floatmgr:       floatmgr, //if float is showing then no diff scroll.
+                savedoffset:    0,
+                containerElt:   this.ctr,
+                divObjs:        this.divObjs,
+                c:              this.c
+            });
+            this.cxtFcns.addListener(this.allhooks, null, "scroll", this.bf_scroll);
       }
-      HooksMgr.prototype.unhookDifferentialScroll = function() {
-        this.cxtFcns.removeListener(this.allhooks, null, "scroll", this.bf_scroll);
-      }
+      //HooksMgr.prototype.unhookDifferentialScroll = function() {
+        //this.cxtFcns.removeListener(this.allhooks, null, "scroll", this.bf_scroll);
+      //}
       HooksMgr.prototype.hookResize = function() {
         this.cxtFcns.addListener(this.allhooks, window, "resize", this.bf_resize);
       }
@@ -2423,12 +2438,6 @@ const thresholdDiff_ = 120;
                     hooksMgr.hookBlur();
                 }
                 
-                /**
-                 *  if we do differential scrolling, then set up the listener
-                 */
-                if (normCrParams.doDiffScroll) {
-                    hooksMgr.hookDifferentialScroll();
-                }
                 //OK, JUST WAIT FOR THE CREATIVE TO SAY HAS AD OR NO AD THEN!
                 return prom2_crHasAd; 
             })
@@ -2454,7 +2463,8 @@ const thresholdDiff_ = 120;
                 if (JX_FLOAT_COND_COMPILE) {
                     if (normCrParams.floatParams) {
                         try {
-                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, boundPM2Creative, univmgr); //, normCrParams.height, normCrParams.fixedHeight);
+                        _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, function() {
+                            boundPM2Creative('jxnotvisible'); }, univmgr); 
                         }
                         catch (x) {
                             console.log(x.stack);
@@ -2463,28 +2473,30 @@ const thresholdDiff_ = 120;
                 }
 
                 /**
+                 *  if we do differential scrolling, then set up the listener
+                 */
+                if (normCrParams.doDiffScroll) {
+                    hooksMgr.hookDifferentialScroll(univmgr, _floatInst);
+                }
+          
+                /**
                  * visibility detection (for AMP, the differential scrolling depends on same callback
                  * mechanism as the visibility stuff)
                  */
-                //if float inst
-                //already means visible bah.
                 let notifyFcn = function(vis) {
                     if (_floatInst) { 
-                        if (vis) { //the slot is visible
+                        if (vis) { //the in-article slot is visible
                             _floatInst.stopFloat();
-                            hooksMgr.hookDifferentialScroll();
-                            boundPM2Creative('jxvisible');
-                        } else {
-                            if (!_floatInst.shouldFloat(this.firstViewed, vis) || !this.lastPgVis) boundPM2Creative('jxnotvisible');
-                            else {
-                                hooksMgr.unhookDifferentialScroll();
-                                boundPM2Creative('jxvisible');
+                        } else if (this.lastPgVis != 0) { //the page is not covered (lastPgVis != 0)
+                            if (_floatInst.shouldFloat(this.firstViewed, vis)) {
                                 _floatInst.startFloat(this.firstViewed);
                             } 
                         }
-                    } else {
-                        boundPM2Creative(vis ? 'jxvisible': 'jxnotvisible');
-                    }
+                    } 
+                    //if the page is covered (lastPgVis == 0), then nothing is visible then:
+                    //somethingVis: either at the original inarticle position, or the floating.
+                    let somethingVis = (this.lastPgVis == 0 ? 0: (vis ? true : (_floatInst ? _floatInst.isShowing(): false)));
+                    boundPM2Creative(somethingVis ? 'jxvisible': 'jxnotvisible');
                 };
                 hooksMgr.hookVisChangeNotifiers(notifyFcn);
                 return prom3_evtSDKHandshake; 
