@@ -1835,7 +1835,7 @@ const thresholdDiff_ = 120;
         
         if (JX_FLOAT_COND_COMPILE) {
             let device = (common.isMobile() ? 'mobile': 'desktop');
-            //jxParams.floating = 'always'; //HACK
+            
             if (jxParams.floating == 'always' || jxParams.floating == 'creative' && c[u_] && c[u_].floating) {
                 //if there are any things:
                 let srvCfg = (c[u_] && c[u_].floatparams ? c[u_].floatparams: {});
@@ -2456,9 +2456,11 @@ const thresholdDiff_ = 120;
                  * visibility detection (for AMP, the differential scrolling depends on same callback
                  * mechanism as the visibility stuff)
                  */
+                //if float inst
+                //already means visible bah.
                 let notifyFcn = function(vis) {
                     if (_floatInst) { 
-                        if (vis) {
+                        if (vis) { //the slot is visible
                             _floatInst.stopFloat();
                             hooksMgr.hookDifferentialScroll();
                             boundPM2Creative('jxvisible');
@@ -2466,6 +2468,7 @@ const thresholdDiff_ = 120;
                             if (!_floatInst.shouldFloat(this.firstViewed, vis) || !this.lastPgVis) boundPM2Creative('jxnotvisible');
                             else {
                                 hooksMgr.unhookDifferentialScroll();
+                                boundPM2Creative('jxvisible');
                                 _floatInst.startFloat(this.firstViewed);
                             } 
                         }
@@ -2502,41 +2505,43 @@ const thresholdDiff_ = 120;
         function _assembleParams(params) {
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
-                if (_jxParams.excludedheight) {
-                    _jxParams.excludedHeight = _jxParams.excludedheight;
+                let p = _jxParams;
+                
+                if (p.excludedheight) {
+                    p.excludedHeight = p.excludedheight;
                 }
                 // Checking the parameters and adding parameters if needed
-                _jxParams.pgwidth = parseInt(_jxParams.pgwidth) || 0;
-                _jxParams.maxwidth = parseInt(_jxParams.maxwidth) || 0;
-                if (_jxParams.pgwidth && !_jxParams.maxwidth) {
-                    _jxParams.maxwidth = _jxParams.pgwidth;
+                p.pgwidth = parseInt(p.pgwidth) || 0;
+                p.maxwidth = parseInt(p.maxwidth) || 0;
+                if (p.pgwidth && !p.maxwidth) {
+                    p.maxwidth = p.pgwidth;
                 }
-                _jxParams.maxheight = parseInt(_jxParams.maxheight) || 0;
+                p.maxheight = parseInt(p.maxheight) || 0;
                 
-                if (_jxParams.fixedheight) {
-                    _jxParams.fixedHeight = _jxParams.fixedheight;
-                    _jxParams.maxheight = _jxParams.fixedheight;
+                if (p.fixedheight) {
+                    p.fixedHeight = p.fixedheight;
+                    p.maxheight = p.fixedheight;
                 }
                 //_jxParams.nested = parseInt(_jxParams.nested) || 0;
-                _jxParams.creativeid = parseInt(_jxParams.creativeid) || null;
+                p.creativeid = parseInt(p.creativeid) || null;
                 
                 //but this stuff really no body use ah?!
                 //_jxParams.width = parseInt(_jxParams.width) || 640;
                 //_jxParams.height = parseInt(_jxParams.height) || 360;
-                _jxParams.campaignid = parseInt(_jxParams.campaignid) || null;
+                p.campaignid = parseInt(p.campaignid) || null;
 
                 let ctr = null;
 
                 if (JX_FLOAT_COND_COMPILE) {
-                    if (_jxParams.floating == 'none' || !_jxParams.floating) {
-                        delete _jxParams.floatparams; //even if there is, delete.
+                    if (p.floating == 'none' || !p.floating) {
+                        delete p.floatparams; //even if there is, delete.
                     }
                     //the other options are: always, creative (default)
                     //for those we would have kept the floatparams already.
                 }
 
                 if (params.container) {
-                    if (gIsFifs && _jxParams.doFloat) { //<--?
+                    if (gIsFifs && p.doFloat) { //<--?
                         ctr = parent.document.getElementById(params.container);
                         if (!ctr) ctr = window.top.document.getElementById(params.container);
                     } else {
@@ -2546,13 +2551,13 @@ const thresholdDiff_ = 120;
                         let pgWidthGuide = Math.round(ctr.offsetWidth);
                         //too off we dun use.
                         if (!isNaN(pgWidthGuide) && pgWidthGuide > 300 && pgWidthGuide < 700) {
-                            _jxParams.pgwidth = pgWidthGuide;
+                            p.pgwidth = pgWidthGuide;
                         }
                     }
                 } 
-                if (_jxParams.context != 'amp' && gIsUFif) {
-                    _jxParams.fixedHeight = 0; //We will not be able to do the differential scroll
-                    _jxParams.excludedHeight = 0; 
+                if (p.context != 'amp' && gIsUFif) {
+                    p.fixedHeight = 0; //We will not be able to do the differential scroll
+                    p.excludedHeight = 0; 
                 }
                 if (ctr) {
                     _jxContainer = ctr;
