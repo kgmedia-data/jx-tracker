@@ -2543,7 +2543,7 @@ const thresholdDiff_ = 120;
                 let ctr = null;
 
                 if (JX_FLOAT_COND_COMPILE) {
-                    if (p.floating == 'none' || !p.floating) {
+                    if (p.floating == 'never' || !p.floating) {
                         delete p.floatparams; //even if there is, delete.
                     }
                     //the other options are: always, creative (default)
