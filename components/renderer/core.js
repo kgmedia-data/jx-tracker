@@ -2076,11 +2076,12 @@ const thresholdDiff_ = 120;
             out[u_] = c[u_];//??
         }
         /* just for ease of local testing: */
-        out[u_] = {
+        /* out[u_] = {
             "title":"OSM demo video",
         "thumbnail":"https://creatives.jixie.media/MN168F6uZj/459/1708/mnc_youtube.jpg",
         "description":"This is a demo video for testing OSM solution from Jixie."
          };
+         */
         
         
         out.assumeHasAd = assumeHasAd;
