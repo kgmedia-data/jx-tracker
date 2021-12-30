@@ -7,12 +7,12 @@
 DO_NOT_REMOVE_GULPBUILD_REPLACE_FLOAT_COND_COMPILE
 
 if (JX_FLOAT_COND_COMPILE) {
-    if (window.jxuniversalflt) {
+    if (window.jxuniv) {
         return;
     }
 }
 else {
-    if (window.jxuniversal) {
+    if (window.jxuniv) {
         return;
     }
 }
@@ -46,14 +46,15 @@ function start_(options) {
     instMap.set(hashStr, uliteInst);
 }
 
+
 var ourSigQ = '';
 if (JX_FLOAT_COND_COMPILE) {
-    ourSigQ = '_jxuniversalfltq';
-    window.jxuniversalflt = { init: start_}; 
+    ourSigQ = '_jxuniv';
+    window.jxuniv = { init: start_}; 
 }
 else {
-    ourSigQ = '_jxuniversalq';
-    window.jxuniversal = { init: start_}; 
+    ourSigQ = '_jxuniv';
+    window.jxuniv = { init: start_}; 
 }
 
 //this is a now-common design-pattern so that the code calling us
@@ -62,23 +63,39 @@ else {
 window.jxuniversalq = window.jxuniversalq || [];
 window.jxuniversalq.push('init', p);
 */
+
 var JxEventsQ = function () {
     this.push = function () {
-        for (var i = 0; i < arguments.length; i++) try {
-            if (typeof arguments[i][0] === "string") {
-                let fcnname = arguments[i][0];
-                if (fcnname == 'init' && arguments[i].length >= 2) {
-                    start_(
-                     arguments[i][1]
-                    );
+        for (var i = 0; i < arguments.length; i++) {
+            try {
+                if (Array.isArray(arguments[i]) && arguments[i][0] == 'init') {
+                    start_(arguments[i][1]);    
                 }
-            }
-        } catch (e) {}
+                else 
+                    start_(arguments[i]);
+      
+            } catch (e) {}
+        }
     }
 };
+/*
+window._jxuniv = window._jxuniv || [];
+window._jxuniv.push({
+    maxwidth: 640,
+    unit: "62dfd0d28588b4a2ed791b90dda06fce", // TO BE REPLACED WITH THE AD UNIT ID (HERE IT IS DEMO ONLY)
+    container: "jxOutstreamContainer",
+    creativeid: 1707, 
+});*/
 
 var _old_eventsq = window[ourSigQ];
+if (!_old_eventsq) {
+    _old_eventsq = window.jxuniversalq; //in case still got anybody using it like this?
+}
+
 window[ourSigQ] = new JxEventsQ(); //actually no need object, just cloned from some website's snipplet .. :-)
+window.jxuniversalq = window[ourSigQ];//in case still got anyone using it like this
+
 // execute all of the queued up events - apply() turns the array entries into individual arguments
 if (_old_eventsq)
     window[ourSigQ].push.apply(window[ourSigQ], _old_eventsq);
+
