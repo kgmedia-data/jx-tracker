@@ -127,17 +127,66 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         let ar = elt.offsetWidth/elt.offsetHeight;
         
         //set to all the reasonable values first: 
+        /*
         params.maxwidth = params.maxwidth || (common.isMobile() ? 200:600);
         params.maxheight = params.maxheight || (common.isMobile() ? 300:400);
         //translate it into maxwidth also: if whatever from the maxheight is stricter, then update the maxwidht
         let tmp = ar*params.maxheight;
         if (tmp < params.maxwidth) params.maxwidth = tmp; 
-        
+        */
         params.position = params.position || 'bottom-right';
         params.marginX = params.hasOwnProperty('marginX') ? params.marginX : 10;
         params.marginY = params.marginY || 0;
         params.background = params.background || 'transparent';
         //--->
+        //<--
+        //WIP: this array will be traversed from top and stopping as soon as the ar matches (arOfCreative > ar in the object)
+        //x : 1 means consider width, 0 means consider height
+        //p and v are some limits to the extent of the creative we will impose:
+            //p: is a percentage of the browser width (or height) 
+            //v: is a hard value (px) 
+        const rules_ = {
+            other: { //<-- creative type (potentially we can have another entry for e.g. video)
+                desktop: [
+                    //horiz: banner type
+                    { ar: 3,   x: 1, p: 0.7,  v: 800},
+                    // normal video:
+                    { ar: 1.7, x: 1, p: 0.50, v: 400},
+                    // squarish stuff
+                    { ar: 0.8, x: 1, p: 0.50, v: 400},
+                    //vertical video
+                    { ar: 0.5, x: 0, p: 0.5, v: 400},
+                    { ar: 0.4, x: 0, p: 0.5, v: 500},
+                    { ar: 0,   x: 0, p: 0.7, v: 600},
+                ],
+                mobile: [
+                    //horiz: banner type
+                    { ar: 3,   x: 1, p: 0.7,  v: 400},
+                    // normal video:
+                    { ar: 1.7, x: 1, p: 0.50, v: 200},
+                    // squarish stuff
+                    { ar: 0.8, x: 1, p: 0.50, v: 150},
+                    //vertical video
+                    { ar: 0.5, x: 0, p: 0.5, v: 200},
+                    { ar: 0.4, x: 0, p: 0.5, v: 300},
+                    { ar: 0,   x: 0, p: 0.7, v: 400}
+                ]
+            }
+        };
+        let brSz = {
+            x: window.innerWidth || document.body.clientWidth,
+            y: window.innerHeight || document.body.clientHeight
+        };
+        let blob = rules_[params.adtype] || rules_.other;
+        blob = blob.desktop;
+        let rule = blob.find((e) => e.ar < ar);
+        //console.log(`### FOUND RULE ${JSON.stringify(rule,null,2)}`);
+        params.maxwidth = rule.x ? brSz.x*rule.p: brSz.x;
+        params.maxheight = rule.x ? brSz.y: brSz.y*rule.p;
+        let tmp = ar*params.maxheight;
+        if (tmp < params.maxwidth) params.maxwidth = tmp; 
+        //natural width:
+        //-->
 
         _fP = params;
 
@@ -400,6 +449,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
          * @param {*} param 
          */
     function __combiVisibilityChange(param, secondParam) {
+        console.log(`### _CALLED VIS THING`);
         if (!this.hasOwnProperty('lastVisVal')) {
             //not initialized yet
             this.lastVisVal = -1;
@@ -504,6 +554,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                 return;
             }
         }
+        //TODO : switch to Beacon!!
         let url = trackers.baseurl + '?' + trackers.parameters + '&action='+action;
         fetch(url, {
             method: 'get',
@@ -1852,31 +1903,36 @@ const thresholdDiff_ = 120;
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
             doDiffScroll:       c.doDiffScroll
         };
-        
+        // perhaps there will be nothing from server side.
+        // just base on shape?
+        // 
         if (JX_FLOAT_COND_COMPILE) {
             let device = (common.isMobile() ? 'mobile': 'desktop');
-            
-            if (jxParams.floating == 'always' || jxParams.floating == 'creative' && c[u_] && c[u_].floating) {
-                //if there are any things:
-                let srvCfg = (c[u_] && c[u_].floatparams ? c[u_].floatparams: {});
-                if (srvCfg[device]) { 
-                    srvCfg = Object.assign(srvCfg, srvCfg[device]);
-                }
+            console.log(`context: ### ${jxParams.context}`);
+            //for amp there is not floating:
+            if (jxParams.context != 'amp' && 
+                (jxParams.floating == 'always' || jxParams.floating == 'creative' && c[u_] && c[u_].floating)) {
+                //let srvCfg = (c[u_] && c[u_].floatparams ? c[u_].floatparams: {});
+                //if (srvCfg[device]) { 
+                  //  srvCfg = Object.assign(srvCfg, srvCfg[device]);
+                //}
                 let brwCfg = (jxParams.floatparams ? jxParams.floatparams: {});
-                let smw = srvCfg.maxwidth > 0 ? srvCfg.maxwidth : 9999;
-                let cmw = brwCfg.maxwidth > 0 ? brwCfg.maxwidth : 9999;
+                //let smw = srvCfg.maxwidth > 0 ? srvCfg.maxwidth : 9999;
+                //let cmw = brwCfg.maxwidth > 0 ? brwCfg.maxwidth : 9999;
                 //we take the more conservative maxwidth
-                let t = Math.min(cmw, smw);
-                if (t != 9999) tmp.maxwidth = t;
+                //let t = Math.min(cmw, smw);
+                //if (t != 9999) tmp.maxwidth = t;
                 
                 if (brwCfg[device]) { 
                     brwCfg = Object.assign(brwCfg, brwCfg[device]);
                 }
-                let tmp = Object.assign({}, srvCfg, brwCfg);
+                let tmp = Object.assign({}, brwCfg);
+                
                 if (jxParams.fixedHeight) {
                     tmp.fixedHeight = jxParams.fixedHeight;
                 }
                 tmp.floating = jxParams.floating;
+                tmp.adtype = c.type;
                 out.floatParams = tmp;
             }
         }
