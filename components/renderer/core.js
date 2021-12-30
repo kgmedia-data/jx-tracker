@@ -121,7 +121,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         // The parameters of the float are from publisher setting  and creative setting.
         // By the time we reach here, the publisher and creative setting are already mixed.
         // Now if anything is still not set, then we fill in with a sensible default.
-        params.type = params.type || 'view';
+        params.mode = params.mode || 'viewed';
         //the right way to merge maxwidth is take the most conservative.
         let elt = divObjs.jxCoreElt;
         let ar = elt.offsetWidth/elt.offsetHeight;
@@ -153,7 +153,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                     // normal video:
                     { ar: 1.7, x: 1, p: 0.50, v: 400},
                     // squarish stuff
-                    { ar: 0.8, x: 1, p: 0.50, v: 400},
+                    { ar: 0.8, x: 1, p: 0.50, v: 300},
                     //vertical video
                     { ar: 0.5, x: 0, p: 0.5, v: 400},
                     { ar: 0.4, x: 0, p: 0.5, v: 500},
@@ -181,8 +181,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         blob = blob.desktop;
         let rule = blob.find((e) => e.ar < ar);
         //console.log(`### FOUND RULE ${JSON.stringify(rule,null,2)}`);
-        params.maxwidth = rule.x ? brSz.x*rule.p: brSz.x;
-        params.maxheight = rule.x ? brSz.y: brSz.y*rule.p;
+        params.maxwidth = rule.x ? Math.min(brSz.x*rule.p, rule.v): brSz.x;
+        params.maxheight = rule.x ? brSz.y: Math.min(brSz.y*rule.p, rule.v);
         let tmp = ar*params.maxheight;
         if (tmp < params.maxwidth) params.maxwidth = tmp; 
         //natural width:
@@ -305,7 +305,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         _startFloat(crViewed);
     }
     FactoryOneFloating.prototype.shouldFloat = function(crViewed, visible) {
-        return (!_userClosed && ((_fP.type == "always" && !visible) || (_fP.type == "view" && crViewed && !visible)));
+        return (!_userClosed && ((_fP.start == "init" && !visible) || (_fP.mode == "viewed" && crViewed && !visible)));
     }
     FactoryOneFloating.prototype.stopFloat = function() {
         _stopFloat();
