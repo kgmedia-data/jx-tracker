@@ -25,7 +25,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
          * ..... what if the page has several of their scripts (hope that will not happen)
          */
         rtjson.createslot = {
-            diffscroll: true
+            diffscroll: false
         };
         rtjson.createslot.parent = aNode;
         rtjson.createslot.div = {

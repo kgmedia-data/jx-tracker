@@ -28,7 +28,7 @@ const mpcommon              = modulesmgr.get('osmpartners/common');
             return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, makeNormalizedObj__);
         }
         
-        function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, fixedHeightBlob) {
+        function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgObj) {
             let instID = rtjson.instID;
             let aNode = mpcommon.getAdSlotAttachNode(dbjson, getPageSelectorFcn);
             if (!aNode) {
@@ -45,49 +45,18 @@ const mpcommon              = modulesmgr.get('osmpartners/common');
             };
             /**/
             let rr = Math.floor(Math.random() * 1000) + 1;
-            //there is no scriptb to run
-            //scritb is for injection
-            //script
-            //this is new. if there is this . then just run it.
-            //we may just want to run the thing directly.
             try {
-            rtjson.scriptcfg = {
-                responsive: 1, 
-                container: `jxOutstream${instID}`, 
-                maxwidth: fixedHeightBlob && fixedHeightBlob.maxwidth ? fixedHeightBlob.maxwidth: 0,
-
-                maxheight: fixedHeightBlob && fixedHeightBlob.maxheight ? fixedHeightBlob.maxheight: 0,
-                pgwidth: aNode.node.offsetWidth ? aNode.node.offsetWidth: 300,
-                fixedheight: fixedHeightBlob && fixedHeightBlob.fixedheight ? fixedHeightBlob.fixedheight: 0,
-                excludedheight: fixedHeightBlob && fixedHeightBlob.excludedheight ? fixedHeightBlob.excludedheight: 0,
-                jsoncreativeobj64: dbjson.adparameters.jsonbase64
-            };
+                rtjson.scriptcfg = Object.assign({}, cfgObj, {
+                    responsive: 1, 
+                    container: `jxOutstream${instID}`, 
+                    pgwidth: aNode.node.offsetWidth ? aNode.node.offsetWidth: 300,
+                    jsoncreativeobj64: dbjson.adparameters.jsonbase64
+                });
             }
             catch(x) {
                 console.log(x.stack);
             }
             rtjson.msgs = { abc: 1};
-            rtjson.HIDE_scriptb =
-            `<script>
-                var jxosmarg${rr} ={
-                    responsive: 1, 
-                    container: "jxOutstream${instID}", 
-                    maxwidth: ${aNode.node.clientWidth ? aNode.node.clientWidth: 300},
-                    fixedheight: ${fixedHeightBlob && fixedHeightBlob.fixedheight ? fixedHeightBlob.fixedheight: 0},
-                    excludedheight: ${fixedHeightBlob && fixedHeightBlob.excludedheight ? fixedHeightBlob.excludedheight: 0},
-                    jsoncreativeobj64: "${dbjson.adparameters.jsonbase64}"
-                };
-                function jxdefer(p) {
-                    if (window.jxuniversallite) {
-                        window.jxuniversallite(p);
-                    } else {
-                        setTimeout(function() { jxdefer(p) }, 100);
-                    }
-                }
-                jxdefer(jxosmarg${rr});
-                </script>
-                <script type="text/javascript" src="https://jx-scripts.s3-ap-southeast-1.amazonaws.com/tests/jxoutstreamlite.min.js" defer></script>
-                `; 
                 //no need for jxosmcore_ later to create any div for ad.
                 //and not need for jxosmcore_ to monitor on any visibility as the JX itself will fire
                 //the right tracker events
