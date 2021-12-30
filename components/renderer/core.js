@@ -121,7 +121,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         // The parameters of the float are from publisher setting  and creative setting.
         // By the time we reach here, the publisher and creative setting are already mixed.
         // Now if anything is still not set, then we fill in with a sensible default.
-        params.mode = params.mode || 'viewed';
+        params.start = params.start || 'viewed';
         //the right way to merge maxwidth is take the most conservative.
         let elt = divObjs.jxCoreElt;
         let ar = elt.offsetWidth/elt.offsetHeight;
@@ -305,7 +305,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         _startFloat(crViewed);
     }
     FactoryOneFloating.prototype.shouldFloat = function(crViewed, visible) {
-        return (!_userClosed && ((_fP.start == "init" && !visible) || (_fP.mode == "viewed" && crViewed && !visible)));
+        return (!_userClosed && ((_fP.start == "init" && !visible) || (_fP.start == "viewed" && crViewed && !visible)));
     }
     FactoryOneFloating.prototype.stopFloat = function() {
         _stopFloat();
@@ -449,7 +449,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
          * @param {*} param 
          */
     function __combiVisibilityChange(param, secondParam) {
-        console.log(`### _CALLED VIS THING`);
         if (!this.hasOwnProperty('lastVisVal')) {
             //not initialized yet
             this.lastVisVal = -1;
