@@ -32,10 +32,16 @@ const startModePWApi_       = consts.startModePWApi;
 const startModeSDKApi_      = consts.startModeSDKApi;
 const startModeSDKClick_    = consts.startModeSDKClick;
 
-//var DAMApiBase_ = 'https://jixie-dam-api-w.azurewebsites.net/api/stream?format=hls&metadata=basic';
-var DAMApiBase_ = 'https://jx-dam-api-express.azurewebsites.net/api/stream?format=hls&metadata=basic';
+//var DAMApiBase_ = 'https://apidam.jixie.io/api/stream?format=hls&metadata=basic';
+var DAMApiBase_ = 'https://jixie-dam-api-w.azurewebsites.net/api/stream?format=hls&metadata=basic';
 
-
+/* 
+if (window.location && window.location.hostname) {
+    if (window.location.hostname.indexOf("megapolitan") > -1) {
+          DAMApiBase_ = `https://jixie-dam-api-release-candidate.azurewebsites.net/api/stream?format=hls&metadata=basic`;
+    }
+}
+*/
 
 const IRThreshold_ = 0.5;
 
@@ -50,6 +56,7 @@ function createObject_(options, ampIntegration) {
         if (options.restrictions.maxwidth > 0) 
             DAMApiBase_ += '&max-width=' + options.restrictions.maxwidth;
     }
+
     var _dbgCountOOS = 0;
     var _dbgCountLoad = 0;
     var _dbgL1VP = 0;
@@ -58,11 +65,7 @@ function createObject_(options, ampIntegration) {
     
     var _vInfoMap = null;
     var _ampIntegration = ampIntegration; //so could be null
-    var _videos = [];
-    var _fakeLocalDam = []; //this is to support the mode of caller using loadTest to force a HLS stream (rather than going thru DAM)
-                            //Used in conjunction with this specialVideoId_
-    const specialVideoId_ = 230945023482390829048;  //this is to support the loadTest mode whereby a streamURL is given.
-    
+    let _videos = [];
     var _options = {}; // a copy of the stuff from the user.
 
     //this is config at our level:
@@ -245,18 +248,9 @@ function createObject_(options, ampIntegration) {
      * @param {*} v 
      * @param {*} errBlob 
      * @returns 
-     * _vInfoMap[jxId]
      */
-    function _sendAgg(v) {
-        //videoid, ownerid publisher id (accountid)
-        let timeleft = _vInfoMap[v.videoid].metadata.duration - v.playhead;
-        timeleft = timeleft < v.step ? Math.round(timeleft): v.step;
-        let url = _evtsHelperBlock.aggTrackerBase + '&step=' + timeleft + '&action=duragg&videoid=' + v.videoid + 
-            '&ownerid=' + _vInfoMap[v.videoid].owner_id +  '&rendition=' + v.w + 'x' + v.h;
-        common.sendBeacon(url);
-    }
     function _sendVTracker(action, v, errBlob) {
-        let dbgProp = _dbgVersion; // + "_OOS_" + _dbgCountOOS + "_L_" + _dbgCountLoad + "_LVP_" + _dbgL1VP;
+        let dbgProp = _dbgVersion + "_OOS_" + _dbgCountOOS + "_L_" + _dbgCountLoad + "_LVP_" + _dbgL1VP;
         if (!_evtsHelperBlock) {
             return;
         }
@@ -264,10 +258,6 @@ function createObject_(options, ampIntegration) {
         if ((!v || !v.videoid) && (action != 'creativeView')) { 
             return; //this is erorr not emitted from the playerWrapper but
             //but looks like emitted e.g. cannot read DAM API etc.
-        }
-        if (v && v.videoid == specialVideoId_) {
-            //special tests videos.
-            return; 
         }
         let diffTime = 0;
         let DateNow = Date.now();
@@ -320,7 +310,6 @@ function createObject_(options, ampIntegration) {
         if (v) {
             url = _evtsHelperBlock.trackerBase + 
             '&videoid=' + v.videoid + 
-            '&ownerid=' + _vInfoMap[v.videoid].owner_id +
             '&vposition=' + (_evtsHelperBlock.vposition < 0 ? 0: _evtsHelperBlock.vposition) +
             '&startmode=' + _evtsHelperBlock.video.lastgesture +
             '&playhead=' + v.playhead +
@@ -343,12 +332,8 @@ function createObject_(options, ampIntegration) {
             '&viewability=' + vab2 +
             '&debug=' + dbgProp;
         }        
-
         if (action == 'hlserror' && errBlob){
             url += '&debug=' + encodeURIComponent(errBlob.details); //errBlob: details 
-        }
-        if (action == 'play') {
-            url += '&step=' + jxvhelper.getStep();
         }
         //if (action.startsWith('play') || action == 'start') {
           //  console.log(`S_S_S_S_S_S_sendTracker: action=${action} diffTime = ${diffTime}`);
@@ -363,11 +348,15 @@ function createObject_(options, ampIntegration) {
         if (action == 'error') {
             _msLastErrorTracker = DateNow;
         }
-        //let's say we do not bother!
-        common.sendBeacon(url+delta);
+        fetch(url +delta, {
+            method: 'get',
+            credentials: 'include' 
+        })
+        .catch((error) => {
+        }); 
+        
     }
 
-    /*
     function drWifiValueFromDam(value) {
         //console.log(`## drWifiValueFromDam: ${value}`);
         if (common.isMobile()) {
@@ -393,7 +382,6 @@ function createObject_(options, ampIntegration) {
         //}
         return value;
     }
-    */
     
     /**
      * figure out the startMode once and for all.
@@ -405,7 +393,7 @@ function createObject_(options, ampIntegration) {
     function _workoutStartModeOnce(nwFromAPI) {
         let hasWifi;
         if (nwFromAPI) {
-            //nwFromAPI = drWifiValueFromDam(nwFromAPI);
+            nwFromAPI = drWifiValueFromDam(nwFromAPI);
             //it is possible to get 'unknown' from the the video info api endpoint
             //in that case we assume no wifi. so all good
             hasWifi = (nwFromAPI == 'wifi');
@@ -500,9 +488,8 @@ function createObject_(options, ampIntegration) {
     function repairMissingOptions(options) {
         if (options.hasOwnProperty('muted')) {
             // backward compatiable:
-            if (options.hasOwnProperty('sound')) {
-                delete options.muted;
-            }
+            options.sound = options.muted ? "off": "fallback";
+            delete options.muted;
         }
         //This is only for crucial properties that cannot be missing
         //a final options object. 
@@ -514,8 +501,7 @@ function createObject_(options, ampIntegration) {
 		    {sub:'ads', p:'delay',d: defaultAdDelay_},
 		    {sub:'ads', p:'prerolltimeout',d: 5000},
 	    ].forEach(function(one) {
-            //here o is like a pointer to point to the right place in the options object.
-		    var o = one.sub? options[one.sub]: options;
+		    o = one.sub? options[one.sub]: options;
 		    if (o && !o.hasOwnProperty(one.p)) {
 			    o[one.p] = one.d;
 		    }
@@ -682,8 +668,7 @@ function createObject_(options, ampIntegration) {
             _evtsHelperBlock = JSON.parse(JSON.stringify(unfiredOneTimeEvtsSeed_));
             _evtsHelperBlock.trackerBase = jxvhelper.getTrackerBase(_options) + '&accountid=' + _options.accountid + 
                      (_options.customid ? '&customid='+ _options.customid: '') +
-                     '&autoplay=' + _options.autoplay;
-            _evtsHelperBlock.aggTrackerBase = jxvhelper.getAggTrackerBase() + '&accountid=' + _options.accountid;
+                     '&autoplay=' + _options.autoplay,
             _evtsHelperBlock.vposition = -1;
         }
         
@@ -728,16 +713,6 @@ function createObject_(options, ampIntegration) {
             _fetchNPlay1VP(vid2Fetch);
         }
     }
-    
-    
-    /**
-     * The follow are our player's main entry points 
-     * The loadJx and load are the older ones here for sake of compatiability
-     * @param {*} videoId 
-     * @param {*} startOffset 
-     * @param {*} playEndCB 
-     * @param {*} forcePlatform 
-     */
      JXPlayerInt.prototype.loadVideoById = function(videoId, startOffset, playEndCB, forcePlatform) {
         _load(true, [videoId], (playEndCB === undefined ? null: playEndCB), 
             (forcePlatform === undefined? null:forcePlatform), 
@@ -760,77 +735,6 @@ function createObject_(options, ampIntegration) {
      JXPlayerInt.prototype.loadPlaylistByPartnerId = function(param, playEndCB, forcePlatform) {
         _load(false, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
      }
-     /**
-      * This is for internal testing use only: caller directly specifies a stream url.
-      * @param {*} param 
-      * this is a request at a later stage of our development.
-      * so we continue to use the _videos[] construct.
-      * params can be a string (stream url)
-      * or it can be an object: must have url property. In addition can also have thumbnail and network
-      */
-    JXPlayerInt.prototype.loadTest = function(param) {
-        //param = {
-          //  mp4url: 'https://video.jixie.media/1002/32719/32719_240p.mp4'
-        //};
-        //https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8
-        //https://moctobpltc-i.akamaihd.net/hls/live/571329/eight/playlist.m3u8
-        /*
-        data:
-            conf: nothing
-            metadata: 
-                duration
-                thumbnail (string)
-            network "wifi"
-            segment "hw-timer"
-            streams: [
-                {type: HLS, url: ""},
-                ...
-            ]
-            video_id: 
-        */
-        _fakeLocalDam = []; //reset it.
-        let arrFakeVideoIds = [];
-        if (!Array.isArray(param)) {
-            param = [param];
-        }
-        if (param.length > 1) {
-            //ok currently we only do 1 video.
-            param.length = 1;
-        }
-        param.forEach(function(elt) {
-            let o = { 
-                streams: [],
-                metadata: {
-                    title: ' '
-                },
-                //duration: 1000, we will not "pre-know" the duration then. we will just detect it when the video is loaded.
-                network: "wifi",
-                segment: "hw-timer" //it does not matter, just to fill in something to prevent programme errors
-                //no trackers will be sent anyways
-            };
-            if (typeof elt === 'string') {
-                o.streams = [ {type: 'HLS', url: elt}];
-            }
-            else {
-                if (elt.hls) 
-                    o.streams.push({type: 'HLS', url: elt.hls});
-                if (elt.mp4) 
-                    o.streams.push({type: 'MP4', url: elt.mp4});
-                if (elt.thumbnail) {
-                    o.metadata.thumbnail = elt.thumbnail;
-                }
-                if (elt.network) {
-                    o.network = elt.network;
-                }
-            }
-            if (o.streams.length > 0) {
-                o.video_id = specialVideoId_;
-                arrFakeVideoIds.push(o.video_id);
-                _fakeLocalDam.push(o);
-            }
-        });
-       _load(true, arrFakeVideoIds, (null), (null), -1);
-    }
 
      /***
       * START OF LAZY LOAD LOGIC BLOCK 
@@ -1033,15 +937,12 @@ function createObject_(options, ampIntegration) {
      * playEndCB is optional: it is a function that we will call when the 1 video finished playing
      * (if invoked on a list of videoids, then it is only called when everything finished playing)
      */
-    /***/
-    /*
+    /**
     function _sendStuff(endpoint) {
         fetch(endpoint)
         .then(response => response.json())
         .catch();
     }
-    */
-   /*
     function _kickOffLazyTest(accountid, videoids) {
         let prom = new Promise(function(resolve){
               setTimeout(function(){
@@ -1062,8 +963,7 @@ function createObject_(options, ampIntegration) {
         })
         .catch(console.error);
     }
-    */
-    /***/
+    **/
     
     
     /**
@@ -1270,10 +1170,6 @@ function createObject_(options, ampIntegration) {
     var _evtsHelperBlock = null; // JSON.parse(JSON.stringify(unfiredOneTimeEvtsSeed_));
     
     function _routeEvent(type, eName, videoInfoObj, errObj) {
-        if (eName == 'agg') {
-            //quick Do quick go.
-            return _sendAgg(videoInfoObj);
-        }
         
         //if the video id does not match the current video
         //then suppress the emission of the event
@@ -1596,7 +1492,6 @@ function createObject_(options, ampIntegration) {
      * @param {*} type 
      * @param {*} vId 
      * @returns 
-     * Not sure if anybody still use this:
      */
     function _getDevOverrideMaybe(type, vId) {
         if (_options.dev_hls_overrides && type == 'hls') {
@@ -1659,10 +1554,9 @@ function createObject_(options, ampIntegration) {
             repairMissingOptions(_options);
             
             prepareAdsObj(_options);
-            //_options.hotspot might not be there. it is ok.
             _pInst.setConfig(
                 _options.ads,
-                _options.logo, _options.soundindicator, _options.sound, _options.hotspot); //_options.sound (on, off, fallback)
+                _options.logo, _options.soundindicator, _options.sound); //_options.sound (on, off, fallback)
         }
             
         _dbgL1VP++;
@@ -1891,60 +1785,9 @@ function createObject_(options, ampIntegration) {
      * video ids or the jixie one
      * if using the Partnersystem of ids _vidFetchAcctId will be set properly and we call the API variant
      * for partner video ids.
-     * @param {*} result json object
-     * If the data is enough that it can try to launch the player with that stream info
-     * then it returns boolean true, otherwise false 
+     * @param {*} vId 
      */
-    function _commonDigestDamResult(vId, data) {
-        let jxId = -1;//the internal id of the video.
-        //console.log(`__JXTIMING script checking DAM response ` + (Date.now() - basetime_));
-        //from this point onwards everything uses the jixie internal id of this video
-        //i.e. data.id property.
-        jxId = data.video_id; //internal ID!
-        let blob = JSON.parse(JSON.stringify(data));
-        blob.segment = data.segment;
-        blob.extid = vId; //whatever they call load or loadJx with.
-        blob.id = data.video_id;
-        let tmp = data.streams.find((e)=> e.type == 'MP4');
-        blob.fallback = (tmp && tmp.url ? tmp.url : null);
-        tmp = data.streams.find((e)=> e.type == 'HLS');
-        if (tmp && tmp.url) 
-            blob.hls = tmp.url;
-        else if (!blob.fallback)
-            jxId = -1; //This is the min we need but it is not there. So declare error !
-        if (jxId > -1) {
-            _vInfoMap[jxId] = blob;
-            
-        }    
-        return jxId;
-    }
-    /*
-    data:
-        conf: nothing
-        metadata: 
-            duration
-            thumbnail (string)
-            network "wifi"
-            segment "hw-timer"
-        streams: [
-            {type: HLS, url: ""},
-            ...
-        ]
-        video_id: 
-
-    */
     function _fetchNPlay1VP(vId) {
-        // this is the case whereby a hardcoded HLS stream is given to us.
-        // there is no DAM to call. we just fake a dam result so we use as much common code as possible.
-        if (vId == specialVideoId_) {
-            let found = _fakeLocalDam.find((e) => e.video_id == vId);
-            let jxId = _commonDigestDamResult(vId, found);
-            //the fetch of info cannot fail as we do not fetch
-            if (jxId != -1)
-                _launch1VP(_vInfoMap[jxId]);
-            return;
-        }
-        
         var xhr = new XMLHttpRequest();
         //xhr.withCredentials = true;
         //won't work for IE
@@ -1955,11 +1798,13 @@ function createObject_(options, ampIntegration) {
                 { code: errCodeDAMApiError_ } //error object
             );
         };
+       
         xhr.addEventListener("readystatechange", function() {
             //is this safe enough? (to get the whole response?)
             if(this.readyState === XMLHttpRequest.DONE) {
-                let result = null;
+                let jxId = -1;//the internal id of the video.
                 var status = xhr.status;
+                let result = null;
                 if (this.responseText) {
                     try {
                         result = JSON.parse(this.responseText);
@@ -1967,19 +1812,55 @@ function createObject_(options, ampIntegration) {
                     catch (err) {}
                 }
                 if ((status === 0 || (status >= 200 && status < 400)) && result && result.success) {
-                    let jxId = _commonDigestDamResult(vId, result.data);
-                    if (jxId != -1) {
-                        _launch1VP(_vInfoMap[jxId]);
-                        return; 
+                    //console.log(`__JXTIMING script checking DAM response ` + (Date.now() - basetime_));
+                    //from this point onwards everything uses the jixie internal id of this video
+                    //i.e. data.id property.
+                    jxId = result.data.video_id; //internal ID!
+                    let blob = JSON.parse(JSON.stringify(result.data));
+                    blob.segment = result.data.segment;
+                    blob.extid = vId; //whatever they call load or loadJx with.
+                    blob.id = result.data.video_id;
+                    let tmp = _getDevOverrideMaybe(fallbackTech_, vId);
+                    if (tmp) {
+                        blob.fallback = tmp;
+                    }
+                    else {
+                        tmp = result.data.streams.find((e)=> e.type == 'MP4');
+                        blob.fallback = (tmp && tmp.url ? tmp.url : null);
+                    }
+                    tmp = _getDevOverrideMaybe('hls', vId);
+                    if (tmp) {
+                        blob.hls = tmp;
+                    }
+                    else {
+                        tmp = result.data.streams.find((e)=> e.type == 'HLS');
+                        if (tmp && tmp.url) 
+                            blob.hls = tmp.url;
+                        else
+                            jxId = -1; //This is the min we need but it is not there. So declare error !
+                    }
+                    
+                    if (jxId > -1) {
+                        _vInfoMap[jxId] = blob;
+                    }    
+                }
+                else { //see if we can salvage anything (info as to what went wrong)
+                    if (result) {
+                        console.log("DAM API error message:");
+                        console.log(result);
                     }
                 }
-                _routeEvent("video", "error", 
-                    { extid: vId }, //video info object
-                    { code: errCodeDAMApiError_ } //error object
-                );
+                if (jxId != -1) {
+                    _launch1VP(_vInfoMap[jxId]);
+                }
+                else {
+                    _routeEvent("video", "error", 
+                        { extid: vId }, //video info object
+                        { code: errCodeDAMApiError_ } //error object
+                    );
+                }
             }
         });
-        
         let url = DAMApiBase_;
         if (_vidFetchAcctId) {
             url += '&partner_id=' + vId +

@@ -216,7 +216,8 @@ function MakeOneHelperObj_() {
      *  html5 video + the npm HLS.js plugin
      *  In order not to change the playerWrapper code, I have faked a shaka.Player class above
      */
-    FactoryOneHelper.prototype.FAKE_loadShakaScriptP = function(goodans, badans) {
+    /*********
+     * FactoryOneHelper.prototype.FAKE_loadShakaScriptP = function(goodans, badans) {
         if(_loadShakaProm) return _loadShakaProm;
         _loadShakaProm = new Promise(function(resolve) {
             var tag = document.createElement("script");
@@ -236,6 +237,7 @@ function MakeOneHelperObj_() {
         });
         return _loadShakaProm;
     }
+    ***********/
     //This is the real shaka player, right now commented out.
     FactoryOneHelper.prototype.loadShakaScriptP = function(goodans, badans) {
         //dun even have promises, then forget it just do simplist
@@ -403,6 +405,13 @@ function MakeOneHelperObj_() {
         if (options.amp) tmp += '&device=amp';
         return tmp;
     }
+    FactoryOneHelper.prototype.getAggTrackerBase = function() {
+        return 'https://traid.jixie.io/sync/video?x=1';
+    }
+    FactoryOneHelper.prototype.getStep = function() {
+        //if you change this, remember to change the function above! (getAggTrackerBase)
+        return 5;
+    }
     FactoryOneHelper.prototype.guessIsVODByDuration = function(dur) {
         return (!isNaN(dur) && dur >= 0 && dur < 86400);
     }
@@ -423,6 +432,7 @@ function MakeOneHelperObj_() {
         if (options.amp) tmp += '&device=amp';
         return tmp;
     }
+    
     let ret = new FactoryOneHelper();
     return ret;
 };
