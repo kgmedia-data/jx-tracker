@@ -380,6 +380,10 @@
                         _fcnVector.setScrollMgmt(true, cnO, cn);
                     }
                     else {
+                        //let cnO_ = parentNode.querySelector(".jxfhhelper");
+                        //if (cnO_) {
+                          //  cnO_.style.height = '1px';
+                        //}
                         _fcnVector.setScrollMgmt(false);
                         cn = getAnElt('#' + _jsonObj.createslot.div.id, parentNode);
                         if(!cn) {
@@ -1226,7 +1230,7 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            ['fixedheight','excludedheight','maxwidth','maxheight','gam'].forEach(function(prop){
+            ['fixedheight','excludedheight','maxwidth','maxheight','gam','floating','floatparams'].forEach(function(prop){
                 if (p[prop]) {
                     _commonCfg[prop] = p[prop];
                 }

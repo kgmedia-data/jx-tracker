@@ -9,7 +9,7 @@ const MakeOneSoundIndicator     = modulesmgr.get('video/soundind-factory');
 const MakeOneSpinner            = modulesmgr.get('video/spinner-factory');
 const MakeOneAdScheduler        = modulesmgr.get('video/adscheduler-factory');
 const MakeOnePlayerCfgMgr       = modulesmgr.get('video/playercfgmgr-factory');
-     
+const MakeOneHotspot            = modulesmgr.get('video/hotspotmgr-factory');
 
 const defaultPBMethod_          = 'shaka';
 const defaultVolume_            = 0.5;
@@ -22,7 +22,6 @@ const startModeSDKApi_          = consts.startModeSDKApi;
 const startModeSDKClick_        = consts.startModeSDKClick;
 const startModeSDKAutoplay_     = consts.startModeSDKAutoplay;
 const startModeSDKAuto_         = consts.startModeSDKAuto;
-
 
 const _jxPreloadOverride        = null;
 const _jxPlaybackOverride       = "shaka";
@@ -93,6 +92,7 @@ const _aggStep = jxvhelper.getStep();
         var _oneOffInitDone = false; //after doing a first video, then this is set to true
         //some init we only need to do once.
         var _adObject = null;
+        var _adScheduler = null;
 
         var _reportCB = function() {}; //donothing now. Can be overwritten
         var _gestureReportCB = function() {}; //donothing now. Can be overwritten
@@ -185,6 +185,8 @@ const _aggStep = jxvhelper.getStep();
         //we need to do some heuristics to help us know whether the current pausing or playing
         //is due to user action or just our internal mechanism (intersectionObserver etc)
         var _manualPaused = false;
+
+        var _hotspotObj = null;
         
         function FactoryPlayerWrapper(container) {
             //one off init: the synchronous stuff.
@@ -411,6 +413,9 @@ const _aggStep = jxvhelper.getStep();
             if (_adObject) {
                 _adObject.reset();
             }
+            if (_hotspotObj) {
+                _hotspotObj.reset();
+            }
             _contentDiv.classList.remove(styles.hide); //this is important. Coz if video is switched while ad is playing, 
             //then the content div at that time would be hidden!
             _contentDiv.classList.remove(styles.hideOpacity); //this is important. Coz if video is switched while ad is playing, 
@@ -457,7 +462,7 @@ const _aggStep = jxvhelper.getStep();
         }
         FactoryPlayerWrapper.prototype.setConfig = function(
             adsCfg, //the tags are also inside this obj: adtagurl and adtagurl2
-            logoCfg, soundIndCfg = null, sound = "off") {
+            logoCfg, soundIndCfg = null, sound = "off", hotspotCfg) {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
             _cfg.ads.delay = 5;
@@ -466,6 +471,7 @@ const _aggStep = jxvhelper.getStep();
             _controlsColor = "#FF1111"; //controlsColor;
             _cfg.logo = logoCfg ? JSON.parse(JSON.stringify(logoCfg)): null;
             _cfg.soundind = soundIndCfg ?  JSON.parse(JSON.stringify(soundIndCfg)): null;
+            _cfg.hotspot = hotspotCfg ? JSON.parse(JSON.stringify(hotspotCfg)) : null;
             //if (!mute) {
                 //this is regarding autoplay:
               //  _forceAutoplayWithSound = true;
@@ -589,7 +595,9 @@ const _aggStep = jxvhelper.getStep();
                       //  _soundIndObj.showMaybe();
                     //then the state will be set to content in the onPlayingCB....
                     _ctrls.showCtrl();
-                    _ctrls.overlaysChanged(); 
+                    _ctrls.overlaysChanged();
+                    _createHotspotObjMaybe();
+                    _hotspotObj.trigger();
                 },
                 onAdPlaying: function() {
                     // nothing to do anymore
@@ -1202,7 +1210,6 @@ const _aggStep = jxvhelper.getStep();
                     _changeShakaBuffering = null;
                     tmp(_shakaPlayer);
                 }
-                  
 
                 /** Get the diff between playheads then check whether it make senses to take it as an accumulated time
                  * the timeupdate handler didn't take longer than 250ms or 0.25 to run. refer to https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/timeupdate_event
@@ -1332,14 +1339,35 @@ const _aggStep = jxvhelper.getStep();
             }
         };
         ********/
+        var doctorAdTag = function(adtag) {
+            let entry = (Array.isArray(_cfg.ads.creativeids) ? _cfg.ads.creativeids : []).find((e)=>e.videoid == _videoID);
+            if (entry && !isNaN(entry.creativeid)) {
+                return adtag + '&creativeid=' + entry.creativeid;
+            }
+            return adtag;                
+        }
         var _createAdObjMaybe = function(makeNew) {
             if (!_adObject) {
                 _adObject = MakeOneAdObj(_container, _vid, _makeFcnVectorForAd());
                 _adObject.setVpaidSecure(false);
+
             }
             return _adObject;
         };
-  
+
+        var _createHotspotObjMaybe = function() {
+            if (!_hotspotObj) {
+                _hotspotObj = MakeOneHotspot(_container, _contentDiv, _cfg.hotspot, {
+                    getAccTime: function() {
+                        return _accumulatedTime;
+                    },
+                    getCompHotspot: function() {
+                        return (_adObject ? _adObject.getCompHotspot(): null);
+                    }});
+            }
+            return _hotspotObj;
+        };
+
         function _newAShakaPlayer(video) {
             shakaPlayer = new shaka.Player(video);
             let o = _playerCfgMgr.getNewCfgMaybe(0, true); //true as this is for init phase
@@ -1602,7 +1630,8 @@ const _aggStep = jxvhelper.getStep();
            */
         function _initChainDoAdsP(getAdMode, adProm) {
             if (getAdMode == 'noprefetch') {
-                adProm = _adObject.makeAdRequestP(_cfg.ads.adtagurl, 
+                adProm = _adObject.makeAdRequestP(
+                    doctorAdTag(_cfg.ads.adtagurl),
                     _startModePW == startModePWClick_ ? false: true,
                     _savedMuted);
             }
@@ -1861,7 +1890,8 @@ const _aggStep = jxvhelper.getStep();
                     _reportCB('video', 'ready', _makeCurrInfoBlobEarly(videoID));
                     _ctrls.hideSpinner();
                     if(getAdMode == 'prefetch') {
-                        adPromise = _adObject.makeAdRequestP(_cfg.ads.adtagurl, 
+                        adPromise = _adObject.makeAdRequestP(
+                            doctorAdTag(_cfg.ads.adtagurl),
                             _startModePW == startModePWClick_? false: true, //autoplay Flag (best effort lah)
                             _savedMuted); //muted flag (best effort lah)
                     }
@@ -1950,8 +1980,10 @@ const _aggStep = jxvhelper.getStep();
                 return; 
             }
             _createAdObjMaybe();
+            if (_hotspotObj) _hotspotObj.reset();
             //autoplay how you decide leh.
-            _adObject.makeAdRequestP(adUrl,
+            _adObject.makeAdRequestP(
+                doctorAdTag(adUrl),
                 _startModePW == startModePWClick_ ? false: true,
                 _vid.muted)
             .then(function(outcome) {

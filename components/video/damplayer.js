@@ -519,7 +519,8 @@ function createObject_(options, ampIntegration) {
 		    {sub:'ads', p:'delay',d: defaultAdDelay_},
 		    {sub:'ads', p:'prerolltimeout',d: 5000},
 	    ].forEach(function(one) {
-		    o = one.sub? options[one.sub]: options;
+            //here o is like a pointer to point to the right place in the options object.
+		    var o = one.sub? options[one.sub]: options;
 		    if (o && !o.hasOwnProperty(one.p)) {
 			    o[one.p] = one.d;
 		    }
@@ -1663,9 +1664,10 @@ function createObject_(options, ampIntegration) {
             repairMissingOptions(_options);
             
             prepareAdsObj(_options);
+            //_options.hotspot might not be there. it is ok.
             _pInst.setConfig(
                 _options.ads,
-                _options.logo, _options.soundindicator, _options.sound); //_options.sound (on, off, fallback)
+                _options.logo, _options.soundindicator, _options.sound, _options.hotspot); //_options.sound (on, off, fallback)
         }
             
         _dbgL1VP++;

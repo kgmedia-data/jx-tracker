@@ -60,7 +60,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
          * really corresponds to something on the page.
          */
         rtjson.createslot = {
-            diffscroll: true
+            diffscroll: false
         };
         rtjson.createslot.parent = aNode;
         //this old stupid one I did wrongly!

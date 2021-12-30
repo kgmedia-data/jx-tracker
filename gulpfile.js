@@ -79,7 +79,7 @@ const supported_ = [
         name: 'OSM', //name does not matter
         in: 'osm', //name of the file in bundles/ folder. So this one is bundles/osm.js
         out: 'jxosm.1.0', //the built file is jxosm.1.0.min.js 
-        floatable: 'no', //this will determine the built for some of the stuff so it matters.
+        floatable: 'yes', //this will determine the built for some of the stuff so it matters.
                          //floatable no means it will not have the ability to float.
         signature: "window.jxoutstreammgr.init", //if the script is somehow loaded twice by the publisher
                                                  // the second time the script sees that window.jxoutstreammgr & the init
