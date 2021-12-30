@@ -75,7 +75,31 @@ function start(options) {
     const ids = mids.get();
     //check if the options has the keywords.
     
+    
+    /*
+    {
+        "floating": "always",
+        "floatparams": {
+            "position": "bottom-left",
+            "marginX": 3,
+            "marginY": 19,
+            "background": "transparent"
+        }
+    }
+    
+    jxoptions=%7B%22floating%22%3A%22always%22%2C%22floatparams%22%3A%7B%22position%22%3A%22bottom-left%22%2C%22marginX%22%3A3%2C%22marginY%22%3A19%2C%22background%22%3A%22transparent%22%7D%7D
+    */
+
     const pginfo = mpginfo.get(options);
+    if (pginfo.jxoptions) {
+        //special way to have overriding options via url param. for testing and development and demo
+        try {
+            let opt2 = JSON.parse(pginfo.jxoptions);
+            Object.assign(options, opt2);
+        }
+        catch(z) {}
+        delete pginfo.jxoptions;
+    }
     // if options has pagekeywords, then it will win over whatever pginfo gets.
     let merged = Object.assign({}, ids, pginfo, options);
     
