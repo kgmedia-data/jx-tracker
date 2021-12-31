@@ -110,6 +110,13 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     var _userClosed = false; //if the user has closed the floating unit already
     
     function FactoryOneFloating(container, params, divObjs, dismissCB, univmgr) { 
+        //TMP HACK for z index of floating unit (not live yet; only thru demo path)
+        let pp = container;
+        pp = pp.parentNode;
+        if (pp) {pp = pp.parentNode;}
+        if (pp && pp.tagName == 'DIV') {
+            pp.style.zIndex="2147483647";
+        }
         _univmgr = univmgr;
         _scaleDiv = divObjs.jxbnScaleDiv;
 
