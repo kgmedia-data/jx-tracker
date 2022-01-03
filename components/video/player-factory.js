@@ -465,7 +465,6 @@ const _aggStep = jxvhelper.getStep();
             logoCfg, soundIndCfg = null, sound = "off", hotspotCfg) {
             _isConfigSet = true;
             _cfg.ads = adsCfg;
-            _cfg.ads.delay = 5;
             _adScheduler = MakeOneAdScheduler(_cfg.ads);
             _nextAdSlot = _adScheduler.getFirstNonPreroll();
             _controlsColor = "#FF1111"; //controlsColor;
