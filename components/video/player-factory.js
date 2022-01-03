@@ -989,7 +989,6 @@ const _aggStep = jxvhelper.getStep();
         function _onPlayingCB(param) {
             if (_tsPaused) {
                 _msNoCntPlay += Date.now() - _tsPaused;
-                console.log(`# _msNoCntPlay is now = ${_msNoCntPlay}`);
                 _tsPaused = 0;
             }
             //if (_manualPaused) {
