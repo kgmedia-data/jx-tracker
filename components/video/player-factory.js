@@ -1085,11 +1085,9 @@ const _aggStep = jxvhelper.getStep();
         //if it starts playing
 
         function _onPlayheadUpdateCB() {
-            if (_manualPaused) {
-                let diff1 = _vid.currentTime- this.lastPlayhead;
-                //console.log(`##_ ${diff1} _onPlayheadUpdateCB setting manualPaused to false`);
+            if (_vid.paused) {
+                return;
             }
-            //_manualPaused = false;
             let currentTime = _vid.currentTime;
             //<--- Do the video events (25%, 75% etc.)
             _doPlayedPctEvent(currentTime);
@@ -1968,6 +1966,7 @@ const _aggStep = jxvhelper.getStep();
             _createAdObjMaybe();
             if (_hotspotObj) _hotspotObj.reset();
             //autoplay how you decide leh.
+            _adObject.setAutoAdsManagerStart(false);
             _adObject.makeAdRequestP(
                 doctorAdTag(adUrl),
                 _startModePW == startModePWClick_ ? false: true,
