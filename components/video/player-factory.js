@@ -1771,6 +1771,7 @@ const _aggStep = jxvhelper.getStep();
                     //normally rolling from one video to the next...
                     //so the gesture is here.
                     _gestureReportCB(startModeSDKAuto_, _defaultReportInfoBlob);
+                    startSignalledProm = Promise.resolve(startModePWAuto_);
                     break;
                 case startModePWClick_:                    
                     startSignalledProm = Promise.resolve(startModePWClick_);
