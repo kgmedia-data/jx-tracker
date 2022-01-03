@@ -39,6 +39,7 @@ let MakeOneAdScheduler_ = function(adscfg) {
         if (adscfg.hasOwnProperty('interval') && !isNaN(adscfg.interval)) {
             _sInterval = parseInt(adscfg.interval);
         }
+        
         if (adscfg.maxslots && !isNaN(adscfg.maxslots)) {
             _maxSlots = parseInt(adscfg.maxslots);
         }
@@ -98,6 +99,11 @@ let MakeOneAdScheduler_ = function(adscfg) {
         if (_dirty) {
             _updateNext(0);
         }
+        if (_sNext == -1) return null;
+        return {
+            reqTime: _sNext <= 3 ? 0: _sNext -3,
+            playTime: _sNext
+        };
         //console.log(`__DEBUG podSize=${_podSize} maxSlots=${_maxSlots} minTimeLeft=${_minTimeLeft} interval=${_sInterval} delay=${_sDelay}`);
         //console.log(`__DEBUG(So far ${_usedSlots}) first non preroll ${_sNext}`);
         return _sNext;
@@ -130,7 +136,11 @@ let MakeOneAdScheduler_ = function(adscfg) {
     }
     FactoryOneAdScheduler.prototype.getNext = function(accuTime) {
         _updateNext(accuTime);
-        return _sNext;
+        if (_sNext == -1) return null;
+        return {
+            reqTime: _sNext <= 3 ? 0: _sNext - 3,
+            playTime: _sNext
+        };
     }
     let ret = new FactoryOneAdScheduler(adscfg);
     return ret;
