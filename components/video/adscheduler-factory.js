@@ -39,6 +39,7 @@ let MakeOneAdScheduler_ = function(adscfg) {
         if (adscfg.hasOwnProperty('interval') && !isNaN(adscfg.interval)) {
             _sInterval = parseInt(adscfg.interval);
         }
+        
         if (adscfg.maxslots && !isNaN(adscfg.maxslots)) {
             _maxSlots = parseInt(adscfg.maxslots);
         }
@@ -137,7 +138,7 @@ let MakeOneAdScheduler_ = function(adscfg) {
         _updateNext(accuTime);
         if (_sNext == -1) return null;
         return {
-            reqTime: _sNext <= 3 ? 0: _sNext - 1,
+            reqTime: _sNext <= 3 ? 0: _sNext - 3,
             playTime: _sNext
         };
     }
