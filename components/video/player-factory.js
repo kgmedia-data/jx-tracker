@@ -934,8 +934,7 @@ const _aggStep = jxvhelper.getStep();
         }
         var _onPausedCB = function(param) {
             _tsPaused = Date.now();
-            console.log(`# _tsPaused is set to now`);
-  
+            
             if (_ctrls) {
                 _ctrls.setPlayBtn();
             }
