@@ -295,9 +295,9 @@ function createObject_(options, ampIntegration) {
                 dbgProp += "_NOREF_1";
             }
             //reference point of all the events.
-            console.log(`# ${action}: 
-                # w/o: ${DateNow - _evtsHelperBlock.video.startts}
-                # w: ${DateNow - _evtsHelperBlock.video.startts - (v.mspaused ? v.mspaused : 0)}`)
+            //console.log(`# ${action}: 
+              //  # w/o: ${DateNow - _evtsHelperBlock.video.startts}
+                //# w: ${DateNow - _evtsHelperBlock.video.startts - (v.mspaused ? v.mspaused : 0)}`)
                 
             diffTime = DateNow - _evtsHelperBlock.video.startts - (v.mspaused ? v.mspaused : 0);
             if (diffTime <0) diffTime = 0;
