@@ -1230,7 +1230,7 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            ['fixedheight','excludedheight','maxwidth','maxheight','gam','floating','floatparams'].forEach(function(prop){
+            ['fixedheight','excludedheight','maxwidth','maxheight','gam','floating','floatparams','poverrides'].forEach(function(prop){
                 if (p[prop]) {
                     _commonCfg[prop] = p[prop];
                 }
