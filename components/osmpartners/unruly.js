@@ -12,6 +12,8 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
     let siteId = dbjson.adparameters.siteId;
     if (cfgBlob.poverrides && cfgBlob.poverrides.unruly) {
         siteId = cfgBlob.poverrides.unruly.siteId;
+        dbjson.timeout = -1;
+        rtjson.timeout = -1;
     }
     let instID = rtjson.instID;
     rtjson.msgs = {
