@@ -108,14 +108,16 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     var _floating = false;//current state.
     var _dismissCB = null;
     var _userClosed = false; //if the user has closed the floating unit already
+    var pp = null;
+    var savedZIndex = 'auto';
     
     function FactoryOneFloating(container, params, divObjs, dismissCB, univmgr) { 
         //TMP HACK for z index of floating unit (not live yet; only thru demo path)
-        let pp = container;
+        pp = container;
         pp = pp.parentNode;
-        if (pp) {pp = pp.parentNode;}
-        if (pp && pp.tagName == 'DIV') {
-            pp.style.zIndex="2147483647";
+        if (pp) {
+            pp = pp.parentNode;
+            savedZIndex = window.getComputedStyle(pp).getPropertyValue('z-index'); // get the z-index value of the parent container, we would need to change back the z-index value when stopping the float
         }
         _univmgr = univmgr;
         _scaleDiv = divObjs.jxbnScaleDiv;
@@ -259,13 +261,18 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     var _hidePlaceholderDiv = function() {
         if (_placeholderDiv) _placeholderDiv.style.display = "none";
     }
-    var _startFloat = function(crViewed) {
+    var _setFloat = function() {
         if (!_floating) {
             _floating = true;
+
+            if (pp && pp.tagName == 'DIV') {
+                pp.style.zIndex="2147483647"; // change the z-index to the higher value when floating
+            }
+
             _ctr.classList.add(JXFloatingClsName);
             let sty = _ctr.style;
             sty.background = _fP.background;
-
+    
             if (_fP.fixedHeight > 0) {
                 sty.height = _fP.height + "px";
                 _scaleDiv.style.top = 0 + "px";//wah liao!
@@ -280,11 +287,29 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             _setPlaceholderDiv();
         }
     }
+    var _startFloat = function(firstViewed, IRObj) {
+        if (_fP.position == 'top') {
+            // in case if the start is init. then we show with the floating first even if user scrolls down
+            // then after the unit entered in-article mode, we can make it to not show when user scrolls up
+            if (!firstViewed && _fP.start == 'init') {
+                _setFloat();
+            } else if (IRObj.boundingClientRect.top < 0) { // else if the start is viewed, we check if the unit's position is above the viewport
+                _setFloat();
+            }
+        } else {
+            _setFloat();
+        }
+    }
     //if the floating is closed and the whatever is not yet in viewport then it is invisible
 
     var _stopFloat = function() {
         if (_floating) {
             _floating = false;
+
+            if (pp && pp.tagName == 'DIV') {
+                pp.style.zIndex=savedZIndex; // change back the z-index to what it was
+            }
+
             _ctr.classList.remove(JXFloatingClsName);
             _ctr.style.cssText = "";
             _ctr.style.height = _initialHeight + "px";
@@ -302,14 +327,11 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         //????? what is this? _placeholderObs = null;
         _floating = false;
     }
-    FactoryOneFloating.prototype.startFloat = function(crViewed) {
-        _startFloat(crViewed);
+    FactoryOneFloating.prototype.startFloat = function(crViewed, IRObj) {
+        _startFloat(crViewed, IRObj);
     }
     FactoryOneFloating.prototype.isShowing = function() {
         return _floating;
-    }
-    FactoryOneFloating.prototype.startFloat = function(crViewed) {
-        _startFloat(crViewed);
     }
     FactoryOneFloating.prototype.shouldFloat = function(crViewed, visible) {
         return (!_userClosed && ((_fP.start == "init" && !visible) || (_fP.start == "viewed" && crViewed && !visible)));
@@ -471,6 +493,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         let fire = -1;
         let isIR = Array.isArray(param);
         let thisObj = this;
+        let latestChange = null;
 
         if (!isIR) {
             //console.log(JSON.stringify(param, null, 2));
@@ -496,7 +519,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         else { //is IR ratio change
             //for AMP we actually get an array of stuff every now and then. not sure what it is doing.
             if (param && Array.isArray(param) && param.length > 0) {
-                var latestChange = param[param.length - 1];
+                latestChange = param[param.length - 1];
                 //param.forEach(function(entry) 
                 if (thisObj.amp) {
                     //console.log(`### thisObj.amp.boundScrollEvent ${latestChange.rootBounds.height} ${JSON.stringify(latestChange.boundingClientRect)}`);
@@ -542,7 +565,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             if (!this.firstViewed) {
                 if (fire == 1) this.firstViewed = true;
             }
-            this.notifyFcn(fire == 1 ? true: false);
+            this.notifyFcn(fire == 1 ? true: false, latestChange);
             if (fire == 1 && this.notifyFirstVisible) {
                 // console.log(`!!!!!! ####calling notifyFirstVisible NOW`);
                 this.notifyFirstVisible();
@@ -1928,7 +1951,7 @@ const thresholdDiff_ = 120;
                 //we take the more conservative maxwidth
                 //let t = Math.min(cmw, smw);
                 //if (t != 9999) tmp.maxwidth = t;
-                
+
                 if (brwCfg[device]) { 
                     brwCfg = Object.assign(brwCfg, brwCfg[device]);
                 }
@@ -2545,13 +2568,13 @@ const thresholdDiff_ = 120;
                  * visibility detection (for AMP, the differential scrolling depends on same callback
                  * mechanism as the visibility stuff)
                  */
-                let notifyFcn = function(vis) {
+                let notifyFcn = function(vis, IRObj) {
                     if (_floatInst) { 
                         if (vis) { //the in-article slot is visible
                             _floatInst.stopFloat();
                         } else if (this.lastPgVis != 0) { //the page is not covered (lastPgVis != 0)
                             if (_floatInst.shouldFloat(this.firstViewed, vis)) {
-                                _floatInst.startFloat(this.firstViewed);
+                                _floatInst.startFloat(this.firstViewed, IRObj);
                             } 
                         }
                     } 
@@ -2616,6 +2639,7 @@ const thresholdDiff_ = 120;
 
                 let ctr = null;
 
+                
                 if (JX_FLOAT_COND_COMPILE) {
                     if (p.floating == 'never' || !p.floating) {
                         delete p.floatparams; //even if there is, delete.
