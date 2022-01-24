@@ -4,7 +4,7 @@ const mpcommon              = modulesmgr.get('osmpartners/common');
 
 
 function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, cfgBlob) {
-    dbjson.timeout = 5000; //temp try this due to SM complaints
+    dbjson.timeout = 10000; //temp try this due to SM complaints
     return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, cfgBlob, makeNormalizedObj__);
 }
 
