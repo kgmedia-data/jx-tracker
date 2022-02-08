@@ -156,7 +156,15 @@ const supported_ = [
         signature: "window.jxvideoadsdksal",
         //queue: not supported.
         liveall: ["https://scripts.jixie.media/jxvideoad.2.0.min.js"]
-    }  
+    },
+    {
+        name: 'RECWIDGET', //name does not matter
+        in: 'recwidget', //name of the file in bundles/ folder. So this one is bundles/osm.js
+        out: 'jxvwidget.1.0', //the built file is jxosm.1.0.min.js 
+        floatable: 'no',
+        signature: "window.jxwidget", 
+        queue: "window._jxrwidget"
+    },
     //--------- NOT USED ACTIVITELY IN LIVE ----------------------->
 ];
   // 
