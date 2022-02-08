@@ -1,0 +1,58 @@
+KG mock up:
+https://xd.adobe.com/view/f3bdda26-f7be-44ef-9566-1967369c51bf-a6ee/
+
+
+what you need to do:
+
+1 fire widget loaded tracker
+2 retrieval of client_Id, cohort (~~~), sid ---
+3 calling rec endpoint (need the info from 2)
+4 fire ready tracker event
+5 instantiate the GUI and be able to monitor a lot of visibility stuff
+6 detect CV, IMP, CLICK - fire trackers
+ (OR error: no rec results)
+ 
+The way we send events are very different from before.
+Please do not worry about this now. Focus on the GUI / interfacing and all the visibility tracking!
+
+Condition to fire the creativeView event:
+-----------------------------------------
+-50% of widget is in viewport OR
+-widget covered 50% of viewport (LONG WIDGET)
+
+Condition to impression event:
+------------------------------
+CV being true for N seconds
+
+Tracking on all the individual items's visibility:
+--------------------------------------------------
+0 
+
+
+
+Calling:
+ <script>
+      window._jxrwidget = window._jxrwidget || [];
+      window._jxrwidget.push({
+        "accountid": "9262bf2590d558736cac4fff7978fcb1", 
+        "container": "recWidgetTestDivId",
+        "widgetid": "....",
+        "title": "...",
+        "pageurl": "...",
+        "keywords": "...",
+        "gui": {
+            "cssfile": "https://rwidget.css",
+            "classes": {
+                "title": ["titlestyle"],
+                "thumbnail": ["thumbnailx"],
+                
+                ..... gap? 
+            },
+            "numcols": 2 <-- ??
+        }
+      });
+  </script>
+  <script type="text/javascript" src="https://scripts.jixie.media/jxrwidget.1.0.min.js"></script>
+
+ */
+/**
