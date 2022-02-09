@@ -1,8 +1,10 @@
 const mids = require('../basic/idslite');
+const mpginfo = require('../basic/pginfo');
 
 const rand = Math.floor(Math.random() * 1000);
 const recColCls = "jxRecCol";
 const recWrapperCls = "jxRecWrapper";
+const recAPIBase_ = "https://jixie-recommendation-api.azurewebsites.net/v1/recommendation";
 
 /* if use Vincent recommendation API then the trackerBlock is already well prepared
 and looks like this:
@@ -106,8 +108,37 @@ we try to create the event helper object
      * }
      * returns an object.
      */
- function collectBasicInfo() {
+ function collectBasicInfo(options) {
     // TODO
+    try {
+        const ids = mids.get();
+        const pginfo = mpginfo.get();
+        let newObj = {};
+
+        newObj.type = "pages";
+        if (options.title) newObj.title = options.title;
+        else if (pginfo.pagetitle) newObj.title = pginfo.pagetitle;
+
+        if (options.keywords) newObj.keywords = options.keywords;
+        else if (pginfo.pagekeywords) newObj.keywords = pginfo.pagekeywords;
+
+        if (options.pageurl) newObj.pageurl = options.pageurl;
+        else if (pginfo.pageurl) newObj.pageurl = pginfo.pageurl;
+
+        if (options.accountid) newObj.accountid = options.accountid;
+        if (ids.sid) {
+            newObj.session_id = ids.sid;
+            delete ids.sid;
+        }
+
+        if (options.widgetid) newObj.widget_id = options.widgetid;
+        else newObj.widget_id = "abcdef"; // hardcoded widget id
+
+        let merged = Object.assign({}, ids, newObj);
+        return merged;
+    } catch (error) {
+        console.log("Error: error while extracting the options object");
+    }
 }
 
 /**
@@ -120,11 +151,17 @@ we try to create the event helper object
  */
 function fetchRecommendationsP(basicInfo) {
     //FOR NOW PLEASE just call this hardcoded first!!!!!
+    const fetchURL = new URL(recAPIBase_);
+    Object.keys(basicInfo).map(function(item) {
+        fetchURL.searchParams.append(item, basicInfo[item])
+    })
+    console.log(fetchURL.toString());
+
     const dummyURL = "https://jixie-recommendation-api.azurewebsites.net/v1/recommendation?type=pages&widget_id=abcdef&accountid=28d808daafa0cf6acb0c57fde0e37b12&pageurl=https://www.bolasport.com/read/313130745/persib-kalah-dari-bhayangkara-fc-bukan-karena-ketiadaan-robert-rene-alberts";
     // TODO
     return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
-        xhr.open("GET", dummyURL);
+        xhr.open("GET", fetchURL.toString());
         xhr.onload = function() {
             if (xhr.status >= 200 && xhr.status < 300) {
                 resolve(JSON.parse(xhr.response));
@@ -189,6 +226,17 @@ function jixieRecAdaptor(resultObj) {
  function makeTrackerBaseUrl(basicInfo, resultObj) {
     // if resultObj contains trackerUrlBase property, we use that
     // else we cook up the tracker base url from the basic info then.
+    var trackerBaseUrl = "https://traid.jixie.io/sync/recommendation";
+    var trackerParams = "s=jx&v=mixed:9.0";
+    ['accountid', 'widget_id', 'client_id', 'session_id'].forEach(function(prop) {
+        if (basicInfo[prop])
+            trackerParams += '&' + prop + '=' + basicInfo[prop];
+    });
+    if (basicInfo.pageurl) trackerParams += '&page=' + decodeURIComponent(basicInfo.pageurl);
+
+    if (resultObj.trackers.baseURL) trackerBaseUrl = resultObj.trackers.baseURL;
+    if (resultObj.trackers.sharedParams) trackerParams = resultObj.trackers.sharedParams;
+    return trackerBaseUrl + '?' + trackerParams;
 }
 
 let MakeOneRecWidget_ = function(options) {
@@ -365,7 +413,7 @@ let MakeOneRecWidget_ = function(options) {
     
             appendDefaultCSS();
 
-            _basicInfo = collectBasicInfo();
+            _basicInfo = collectBasicInfo(options);
     
             // load the CSS file and fetch the recommendation need both done.
             let promMain = fetchRecommendationsP(_basicInfo);
@@ -378,7 +426,8 @@ let MakeOneRecWidget_ = function(options) {
                 // when both css file is fetched and the rec
                 // results came back, then we can use it.
                 let resultObj = values[0]; // from first promise
-                // let tUrl = makeTrackerBaseUrl(_basicInfo, resultObj);
+                let tUrl = makeTrackerBaseUrl(_basicInfo, resultObj);
+                console.log(tUrl);
                 // _evtHelper = MakeOneEvtHelper(numItems, tUrl);
 
                 // createDisplay(resultObj, _evtHelper);
