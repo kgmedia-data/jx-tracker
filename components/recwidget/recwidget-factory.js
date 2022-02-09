@@ -1,3 +1,5 @@
+const mids = require('../basic/idslite');
+
 const rand = Math.floor(Math.random() * 1000);
 const recColCls = "jxRecCol";
 const recWrapperCls = "jxRecWrapper";
@@ -181,8 +183,8 @@ let MakeOneRecWidget_ = function(options) {
         if (_numOfCols) colWidth = 100 / _numOfCols;
     
         const stylesArr = [
-            "."+recWrapperCls+"{display:flex;flex-wrap:wrap;}",
-            "."+recColCls+"{position:relative;box-sizing:border-box;width:100%;flex:0 0 "+colWidth+"%;max-width:"+colWidth+"%;padding:0 15px;}",
+            "."+recWrapperCls+""+rand+"{display:flex;flex-wrap:wrap;}",
+            "."+recColCls+""+rand+"{position:relative;box-sizing:border-box;width:100%;flex:0 0 "+colWidth+"%;max-width:"+colWidth+"%;}",
         ].join("\n");
     
         var head = document.getElementsByTagName('HEAD')[0];
@@ -218,7 +220,7 @@ let MakeOneRecWidget_ = function(options) {
         // more complicated visibility stuff.
         // you will need to hook up calls to _evtHelper.
         _widgetWrapper = document.createElement('div');
-        _widgetWrapper.className = recWrapperCls;
+        _widgetWrapper.className = `${recWrapperCls}${rand}`;
         if (_cssClasses.container && _cssClasses.container) _widgetWrapper.classList.add(_cssClasses.container);
         _container.appendChild(_widgetWrapper);
 
@@ -228,7 +230,7 @@ let MakeOneRecWidget_ = function(options) {
             items.map(function(item, index) {
                 _clickUrlArr.push({id: `recItem-${rand}-${index}`, url: item[_responseMapping.page_url]});
 
-                var recItem = createElement('div', `recItem-${rand}-${index}`, recColCls, _cssClasses.wrapper);
+                var recItem = createElement('div', `recItem-${rand}-${index}`, `${recColCls}${rand}`, _cssClasses.wrapper);
                 recItem.dataset.index = index;
 
                 var imgWrapper = createElement('div', null, null, _cssClasses.thumbnail_wrapper);
@@ -266,7 +268,7 @@ let MakeOneRecWidget_ = function(options) {
                 });
             }, {threshold: _defaultThreshold});
 
-            document.querySelectorAll(`.${recColCls}`).forEach(function(el) {
+            document.querySelectorAll(`.${recColCls}${rand}`).forEach(function(el) {
                 if (el) _itemsObserver.observe(el);
             });
 

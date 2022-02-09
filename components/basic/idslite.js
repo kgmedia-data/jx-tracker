@@ -31,6 +31,7 @@
         let ls = window.localStorage;
         let id =  ls.getItem('_jx');
         let sid = ls.getItem('_jxs');
+        let cohort = ls.getItem('_jxcht');
         if (id) {
             //console.log(`### FROM LS1 ${id}`);
             ret.client_id = id;
@@ -39,7 +40,11 @@
             //console.log(`### FROM LS2 ${sid}`);
             ret.sid = sid;
         }
-        if (id || sid) return ret;
+        if (cohort) {
+          //console.log(`### FROM LS3 ${cohort}`);
+          ret.cohort = cohort;
+        }
+        if (id || sid || cohort) return ret;
     }
     catch(e) {}
     let coo = getParsedCk_(document);
@@ -50,6 +55,10 @@
     if (coo['_jxs'] !== undefined) {
         ret.sid = coo['_jxs'];
         //console.log(`### FROM COOKIE2 ${ret.sid}`);
+    }
+    if (coo['_jxcht'] !== undefined) {
+      ret.cohort = coo['_jxcht'];
+      //console.log(`### FROM COOKIE3 ${ret.cohort}`);
     }
    }
    module.exports.get = get_;
