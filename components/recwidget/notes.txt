@@ -108,9 +108,12 @@ https://jixie.atlassian.net/wiki/spaces/DEMO/pages/1840218113/Recommendation+tra
       ]
 
 https://jixie.atlassian.net/wiki/spaces/DEMO/pages/1840218113/Recommendation+tracker
+
 1/ When you send, batch up and send.
 2/ Once you have an IMPRESSION taking place, then you can send what you have batched up so far.
 3/ 
+POST
+body: 'sendBeacon' POST 
 {
   "actions":[ {
       "action":"load",
@@ -124,24 +127,32 @@ https://jixie.atlassian.net/wiki/spaces/DEMO/pages/1840218113/Recommendation+tra
     },{
       "action":"impression",
       "elapsedms":7000 // the number of ms since load
+    },
+    {
+      action CLICK
+      .....
+
     }
   ],
+  //10 items.
+
   //with items being an array of the items that are displayed, with the type and the position.
   "items":[{
       "t":"page", //<-- type. for rec widget always "page"
-      "i":"12345", //<-- ID of item.
+      "i":"PAGEURL", //<-- ID of item.
       "p":0,
       "v":1,
-      "s":"100x50"
+      "s":"100x50" <-- optional
     },{
         "t":"ad",
         "i":"12345",
         "p":1,
-        "v":1,
-        "s":"100x50"
+        "v":1,<---------
+        "s":"100x50" <-- optional
     },
    ]
 }
+
 
 ---
 NOTE: If can use sendBeacon then sendBeacon. If cannot then call the fetch .
@@ -170,3 +181,15 @@ here the url then str is the JSON.stringified body!!
             'Content-Type': 'text/plain'
         }
     });
+
+
+
+      document.addEventListener('visibilitychange', function logData() {
+        if (document.visibilityState === 'hidden') {
+        //SEND YOUR ACCMULATED EVENTS USING SENDBEACON
+        }
+      });
+      window.addEventListener("pagehide", event => {
+        //SEND YOUR ACCMULATED EVENTS USING SENDBEACON
+        
+      }, false);

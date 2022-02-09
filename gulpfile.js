@@ -164,7 +164,7 @@ const supported_ = [
         floatable: 'no',
         signature: "window.jxwidget", 
         queue: "window._jxrwidget"
-    },
+    }, 
     //--------- NOT USED ACTIVITELY IN LIVE ----------------------->
 ];
   // 
@@ -267,7 +267,7 @@ function doCore_(inname, outname, floatable = 'na') {
 
   gulp.task('UPLOAD_TESTFILES', function(cb) {
     pump([
-            gulp.src(['dist/sdks/*.js', 'dist/bundles/*.js', 'tests/*.json', 'tests/*.html', 'tests/*.css']),
+            gulp.src(['dist/sdks/*.js', 'dist/bundles/*.js', 'tests/*.json', 'tests/*.html', 'tests/*.css']), //, 'tests/jxrwidget.1.0.min.js']),
             gulpif(true, s3(config_aws, s3_options.dev))
         ],
         cb
