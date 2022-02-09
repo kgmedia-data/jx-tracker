@@ -1,3 +1,8 @@
+const rand = Math.floor(Math.random() * 1000);
+const recColCls = "jxRecCol";
+const recWrapperCls = "jxRecWrapper";
+
+
 /**
  * internal use only:
  * @param {*} numItems 
@@ -61,8 +66,23 @@
  */
 function fetchRecommendationsP(basicInfo) {
     //FOR NOW PLEASE just call this hardcoded first!!!!!
-    //https://jixie-recommendation-api.azurewebsites.net/v1/recommendation?type=pages&widget_id=abcdef&accountid=28d808daafa0cf6acb0c57fde0e37b12&pageurl=https://www.bolasport.com/read/313130745/persib-kalah-dari-bhayangkara-fc-bukan-karena-ketiadaan-robert-rene-alberts
+    const dummyURL = "https://jixie-recommendation-api.azurewebsites.net/v1/recommendation?type=pages&widget_id=abcdef&accountid=28d808daafa0cf6acb0c57fde0e37b12&pageurl=https://www.bolasport.com/read/313130745/persib-kalah-dari-bhayangkara-fc-bukan-karena-ketiadaan-robert-rene-alberts";
     // TODO
+    return new Promise((resolve, reject) => {
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", dummyURL);
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(JSON.parse(xhr.response));
+            } else {
+                reject(xhr.statusText);
+            }
+        }
+        xhr.onerror = function() {
+            reject(xhr.statusText);
+        }
+        xhr.send();
+    });
 }
 
 /**
@@ -137,6 +157,53 @@ let MakeOneRecWidget_ = function(options) {
     var _basicInfo = {};
     var _evtHelper = null;
 
+    var _cssFileURL = null;
+    var _cssClasses = null;
+    var _responseMapping = {
+        response: "items",
+        image: "img",
+        page_url: "url",
+        title: "title",
+        category: "category"
+    };
+    var _numOfCols = 0;
+
+    var _container = null;
+    var _widgetWrapper = null;
+    var _clickUrlArr = [];
+
+    var _wrapperObserver = null;
+    var _itemsObserver = null;
+    var _defaultThreshold = 0.5;
+
+    function appendDefaultCSS() {
+        var colWidth = 100; // default width and flex of each items
+        if (_numOfCols) colWidth = 100 / _numOfCols;
+    
+        const stylesArr = [
+            "."+recWrapperCls+"{display:flex;flex-wrap:wrap;}",
+            "."+recColCls+"{position:relative;box-sizing:border-box;width:100%;flex:0 0 "+colWidth+"%;max-width:"+colWidth+"%;padding:0 15px;}",
+        ].join("\n");
+    
+        var head = document.getElementsByTagName('HEAD')[0];
+        var s = document.createElement("style");
+        s.innerHTML = stylesArr;
+        head.appendChild(s);
+    }
+
+    function createElement(tag, id, defaultClass, customClasses, iHTML) {
+        var elm = document.createElement(tag);
+        if (id) elm.id = id;
+        if (defaultClass) elm.className = defaultClass;
+        if (customClasses && customClasses.length > 0) {
+            customClasses.forEach(function(cls) {
+                elm.classList.add(cls);
+            });
+        }
+        if (iHTML) elm.innerHTML = iHTML;
+        return elm;
+    }
+
     /**
      * The bulk of the work is here then.
      * it will also call on the event helper
@@ -150,32 +217,127 @@ let MakeOneRecWidget_ = function(options) {
         // and the isolation of concerns.
         // more complicated visibility stuff.
         // you will need to hook up calls to _evtHelper.
+        _widgetWrapper = document.createElement('div');
+        _widgetWrapper.className = recWrapperCls;
+        if (_cssClasses.container && _cssClasses.container) _widgetWrapper.classList.add(_cssClasses.container);
+        _container.appendChild(_widgetWrapper);
+
+        var recList = '';
+        var items = resultObj[_responseMapping.response];
+        if (items.length > 0) {
+            items.map(function(item, index) {
+                _clickUrlArr.push({id: `recItem-${rand}-${index}`, url: item[_responseMapping.page_url]});
+
+                var recItem = createElement('div', `recItem-${rand}-${index}`, recColCls, _cssClasses.wrapper);
+                recItem.dataset.index = index;
+
+                var imgWrapper = createElement('div', null, null, _cssClasses.thumbnail_wrapper);
+                var imgElm = createElement('img', null, null, _cssClasses.thumbnail);
+                imgElm.src = item[_responseMapping.image];
+                imgWrapper.appendChild(imgElm);
+
+                var categoryDiv = createElement('div', null, null, _cssClasses.category, item[_responseMapping.category]);
+                var titleDiv = createElement('div', null, null, _cssClasses.title, item[_responseMapping.title]);
+
+                recItem.appendChild(imgWrapper);
+                recItem.appendChild(categoryDiv);
+                recItem.appendChild(titleDiv);
+
+                _widgetWrapper.appendChild(recItem);
+            });
+
+            if (_clickUrlArr.length > 0) {
+                _clickUrlArr.map(function(item) {
+                    document.getElementById(item.id).onclick = function() {
+                        window.open(item.url, '_blank');
+                        return false;
+                    }
+                });
+            }
+
+            // listen to the visibility changes of all items on the widget
+            _itemsObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.intersectionRatio >= _defaultThreshold) {
+                        console.log('the item with id= '+entry.target.id+' and index= '+entry.target.dataset.index+' is now visible');
+                        // _evtHelper.recordItemVis(entry.target.dataset.index);
+                        _itemsObserver.unobserve(entry.target);
+                    }
+                });
+            }, {threshold: _defaultThreshold});
+
+            document.querySelectorAll(`.${recColCls}`).forEach(function(el) {
+                if (el) _itemsObserver.observe(el);
+            });
+
+            // check the visibility of the widget on viewport. we would need to check with this two conditions:
+            // 1. 50% of widget is in viewport OR
+            // 2. widget covered 50% of viewport (LONG WIDGET)
+            const elHeight = _widgetWrapper.getBoundingClientRect().height;
+            var th = _defaultThreshold;
+
+            console.log('height of widget is', elHeight)
+            console.log('height of window is', window.innerHeight)
+            console.log('height of window * threshold is', window.innerHeight * _defaultThreshold)
+            // The widget is too tall to ever hit the threshold - change threshold. this one is to achieve the 2nd condition
+            if (elHeight > (window.innerHeight)) {
+                th = ((window.innerHeight * _defaultThreshold) / elHeight);
+                console.log('the threshold now is ', th);
+            }
+            _wrapperObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.intersectionRatio >= th) {
+                        console.log('widget is now visible on viewport');
+                        // _evtHelper.recordEvent('creativeView');
+                    }
+                });
+            }, {threshold: th});
+            _wrapperObserver.observe(_widgetWrapper);
+        } else {
+            console.error("Error: no recommendation items");
+            // _evtHelper.recordEvent('error');
+            return;
+        }
     }
 
     function FactoryOneRWidget(options) {
         // prepare the options.
         // mix with the defaults
+        if (options.container) {
+            _container = document.getElementById(options.container);
+            _cssFileURL = options.gui.cssfile;
+            _cssClasses = options.gui.classes;
+            _numOfCols = parseInt(options.gui.numcols);
+    
+            appendDefaultCSS();
 
-        _basicInfo = collectBasicInfo();
+            _basicInfo = collectBasicInfo();
+    
+            // load the CSS file and fetch the recommendation need both done.
+            let promMain = fetchRecommendationsP(_basicInfo);
+            // from the options or internal default we know what is the
+            // css file to load
+            let promCSS = fetchCSSFileP(_cssFileURL);
+    
+            Promise.all([promMain, promCSS])
+            .then(function(values) {
+                // when both css file is fetched and the rec
+                // results came back, then we can use it.
+                let resultObj = values[0]; // from first promise
+                // let tUrl = makeTrackerBaseUrl(_basicInfo, resultObj);
+                // _evtHelper = MakeOneEvtHelper(numItems, tUrl);
 
-        // load the CSS file and fetch the recommendation need both done.
-        let promMain = fetchRecommendationsP(_basicInfo);
-        // from the options or internal default we know what is the
-        // css file to load
-        let promCSS = fetchCSSFileP(fileUrl);
-
-        Promise.all([promMain, promCSS])
-        .then(function(values) {
-            // when both css file is fetched and the rec
-            // results came back, then we can use it.
-            let resultObj = values[0]; // from first promise
-            let tUrl = makeTrackerBaseUrl(basicInfo, resultObj);
-            _evtHelper = MakeOneEvtHelper(numItems, tUrl);
-            createDisplay(resultObj, _evtHelper);
-        })
-        //.catch() {
-
-        //}
+                // createDisplay(resultObj, _evtHelper);
+                createDisplay(resultObj, null);
+            })
+            .catch(function(error) {
+                console.log(error);
+            });
+        } else {
+            console.error("Error: container not found in options object");
+            // _evtHelper.recordEvent('error');
+            return;
+        }
     }
     let ret = new FactoryOneRWidget(options);
     return ret;
