@@ -6,37 +6,90 @@ const recColCls = "jxRecCol";
 const recWrapperCls = "jxRecWrapper";
 const recAPIBase_ = "https://jixie-recommendation-api.azurewebsites.net/v1/recommendation";
 
+/* if use Vincent recommendation API then the trackerBlock is already well prepared
+and looks like this:
+if not from vincent recommendation API, then prepare a trackerBlock like this before
+we try to create the event helper object
+"trackers":{
+      "baseURL":"https://traid.jixie.io/sync/recommendation",
+      "sharedParams":"accountid=9262bf2590d558736cac4fff7978fcb1&s=jx&v=mixed:0.9&page=http%3A%2F%2Fmegapolitan.kompas.com%2Fread%2F2022%2F01%2F21%2F09125931%2Fupdate-20-januari-bertambah-97-kasus-positif-covid-19-pasien-dalam&widget_id=abcdef",
+      "items":[
+         {
+            "t":"page",
+            "p":0,
+            "v":0,
+            "i":"https://money.kompas.com/read/2022/02/08/162337626/ironi-kereta-cepat-jakarta-bandung-yang-tak-sampai-bandung"
+         },
+         .......
+         {
+            "t":"page",
+            "p":5,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/09/06363061/trik-supermarket-nakal-raup-untung-dari-kelangkaan-minyak-goreng-bikin"
+         }
+      ]
+
+*/
 /**
  * internal use only:
  * @param {*} numItems 
  * @param {*} trackerUrlBase 
+ * @param {*} loadedTS
  * @returns 
  */
- let MakeOneEvtHelper = function(numItems, trackerUrlBase) {
+ let MakeOneEvtHelper = function(numItems, trackerBlock, loadedTS) {
     // private variables:
-    var _events = [];
+    var _actions = [];
     var _itemVis = null;
-    var _sent = false;
     var _trackerUrlBase = null;
-
-    // it will hook up to some pagekill events 
-    // this one is more complicated than normal
-    // please do not implement this. Just focus
-    // on the GUI first.
-    // These things are to be done differently than before.
     
-    function FactoryEvtHelper(numItems) {
-        _itemVis = new Array(numItems);
+    function _sendWhatWeHave() {
+        //prepare the object to send.
+        //URL is the trackerUrlbase
+        var msgBody = {
+            actions: _actions,
+            items: _itemVis 
+        };
+        //**stringify** this body and then send. by sendBeacon (see notes.txt for snipplet)
+    }
+    function _doPgExitHooks() {
+
+    }
+    function _doPgExitHooks() {
+        document.addEventListener('visibilitychange', function logData() {
+            if (document.visibilityState === 'hidden') {
+                _sendWhatWeHave();
+            }
+          });
+          window.addEventListener("pagehide", event => {
+            /* the page isn't being discarded, so it can be reused later */
+            _sendWhatWeHave();
+          }, false);
+    }
+    function FactoryEvtHelper(numItems, trackerBlock) {
+        //NOTE: to record the loaded event also.
         for (let i = 0; i < n; ++i) a[i] = 0;
-        _trackerUrlBase = trackerUrlBase;
+        _trackerUrlBase = trackerBlock.sharedParams + '&' + trackerBlock.sharedParams;
+        _itemVis = JSON.parse.JSON.stringify(trackerblock.items);
+        _doPgExitHooks();
     }
     FactoryEvtHelper.prototype.recordEvent = function(action, itemIdx = -1) {
         // TODO
+        /* stash a record to your events array (CHECK THE SPECS and my notes)
+        {   
+            "action":"load",
+            "y":3000 // the pixels from the top of the page, optional
+        }
+        */
     };
     FactoryEvtHelper.prototype.recordItemVis = function(itemIdx) {
         // TODO
+        // find the right item in the _itemVis and set the v from 0 to 1 then.
+        //_itemVis
     };
-    let ret = new FactoryEvtHelper(numItems);
+    //TODO: set up something to monitor the page being covered or killed.
+
+    let ret = new FactoryEvtHelper(numItems, trackerBlock, loadedTS);
     return ret;
 }
 

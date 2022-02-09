@@ -55,4 +55,118 @@ Calling:
   <script type="text/javascript" src="https://scripts.jixie.media/jxrwidget.1.0.min.js"></script>
 
  */
-/**
+
+/* More notes on the event stuff
+
+https://jixie-recommendation-api.azurewebsites.net/v1/recommendation?type=pages&widget_id=abcdef&accountid=9262bf2590d558736cac4fff7978fcb1&pageurl=http://megapolitan.kompas.com/read/2022/01/21/09125931/update-20-januari-bertambah-97-kasus-positif-covid-19-pasien-dalam&keywords=jakarta,indonesia
+
+https://jixie.atlassian.net/wiki/spaces/DEMO/pages/1840218113/Recommendation+tracker
+
+- Vincent already create the starter item for us!!
+- So use it as a starter then.
+
+"trackers":{
+      "baseURL":"https://traid.jixie.io/sync/recommendation",
+      "sharedParams":"accountid=9262bf2590d558736cac4fff7978fcb1&s=jx&v=mixed:0.9&page=http%3A%2F%2Fmegapolitan.kompas.com%2Fread%2F2022%2F01%2F21%2F09125931%2Fupdate-20-januari-bertambah-97-kasus-positif-covid-19-pasien-dalam&widget_id=abcdef",
+      "items":[
+         {
+            "t":"page",
+            "p":0,
+            "v":0,
+            "i":"https://money.kompas.com/read/2022/02/08/162337626/ironi-kereta-cepat-jakarta-bandung-yang-tak-sampai-bandung"
+         },
+         {
+            "t":"page",
+            "p":1,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/09/05514961/pengakuan-napi-lapas-tangerang-bayar-rp-5000-per-minggu-untuk-tidur-di"
+         },
+         {
+            "t":"page",
+            "p":2,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/08/22283881/saat-diperiksa-kpk-ketua-dprd-dki-sebut-commitment-fee-formula-e-sudah"
+         },
+         {
+            "t":"page",
+            "p":3,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/08/20421291/ada-puluhan-zona-merah-di-jakarta-barat-paling-banyak-di-4-kecamatan-ini"
+         },
+         {
+            "t":"page",
+            "p":4,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/09/07240341/berharganya-bintang-dari-pelanggan-bagi-pengemudi-ojek-online-orderan"
+         },
+         {
+            "t":"page",
+            "p":5,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/09/06363061/trik-supermarket-nakal-raup-untung-dari-kelangkaan-minyak-goreng-bikin"
+         }
+      ]
+
+https://jixie.atlassian.net/wiki/spaces/DEMO/pages/1840218113/Recommendation+tracker
+1/ When you send, batch up and send.
+2/ Once you have an IMPRESSION taking place, then you can send what you have batched up so far.
+3/ 
+{
+  "actions":[ {
+      "action":"load",
+      "y":3000 // the pixels from the top of the page, optional
+    },{
+      "action":"ready",
+      "elapsedms":1500 // the number of ms since load
+    },{
+      "action":"creativeView",
+      "elapsedms":4500 // the number of ms since load
+    },{
+      "action":"impression",
+      "elapsedms":7000 // the number of ms since load
+    }
+  ],
+  //with items being an array of the items that are displayed, with the type and the position.
+  "items":[{
+      "t":"page", //<-- type. for rec widget always "page"
+      "i":"12345", //<-- ID of item.
+      "p":0,
+      "v":1,
+      "s":"100x50"
+    },{
+        "t":"ad",
+        "i":"12345",
+        "p":1,
+        "v":1,
+        "s":"100x50"
+    },
+   ]
+}
+
+---
+NOTE: If can use sendBeacon then sendBeacon. If cannot then call the fetch .
+See this example below:
+here the url then str is the JSON.stringified body!!
+(sendBeacon is a POST and sends text type)
+
+ if (window &&
+        window.navigator &&
+        typeof window.navigator.sendBeacon === "function" &&
+        typeof window.Blob === "function") {
+        try {
+            if (window.navigator.sendBeacon(url, str)) {
+                // sendBeacon was successful!
+                return;
+            }
+        } catch (e) {
+            // fallback below
+        }
+    }
+
+    return fetch(url , {
+        method: 'POST',
+        body: str,
+        headers: {
+            'Content-Type': 'text/plain'
+        }
+    });
