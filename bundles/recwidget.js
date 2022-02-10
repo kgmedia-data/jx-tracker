@@ -66,7 +66,7 @@
             xhr.open("GET", dummyURL);
             xhr.onload = function() {
                 if (xhr.status >= 200 && xhr.status < 300) {
-                    resolve(JSON.parse(xhr.response));
+                    resolve([JSON.parse(xhr.response), Date.now()]);
                 } else {
                     reject(xhr.statusText);
                 }
@@ -191,39 +191,37 @@
     }
 
     const _cssURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/test_rec_widget.css';
-    const _jxRecSdkURL = 'https://scripts.jixie.media/jxrecwidgetsdk.1.0.min.js';
+    const _jxRecSdkURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/jxrecsdk.min.js';
 
     class OneWidget {
         constructor(options) {
+            this._options = options;
             this._numOfCols = options.numcols || 2;
             this._containerId = options.container;
             this._container = document.getElementById(this._containerId);
         }
         kickOff() {
-            appendDefaultCSS(this._numOfCols);
-            //get the cohort 
-            let basicInfo = {}; //dummy need to gather cohort client id etc
-            let promMain = fetchRecommendationsP(basicInfo);
-            let promCSS = fetchCSSFileP(_cssURL); //you can inject your css dynamically . this is optional.
-            //let promJXSDK = fetchJSFileP(_jxRecSdkURL);
-            let promJXSDK = Promise.resolve(true); //pretend
-            let thisObj = this;
-            Promise.all([promMain, promCSS, promJXSDK])
-                .then(function(values) {
-                    // when both css file is fetched and the rec
-                    // results came back, then we can use it.
-                    let resultObj = values[0]; // from first promise
-                    //when the JX REC SDK is there, then we have this jxRecMgr.
-                    //let recHelperObj = jxRecMgr.createJxRecHelper(options.container);
-                    let recHelperObj = {
-                        reportClick: function() {},
-                        registerItem: function() {},
-                    };
-                    createDisplay(thisObj._container, resultObj, recHelperObj);
-                })
-                .catch(function(error) {
-                    console.log(error);
-                });
+                appendDefaultCSS(this._numOfCols);
+                //get the cohort 
+                let basicInfo = {}; //dummy need to gather cohort client id etc
+                let promMain = fetchRecommendationsP(basicInfo);
+                let promCSS = fetchCSSFileP(_cssURL); //you can inject your css dynamically . this is optional.
+                let promJXSDK = fetchJSFileP(_jxRecSdkURL);
+                let thisObj = this;
+                let tsRecReq = Date.now();
+                Promise.all([promMain, promCSS, promJXSDK])
+                    .then(function(values) {
+                        // when both css file is fetched and the rec
+                        // results came back, then we can use it.
+                        let resultObj = values[0][0]; // from first promise
+                        let tsRecRes = values[0][1];
+                        //when the JX REC SDK is there, then we have this jxRecMgr.
+                        let recHelperObj = jxRecMgr.createJxRecHelper(thisObj._options, resultObj.trackers, tsRecReq, tsRecRes);
+                        createDisplay(thisObj._container, resultObj, recHelperObj);
+                    })
+                    .catch(function(error) {
+                        console.log(error);
+                    });
         }
     }
 

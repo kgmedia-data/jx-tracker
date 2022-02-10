@@ -170,7 +170,7 @@ const supported_ = [
   // 
   // we will be adding to this array based on a JSON object with all the bundles we need to build
   // a var called bundles_ .
-  var orderedTasksArr = ['clean', 'BUILD_3PARTYCR_PROXY_SDK'];
+  var orderedTasksArr = ['clean', 'BUILD_3PARTYCR_PROXY_SDK', 'BUILD_REC_SDK'];
 
    var minify_options_strip_float = {
     compress: {
@@ -263,6 +263,20 @@ function doCore_(inname, outname, floatable = 'na') {
         ],
         cb
     );
+  });
+
+  gulp.task('BUILD_REC_SDK', function(cb) {
+    browserify('sdks/jxrecsdk.js', {
+        debug: false
+    }).bundle()
+    .pipe(source('jxrecsdk.js'))
+    .pipe(buffer())
+    .pipe(gulpif(config.minify, minify({})))
+    .pipe(gulpif(true, rename({
+        extname: '.min.js'
+    })))
+    .pipe(gulp.dest('dist/sdks'))
+    cb();
   });
 
   gulp.task('UPLOAD_TESTFILES', function(cb) {
