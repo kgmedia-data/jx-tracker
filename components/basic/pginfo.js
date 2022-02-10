@@ -79,7 +79,7 @@ function get_(options) {
     if (keywords) ret.pagekeywords = keywords;
     if (ttl) ret.pagetitle = ttl;
 
-    let qparams = (new URL(document.location)).searchParams;
+    let qparams = (new window.URL(document.location)).searchParams;
     ['jxoptions','creativeid','creativeids','debug', 'deltaassets64', 'logwhythrow','portal', 'jxsimidurl'].forEach(function(item) {
         if (qparams.has(item)) {
             ret[item] = qparams.get(item);
