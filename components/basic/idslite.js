@@ -60,6 +60,7 @@
       ret.cohort = coo['_jxcht'];
       //console.log(`### FROM COOKIE3 ${ret.cohort}`);
     }
+    return ret;
    }
    module.exports.get = get_;
 
