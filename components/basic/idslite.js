@@ -56,10 +56,6 @@
         ret.sid = coo['_jxs'];
         //console.log(`### FROM COOKIE2 ${ret.sid}`);
     }
-    if (coo['_jxcht'] !== undefined) {
-      ret.cohort = coo['_jxcht'];
-      //console.log(`### FROM COOKIE3 ${ret.cohort}`);
-    }
     return ret;
    }
    module.exports.get = get_;

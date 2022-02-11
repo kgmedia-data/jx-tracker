@@ -8,6 +8,7 @@ const mpginfo = require('../components/basic/pginfo');
     let MakeOneJxRecHelper = function(type, options, trackersBlock = null, tsRecReq = null, tsRecRes = null) {
         var _actions = [];
         var _itemVis = [];
+        var _options = null;
         var _trackerUrlBase = null;
         var _basicInfo = null;
 
@@ -83,7 +84,8 @@ const mpginfo = require('../components/basic/pginfo');
         // this will collect the page information from the options passed by the publisher on their HTML file if any
         // else we will try to get it from our page info module
         // this will also get the ids information (client_id, session_id) using our ids module
-        function _collectBasicInfo(options) {
+        function _collectBasicInfo() {
+            let options = _options;
             // TODO
             try {
                 const ids = mids.get();
@@ -129,8 +131,9 @@ const mpginfo = require('../components/basic/pginfo');
             else {
                 trackerBaseUrl = "https://traid.jixie.io/sync/recommendation";
             }
-            trackerBaseUrl = "http://localhost:3000/sync/recommendation";//HACK
-
+            // temporary:
+            trackerBaseUrl = "https://jx-id-trackers-deployslot.azurewebsites.net/sync/recommendation";
+            
             if (trackersBlock && trackersBlock.sharedParams) {
                 trackerParams = trackersBlock.sharedParams;
             }
@@ -165,7 +168,7 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
 
-        FactoryJxRecHelper.prototype.itemAdded = function(itemId, itemIdx, page_url) {
+        FactoryJxRecHelper.prototype.item = function(itemId, itemIdx, page_url) {
             if (!_readyTimeMs) _readyTimeMs = Date.now();
             const elm = document.getElementById(itemId);
             if (_registeredDivs.findIndex((x) => x.divId === itemId) < 0) {
@@ -259,29 +262,31 @@ const mpginfo = require('../components/basic/pginfo');
         FactoryJxRecHelper.prototype.ready = function(trackersBlock = null, tsRecResp = null) {
             _ready(trackersBlock, tsRecResp);
         }
+        FactoryJxRecHelper.prototype.getJxUserInfo = function() {
+            return _basicInfo;
+        }
 
-        function _loaded(options, ts = null) {
+        function _loaded(ts = null) {
             _loadedTimeMs = ts ? ts:  Date.now();
             if (options.container) {
                 const containerElm = document.getElementById(options.container)
                 if (containerElm) _registerWidget(containerElm);
             }
-            console.log("######### 1");
-            _basicInfo = _collectBasicInfo(options);
-            console.log("######### 2");
-            console.log(`#### 3 ${JSON.stringify(_basicInfo, null, 2)}`);
+            if (!_basicInfo)
+                _basicInfo = _collectBasicInfo();
             if (!_eventsFired.load) {
                 _eventsFired.load = 1;
                 console.log('load event')
                 _actions.push({
                     action: "load",
-                    y: _widgetDiv.getBoundingClientRect().top
+                    y: Math.round(_widgetDiv.getBoundingClientRect().top)
                 });
             }
             _doPgExitHooks();
         }
 
         function _ready(trackersBlock, tsRecResp) {
+            
             _trackerUrlBase = _makeTrackerBaseUrl(_basicInfo, trackersBlock);
 
             _readyTimeMs = tsRecResp ? tsRecResp: Date.now();
@@ -303,12 +308,13 @@ const mpginfo = require('../components/basic/pginfo');
         }
 
         function FactoryJxRecHelper(type, options, trackersBlock, tsRecReq, tsRecResp) {
+            _options = JSON.parse(JSON.stringify(options));
             if (type == 'simple') {
-                _loaded(options);
+                _loaded();
                 //later the caller will fire a ready
             }
             else if (type == 'adv') {
-                _loaded(options, tsRecReq);
+                _loaded(tsRecReq);
                 _ready(trackersBlock, tsRecResp);
             }
         }

@@ -273,7 +273,7 @@ function doCore_(inname, outname, floatable = 'na') {
     .pipe(buffer())
     .pipe(gulpif(config.minify, minify({})))
     .pipe(gulpif(true, rename({
-        extname: '.min.js'
+        extname: '.1.0.min.js'
     })))
     .pipe(gulp.dest('dist/sdks'))
     cb();

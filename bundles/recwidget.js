@@ -9,9 +9,11 @@
  * 
  * This piece of code also serves as an example of how one can use the 
  * jxrecsdk then. Look for 
- * JXRECSDK NOTES 1 of 3 
- * JXRECSDK NOTES 2 of 3 
- * JXRECSDK NOTES 3 of 3 
+ * JXRECSDK NOTES 1 of 5 
+ * JXRECSDK NOTES 2 of 5 
+ * JXRECSDK NOTES 3 of 7 
+ * JXRECSDK NOTES 4 of 5 
+ * JXRECSDK NOTES 5 of 5 
  * 
  */
 (function() {
@@ -66,19 +68,19 @@
      * 
      * Note we also call resolve in case of error. Just easier to report the error in the code that calls it
      */
-    function fetchRecommendationsP(infoObj) {
-        let ls = window.localStorage;
-        let cohort = ls.getItem('_jxcht');
+    function fetchRecommendationsP(infoObj, jxUserInfo) {
         let s = '';
-        ["accountid","pageurl","widget_id"].forEach(function(pname) {
-            // 
+        ["accountid","pageurl","widget_id","keywords","title"].forEach(function(pname) {
             if (infoObj[pname])
-                s += '&' + pname + '=' + infoObj[pname];
+                s += '&' + pname + '=' + encodeURIComponent(infoObj[pname]);
         });
-                    'https://jixie-recommendation-api.azurewebsites.net/v1/recommendation?type=pages&accountid=28d808daafa0cf6acb0c57fde0e37b12&pageurl=https://www.bolasport.com/read/313130745/persib-kalah-dari-bhayangkara-fc-bukan-karena-ketiadaan-robert-rene-alberts'
-        //let url = "https://jixie-recommendation-api.azurewebsites.net/v1/recommendation?type=pages&widget_id=abcdef&accountid=28d808daafa0cf6acb0c57fde0e37b12&pageurl=https://www.bolasport.com/read/313130745/persib-kalah-dari-bhayangkara-fc-bukan-karena-ketiadaan-robert-rene-alberts";
-        let url = "https://jixie-recommendation-api.azurewebsites.net/v1/recommendation?type=pages";
-        url += s + (cohort ? '&cohort='+cohort: '');
+        ["client_id","session_id","cohort"].forEach(function(pname) {
+            if (jxUserInfo[pname])
+                s += '&' + pname + '=' + encodeURIComponent(jxUserInfo[pname]);
+        });
+        
+        let url = "https://recommendation.jixie.io/v1/recommendation?type=pages" + s;
+        
         // TODO CORS 
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
@@ -200,12 +202,13 @@
                  * param2: MANDATORY: index of the item of the widget (starts from 0)
                  * param3: MANDATORY: click url of the item
                  */
-                jxRecHelper.itemAdded(`recItem-${rand}-${index}`, index, item.url);
+                jxRecHelper.item(`recItem-${rand}-${index}`, index, item.url);
                 /* note: We have this -rand- thing in the div id (this is just
                     * because want the div id to be unique on the page as
                     * in case more than 1 widget is embedded on the page) */
 
             });
+                   
 
             if (clickUrlArr.length > 0) {
                 clickUrlArr.map(function(item) {
@@ -223,9 +226,9 @@
         }
     }
 
-    const _cssURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/test_rec_widget.css';
-    const _jxRecSdkURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/jxrecsdk.min.js';
-    //RENEE ONE const _jxRecSdkURL = 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jxrecsdk.min.js'
+    const _cssURL = 'https://scripts.jixie.media/jxrecwidget.1.0.css';
+    //const _jxRecSdkURL = 'https://scripts.jixie.media/jxrecsdk.1.0.min.js';
+    const _jxRecSdkURL = 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jxrecsdk.1.0.min.js';
 
     class OneWidget {
         constructor(options) {
@@ -233,7 +236,9 @@
                 accountid : options.accountid,
                 pageurl: options.pageurl ? options.pageurl: windows.location.href,
                 widget_id: options.widgetid,
-                container: options.container
+                container: options.container,
+                keywords: options.keywords,
+                title: options.title
             };
             this._numOfCols = options.numcols || 2;
             this._containerId = options.container;
@@ -272,7 +277,10 @@
                     // now fire off the call to recommendation endpoint 
                     let basicInfo = thisObj._options; //for now just use back the options obj 
                     // it has the pageurl and stuff.
-                    return fetchRecommendationsP(basicInfo);
+
+                    // this getJxUserInfo is an unpublished convenience the JX recommendation
+                    // widget will call.
+                    return fetchRecommendationsP(basicInfo, recHelperObj.getJxUserInfo());
                 })
                 .then(function(resp) {
                     recResults = resp;          
