@@ -280,6 +280,7 @@ function doCore_(inname, outname, floatable = 'na') {
     })))
     .pipe(gulp.dest('dist/sdks'))
     cb();
+});
     
   gulp.task('BUILD_IFRAMEHELPER_JS', function(cb) {
     pump([
