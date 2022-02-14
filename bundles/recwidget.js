@@ -170,18 +170,23 @@
         widgetWrapper.className = `${recWrapperCls}${rand}`;
         widgetWrapper.classList.add(cssClasses.container); //OWN
         container.appendChild(widgetWrapper);
-        let clickUrlArr = [];
+        let widgetItemArr = [];
         try {
         var items = resultObj.items;
         if (items.length > 0) {
             items.map(function(item, index) {
-                clickUrlArr.push({
+                widgetItemArr.push({
                     id: `recItem-${rand}-${index}`,
                     url: item.url,
                     pos: index
                 });
+
+                /* note: We have this -rand- thing in the div id (this is just
+                * because want the div id to be unique on the page as
+                * in case more than 1 widget is embedded on the page) */
                 var recItem = createElement('div', `recItem-${rand}-${index}`, `${recColCls}${rand}`, [cssClasses.wrapper]);
                 recItem.dataset.index = index;
+
                 var imgWrapper = createElement('div', null, null, [cssClasses.thumbnail_wrapper]);
                 var imgElm = createElement('img', null, null, [cssClasses.thumbnail]);
                 imgElm.src = item.img;
@@ -195,23 +200,20 @@
                 recItem.appendChild(titleDiv);
 
                 widgetWrapper.appendChild(recItem);
-                /***
-                 * JXRECSDK NOTES 4 of 5 - 
-                 * call itemAdded of helper obj - for each item on the widget
-                 * param1: MANDATORY: the DOM div-id of the item
-                 * param2: MANDATORY: index of the item of the widget (starts from 0)
-                 * param3: MANDATORY: click url of the item
-                 */
-                jxRecHelper.item(`recItem-${rand}-${index}`, index, item.url);
-                /* note: We have this -rand- thing in the div id (this is just
-                    * because want the div id to be unique on the page as
-                    * in case more than 1 widget is embedded on the page) */
-
             });
                    
 
-            if (clickUrlArr.length > 0) {
-                clickUrlArr.map(function(item) {
+            if (widgetItemArr.length > 0) {
+                widgetItemArr.map(function(item) {
+                    /***
+                     * JXRECSDK NOTES 4 of 5 - 
+                     * call items of helper obj - for all items on the widget
+                     * param1: MANDATORY: the DOM div-id of the item
+                     * param2: MANDATORY: index of the item of the widget (starts from 0)
+                     * param3: MANDATORY: click url of the item
+                     */
+                    jxRecHelper.items(item.id, item.pos, item.url);
+
                     document.getElementById(item.id).onclick = handleClick.bind(null, jxRecHelper, item.url, item.pos);
                 });
             }

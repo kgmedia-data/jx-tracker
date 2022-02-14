@@ -139,7 +139,7 @@ const mpginfo = require('../components/basic/pginfo');
             }
             else {
                 // no choice then we make our own:
-                trackerParams = "s=jx&v=mixed:9.0";
+                trackerParams = "s=jx&v=mixed:0.9";
                 ['accountid', 'widget_id', 'client_id', 'session_id', 'cohort'].forEach(function(prop) {
                     if (basicInfo[prop])
                         trackerParams += '&' + prop + '=' + basicInfo[prop];
@@ -167,8 +167,8 @@ const mpginfo = require('../components/basic/pginfo');
                 });
             }
         }
-
-        FactoryJxRecHelper.prototype.item = function(itemId, itemIdx, page_url) {
+        
+        function _setUpItems(itemId, itemIdx, page_url) {
             if (!_readyTimeMs) _readyTimeMs = Date.now();
             const elm = document.getElementById(itemId);
             if (_registeredDivs.findIndex((x) => x.divId === itemId) < 0) {
@@ -200,13 +200,17 @@ const mpginfo = require('../components/basic/pginfo');
                     _itemVis[idx].s = "" + parseInt(elm.offsetWidth) + "x" + parseInt(elm.offsetHeight);
                 }
             }
+            _registerWidget();
+        }
+
+        FactoryJxRecHelper.prototype.items = function(itemId, itemIdx, page_url) {
+            _setUpItems(itemId, itemIdx, page_url);
         }
 
         // hook up the intersection observer to track the visibility of the widget
-        function _registerWidget(elm) {
+        function _registerWidget() {
             if (!_wrapperObserver) {
-                _widgetDiv = elm;
-                const elHeight = elm.getBoundingClientRect().height;
+                const elHeight = _widgetDiv.getBoundingClientRect().height;
                 var th = _defaultThreshold;
 
                 // The widget is too tall to ever hit the threshold - change threshold. this one is to achieve the 2nd condition
@@ -226,8 +230,8 @@ const mpginfo = require('../components/basic/pginfo');
                             }
                             if (!_eventsFired.impression) {
                                 _eventsFired.impression = 1;
-                                console.log('impression event')
                                 setTimeout(function() {
+                                    console.log('impression event')
                                     _actions.push({
                                         action: 'impression',
                                         elapsedms: Date.now() - _loadedTimeMs
@@ -240,7 +244,7 @@ const mpginfo = require('../components/basic/pginfo');
                 }, {
                     threshold: th
                 });
-                _wrapperObserver.observe(elm);
+                _wrapperObserver.observe(_widgetDiv);
             }
         }
 
@@ -268,9 +272,8 @@ const mpginfo = require('../components/basic/pginfo');
 
         function _loaded(ts = null) {
             _loadedTimeMs = ts ? ts:  Date.now();
-            if (options.container) {
-                const containerElm = document.getElementById(options.container)
-                if (containerElm) _registerWidget(containerElm);
+            if (_options.container) {
+                _widgetDiv = document.getElementById(_options.container);
             }
             if (!_basicInfo)
                 _basicInfo = _collectBasicInfo();
