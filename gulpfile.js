@@ -163,7 +163,7 @@ const supported_ = [
   // 
   // we will be adding to this array based on a JSON object with all the bundles we need to build
   // a var called bundles_ .
-  var orderedTasksArr = ['clean', 'BUILD_3PARTYCR_PROXY_SDK'];
+  var orderedTasksArr = ['clean', 'BUILD_3PARTYCR_PROXY_SDK', 'BUILD_IFRAMEHELPER_JS'];
 
    var minify_options_strip_float = {
     compress: {
@@ -250,6 +250,19 @@ function doCore_(inname, outname, floatable = 'na') {
   gulp.task('BUILD_3PARTYCR_PROXY_SDK', function(cb) {
     pump([
             gulp.src('sdks/jxeventssdk.js'),
+            gulpif(config.minify, minify({})),
+            gulpif(true, rename({
+                extname: `.min.js`
+            })),//always generate min extension whether min or no min.
+            gulp.dest('dist/sdks')
+        ],
+        cb
+    );
+  });
+
+  gulp.task('BUILD_IFRAMEHELPER_JS', function(cb) {
+    pump([
+            gulp.src('sdks/jxiframe.1.2.js'),
             gulpif(config.minify, minify({})),
             gulpif(true, rename({
                 extname: `.min.js`

@@ -2050,7 +2050,7 @@ const thresholdDiff_ = 120;
                             out.adparameters = c.adparameters;
                         }
                         else {
-                            url = 'https://universal.jixie.io/iframe.1.1.html?'; //broker
+                            url = 'https://universal.jixie.io/iframe.1.2.html?'; //broker
                             url += 'creative=' + btoa(JSON.stringify(c)) + '&trackers=' + btoa(JSON.stringify(c.trackers));
                         }
                         out['iframe'] = { url: url };
