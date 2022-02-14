@@ -45,6 +45,7 @@ const supported_ = [
   ];
   
   var gulp = require('gulp');
+  var gap = require('gulp-append-prepend');
   var uglifyjs = require('uglify-es');
   //var uglifyjs      = require("gulp-terser"), 
   var concat = require("gulp-concat");
@@ -232,6 +233,8 @@ function doCore_(inname, outname, floatable = 'na') {
         .on('error', function(err) {
             gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
+        .pipe(gap.prependText('(function(){'))
+        .pipe(gap.appendText('})();'))
         .pipe(gulpif(true, rename({
             basename: outname
         })))

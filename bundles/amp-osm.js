@@ -83,7 +83,7 @@ function start() {
     }
     if (cxt.sourceUrl) {
         //our own folks can still force a creativeid to check creatives;
-        let qparams = (new URL(cxt.sourceUrl)).searchParams;
+        let qparams = (new window.URL(cxt.sourceUrl)).searchParams;
         ['creativeids','creativeid'].forEach(function(p) {
             if (qparams.has(p))
             params[p] = qparams.get(p);
