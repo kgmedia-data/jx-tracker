@@ -201,37 +201,34 @@
 
                 widgetWrapper.appendChild(recItem);
             });
-                   
-
-            if (widgetItemArr.length > 0) {
-                widgetItemArr.map(function(item) {
-                    /***
-                     * JXRECSDK NOTES 4 of 5 - 
-                     * call items of helper obj - for all items on the widget
-                     * param1: MANDATORY: the DOM div-id of the item
-                     * param2: MANDATORY: index of the item of the widget (starts from 0)
-                     * param3: MANDATORY: click url of the item
-                     */
-                    jxRecHelper.items(item.id, item.pos, item.url);
-
-                    document.getElementById(item.id).onclick = handleClick.bind(null, jxRecHelper, item.url, item.pos);
-                });
-            }
+            widgetItemArr.map(function(item) {
+                document.getElementById(item.id).onclick = handleClick.bind(null, jxRecHelper, item.url, item.pos);
+            });
             
+            /***
+             * JXRECSDK NOTES 4 of 5 - 
+             * pass all the info about the items to the rec helper
+             * each one is an object: ALL MANDATORY (check with Vincent.)
+             *  id: div id of the item
+             *  index of the item in the widget (starts from 0)
+             *  url: click url of the item
+             */
+            jxRecHelper.items(widgetItemArr);
         } else {
+            jxRecHelper.error();
             console.error("Error: no recommendation items");
             return;
         }
         }
         catch (err) {
+            jxRecHelper.error();
             console.log(err.stack);
         }
     }
 
     const _cssURL = 'https://scripts.jixie.media/jxrecwidget.1.0.css';
-    //const _jxRecSdkURL = 'https://scripts.jixie.media/jxrecsdk.1.0.min.js';
-    const _jxRecSdkURL = 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jxrecsdk.1.0.min.js';
-
+    const _jxRecSdkURL = 'https://scripts.jixie.media/jxrecsdk.1.0.min.js';
+    
     class OneWidget {
         constructor(options) {
             this._options = {

@@ -42,6 +42,7 @@ const mpginfo = require('../components/basic/pginfo');
             }
             
             if (msgBody.actions && msgBody.actions.length > 0) {
+                console.log(`#### sendBeacon ${JSON.stringify(msgBody.actions, null, 2)}`);
                 if (window &&
                     window.navigator &&
                     typeof window.navigator.sendBeacon === "function" &&
@@ -114,7 +115,7 @@ const mpginfo = require('../components/basic/pginfo');
                 let merged = Object.assign({}, ids, newObj);
                 return merged;
             } catch (error) {
-                console.log("Error: error while extracting the options object");
+                console.log("#### Error: error while extracting the options object");
             }
         }
 
@@ -132,7 +133,7 @@ const mpginfo = require('../components/basic/pginfo');
                 trackerBaseUrl = "https://traid.jixie.io/sync/recommendation";
             }
             // temporary:
-            trackerBaseUrl = "https://jx-id-trackers-deployslot.azurewebsites.net/sync/recommendation";
+            ///////trackerBaseUrl = "https://jx-id-trackers-deployslot.azurewebsites.net/sync/recommendation";
             
             if (trackersBlock && trackersBlock.sharedParams) {
                 trackerParams = trackersBlock.sharedParams;
@@ -168,7 +169,7 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
         
-        function _setUpItems(itemId, itemIdx, page_url) {
+        function _setUpItem(itemId, itemIdx, page_url) {
             if (!_readyTimeMs) _readyTimeMs = Date.now();
             const elm = document.getElementById(itemId);
             if (_registeredDivs.findIndex((x) => x.divId === itemId) < 0) {
@@ -200,11 +201,21 @@ const mpginfo = require('../components/basic/pginfo');
                     _itemVis[idx].s = "" + parseInt(elm.offsetWidth) + "x" + parseInt(elm.offsetHeight);
                 }
             }
-            _registerWidget();
+            //_registerWidget();
         }
 
-        FactoryJxRecHelper.prototype.items = function(itemId, itemIdx, page_url) {
-            _setUpItems(itemId, itemIdx, page_url);
+        //FactoryJxRecHelper.prototype.items = function(itemId, itemIdx, page_url) {
+          //  _setUpItems(itemId, itemIdx, page_url);
+        //}
+
+        FactoryJxRecHelper.prototype.items = function(arrOfItems) {
+            console.log(`### items being called`);
+            for (var i = 0; i < arrOfItems.length; i++) {
+                let oneRec = arrOfItems[i];
+                _setUpItem(oneRec.id, oneRec.pos, oneRec.url);
+            }
+            console.log(`### calling _registerWidget`);
+            _registerWidget();
         }
 
         // hook up the intersection observer to track the visibility of the widget
@@ -222,7 +233,7 @@ const mpginfo = require('../components/basic/pginfo');
                         if (entry.intersectionRatio >= th) {
                             if (!_eventsFired.creativeView) {
                                 _eventsFired.creativeView = 1;
-                                console.log('creativeview event')
+                                console.log('#### creativeview event')
                                 _actions.push({
                                     action: 'creativeview',
                                     elapsedms: Date.now() - _loadedTimeMs
@@ -231,7 +242,7 @@ const mpginfo = require('../components/basic/pginfo');
                             if (!_eventsFired.impression) {
                                 _eventsFired.impression = 1;
                                 setTimeout(function() {
-                                    console.log('impression event')
+                                    console.log('#### impression event')
                                     _actions.push({
                                         action: 'impression',
                                         elapsedms: Date.now() - _loadedTimeMs
@@ -279,7 +290,7 @@ const mpginfo = require('../components/basic/pginfo');
                 _basicInfo = _collectBasicInfo();
             if (!_eventsFired.load) {
                 _eventsFired.load = 1;
-                console.log('load event')
+                console.log('#### load event')
                 _actions.push({
                     action: "load",
                     y: Math.round(_widgetDiv.getBoundingClientRect().top)
@@ -298,7 +309,7 @@ const mpginfo = require('../components/basic/pginfo');
             // this is the case whereby the publisher use Jixie recommendation API
             if (!_eventsFired.ready) {
                 _eventsFired.ready = 1;
-                console.log('ready event')
+                console.log('#### ready event')
                 _actions.push({
                     action: "ready",
                     elapsedms: Date.now() - _loadedTimeMs
