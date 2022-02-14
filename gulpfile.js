@@ -156,13 +156,21 @@ const supported_ = [
         signature: "window.jxvideoadsdksal",
         //queue: not supported.
         liveall: ["https://scripts.jixie.media/jxvideoad.2.0.min.js"]
-    }  
+    },
+    {
+        name: 'RECWIDGET', //name does not matter
+        in: 'recwidget', //name of the file in bundles/ folder. So this one is bundles/osm.js
+        out: 'jxrwidget.1.0', //the built file is jxosm.1.0.min.js 
+        floatable: 'no',
+        signature: "window.jxwidget", 
+        queue: "window._jxrwidget"
+    }, 
     //--------- NOT USED ACTIVITELY IN LIVE ----------------------->
 ];
   // 
   // we will be adding to this array based on a JSON object with all the bundles we need to build
   // a var called bundles_ .
-  var orderedTasksArr = ['clean', 'BUILD_3PARTYCR_PROXY_SDK'];
+  var orderedTasksArr = ['clean', 'BUILD_3PARTYCR_PROXY_SDK', 'BUILD_REC_SDK'];
 
    var minify_options_strip_float = {
     compress: {
@@ -257,9 +265,23 @@ function doCore_(inname, outname, floatable = 'na') {
     );
   });
 
+  gulp.task('BUILD_REC_SDK', function(cb) {
+    browserify('sdks/jxrecsdk.js', {
+        debug: false
+    }).bundle()
+    .pipe(source('jxrecsdk.js'))
+    .pipe(buffer())
+    .pipe(gulpif(config.minify, minify({})))
+    .pipe(gulpif(true, rename({
+        extname: '.1.0.min.js'
+    })))
+    .pipe(gulp.dest('dist/sdks'))
+    cb();
+  });
+
   gulp.task('UPLOAD_TESTFILES', function(cb) {
     pump([
-            gulp.src(['dist/sdks/*.js', 'dist/bundles/*.js', 'tests/*.json', 'tests/*.html', 'tests/*.css']),
+            gulp.src(['dist/sdks/*.js', 'dist/bundles/*.js', 'tests/*.json', 'tests/*.html', 'tests/*.css']), //, 'tests/jxrwidget.1.0.min.js']),
             gulpif(true, s3(config_aws, s3_options.dev))
         ],
         cb

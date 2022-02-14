@@ -1,0 +1,195 @@
+KG mock up:
+https://xd.adobe.com/view/f3bdda26-f7be-44ef-9566-1967369c51bf-a6ee/
+
+
+what you need to do:
+
+1 fire widget loaded tracker
+2 retrieval of client_Id, cohort (~~~), sid ---
+3 calling rec endpoint (need the info from 2)
+4 fire ready tracker event
+5 instantiate the GUI and be able to monitor a lot of visibility stuff
+6 detect CV, IMP, CLICK - fire trackers
+ (OR error: no rec results)
+ 
+The way we send events are very different from before.
+Please do not worry about this now. Focus on the GUI / interfacing and all the visibility tracking!
+
+Condition to fire the creativeView event:
+-----------------------------------------
+-50% of widget is in viewport OR
+-widget covered 50% of viewport (LONG WIDGET)
+
+Condition to impression event:
+------------------------------
+CV being true for N seconds
+
+Tracking on all the individual items's visibility:
+--------------------------------------------------
+0 
+
+
+
+Calling:
+ <script>
+      window._jxrwidget = window._jxrwidget || [];
+      window._jxrwidget.push({
+        "accountid": "9262bf2590d558736cac4fff7978fcb1", 
+        "container": "recWidgetTestDivId",
+        "widgetid": "....",
+        "title": "...",
+        "pageurl": "...",
+        "keywords": "...",
+        "gui": {
+            "cssfile": "https://rwidget.css",
+            "classes": {
+                "title": ["titlestyle"],
+                "thumbnail": ["thumbnailx"],
+                
+                ..... gap? 
+            },
+            "numcols": 2 <-- ??
+        }
+      });
+  </script>
+  <script type="text/javascript" src="https://scripts.jixie.media/jxrwidget.1.0.min.js"></script>
+
+ */
+
+/* More notes on the event stuff
+
+https://jixie-recommendation-api.azurewebsites.net/v1/recommendation?type=pages&widget_id=abcdef&accountid=9262bf2590d558736cac4fff7978fcb1&pageurl=http://megapolitan.kompas.com/read/2022/01/21/09125931/update-20-januari-bertambah-97-kasus-positif-covid-19-pasien-dalam&keywords=jakarta,indonesia
+
+https://jixie.atlassian.net/wiki/spaces/DEMO/pages/1840218113/Recommendation+tracker
+
+- Vincent already create the starter item for us!!
+- So use it as a starter then.
+
+"trackers":{
+      "baseURL":"https://traid.jixie.io/sync/recommendation",
+      "sharedParams":"accountid=9262bf2590d558736cac4fff7978fcb1&s=jx&v=mixed:0.9&page=http%3A%2F%2Fmegapolitan.kompas.com%2Fread%2F2022%2F01%2F21%2F09125931%2Fupdate-20-januari-bertambah-97-kasus-positif-covid-19-pasien-dalam&widget_id=abcdef",
+      "items":[
+         {
+            "t":"page",
+            "p":0,
+            "v":0,
+            "i":"https://money.kompas.com/read/2022/02/08/162337626/ironi-kereta-cepat-jakarta-bandung-yang-tak-sampai-bandung"
+         },
+         {
+            "t":"page",
+            "p":1,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/09/05514961/pengakuan-napi-lapas-tangerang-bayar-rp-5000-per-minggu-untuk-tidur-di"
+         },
+         {
+            "t":"page",
+            "p":2,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/08/22283881/saat-diperiksa-kpk-ketua-dprd-dki-sebut-commitment-fee-formula-e-sudah"
+         },
+         {
+            "t":"page",
+            "p":3,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/08/20421291/ada-puluhan-zona-merah-di-jakarta-barat-paling-banyak-di-4-kecamatan-ini"
+         },
+         {
+            "t":"page",
+            "p":4,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/09/07240341/berharganya-bintang-dari-pelanggan-bagi-pengemudi-ojek-online-orderan"
+         },
+         {
+            "t":"page",
+            "p":5,
+            "v":0,
+            "i":"https://megapolitan.kompas.com/read/2022/02/09/06363061/trik-supermarket-nakal-raup-untung-dari-kelangkaan-minyak-goreng-bikin"
+         }
+      ]
+
+https://jixie.atlassian.net/wiki/spaces/DEMO/pages/1840218113/Recommendation+tracker
+
+1/ When you send, batch up and send.
+2/ Once you have an IMPRESSION taking place, then you can send what you have batched up so far.
+3/ 
+POST
+body: 'sendBeacon' POST 
+{
+  "actions":[ {
+      "action":"load",
+      "y":3000 // the pixels from the top of the page, optional
+    },{
+      "action":"ready",
+      "elapsedms":1500 // the number of ms since load
+    },{
+      "action":"creativeView",
+      "elapsedms":4500 // the number of ms since load
+    },{
+      "action":"impression",
+      "elapsedms":7000 // the number of ms since load
+    },
+    {
+      action CLICK
+      .....
+
+    }
+  ],
+  //10 items.
+
+  //with items being an array of the items that are displayed, with the type and the position.
+  "items":[{
+      "t":"page", //<-- type. for rec widget always "page"
+      "i":"PAGEURL", //<-- ID of item.
+      "p":0,
+      "v":1,
+      "s":"100x50" <-- optional
+    },{
+        "t":"ad",
+        "i":"12345",
+        "p":1,
+        "v":1,<---------
+        "s":"100x50" <-- optional
+    },
+   ]
+}
+
+
+---
+NOTE: If can use sendBeacon then sendBeacon. If cannot then call the fetch .
+See this example below:
+here the url then str is the JSON.stringified body!!
+(sendBeacon is a POST and sends text type)
+
+ if (window &&
+        window.navigator &&
+        typeof window.navigator.sendBeacon === "function" &&
+        typeof window.Blob === "function") {
+        try {
+            if (window.navigator.sendBeacon(url, str)) {
+                // sendBeacon was successful!
+                return;
+            }
+        } catch (e) {
+            // fallback below
+        }
+    }
+
+    return fetch(url , {
+        method: 'POST',
+        body: str,
+        headers: {
+            'Content-Type': 'text/plain'
+        }
+    });
+
+
+
+      document.addEventListener('visibilitychange', function logData() {
+        if (document.visibilityState === 'hidden') {
+        //SEND YOUR ACCMULATED EVENTS USING SENDBEACON
+        }
+      });
+      window.addEventListener("pagehide", event => {
+        //SEND YOUR ACCMULATED EVENTS USING SENDBEACON
+        
+      }, false);
