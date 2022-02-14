@@ -3,11 +3,18 @@ const modulesmgr            = require('../basic/modulesmgr');
 const mpcommon              = modulesmgr.get('osmpartners/common');
 
 
-function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob) {
-    return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, makeNormalizedObj__);
+function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, cfgBlob) {
+    dbjson.timeout = 10000; //temp try this due to SM complaints
+    return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, cfgBlob, makeNormalizedObj__);
 }
 
-function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
+function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
+    let siteId = dbjson.adparameters.siteId;
+    if (cfgBlob.poverrides && cfgBlob.poverrides.unruly) {
+        siteId = cfgBlob.poverrides.unruly.siteId;
+        dbjson.timeout = -1;
+        rtjson.timeout = -1;
+    }
     let instID = rtjson.instID;
     rtjson.msgs = {
         noad: `jxosm_noad_unruly${instID}`,
@@ -18,7 +25,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
 
     //This is the function for the inview stuff below:
     //<----
-    let div2check = (dbjson.adparameters.siteId === 226678 ? "jxunrulydivid_226678" : `divid_jxosm_unruly_${dbjson.adparameters.siteId}`);
+    let div2check = (siteId === 226678 ? "jxunrulydivid_226678" : `divid_jxosm_unruly_${siteId}`);
     let virtimp = rtjson.msgs.virtimp;
 
     function doWork_(timerBlob) {
@@ -54,8 +61,8 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     let htmlcode = `
             var unruly = window.unruly || {};
             unruly.native = unruly.native || {};
-            unruly.native.siteId = ${dbjson.adparameters.siteId};
-            unruly.native.placementId = ${dbjson.adparameters.siteId};
+            unruly.native.siteId = ${siteId};
+            unruly.native.placementId = ${siteId};
             unruly.native.onFallback = function(){
                 parent.postMessage("${rtjson.msgs.noad}", "*");
                 return "";
@@ -107,8 +114,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
             diffscroll: false
         };
         rtjson.createslot.parent = aNode;
-        //let destdivid = (dbjson.adparameters.siteId === 226678 ? "jxunrulydivid_226678": jxDefaultUnrulyDivId_);
-        let destdivid = (dbjson.adparameters.siteId === 226678 ? "jxunrulydivid_226678" : `divid_jxosm_unruly_${dbjson.adparameters.siteId}`);
+        let destdivid = (siteId === 226678 ? "jxunrulydivid_226678" : `divid_jxosm_unruly_${siteId}`);
         rtjson.createslot.div = {
             id: destdivid,
             css: `width:100%;`,
@@ -118,16 +124,6 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
             selector: '#' + destdivid,
             node: null
         };
-    } else {
-        //the other type is the thing is configured at unruly as to where the ad 
-        //shoudl come out.
-        //this one nothing to create
-        if (!aNode) {
-            //if the div does not exist. it could be a problem or just that
-            //the list of selectors is not updated on our side..
-        } else {
-            rtjson.visibilityslot = aNode; //{ selector: selector, node: node };
-        }
     }
     return true;
 }

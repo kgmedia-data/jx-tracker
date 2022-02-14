@@ -3,24 +3,27 @@ const modulesmgr            = require('../basic/modulesmgr');
 const mpcommon              = modulesmgr.get('osmpartners/common');
 
 // this is a bit stupid, but not changing it b4 my trip 20211111 renee note
-function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob) {
-    return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, makeNormalizedObj__);
+function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, cfgBlob) {
+    return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, cfgBlob, makeNormalizedObj__);
 }
 
-function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
-    
+function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
+    let pageId = dbjson.adparameters.pageId;
+    if (cfgBlob.poverrides && cfgBlob.poverrides.teads) {
+        pageId = cfgBlob.poverrides.teads.pageId;
+    }
     rtjson.msgs = {
         //I stupid last time
-        hasad: `jxosm_hasad_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
-        noad: `jxosm_noad_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
-        imp: `jxosm_imp_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
-        timeout: `jxosm_timeout_teads_${dbjson.adparameters.pageId}` + `${dbjson.adparameters.pageId==126472?'x137811':''}` //`jxosm_noad_teads`,
+        hasad: `jxosm_hasad_teads_${pageId}` + `${pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
+        noad: `jxosm_noad_teads_${pageId}` + `${pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
+        imp: `jxosm_imp_teads_${pageId}` + `${pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
+        timeout: `jxosm_timeout_teads_${pageId}` + `${pageId==126472?'x137811':''}` //`jxosm_noad_teads`,
     };
     /*
     javascript
     */
     rtjson.scriptb =
-        `<script type="text/javascript" class="teads" src="//a.teads.tv/page/${dbjson.adparameters.pageId}/tag" async="true"></script>`;
+        `<script type="text/javascript" class="teads" src="//a.teads.tv/page/${pageId}/tag" async="true"></script>`;
     let aNode = mpcommon.getAdSlotAttachNode(dbjson, getPageSelectorFcn);
     //let's try something different to try to solve the teads problem.
     if (false) {
@@ -30,7 +33,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         if (!aNode) {
             return false;
         }
-        let slotid = dbjson.adparameters.pageId == '126472' ? 'divid_jxosm_teads' : `divid_jxosm_teads_${dbjson.adparameters.pageId}`;
+        let slotid = pageId == '126472' ? 'divid_jxosm_teads' : `divid_jxosm_teads_${pageId}`;
         if (!aNode.node.id) {
             aNode.node.id = slotid;
         }
@@ -64,7 +67,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         };
         rtjson.createslot.parent = aNode;
         //this old stupid one I did wrongly!
-        let sslot = dbjson.adparameters.pageId == '126472' ? 'divid_jxosm_teads' : `divid_jxosm_teads_${dbjson.adparameters.pageId}`;
+        let sslot = pageId == '126472' ? 'divid_jxosm_teads' : `divid_jxosm_teads_${pageId}`;
         rtjson.createslot.div = {
             id: sslot,
             css: `width:100%;`,

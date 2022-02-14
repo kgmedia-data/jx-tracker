@@ -102,6 +102,12 @@ function start(options) {
     }
     // if options has pagekeywords, then it will win over whatever pginfo gets.
     let merged = Object.assign({}, ids, pginfo, options);
+    //emergency tweak 20220112 for Unruly testpages:
+    if (['1000116-l0qqATjDAK', '1000116-XvMGkSubaJ', '1000116-mMzvAh0ukv', '1000116-lDz0KaOjvC', '1000116-MWkqD9mGbH', '1000116-f14ZTyR1BF'].indexOf(merged.unit) > -1) {
+        if (merged.poverrides && merged.poverrides.unruly)  {
+            merged.unit = '1000008-iT3q5Ci4Ry';
+        }
+     }
     
     var osmInst = mosmcore.createInstance(merged, {
             jixie: mpjixie,
