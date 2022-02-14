@@ -295,7 +295,12 @@ function createObject_(options, ampIntegration) {
                 dbgProp += "_NOREF_1";
             }
             //reference point of all the events.
-            diffTime = DateNow - _evtsHelperBlock.video.startts;
+            //console.log(`# ${action}: 
+              //  # w/o: ${DateNow - _evtsHelperBlock.video.startts}
+                //# w: ${DateNow - _evtsHelperBlock.video.startts - (v.mspaused ? v.mspaused : 0)}`)
+                
+            diffTime = DateNow - _evtsHelperBlock.video.startts - (v.mspaused ? v.mspaused : 0);
+            if (diffTime <0) diffTime = 0;
         }
         if (action == 'error') {
             //We suppress errors that occurs in too close proximity
