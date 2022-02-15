@@ -576,7 +576,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         }
     }
 
-    function fireTracker(trackers, action, extra) {
+    function fireTracker(trackers, action, extra = null) {
         if (trackers.actions) {
             if (!trackers.actions.hasOwnProperty(action)) {
                 //console.log("#####WE ARE NOT MEANT TO EVER FIRE THIS!!!!!");
@@ -584,7 +584,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             }
         }
         //TODO : switch to Beacon!!
-        let url = trackers.baseurl + '?' + trackers.parameters + '&action='+action;
+        let url = trackers.baseurl + '?' + trackers.parameters + '&action='+action + (extra ? '&'+extra: '');
         fetch(url, {
             method: 'get',
             credentials: 'include' 
@@ -732,7 +732,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             type = json.type;
         }
 
-        if (this.c.div && this.c.crSig) {
+       /* if (this.c.div && this.c.crSig) {
             //trusted
             //if the creative has a signature (new trusted script type) 
             //and it is trusted
@@ -747,6 +747,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                 return; //not meant for us.
             }
         }
+        */
         
         // we don't want the iframe type to kill our own local creative though.
         if (!sureOK && json && json.token && this.c.div) {
@@ -756,11 +757,23 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             }
             // then we need to check if 
             //we need to match it properly:
-
         }
         
         if (type) {
             switch (type) {
+                case "click":
+                    if (json) {
+                        //if just some click thing it could be random noise 
+                        // and not our stuff.
+                        let extra = (json.params && json.params.id ? 'clickid='+json.params.id: null);
+                        fireTracker(this.c.trackers, 'click', extra);
+				        if (json.params && json.params.url) {
+					        window.open(json.params.url)
+				        }
+                    }
+                    break;
+                case "jxsuppress":
+                    break;
                 case "jxloaded": //only used for untrusted
                     //for trusted, the old creatives dun need this sign to talk to the creative
                     //for trusted, the future creative will follow template/trustedscript.js
