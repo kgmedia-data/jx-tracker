@@ -38,7 +38,7 @@ function getAdSlotAttachNode_(dbjson, getPageSelectorFcn) {
      * It will 
      */
 const defaultPTimeout_ = -1;
-function packRTJsonObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, fcnPartnerMakeNormalizedObj__) {
+function packRTJsonObj_(dbjson, instID, getPageSelectorFcn, cfgBlob, fcnPartnerMakeNormalizedObj__) {
     let rtjson = {
         timeout: dbjson.timeout ? dbjson.timeout : defaultPTimeout_,
         partner: dbjson.subtype, //for debug printout only
@@ -49,7 +49,7 @@ function packRTJsonObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, fcn
         valid: false
     }; 
         common_(rtjson);
-        if (fcnPartnerMakeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, fixedHeightBlob)) {
+        if (fcnPartnerMakeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob)) {
             delete dbjson.trackers;
             rtjson.valid = true;
             return rtjson;

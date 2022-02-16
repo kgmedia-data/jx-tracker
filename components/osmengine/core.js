@@ -854,7 +854,7 @@
                     return;
                 }
                 try {
-                    let qp = (new URL(trackerUrl)).searchParams;
+                    let qp = (new window.URL(trackerUrl)).searchParams;
                     if (!qp) {
                         qp = {
                             get: function() { return "na"; }
@@ -1230,7 +1230,7 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            ['fixedheight','excludedheight','maxwidth','maxheight','gam','floating','floatparams'].forEach(function(prop){
+            ['fixedheight','excludedheight','maxwidth','maxheight','gam','floating','floatparams','poverrides'].forEach(function(prop){
                 if (p[prop]) {
                     _commonCfg[prop] = p[prop];
                 }
@@ -1317,9 +1317,9 @@
     //window.jxoutstreammgr.init = function(p) 
     function createInstance_(p, partners ) {
         //if (!window.jxoutstreammgr.qparams) {
-          //  window.jxoutstreammgr.qparams = (new URL(document.location)).searchParams;
+          //  window.jxoutstreammgr.qparams = (new window.URL(document.location)).searchParams;
         //}
-        let qparams = (new URL(document.location)).searchParams;
+        let qparams = (new window.URL(document.location)).searchParams;
         let OneLogHelper = FactoryOneLogHelper();
         let logInst = new OneLogHelper(qparams);
         
