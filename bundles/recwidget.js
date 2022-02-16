@@ -178,7 +178,7 @@
                 widgetItemArr.push({
                     divid: divid,
                     id: jxRecHelper.jxUrlCleaner(item.url),
-                    pos: index+1 //starts from 1
+                    pos: index //starts from 0
                 });
 
                 /* note: We have this -rand- thing in the div id (this is just
@@ -200,7 +200,7 @@
                 recItem.appendChild(titleDiv);
 
                 widgetWrapper.appendChild(recItem);
-                recItem.onclick = handleClick.bind(null, jxRecHelper, item.url, index+1);
+                recItem.onclick = handleClick.bind(null, jxRecHelper, item.url, index);
 
             });
             /***
