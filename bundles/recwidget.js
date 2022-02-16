@@ -1,5 +1,4 @@
-/**
- * The jixie recommendation widget :
+/* The jixie recommendation widget :
  * - Supports multiple copies of the widget on a given webpage
  * - This widget talks to the Jixie recommendation endpoint and does a simple
  *   rendering into rows of fixed number of columns
@@ -168,23 +167,24 @@
     function createDisplay(rand, container, resultObj, jxRecHelper) {
         let widgetWrapper = document.createElement('div');
         widgetWrapper.className = `${recWrapperCls}${rand}`;
-        widgetWrapper.classList.add(cssClasses.container); //OWN
+        widgetWrapper.classList.add(cssClasses.container); 
         container.appendChild(widgetWrapper);
         let widgetItemArr = [];
         try {
         var items = resultObj.items;
         if (items.length > 0) {
             items.map(function(item, index) {
+                let divid = `recItem-${rand}-${index}`; 
                 widgetItemArr.push({
-                    id: `recItem-${rand}-${index}`,
-                    url: item.url,
-                    pos: index
+                    divid: divid,
+                    id: jxRecHelper.jxUrlCleaner(item.url),
+                    pos: index+1 //starts from 1
                 });
 
                 /* note: We have this -rand- thing in the div id (this is just
                 * because want the div id to be unique on the page as
                 * in case more than 1 widget is embedded on the page) */
-                var recItem = createElement('div', `recItem-${rand}-${index}`, `${recColCls}${rand}`, [cssClasses.wrapper]);
+                var recItem = createElement('div', divid, `${recColCls}${rand}`, [cssClasses.wrapper]);
                 recItem.dataset.index = index;
 
                 var imgWrapper = createElement('div', null, null, [cssClasses.thumbnail_wrapper]);
@@ -200,13 +200,11 @@
                 recItem.appendChild(titleDiv);
 
                 widgetWrapper.appendChild(recItem);
+                recItem.onclick = handleClick.bind(null, jxRecHelper, item.url, index+1);
+
             });
-            widgetItemArr.map(function(item) {
-                document.getElementById(item.id).onclick = handleClick.bind(null, jxRecHelper, item.url, item.pos);
-            });
-            
             /***
-             * JXRECSDK NOTES 4 of 5 - 
+             * JXRECSDK NOTES 3 of 5 - 
              * pass all the info about the items to the rec helper
              * each one is an object: ALL MANDATORY (check with Vincent.)
              *  id: div id of the item
@@ -214,14 +212,21 @@
              *  url: click url of the item
              */
             jxRecHelper.items(widgetItemArr);
+             /***
+             * JXRECSDK NOTES 4 of 5 - 
+             * Call the ready() of the helper object when the recommendation 
+             * results have been populated to the widget
+             * (This will register the action=ready event)
+             */ 
+            jxRecHelper.ready(resultObj.options.algo + ":" + resultObj.options.version);
         } else {
-            jxRecHelper.error();
+            jxRecHelper.error(204);
             console.error("Error: no recommendation items");
             return;
         }
         }
         catch (err) {
-            jxRecHelper.error();
+            jxRecHelper.error(901);
             console.log(err.stack);
         }
     }
@@ -231,10 +236,15 @@
     
     class OneWidget {
         constructor(options) {
+            // in our case most of the stuff is gotten from the page 
             this._options = {
                 accountid : options.accountid,
                 pageurl: options.pageurl ? options.pageurl: windows.location.href,
                 widget_id: options.widgetid,
+                system: "jx", // this current widget is calling the jixie recommendation backend
+                              // as it is the jixie recommendation widget :)
+                partner_id: options.partner_id,
+                partner_cookie: options.partner_cookie,
                 container: options.container,
                 keywords: options.keywords,
                 title: options.title
@@ -282,7 +292,7 @@
                     return fetchRecommendationsP(basicInfo, recHelperObj.getJxUserInfo());
                 })
                 .then(function(resp) {
-                    recResults = resp;          
+                    recResults = resp;       
                     if (!resp || !recResults.items || recResults.items.length == 0) {
                       // bad bad bad bad
                       /***
@@ -292,17 +302,9 @@
                        * 
                        * (This will register the action=error event)
                        */ 
-                        recHelperObj.error();
+                        recHelperObj.error(204);
                         throw "no recommendation results";
                     }            
-                    /***
-                       * JXRECSDK NOTES 3 of 5 - 
-                       * Call the ready() of the helper object when the recommendation 
-                       * results have been fetched.  
-                       * 
-                       * (This will register the action=ready event)
-                       */ 
-                    recHelperObj.ready();
                     return promCSS; //ok this promise (CSS loading) should have resolved by now 
                                     //so should be minimal waiting
                 })

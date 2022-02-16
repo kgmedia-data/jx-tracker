@@ -9,6 +9,7 @@ const mpginfo = require('../components/basic/pginfo');
         var _actions = [];
         var _itemVis = [];
         var _options = null;
+        var _recVersion = null;
         var _trackerUrlBase = null;
         var _basicInfo = null;
 
@@ -18,6 +19,7 @@ const mpginfo = require('../components/basic/pginfo');
         var _readyTimeMs = 0;
 
         var _registeredDivs = [];
+        var _items2Observe = [];
         var _wrapperObserver = null;
         var _itemsObserver = null;
         var _defaultThreshold = 0.5;
@@ -33,6 +35,7 @@ const mpginfo = require('../components/basic/pginfo');
             if (!_trackerUrlBase) {
                 _trackerUrlBase = _makeTrackerBaseUrl(_basicInfo, null);
             }
+            _trackerUrlBase += (_recVersion ? '&v=' + _recVersion: '');
             var msgBody = {
                 actions: _actions,
                 items: _itemVis
@@ -43,6 +46,7 @@ const mpginfo = require('../components/basic/pginfo');
             
             if (msgBody.actions && msgBody.actions.length > 0) {
                 console.log(`#### sendBeacon ${JSON.stringify(msgBody.actions, null, 2)}`);
+                console.log(`#### sendBeacon(items) ${JSON.stringify(msgBody.items, null, 2)}`);
                 if (window &&
                     window.navigator &&
                     typeof window.navigator.sendBeacon === "function" &&
@@ -87,12 +91,17 @@ const mpginfo = require('../components/basic/pginfo');
         // this will also get the ids information (client_id, session_id) using our ids module
         function _collectBasicInfo() {
             let options = _options;
-            // TODO
             try {
-                const ids = mids.get();
                 const pginfo = mpginfo.get();
                 let newObj = {};
-
+                let namedCookie = options.partner_cookie;
+                const ids = mids.get(namedCookie);
+                if (namedCookie && ids && ids[namedCookie]) {
+                    newObj.partner_id = ids[namedCookie];
+                }
+                else if (options.partner_id) {
+                    newObj.partner_id = options.partner_id;
+                }
                 newObj.type = "pages";
                 if (options.title) newObj.title = options.title;
                 else if (pginfo.pagetitle) newObj.title = pginfo.pagetitle;
@@ -108,13 +117,15 @@ const mpginfo = require('../components/basic/pginfo');
                     newObj.session_id = ids.sid;
                     delete ids.sid;
                 }
-
+                if (options.system) newObj.system = options.system;
                 if (options.widgetid) newObj.widget_id = options.widgetid;
-                else newObj.widget_id = "abcdef"; // hardcoded widget id
-
+                
                 let merged = Object.assign({}, ids, newObj);
                 return merged;
             } catch (error) {
+
+                // so ?? still need to handle it properly moving forward ah?!
+                // TODO
                 console.log("#### Error: error while extracting the options object");
             }
         }
@@ -140,8 +151,8 @@ const mpginfo = require('../components/basic/pginfo');
             }
             else {
                 // no choice then we make our own:
-                trackerParams = "s=jx&v=mixed:0.9";
-                ['accountid', 'widget_id', 'client_id', 'session_id', 'cohort'].forEach(function(prop) {
+                trackerParams = "s=" + basicInfo.system; //&v=mixed:0.9";
+                ['accountid', 'widget_id', 'client_id', 'session_id', 'cohort', 'partner_id'].forEach(function(prop) {
                     if (basicInfo[prop])
                         trackerParams += '&' + prop + '=' + basicInfo[prop];
                 });
@@ -167,18 +178,22 @@ const mpginfo = require('../components/basic/pginfo');
                     threshold: _defaultThreshold
                 });
             }
+            for (var i = 0; i < _items2Observe.length; i++) {
+                _itemsObserver.observe(_items2Observe[i]);
+            }
         }
         
         function _setUpItem(itemId, itemIdx, page_url) {
             if (!_readyTimeMs) _readyTimeMs = Date.now();
             const elm = document.getElementById(itemId);
             if (_registeredDivs.findIndex((x) => x.divId === itemId) < 0) {
-                if (elm) _itemsObserver.observe(elm);
+                _items2Observe.push(elm);
+                //if (elm) _itemsObserver.observe(elm);
                 _registeredDivs.push({
                     divId: itemId,
                     index: itemIdx,
                     url: page_url
-                });
+                }); 
             }
 
             // if we didn't have the tracker items from the recommendation API respsonse
@@ -212,10 +227,9 @@ const mpginfo = require('../components/basic/pginfo');
             console.log(`### items being called`);
             for (var i = 0; i < arrOfItems.length; i++) {
                 let oneRec = arrOfItems[i];
-                _setUpItem(oneRec.id, oneRec.pos, oneRec.url);
+                _setUpItem(oneRec.divid, oneRec.pos, oneRec.id);
             }
-            console.log(`### calling _registerWidget`);
-            _registerWidget();
+            
         }
 
         // hook up the intersection observer to track the visibility of the widget
@@ -272,10 +286,32 @@ const mpginfo = require('../components/basic/pginfo');
             };
             _sendWhatWeHave(_msgBody);
         }
-        FactoryJxRecHelper.prototype.error = function() {
+        FactoryJxRecHelper.prototype.error = function(code = 0) {
+            var _msgBody = {
+                actions: [{
+                    action: 'error',
+                    elapsedms: Date.now() - _loadedTimeMs
+                }],
+                code: code
+            };
+            _sendWhatWeHave(_msgBody);
         }
-        FactoryJxRecHelper.prototype.ready = function(trackersBlock = null, tsRecResp = null) {
+        FactoryJxRecHelper.prototype.ready = function(version = null, trackersBlock = null, tsRecResp = null) {
+            if (version) {
+                _recVersion = version;
+            }
             _ready(trackersBlock, tsRecResp);
+        
+            console.log(`### calling _registerWidget`);
+            _registerWidget();
+        }
+        FactoryJxRecHelper.prototype.jxUrlCleaner = function(url) {
+            if (url && typeof url == 'string') {
+                let tmp = url.replace(/^https?:\/\//, '');
+                tmp = tmp.split(/[?#]/)[0];
+                return tmp;
+            }
+            return "";
         }
         FactoryJxRecHelper.prototype.getJxUserInfo = function() {
             return _basicInfo;
