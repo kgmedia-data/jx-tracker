@@ -559,23 +559,42 @@
                 console.log(`__JX_ clear Interval in prepareGoNext exception`);
             }
 
+            // OK, actually removing the script is not going to help. The important
+            // thing is to remove the div of appearance.
             if (_injectedDiv) {
-                //console.log(`## (_prepareGoNext partner=${_jsonObj.partner}) Removing injectedDiv.id=${_injectedDiv.id} From parent.id${_injectedDiv.parentNode.id}`);
+                //alert(`## (_prepareGoNext partner=${_jsonObj.partner}) Removing injectedDiv.id=${_injectedDiv.id} From parent.id${_injectedDiv.parentNode.id}`);
                 _injectedDiv.parentNode.removeChild(_injectedDiv);
             }
-            
-            if (_jsonObj.removedivclass) {
-                //This is an invention just for SelectMedia.
-                //console.log(`__##### ${_jsonObj.removedivclass}`);
-                //somehow they create some div away from the _injectedDiv
-                //so more stuff to get rid of . else users will see a
-                //big white floating window upon declaration of no ad by SM:
-                let div2Del = document.getElementsByClassName(_jsonObj.removedivclass);
-                if (div2Del && div2Del.length>0) {
-                    div2Del = div2Del[0];
-                    div2Del.parentNode.removeChild(div2Del);
+            try {
+                // when we waterfal down actually (the above... removing the injected script
+                // might not help). Coz the script is already running. what is important is
+                // to remove the ad slot created 
+                // e.g. for Unruly Ridho had complained he is seeing adx ad (the lower layer in 
+                // the waterfall) and Unruly 
+                // Last time when we waterfall away from Unruly, the div is not cleaned up,
+                // that's why it happened like that. now we try to remove that div called
+                // divid_jxosm_unruly_<theID> . then hopefully Ridho will not see the situation
+                // again (20220221 note)
+                if (_jsonObj.createslot && _jsonObj.createslot.div && _jsonObj.createslot.div.node) {
+                    let t = _jsonObj.createslot.div.node;
+                    t.parentNode.removeChild(t);
                 }
-            }
+            }catch(e) {}
+            try {    
+                if (_jsonObj.removedivclass) {
+                    //This is an invention just for SelectMedia.
+                    //console.log(`__##### ${_jsonObj.removedivclass}`);
+                    //somehow they create some div away from the _injectedDiv
+                    //so more stuff to get rid of . else users will see a
+                    //big white floating window upon declaration of no ad by SM:
+                    let div2Del = document.getElementsByClassName(_jsonObj.removedivclass);
+                    if (div2Del && div2Del.length>0) {
+                        div2Del = div2Del[0];
+                        div2Del.parentNode.removeChild(div2Del);
+                    }
+                } 
+            }catch(ee) {}
+            
             if(_msgListener) {
                 window.removeEventListener('message', _msgListener);
             }
