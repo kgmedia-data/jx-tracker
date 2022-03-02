@@ -28,7 +28,7 @@ modulesmgr.set('renderer/univelements',         univelements);
 
 const mrenderer                     = require('../components/renderer/core');
 const mpginfo                       = require('../components/basic/pginfo');
-const mids                          = require('../components/basic/ids');
+const mids                          = require('../components/basic/idslite');
 
 var instMap = new Map();
 
@@ -41,7 +41,8 @@ function start_(options) {
     if (instMaybe) {
         return;
     }
-    let merged = Object.assign({}, ids, pginfo, options);
+    let merged = Object.assign({}, pginfo, options);
+    merged.ids = ids;
     var uliteInst = mrenderer.createInstance(merged);
     instMap.set(hashStr, uliteInst);
 }
