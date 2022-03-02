@@ -1275,17 +1275,19 @@
             _instID = "OSMWF_" + _msWFInit;
             _ctrID = "ctrid" + _msWFInit; //TODO REfers to the container for the injected CODE of the various partners
             let url = `https://${p.debug?'ad-rc':'content'}.jixie.io/v2/osm?source=osm`;
-            ['unit', 'client_id', 'sid', 'campaignid', 'creativeids'].forEach(function(prop) {
-                if (p[prop])
-                    url += '&' + prop + '=' + p[prop];
-            });
-            ['pageurl', 'domain', 'pagekeywords'].forEach(function(prop) {
+            if (p.ids) {
+                // this one is already appropriately named.
+                // as this comes from our own ids module.
+                // so tht the adserver accepts it.
+                for (var prop in p.ids) {
+                    url += '&' + prop + '=' + encodeURIComponent(p.ids[prop]);
+                }
+            }
+            [   'unit', 'campaignid', 'creativeids',
+                'minwidth', 'maxheight', 'minheight', 'fixedheight',
+                'pageurl', 'domain', 'pagekeywords'].forEach(function(prop) {
                 if (p[prop])
                     url += '&' + prop + '=' + encodeURIComponent(p[prop]);
-            });
-            ['minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
-                if (p[prop])
-                    url += '&' + prop + '=' + p[prop];
             });
             //<- maxwidth
             let mw = null;
