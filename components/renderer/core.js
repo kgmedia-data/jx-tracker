@@ -2719,15 +2719,14 @@ const thresholdDiff_ = 120;
             else {
                 let subdomain = _jxParams.portal == 'dev' ? 'ad-dev':(_jxParams.debug?'ad-rc': 'ad');
                 let tmp = `https://${subdomain}.jixie.io/v1/universal?source=outstream`;
-                ['unit', 'client_id', 'sid', 'deltaassets64', 'creativeid'].forEach(function(prop) {
-                    if (_jxParams[prop])
-                        tmp += '&' + prop + '=' + _jxParams[prop];
-                });
-                ['pageurl', 'domain', 'pagekeywords'].forEach(function(prop) {
-                    if (_jxParams[prop])
-                        tmp += '&' + prop + '=' + _jxParams[prop];
-                });
-                ['maxwidth', 'minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
+                if (_jxParams.ids) {
+                    for (var prop in _jxParams.ids) {
+                        tmp += '&' + prop + '=' + _jxParams.ids[prop];
+                    }
+                }
+                [   'unit', 'deltaassets64', 'creativeid',
+                    'pageurl', 'domain', 'pagekeywords',
+                    'maxwidth', 'minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
                     if (_jxParams[prop])
                         tmp += '&' + prop + '=' + _jxParams[prop];
                 });
