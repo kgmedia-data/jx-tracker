@@ -21,16 +21,15 @@
 
     const recColCls = "jxRecCol";
     const recWrapperCls = "jxRecWrapper";
+    const defaultAR = 0.5626;
     /**
      * General Helper Function 
      */
-    function appendDefaultCSS(rand, numCols) {
-        var colWidth = 100; // default width and flex of each items
-        if (numCols) colWidth = 100 / numCols;
+    function appendDefaultCSS(rand, widthOfBlock) {
 
         const stylesArr = [
-            "." + recWrapperCls + "" + rand + "{display:flex;flex-wrap:wrap;}",
-            "." + recColCls + "" + rand + "{position:relative;box-sizing:border-box;width:100%;flex:0 0 " + colWidth + "%;max-width:" + colWidth + "%;}",
+            "." + recWrapperCls + "" + rand + "{display:flex;flex-wrap:wrap;justify-content:center;}",
+            "." + recColCls + "" + rand + "{position:relative;box-sizing:border-box;width:"+ widthOfBlock+ "px;flex:0 0 " + widthOfBlock + "px;max-width:" + widthOfBlock + "px;margin:5px;}",
         ].join("\n");
 
         var head = document.getElementsByTagName('HEAD')[0];
@@ -164,7 +163,22 @@
         wrapper: 'jxrwgt-wrap-cl'
     };
 
-    function createDisplay(rand, container, resultObj, jxRecHelper) {
+    function getOriginalSizeImage (imageUrl){
+        return new Promise((resolve, reject) => {
+            var newImg = new Image();
+            newImg.onload = function() {
+                var height = newImg.height;
+                var width = newImg.width;
+                resolve({ width, height });
+            }
+            newImg.onerror = function() {
+                resolve(null);
+            }
+            newImg.src = imageUrl;
+        })
+    }
+
+    function createDisplay(widthOfBlock, rand, container, resultObj, jxRecHelper) {
         let widgetWrapper = document.createElement('div');
         widgetWrapper.className = `${recWrapperCls}${rand}`;
         widgetWrapper.classList.add(cssClasses.container); 
@@ -189,9 +203,29 @@
 
                 var imgWrapper = createElement('div', null, null, [cssClasses.thumbnail_wrapper]);
                 var imgElm = createElement('img', null, null, [cssClasses.thumbnail]);
+
+                getOriginalSizeImage(item.img).then(function(obj) {
+                    if (obj.width && obj.height) {
+                        var wrapperHeight = widthOfBlock * defaultAR;
+                        imgWrapper.style.height = wrapperHeight + 'px';
+
+                        if ((obj.width / obj.height) < 1) {
+                            imgElm.style.width = wrapperHeight * defaultAR + 'px';
+                            imgElm.style.height = '100%';
+                        } else {
+                            imgElm.style.width = '100%';
+                            imgElm.style.height = '100%';
+                        }
+                    } else {
+                        console.log('Unable to get the original size of the image');
+                    }
+                }).catch(function(error) {
+                    console.log(`Unable to get the original size of the image ${error.stack} ${error.message}`);
+                });
+
                 imgElm.src = item.img;
                 imgWrapper.appendChild(imgElm);
-
+        
                 var categoryDiv = createElement('div', null, null, [cssClasses.category], item.category);
                 var titleDiv = createElement('div', null, null, [cssClasses.title], item.title);
 
@@ -201,7 +235,7 @@
 
                 widgetWrapper.appendChild(recItem);
                 recItem.onclick = handleClick.bind(null, jxRecHelper, item.url, index);
-
+                
             });
             /***
              * JXRECSDK NOTES 3 of 5 - 
@@ -249,13 +283,13 @@
                 keywords: options.keywords,
                 title: options.title
             };
-            this._numOfCols = options.numcols || 2;
+            this._widthOfBlock = Number(options.widthOfBlock) || 280;
             this._containerId = options.container;
             this._container = document.getElementById(this._containerId);
         }
         kickOff() {
                 const rand = Math.floor(Math.random() * 1000);
-                appendDefaultCSS(rand, this._numOfCols);
+                appendDefaultCSS(rand, this._widthOfBlock);
 
                 // just fire this request off (loadcss)
                 let promCSS = fetchCSSFileP(_cssURL); // if you css is loaded on the page already, 
@@ -310,7 +344,7 @@
                 })
                 .then(function() {
                     // everything is ready (recommendation results, css):
-                    createDisplay(rand, thisObj._container, recResults, recHelperObj);
+                    createDisplay(thisObj._widthOfBlock, rand, thisObj._container, recResults, recHelperObj);
                 })
                 .catch(function(error) {
                     console.log(`Unable to create recommendations widget ${error.stack} ${error.message}`);

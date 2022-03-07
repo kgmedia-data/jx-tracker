@@ -4,7 +4,6 @@
 .jxrwgt-wrap-cl {
   position: relative;
   cursor: pointer;
-  padding: 5px;
 }
 .jxrwgt-itm-title-cl {
   padding-top: 10px;
@@ -19,7 +18,7 @@
 }
 .jxrwgt-itm-timgwrap-cl {
   position: relative;
-  padding-top: 66.4286%;
+  padding-top: 56.25%;
 }
 .jxrwgt-itm-timg-cl {
   position: absolute;
