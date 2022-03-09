@@ -25,11 +25,11 @@
     /**
      * General Helper Function 
      */
-    function appendDefaultCSS(rand, widthOfBlock) {
+    function appendDefaultCSS(rand, blockwidth) {
 
         const stylesArr = [
             "." + recWrapperCls + "" + rand + "{display:flex;flex-wrap:wrap;justify-content:center;}",
-            "." + recColCls + "" + rand + "{position:relative;box-sizing:border-box;width:"+ widthOfBlock+ "px;flex:0 0 " + widthOfBlock + "px;max-width:" + widthOfBlock + "px;margin:5px;}",
+            "." + recColCls + "" + rand + "{position:relative;box-sizing:border-box;width:"+ blockwidth+ "px;flex:0 0 " + blockwidth + "px;max-width:" + blockwidth + "px;margin:5px;}",
         ].join("\n");
 
         var head = document.getElementsByTagName('HEAD')[0];
@@ -178,7 +178,7 @@
         })
     }
 
-    function createDisplay(widthOfBlock, rand, container, resultObj, jxRecHelper) {
+    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper) {
         let widgetWrapper = document.createElement('div');
         widgetWrapper.className = `${recWrapperCls}${rand}`;
         widgetWrapper.classList.add(cssClasses.container); 
@@ -206,7 +206,7 @@
 
                 getOriginalSizeImage(item.img).then(function(obj) {
                     if (obj.width && obj.height) {
-                        var wrapperHeight = widthOfBlock * defaultAR;
+                        var wrapperHeight = blockwidth * defaultAR;
                         imgWrapper.style.height = wrapperHeight + 'px';
 
                         if ((obj.width / obj.height) < 1) {
@@ -283,13 +283,13 @@
                 keywords: options.keywords,
                 title: options.title
             };
-            this._widthOfBlock = Number(options.widthOfBlock) || 280;
+            this._blockwidth = Number(options.blockwidth) || 280;
             this._containerId = options.container;
             this._container = document.getElementById(this._containerId);
         }
         kickOff() {
                 const rand = Math.floor(Math.random() * 1000);
-                appendDefaultCSS(rand, this._widthOfBlock);
+                appendDefaultCSS(rand, this._blockwidth);
 
                 // just fire this request off (loadcss)
                 let promCSS = fetchCSSFileP(_cssURL); // if you css is loaded on the page already, 
@@ -344,7 +344,7 @@
                 })
                 .then(function() {
                     // everything is ready (recommendation results, css):
-                    createDisplay(thisObj._widthOfBlock, rand, thisObj._container, recResults, recHelperObj);
+                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj);
                 })
                 .catch(function(error) {
                     console.log(`Unable to create recommendations widget ${error.stack} ${error.message}`);
