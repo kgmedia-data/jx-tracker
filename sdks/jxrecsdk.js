@@ -36,6 +36,7 @@ const mpginfo = require('../components/basic/pginfo');
                 _trackerUrlBase = _makeTrackerBaseUrl(_basicInfo, null);
             }
             _trackerUrlBase += (_recVersion ? '&v=' + _recVersion: '');
+            _recVersion = null; //else we keep on adding.
             var msgBody = {
                 actions: _actions,
                 items: _itemVis
