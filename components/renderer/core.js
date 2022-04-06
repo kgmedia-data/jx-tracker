@@ -2097,6 +2097,7 @@ const thresholdDiff_ = 120;
                 //for this type we will use postMessage to post the adparameters.
                 break;
             case 'display':
+            case 'osm':    //type=display,subtype=script AND type=osm,subtype=script are technically same thing. 
                 switch (c.subtype) {
                     //case 'video+banner':
                         //now from adserver it is already morphed into video vvpaid
@@ -2132,7 +2133,6 @@ const thresholdDiff_ = 120;
     });
   </script>
 </div>`;*/
-                        console.log(sbody); 
                         assumeHasAd = true; //<== !!!
                         out[trusted? 'div':'iframe'] = { scriptbody: sbody };
                         if (c.adparameters && c.adparameters.jxeventssdk) {
@@ -2147,6 +2147,11 @@ const thresholdDiff_ = 120;
                        }
                         break;
                     default: //can be either simple image or DPA (html). Still have to figure out...
+                        if (c.type == 'osm') {
+                            // if c.type == osm then c.subtype should be script which is the
+                            // case above. so we should not be here at all.
+                            break;
+                        }
                         let psr = document.createElement('a');
                         psr.href = c.url;
                         if (psr.pathname.indexOf('.htm') === -1 && psr.pathname.indexOf('.html') === -1) {
