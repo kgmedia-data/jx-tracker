@@ -29,6 +29,8 @@ const mpginfo = require('../components/basic/pginfo');
             ready: 0,
             impression: 0,
             creativeView: 0,
+            widgetview_50pct: 0,
+            widgetview_100pct: 0,
         }
 
         function _sendWhatWeHave(_msgBody = null) {
@@ -44,7 +46,7 @@ const mpginfo = require('../components/basic/pginfo');
             if (_msgBody) {
                 msgBody = _msgBody;
             }
-            
+
             if (msgBody.actions && msgBody.actions.length > 0) {
                 console.log(`#### sendBeacon ${JSON.stringify(msgBody.actions, null, 2)}`);
                 console.log(`#### sendBeacon(items) ${JSON.stringify(msgBody.items, null, 2)}`);
@@ -173,6 +175,20 @@ const mpginfo = require('../components/basic/pginfo');
                                 _itemVis[idx].v = 1;
                                 _itemsObserver.unobserve(entry.target);
                             }
+                            if (idx === _items2Observe.length - 1) {
+                                if (!_eventsFired.widgetview_100pct) {
+                                    _eventsFired.widgetview_100pct = 1;
+                                    console.log('#### widgetview_100pct event')
+                                    var _msgBody = {
+                                        actions: [{
+                                            action: 'widgetview_100pct',
+                                            elapsedms: Date.now() - _loadedTimeMs
+                                        }],
+                                        items: _itemVis
+                                    };
+                                    _sendWhatWeHave(_msgBody);
+                                }
+                            }
                         }
                     });
                 }, {
@@ -251,6 +267,14 @@ const mpginfo = require('../components/basic/pginfo');
                                 console.log('#### creativeview event')
                                 _actions.push({
                                     action: 'creativeview',
+                                    elapsedms: Date.now() - _loadedTimeMs
+                                });
+                            }
+                            if (!_eventsFired.widgetview_50pct) {
+                                _eventsFired.widgetview_50pct = 1;
+                                console.log('#### widgetview_50pct event')
+                                _actions.push({
+                                    action: 'widgetview_50pct',
                                     elapsedms: Date.now() - _loadedTimeMs
                                 });
                             }
