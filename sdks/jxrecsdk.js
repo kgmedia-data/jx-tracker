@@ -173,6 +173,9 @@ const mpginfo = require('../components/basic/pginfo');
                             const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(entry.target.dataset.index));
                             if (idx > -1) {
                                 _itemVis[idx].v = 1;
+                                if (_itemVis[idx].t === 'ad') {
+                                    _fireCreativeEvent(_itemVis[idx].trackers, 'creativeview');
+                                }
                                 _itemsObserver.unobserve(entry.target);
                             }
                             if (idx === _items2Observe.length - 1) {
@@ -200,7 +203,7 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
         
-        function _setUpItem(itemId, itemIdx, page_url) {
+        function _setUpItem(itemId, itemIdx, page_url, type, trackers) {
             if (!_readyTimeMs) _readyTimeMs = Date.now();
             const elm = document.getElementById(itemId);
             if (_registeredDivs.findIndex((x) => x.divId === itemId) < 0) {
@@ -217,13 +220,15 @@ const mpginfo = require('../components/basic/pginfo');
             // then we build our own using the information giving by the widget
             // this case is whereby the publisher have their own recommendation API
             if (true) { //!_itemVis.length) {
-                _itemVis.push({
-                    t: "page",
+                const _itemVisObj = {
+                    t: type ? type : "page",
                     p: itemIdx,
                     v: 0,
                     i: page_url,
                     s: "" + parseInt(elm.offsetWidth) + "x" + parseInt(elm.offsetHeight)
-                });
+                }
+                if (trackers) _itemVisObj.trackers = trackers;
+                _itemVis.push(_itemVisObj);
             } else {
                 // but if the publisher using Jixie recommendation API
                 // then we can get it from the API response sent to us
@@ -236,6 +241,21 @@ const mpginfo = require('../components/basic/pginfo');
             //_registerWidget();
         }
 
+        function _fireCreativeEvent(trackers, action = null) {
+            if (!action) {
+                return;
+            }
+
+            let url = trackers.baseurl + '?' + trackers.parameters + '&action='+action;
+            fetch(url, {
+                method: 'get',
+                credentials: 'include' 
+            })
+            .catch((ee) => {
+            });
+            
+        }
+
         //FactoryJxRecHelper.prototype.items = function(itemId, itemIdx, page_url) {
           //  _setUpItems(itemId, itemIdx, page_url);
         //}
@@ -244,7 +264,7 @@ const mpginfo = require('../components/basic/pginfo');
             console.log(`### items being called`);
             for (var i = 0; i < arrOfItems.length; i++) {
                 let oneRec = arrOfItems[i];
-                _setUpItem(oneRec.divid, oneRec.pos, oneRec.id);
+                _setUpItem(oneRec.divid, oneRec.pos, oneRec.id, oneRec.type, oneRec.trackers);
             }
             
         }
@@ -302,14 +322,21 @@ const mpginfo = require('../components/basic/pginfo');
         // we would need to determine which item being clicked by the users
         // and map it as an object to be sent to the trackers URL
         FactoryJxRecHelper.prototype.clicked = function(itemIdx) {
-            var _msgBody = {
-                actions: [{
-                    action: 'click',
-                    elapsedms: Date.now() - _loadedTimeMs
-                }],
-                items: [_itemVis.find((item) => parseInt(item.p) === parseInt(itemIdx))]
-            };
-            _sendWhatWeHave(_msgBody);
+            const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(itemIdx))
+            if (idx > -1)  {
+                var _msgBody = {
+                    actions: [{
+                        action: 'click',
+                        elapsedms: Date.now() - _loadedTimeMs
+                    }],
+                    items: [_itemVis[idx]]
+                };
+                _sendWhatWeHave(_msgBody);
+    
+                if (_itemVis[idx].t === 'ad') {
+                    _fireCreativeEvent(_itemVis[idx].trackers, 'click');
+                }
+            }
         }
         FactoryJxRecHelper.prototype.error = function(code = 0) {
             var _msgBody = {
