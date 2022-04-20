@@ -23,6 +23,8 @@ const mpginfo = require('../components/basic/pginfo');
         var _wrapperObserver = null;
         var _itemsObserver = null;
         var _defaultThreshold = 0.5;
+        var _isCreativeVisible = 0;
+        var _isWidgetVisible = 0;
 
         var _eventsFired = {
             load: 0,
@@ -31,6 +33,11 @@ const mpginfo = require('../components/basic/pginfo');
             creativeView: 0,
             widgetview_50pct: 0,
             widgetview_100pct: 0,
+        }
+
+        var _creativeEventFired = {
+            impression: 0,
+            creativeView: 0,
         }
 
         function _sendWhatWeHave(_msgBody = null) {
@@ -169,28 +176,48 @@ const mpginfo = require('../components/basic/pginfo');
             if (!_itemsObserver) {
                 _itemsObserver = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
+                        const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(entry.target.dataset.index));
                         if (entry.intersectionRatio >= _defaultThreshold) {
-                            const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(entry.target.dataset.index));
                             if (idx > -1) {
                                 _itemVis[idx].v = 1;
                                 if (_itemVis[idx].t === 'ad') {
-                                    _fireCreativeEvent(_itemVis[idx].trackers, 'creativeview');
+                                    _isCreativeVisible = 1;
+                                    if (!_creativeEventFired.creativeView) {
+                                        _fireCreativeEvent(_itemVis[idx].trackers, 'creativeview');
+                                        _creativeEventFired.creativeView = 1;
+                                    }
+
+                                    if (!_creativeEventFired.impression) {
+                                        var jxinter = setInterval(function() {
+                                            if (_isCreativeVisible) {
+                                                if (!_creativeEventFired.impression){
+                                                    _fireCreativeEvent(_itemVis[idx].trackers, 'impression');
+                                                    _creativeEventFired.impression = 1;
+
+                                                    _itemsObserver.unobserve(entry.target);
+                                                }
+                                            }
+                                            clearInterval(jxinter);
+                                        }, 2000);
+                                    }
+                                } else {
+                                    _itemsObserver.unobserve(entry.target);
                                 }
-                                _itemsObserver.unobserve(entry.target);
                             }
                             if (idx === _items2Observe.length - 1) {
                                 if (!_eventsFired.widgetview_100pct) {
                                     _eventsFired.widgetview_100pct = 1;
                                     console.log('#### widgetview_100pct event')
-                                    var _msgBody = {
-                                        actions: [{
-                                            action: 'widgetview_100pct',
-                                            elapsedms: Date.now() - _loadedTimeMs
-                                        }],
-                                        items: _itemVis
-                                    };
-                                    _sendWhatWeHave(_msgBody);
+                                    _actions.push({
+                                        action: 'widgetview_100pct',
+                                        elapsedms: Date.now() - _loadedTimeMs
+                                    });
+                                    _sendWhatWeHave();
                                 }
+                            }
+                        } else {
+                            if (_itemVis[idx].t === 'ad') {
+                                _isCreativeVisible = 0;
                             }
                         }
                     });
@@ -282,6 +309,7 @@ const mpginfo = require('../components/basic/pginfo');
                 _wrapperObserver = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
                         if (entry.intersectionRatio >= th) {
+                            _isWidgetVisible = 1;
                             if (!_eventsFired.creativeView) {
                                 _eventsFired.creativeView = 1;
                                 console.log('#### creativeview event')
@@ -299,16 +327,23 @@ const mpginfo = require('../components/basic/pginfo');
                                 });
                             }
                             if (!_eventsFired.impression) {
-                                _eventsFired.impression = 1;
-                                setTimeout(function() {
-                                    console.log('#### impression event')
-                                    _actions.push({
-                                        action: 'impression',
-                                        elapsedms: Date.now() - _loadedTimeMs
-                                    });
-                                    _sendWhatWeHave();
+                                var interval = setInterval(function() {
+                                    if (_isWidgetVisible) {
+                                        if (!_eventsFired.impression) {
+                                            _eventsFired.impression = 1;
+                                            console.log('#### impression event')
+                                            _actions.push({
+                                                action: 'impression',
+                                                elapsedms: Date.now() - _loadedTimeMs
+                                            });
+                                            _sendWhatWeHave();
+                                        }
+                                    }
+                                    clearInterval(interval);
                                 }, 2000);
                             }
+                        } else {
+                            _isWidgetVisible = 0;
                         }
                     });
                 }, {
