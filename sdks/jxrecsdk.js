@@ -128,7 +128,7 @@ const mpginfo = require('../components/basic/pginfo');
                     delete ids.sid;
                 }
                 if (options.system) newObj.system = options.system;
-                if (options.widgetid) newObj.widget_id = options.widgetid;
+                if (options.widget_id) newObj.widget_id = options.widget_id;
                 
                 let merged = Object.assign({}, ids, newObj);
                 return merged;
