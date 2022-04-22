@@ -23,10 +23,19 @@ const mpginfo = require('../components/basic/pginfo');
         var _wrapperObserver = null;
         var _itemsObserver = null;
         var _defaultThreshold = 0.5;
+        var _isCreativeVisible = 0;
+        var _isWidgetVisible = 0;
 
         var _eventsFired = {
             load: 0,
             ready: 0,
+            impression: 0,
+            creativeView: 0,
+            widgetview_50pct: 0,
+            widgetview_100pct: 0,
+        }
+
+        var _creativeEventFired = {
             impression: 0,
             creativeView: 0,
         }
@@ -44,7 +53,7 @@ const mpginfo = require('../components/basic/pginfo');
             if (_msgBody) {
                 msgBody = _msgBody;
             }
-            
+
             if (msgBody.actions && msgBody.actions.length > 0) {
                 console.log(`#### sendBeacon ${JSON.stringify(msgBody.actions, null, 2)}`);
                 console.log(`#### sendBeacon(items) ${JSON.stringify(msgBody.items, null, 2)}`);
@@ -167,11 +176,48 @@ const mpginfo = require('../components/basic/pginfo');
             if (!_itemsObserver) {
                 _itemsObserver = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
+                        const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(entry.target.dataset.index));
                         if (entry.intersectionRatio >= _defaultThreshold) {
-                            const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(entry.target.dataset.index));
                             if (idx > -1) {
                                 _itemVis[idx].v = 1;
-                                _itemsObserver.unobserve(entry.target);
+                                if (_itemVis[idx].t === 'ad') {
+                                    _isCreativeVisible = 1;
+                                    if (!_creativeEventFired.creativeView) {
+                                        _fireCreativeEvent(_itemVis[idx].trackers, 'creativeview');
+                                        _creativeEventFired.creativeView = 1;
+                                    }
+
+                                    if (!_creativeEventFired.impression) {
+                                        var jxinter = setInterval(function() {
+                                            if (_isCreativeVisible) {
+                                                if (!_creativeEventFired.impression){
+                                                    _fireCreativeEvent(_itemVis[idx].trackers, 'impression');
+                                                    _creativeEventFired.impression = 1;
+
+                                                    _itemsObserver.unobserve(entry.target);
+                                                }
+                                            }
+                                            clearInterval(jxinter);
+                                        }, 2000);
+                                    }
+                                } else {
+                                    _itemsObserver.unobserve(entry.target);
+                                }
+                            }
+                            if (idx === _items2Observe.length - 1) {
+                                if (!_eventsFired.widgetview_100pct) {
+                                    _eventsFired.widgetview_100pct = 1;
+                                    console.log('#### widgetview_100pct event')
+                                    _actions.push({
+                                        action: 'widgetview_100pct',
+                                        elapsedms: Date.now() - _loadedTimeMs
+                                    });
+                                    _sendWhatWeHave();
+                                }
+                            }
+                        } else {
+                            if (_itemVis[idx].t === 'ad') {
+                                _isCreativeVisible = 0;
                             }
                         }
                     });
@@ -184,7 +230,7 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
         
-        function _setUpItem(itemId, itemIdx, page_url) {
+        function _setUpItem(itemId, itemIdx, page_url, type, trackers) {
             if (!_readyTimeMs) _readyTimeMs = Date.now();
             const elm = document.getElementById(itemId);
             if (_registeredDivs.findIndex((x) => x.divId === itemId) < 0) {
@@ -201,13 +247,15 @@ const mpginfo = require('../components/basic/pginfo');
             // then we build our own using the information giving by the widget
             // this case is whereby the publisher have their own recommendation API
             if (true) { //!_itemVis.length) {
-                _itemVis.push({
-                    t: "page",
+                const _itemVisObj = {
+                    t: type ? type : "page",
                     p: itemIdx,
                     v: 0,
                     i: page_url,
                     s: "" + parseInt(elm.offsetWidth) + "x" + parseInt(elm.offsetHeight)
-                });
+                }
+                if (trackers) _itemVisObj.trackers = trackers;
+                _itemVis.push(_itemVisObj);
             } else {
                 // but if the publisher using Jixie recommendation API
                 // then we can get it from the API response sent to us
@@ -220,6 +268,21 @@ const mpginfo = require('../components/basic/pginfo');
             //_registerWidget();
         }
 
+        function _fireCreativeEvent(trackers, action = null) {
+            if (!action) {
+                return;
+            }
+
+            let url = trackers.baseurl + '?' + trackers.parameters + '&action='+action;
+            fetch(url, {
+                method: 'get',
+                credentials: 'include' 
+            })
+            .catch((ee) => {
+            });
+            
+        }
+
         //FactoryJxRecHelper.prototype.items = function(itemId, itemIdx, page_url) {
           //  _setUpItems(itemId, itemIdx, page_url);
         //}
@@ -228,7 +291,7 @@ const mpginfo = require('../components/basic/pginfo');
             console.log(`### items being called`);
             for (var i = 0; i < arrOfItems.length; i++) {
                 let oneRec = arrOfItems[i];
-                _setUpItem(oneRec.divid, oneRec.pos, oneRec.id);
+                _setUpItem(oneRec.divid, oneRec.pos, oneRec.id, oneRec.type, oneRec.trackers);
             }
             
         }
@@ -246,6 +309,7 @@ const mpginfo = require('../components/basic/pginfo');
                 _wrapperObserver = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
                         if (entry.intersectionRatio >= th) {
+                            _isWidgetVisible = 1;
                             if (!_eventsFired.creativeView) {
                                 _eventsFired.creativeView = 1;
                                 console.log('#### creativeview event')
@@ -254,17 +318,32 @@ const mpginfo = require('../components/basic/pginfo');
                                     elapsedms: Date.now() - _loadedTimeMs
                                 });
                             }
+                            if (!_eventsFired.widgetview_50pct) {
+                                _eventsFired.widgetview_50pct = 1;
+                                console.log('#### widgetview_50pct event')
+                                _actions.push({
+                                    action: 'widgetview_50pct',
+                                    elapsedms: Date.now() - _loadedTimeMs
+                                });
+                            }
                             if (!_eventsFired.impression) {
-                                _eventsFired.impression = 1;
-                                setTimeout(function() {
-                                    console.log('#### impression event')
-                                    _actions.push({
-                                        action: 'impression',
-                                        elapsedms: Date.now() - _loadedTimeMs
-                                    });
-                                    _sendWhatWeHave();
+                                var interval = setInterval(function() {
+                                    if (_isWidgetVisible) {
+                                        if (!_eventsFired.impression) {
+                                            _eventsFired.impression = 1;
+                                            console.log('#### impression event')
+                                            _actions.push({
+                                                action: 'impression',
+                                                elapsedms: Date.now() - _loadedTimeMs
+                                            });
+                                            _sendWhatWeHave();
+                                        }
+                                    }
+                                    clearInterval(interval);
                                 }, 2000);
                             }
+                        } else {
+                            _isWidgetVisible = 0;
                         }
                     });
                 }, {
@@ -278,14 +357,21 @@ const mpginfo = require('../components/basic/pginfo');
         // we would need to determine which item being clicked by the users
         // and map it as an object to be sent to the trackers URL
         FactoryJxRecHelper.prototype.clicked = function(itemIdx) {
-            var _msgBody = {
-                actions: [{
-                    action: 'click',
-                    elapsedms: Date.now() - _loadedTimeMs
-                }],
-                items: [_itemVis.find((item) => parseInt(item.p) === parseInt(itemIdx))]
-            };
-            _sendWhatWeHave(_msgBody);
+            const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(itemIdx))
+            if (idx > -1)  {
+                var _msgBody = {
+                    actions: [{
+                        action: 'click',
+                        elapsedms: Date.now() - _loadedTimeMs
+                    }],
+                    items: [_itemVis[idx]]
+                };
+                _sendWhatWeHave(_msgBody);
+    
+                if (_itemVis[idx].t === 'ad') {
+                    _fireCreativeEvent(_itemVis[idx].trackers, 'click');
+                }
+            }
         }
         FactoryJxRecHelper.prototype.error = function(code = 0) {
             var _msgBody = {

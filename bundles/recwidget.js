@@ -192,7 +192,9 @@
                 widgetItemArr.push({
                     divid: divid,
                     id: jxRecHelper.jxUrlCleaner(item.url),
-                    pos: index //starts from 0
+                    pos: index, //starts from 0
+                    type: item.type,
+                    trackers: item.trackers
                 });
 
                 /* note: We have this -rand- thing in the div id (this is just
