@@ -208,15 +208,18 @@
 
                 getOriginalSizeImage(item.img).then(function(obj) {
                     if (obj.width && obj.height) {
+                        const aspectRatio = obj.width / obj.height;
                         var wrapperHeight = blockwidth * defaultAR;
                         imgWrapper.style.height = wrapperHeight + 'px';
 
-                        if ((obj.width / obj.height) < 1) {
-                            imgElm.style.width = wrapperHeight * defaultAR + 'px';
-                            imgElm.style.height = '100%';
+                        imgElm.style.maxWidth = '100%';
+                        imgElm.style.maxHeight = '100%';
+                        if (aspectRatio > 1) {
+                            imgElm.style.width = blockwidth + 'px';
+                            imgElm.style.height = (blockwidth / aspectRatio) + 'px';
                         } else {
-                            imgElm.style.width = '100%';
-                            imgElm.style.height = '100%';
+                            imgElm.style.width = (wrapperHeight * aspectRatio) + 'px';
+                            imgElm.style.height = wrapperHeight + 'px';
                         }
                     } else {
                         console.log('Unable to get the original size of the image');
