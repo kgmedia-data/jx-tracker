@@ -178,16 +178,16 @@
         })
     }
 
-    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper) {
+    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper, maxItems) {
         let widgetWrapper = document.createElement('div');
         widgetWrapper.className = `${recWrapperCls}${rand}`;
-        widgetWrapper.classList.add(cssClasses.container); 
+        widgetWrapper.classList.add(cssClasses.container);
         container.appendChild(widgetWrapper);
         let widgetItemArr = [];
         try {
         var items = resultObj.items;
         if (items.length > 0) {
-            items.map(function(item, index) {
+            items.slice(0, maxItems).map(function(item, index) {
                 let divid = `recItem-${rand}-${index}`; 
                 widgetItemArr.push({
                     divid: divid,
@@ -271,7 +271,10 @@
     }
 
     const _cssURL = 'https://scripts.jixie.media/jxrecwidget.1.0.css';
-    const _jxRecSdkURL = 'https://scripts.jixie.media/jxrecsdk.1.0.min.js';
+    const _jxRecSdkURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/jxrecsdk.1.0.min.js';
+    const _rowsWidgetCssURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/rows-widget.css';
+    const _gridWidgetCssURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/grid-widget.css';
+    const _gridVertBarsWidgetCssURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/grid-vert-bars-widget.css';
     
     class OneWidget {
         constructor(options) {
@@ -286,8 +289,11 @@
                 partner_cookie: options.partner_cookie,
                 container: options.container,
                 keywords: options.keywords,
-                title: options.title
+                title: options.title,
+                count: options.maxitems || 6,
             };
+            this._maxItems = options.maxitems || 6;
+            this._widgetType = options.type || 'normal';
             this._blockwidth = Number(options.blockwidth) || 280;
             this._containerId = options.container;
             this._container = document.getElementById(this._containerId);
@@ -297,7 +303,21 @@
                 appendDefaultCSS(rand, this._blockwidth);
 
                 // just fire this request off (loadcss)
-                let promCSS = fetchCSSFileP(_cssURL); // if you css is loaded on the page already, 
+                let _cssToBeLoad = _cssURL;
+                switch (this._widgetType) {
+                    case 'grid':
+                        _cssToBeLoad = _gridWidgetCssURL;
+                        break;
+                    case 'grid-vert-bars':
+                        _cssToBeLoad = _gridVertBarsWidgetCssURL;
+                        break;
+                    case 'rows':
+                        _cssToBeLoad = _rowsWidgetCssURL;
+                        break;
+                    default:
+                        break;
+                }
+                let promCSS = fetchCSSFileP(_cssToBeLoad); // if you css is loaded on the page already, 
                                                       // then no need this
                 let promJXSDK = fetchJSFileP(_jxRecSdkURL); //kick off fetching of JX REC HELPER SDK
                 let thisObj = this;
@@ -349,7 +369,7 @@
                 })
                 .then(function() {
                     // everything is ready (recommendation results, css):
-                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj);
+                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._maxItems);
                 })
                 .catch(function(error) {
                     console.log(`Unable to create recommendations widget ${error.stack} ${error.message}`);

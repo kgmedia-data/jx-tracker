@@ -177,7 +177,7 @@ const mpginfo = require('../components/basic/pginfo');
                 _itemsObserver = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
                         const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(entry.target.dataset.index));
-                        if (entry.intersectionRatio >= _defaultThreshold) {
+                        if (entry.intersectionRatio >= 1) {
                             if (idx > -1) {
                                 _itemVis[idx].v = 1;
                                 if (_itemVis[idx].t === 'ad') {
@@ -222,7 +222,7 @@ const mpginfo = require('../components/basic/pginfo');
                         }
                     });
                 }, {
-                    threshold: _defaultThreshold
+                    threshold: 1
                 });
             }
             for (var i = 0; i < _items2Observe.length; i++) {
