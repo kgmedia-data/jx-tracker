@@ -68,7 +68,7 @@
      */
     function fetchRecommendationsP(infoObj, jxUserInfo) {
         let s = '';
-        ["accountid","pageurl","widget_id","keywords","title"].forEach(function(pname) {
+        ["count", "adpositions","accountid","pageurl","widget_id","keywords","title"].forEach(function(pname) {
             if (infoObj[pname])
                 s += '&' + pname + '=' + encodeURIComponent(infoObj[pname]);
         });
@@ -178,7 +178,7 @@
         })
     }
 
-    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper, maxItems) {
+    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper, count) {
         let widgetWrapper = document.createElement('div');
         widgetWrapper.className = `${recWrapperCls}${rand}`;
         widgetWrapper.classList.add(cssClasses.container);
@@ -187,7 +187,7 @@
         try {
         var items = resultObj.items;
         if (items.length > 0) {
-            items.slice(0, maxItems).map(function(item, index) {
+            items.slice(0, count).map(function(item, index) {
                 let divid = `recItem-${rand}-${index}`; 
                 widgetItemArr.push({
                     divid: divid,
@@ -290,9 +290,12 @@
                 container: options.container,
                 keywords: options.keywords,
                 title: options.title,
-                count: options.maxitems || 6,
+                count: options.count || 6,
             };
-            this._maxItems = options.maxitems || 6;
+            if (options.adpositions) {
+                this._options.adpositions = options.adpositions;
+            }
+            this._count = options.count || 6;
             this._widgetType = options.type || 'normal';
             this._blockwidth = Number(options.blockwidth) || 280;
             this._containerId = options.container;
@@ -369,7 +372,7 @@
                 })
                 .then(function() {
                     // everything is ready (recommendation results, css):
-                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._maxItems);
+                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._count);
                 })
                 .catch(function(error) {
                     console.log(`Unable to create recommendations widget ${error.stack} ${error.message}`);
