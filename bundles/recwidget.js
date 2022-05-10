@@ -269,12 +269,12 @@
             console.log(err.stack);
         }
     }
-
-    const _cssURL = 'https://scripts.jixie.media/jxrecwidget.1.0.css';
-    const _jxRecSdkURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/jxrecsdk.1.0.min.js';
-    const _rowsWidgetCssURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/rows-widget.css';
-    const _gridWidgetCssURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/grid-widget.css';
-    const _gridVertBarsWidgetCssURL = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/grid-vert-bars-widget.css';
+    const fileBase_ = 'https://scripts.jixie.media/';
+    const _cssURL = fileBase_ + 'jxrecwidget.1.0.css';
+    const _jxRecSdkURL = fileBase_ + 'jxrecsdk.1.0.min.js';
+    const _rowsWidgetCssURL = fileBase_ + 'rows-widget.css';
+    const _gridWidgetCssURL = fileBase_ + 'grid-widget.css';
+    const _gridVertBarsWidgetCssURL = fileBase_ + 'grid-vert-bars-widget.css';
     
     class OneWidget {
         constructor(options) {

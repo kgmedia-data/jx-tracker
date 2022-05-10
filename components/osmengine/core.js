@@ -1249,7 +1249,7 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            ['fixedheight','excludedheight','maxwidth','maxheight','gam','floating','floatparams','poverrides'].forEach(function(prop){
+            [ 'fixedheight','excludedheight','maxwidth','maxheight','gam','floating','floatparams','poverrides'].forEach(function(prop){
                 if (p[prop]) {
                     _commonCfg[prop] = p[prop];
                 }
@@ -1285,7 +1285,7 @@
             }
             [   'unit', 'campaignid', 'creativeids',
                 'minwidth', 'maxheight', 'minheight', 'fixedheight',
-                'pageurl', 'domain', 'pagekeywords'].forEach(function(prop) {
+                'pageurl', 'domain', 'pagekeywords','pagetitle'].forEach(function(prop) {
                 if (p[prop])
                     url += '&' + prop + '=' + encodeURIComponent(p[prop]);
             });
