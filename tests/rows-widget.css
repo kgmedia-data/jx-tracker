@@ -28,9 +28,11 @@
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
+  flex: 1;
 }
 .jxrwgt-itm-timgwrap-cl {
   position: relative;
+  box-sizing: border-box;
 }
 .jxrwgt-itm-timg-cl {
   max-width: none !important;
@@ -49,4 +51,5 @@
   text-overflow: ellipsis;
   font-weight: bold;
   white-space: nowrap;
+  text-transform: capitalize;
 }
