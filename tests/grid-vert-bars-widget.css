@@ -28,6 +28,7 @@
 .jxrwgt-itm-timgwrap-cl {
   position: relative;
   padding-top: 56.25%;
+  box-sizing: border-box;
 }
 .jxrwgt-itm-timg-cl {
   position: absolute;
@@ -51,4 +52,5 @@
   text-overflow: ellipsis;
   font-weight: bold;
   white-space: nowrap;
+  text-transform: capitalize;
 }
