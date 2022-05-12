@@ -6,7 +6,7 @@
   cursor: pointer;
 }
 .jxrwgt-itm-title-cl {
-  padding-top: 10px;
+  padding-top: 5px;
   font-size: 15px;
   line-height: 1.3;
   text-transform: capitalize;
@@ -18,7 +18,6 @@
 }
 .jxrwgt-itm-timgwrap-cl {
   position: relative;
-  padding-top: 56.25%;
 }
 .jxrwgt-itm-timg-cl {
   position: absolute;
@@ -35,4 +34,16 @@
  padding-top: 10px;
  line-height: 1;
  text-transform: capitalize;
+}
+.jxrwgt-itm-sponsored {
+  background: rgba(0,0,0,0.45);
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid #fff;
+  color: #fff;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  font-weight: bold;
 }
