@@ -266,7 +266,7 @@
              * results have been populated to the widget
              * (This will register the action=ready event)
              */ 
-            jxRecHelper.ready(resultObj.options.algo + ":" + resultObj.options.version);
+            jxRecHelper.ready(resultObj.options.version);
         } else {
             jxRecHelper.error(204);
             console.error("Error: no recommendation items");
