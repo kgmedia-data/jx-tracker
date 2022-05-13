@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap');
+
 .jxrwgt-ctr-cl {
   background: #fff !important;
   height: 100%;
@@ -23,6 +25,7 @@
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
+  font-family: 'Roboto', sans-serif;
 }
 .jxrwgt-itm-timgwrap-cl {
   position: relative;
@@ -51,4 +54,5 @@
   font-weight: bold;
   white-space: nowrap;
   text-transform: capitalize;
+  font-family: 'Roboto', sans-serif;
 }
