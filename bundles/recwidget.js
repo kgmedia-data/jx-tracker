@@ -160,7 +160,8 @@
         title: 'jxrwgt-itm-title-cl',
         container: 'jxrwgt-ctr-cl',
         category: 'jxrwgt-itm-cat-cl',
-        wrapper: 'jxrwgt-wrap-cl'
+        wrapper: 'jxrwgt-wrap-cl',
+        sponsored: 'jxrwgt-itm-sponsored'
     };
 
     function getOriginalSizeImage (imageUrl){
@@ -178,7 +179,7 @@
         })
     }
 
-    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper, count) {
+    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper, count, widgetType) {
         let widgetWrapper = document.createElement('div');
         widgetWrapper.className = `${recWrapperCls}${rand}`;
         widgetWrapper.classList.add(cssClasses.container);
@@ -210,16 +211,18 @@
                     if (obj.width && obj.height) {
                         const aspectRatio = obj.width / obj.height;
                         var wrapperHeight = blockwidth * defaultAR;
-                        imgWrapper.style.height = wrapperHeight + 'px';
+                        // imgWrapper.style.height = wrapperHeight + 'px';
 
                         imgElm.style.maxWidth = '100%';
                         imgElm.style.maxHeight = '100%';
                         if (aspectRatio > 1) {
                             imgElm.style.width = blockwidth + 'px';
                             imgElm.style.height = (blockwidth / aspectRatio) + 'px';
+                            imgWrapper.style.height = (blockwidth / aspectRatio) + 'px';
                         } else {
                             imgElm.style.width = (wrapperHeight * aspectRatio) + 'px';
                             imgElm.style.height = wrapperHeight + 'px';
+                            imgWrapper.style.height = wrapperHeight + 'px';
                         }
                     } else {
                         console.log('Unable to get the original size of the image');
@@ -230,9 +233,15 @@
 
                 imgElm.src = item.img;
                 imgWrapper.appendChild(imgElm);
-        
-                var categoryDiv = createElement('div', null, null, [cssClasses.category], item.category);
+
+                var categoryDiv = createElement('div', null, null, [cssClasses.category], item.type === 'ad' && widgetType !== 'normal' ? 'Sponsored' : item.category);
+
                 var titleDiv = createElement('div', null, null, [cssClasses.title], item.title);
+
+                if (widgetType === 'normal' && item.type === 'ad') {
+                    var sponsoredDiv = createElement('div', null, null, [cssClasses.sponsored], 'Sponsored');
+                    imgWrapper.appendChild(sponsoredDiv);
+                }
 
                 recItem.appendChild(imgWrapper);
                 recItem.appendChild(categoryDiv);
@@ -257,7 +266,7 @@
              * results have been populated to the widget
              * (This will register the action=ready event)
              */ 
-            jxRecHelper.ready(resultObj.options.algo + ":" + resultObj.options.version);
+            jxRecHelper.ready(resultObj.options.version);
         } else {
             jxRecHelper.error(204);
             console.error("Error: no recommendation items");
@@ -372,7 +381,7 @@
                 })
                 .then(function() {
                     // everything is ready (recommendation results, css):
-                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._count);
+                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._count, thisObj._widgetType);
                 })
                 .catch(function(error) {
                     console.log(`Unable to create recommendations widget ${error.stack} ${error.message}`);

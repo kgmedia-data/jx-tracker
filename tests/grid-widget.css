@@ -1,30 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap');
+
 .jxrwgt-ctr-cl {
   background: #fff !important;
   height: 100%;
+  display: flex;
+  justify-content: space-evenly !important;
+  align-items: center;
 }
 .jxrwgt-wrap-cl {
   position: relative;
   cursor: pointer;
-  margin: 20px 0px !important;
-  padding: 0px 30px !important;
-  width: 255px !important;
-  flex: 0 0 255px !important;
-  max-width: 255px !important;
+  margin: 10px 0px !important;
 }
 .jxrwgt-itm-title-cl {
-  padding-top: 15px;
+  padding-top: 10px;
   font-size: 12px;
   line-height: 1;
   text-transform: capitalize;
   color: #000;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
+  font-family: 'Roboto', sans-serif;
 }
 .jxrwgt-itm-timgwrap-cl {
   position: relative;
-  padding-top: 56.25%;
   box-sizing: border-box;
 }
 .jxrwgt-itm-timg-cl {
@@ -40,7 +41,7 @@
   font-size: 12px;
   position: absolute;
   top: 0;
-  left: 30px;
+  left: 0;
   background: rgba(0,0,0,0.65);
   padding: 0px 5px;
   color: white;
@@ -50,4 +51,5 @@
   font-weight: bold;
   white-space: nowrap;
   text-transform: capitalize;
+  font-family: 'Roboto', sans-serif;
 }
