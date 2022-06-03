@@ -39,8 +39,9 @@ function getAdSlotAttachNode_(dbjson, getPageSelectorFcn) {
      */
 const defaultPTimeout_ = -1;
 function packRTJsonObj_(dbjson, instID, getPageSelectorFcn, cfgBlob, fcnPartnerMakeNormalizedObj__) {
+    let timeout = dbjson.adparameters && dbjson.adparameters.timeout ? dbjson.adparameters.timeout:defaultPTimeout_;
     let rtjson = {
-        timeout: dbjson.timeout ? dbjson.timeout : defaultPTimeout_,
+        timeout: timeout,
         partner: dbjson.subtype, //for debug printout only
         trackers: dbjson.trackers,
         stackidx: dbjson.stackidx,
