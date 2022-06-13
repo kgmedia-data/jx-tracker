@@ -245,7 +245,8 @@
                     //if (_jsonObj.customfcns.noad) {
                     //    _jsonObj.customfcns.noad();
                     //}
-                    if(_isOpen) {
+                   /*  to build a special build for teads demo page  */
+                   if(_isOpen) {
                         _isOpen = false;
                         _prepareGoNext(); //do all those unlisten and unobserve
                         _fcnTriggerNextLayer(_syntheticCVList);
@@ -257,6 +258,7 @@
                     //
                 } 
                 else if(e.data == _jsonObj.msgs.timeout) {
+                    //console.log(`xyz ${_jsonObj.stackidx} < ${_jsonObj.stackdepth -1}`);
                     //if there is still other stuff under this in the waterfall, then it should get out and make way
                     if (_jsonObj.stackidx < _jsonObj.stackdepth -1) {
                         if (_isOpen) {

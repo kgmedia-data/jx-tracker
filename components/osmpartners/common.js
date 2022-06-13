@@ -1,4 +1,10 @@
 
+/**
+ * work out where the adslot is.
+ * @param {*} dbjson <-- it can also be controlled by adparameters.selectors (NO BODY USE THIS)
+ * @param {*} getPageSelectorFcn 
+ * @returns 
+ */
 function getAdSlotAttachNode_(dbjson, getPageSelectorFcn) {
         if (dbjson.adparameters.selectors) {
             let selectors = dbjson.adparameters.selectors;

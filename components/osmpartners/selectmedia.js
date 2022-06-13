@@ -42,7 +42,24 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         if (!aNode) {
             return false;
         }
-        rtjson.scriptselector = aNode.selector;
+        // we try this lah. we don't attach the script at a particular place
+        // just the standard way (under osmdiv). Then we specify to them what adslot to find
+        // rtjson.scriptselector = aNode.selector;
+        rtjson.createslot = {
+            diffscroll: false
+        };
+        rtjson.createslot.parent = aNode;
+        //this old stupid one I did wrongly!
+        let sslot = 'divid_jxosm_selectmedia';
+        rtjson.createslot.div = {
+            id: sslot,
+            css: `width:100%;`,
+            node: null
+        };
+        rtjson.visibilityslot = {
+            selector: `#${sslot}`,
+            node: null
+        };
     }
 
     //--------- The script/fragment to inject:
