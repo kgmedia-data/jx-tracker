@@ -1264,6 +1264,11 @@
          */
         //we work on this modeldiv thing ...
         OneOSMWaterfall.prototype.init = function(p, qparams, loggerInst) {
+            if (_msWFInit) {  // then this is a repeated call of the init.
+                return;
+            }
+            _msWFInit = Date.now();
+
             _loggerInst = loggerInst;
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_init');
@@ -1291,7 +1296,6 @@
             //we do not abort at this stage even if dun have selectors
             //specified coz in theory it can be supplied per creative (tag)
 
-            _msWFInit = Date.now();
             _instID = "OSMWF_" + _msWFInit;
             _ctrID = "ctrid" + _msWFInit; //TODO REfers to the container for the injected CODE of the various partners
             let url = `https://${p.debug?'ad-rc':'content'}.jixie.io/v2/osm?source=osm`;
@@ -1373,8 +1377,9 @@
             //explicitly coz the page has no jQ...
             window.jxRetryFcn = function() {
                 if (window.jxsellib) {
-                    window.jxsellib = 0;
-                    wfInst.init(p, window.jxoutstreammgr.qparams, logInst);
+                    // you are doing this just to make sure not run twice bah.
+                    //window.jxsellib = 0;
+                    wfInst.init(p, window.jxoutstreammgr.qparams, logInst);// this init will only run once, so fear not.
                 }
                 else {
                     setTimeout(jxRetryFcn, 200);
