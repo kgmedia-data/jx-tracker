@@ -216,16 +216,20 @@
                     //imp . 
                     //if no ad, then at least this trick helps to avoid the stupid 1 second
                     //black window showing up!
+                    //console.log(`MIOW 1a imps`);
                     if (_jsonObj.customfcns.imp) {
                         _jsonObj.customfcns.imp();
                     }
+                    //console.log(`MIOW 1b imps`);
                     //Fear not, if we have NOT YET fired the CV then fire it.
                     //it won't do double.
                     _isOpen = false; //so later if we receive some "noad" postmessage, we also won't do waterfall.
+                    //console.log(`MIOW 1c imps`);
                     _fireTrackingEvent('creativeView');
                     if (!_jsonObj.floating) {
                         _fireMakeupTrackingEvent(_syntheticCVList);
                     }
+                    //console.log(`MIOW 1d imps`);
                     _fireTrackingEvent('impression');
                 }
                 else if (e.data == _jsonObj.msgs.virtimp ) {
@@ -258,10 +262,12 @@
                     //
                 } 
                 else if(e.data == _jsonObj.msgs.timeout) {
-                    //console.log(`xyz ${_jsonObj.stackidx} < ${_jsonObj.stackdepth -1}`);
+                    //console.log(`MIOW 3a timeout isOpen ${_isOpen}`);
+                    //console.log(`MIOW 3b timeout ${_jsonObj.stackidx} < ${_jsonObj.stackdepth -1}`);
                     //if there is still other stuff under this in the waterfall, then it should get out and make way
                     if (_jsonObj.stackidx < _jsonObj.stackdepth -1) {
                         if (_isOpen) {
+                            //console.log(`MIOW 3c timeout isOpen ${_isOpen} so we are here?!`);
                             _fireTrackingEvent('error', 'errorcode=301');
                             _isOpen = false;
                             _prepareGoNext(); //do all those unlisten and unobserve
@@ -329,6 +335,18 @@
             }
             
             let parentNode = null;
+            let cnHelper = null;
+            if(_jsonObj.createslot.parent) {
+                let pN = (_jsonObj.createslot.parent.node ? 
+                    _jsonObj.createslot.parent.node : 
+                    getAnElt(_jsonObj.createslot.parent.selector)); //NOTE: was getUniqElt
+                cnHelper = pN.querySelector(".jxfhhelper");
+                if (cnHelper) {
+                    cnHelper.style.height = '1px'; //<-- when not used when make it like 0 height.
+                }
+            }
+
+
             /*
              * we do provide the functionality to create an adslot (of a certain div-id)
              * under a certain parent. but so far most of our partners we dun need go this route
@@ -350,7 +368,7 @@
                     let fh = _fcnVector.getCommonCfg().fixedheight;
                     let cnO = null;
                     if (fh && _jsonObj.createslot.diffscroll) { //we need to do fixed height.
-                        cnO = parentNode.querySelector(".jxfhhelper");
+                        cnO = cnHelper ? cnHelper: parentNode.querySelector(".jxfhhelper");
                         //under a given parentNode (there should only be 1, corr to the selector
                         //specified by the publisher), just at most 1 jx fixed height helper div then.
                         if (!cnO) { //make one then.
