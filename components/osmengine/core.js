@@ -336,7 +336,7 @@
             
             let parentNode = null;
             let cnHelper = null;
-            if(_jsonObj.createslot.parent) {
+            if(_jsonObj.createslot && _jsonObj.createslot.parent) {
                 let pN = (_jsonObj.createslot.parent.node ? 
                     _jsonObj.createslot.parent.node : 
                     getAnElt(_jsonObj.createslot.parent.selector)); //NOTE: was getUniqElt
