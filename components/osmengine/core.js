@@ -1372,7 +1372,7 @@
                 mw = p.maxwidth;
             }
             let pNode = _getPgSelector();
-            if (pNode && pNode.node.offsetWidth) {
+            if (pNode && pNode.node.offsetWidth > 10) {
                 mw = pNode.node.offsetWidth;
             }
             if (mw) url += '&maxwidth=' +mw;
