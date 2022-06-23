@@ -148,6 +148,8 @@
         
         var _isOpen = false; //isOpen is true when the partner fragment has been injected and we (OSM) is still 
         //awaiting news of the outcome 
+
+        var _hasAdSignalled = false;
         
         //Initially we may not be able to find the element from DOM
         //So we try N number of times before giving up.
@@ -178,11 +180,16 @@
             //so that next time if we turn on the timeout thing
             //we won't kill it if an ad is waiting to be shown (not shown due to slot not in view)
           
+            //let e = {};
+            //e.data = e0.data;
+
             if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
+                
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_msgListener (e.data=${e.data})`);
                 }
 
+                
                 if (JX_PARTNER_TEST) {
                     //https://hooks.slack.com/services/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
                     if (true) {
@@ -220,16 +227,13 @@
                     if (_jsonObj.customfcns.imp) {
                         _jsonObj.customfcns.imp();
                     }
-                    //console.log(`MIOW 1b imps`);
                     //Fear not, if we have NOT YET fired the CV then fire it.
                     //it won't do double.
                     _isOpen = false; //so later if we receive some "noad" postmessage, we also won't do waterfall.
-                    //console.log(`MIOW 1c imps`);
                     _fireTrackingEvent('creativeView');
                     if (!_jsonObj.floating) {
                         _fireMakeupTrackingEvent(_syntheticCVList);
                     }
-                    //console.log(`MIOW 1d imps`);
                     _fireTrackingEvent('impression');
                 }
                 else if (e.data == _jsonObj.msgs.virtimp ) {
@@ -237,7 +241,7 @@
                     //it is still possible that later they say no ad leh.
                     _fireTrackingEvent('impression', 'imptype=virtual2');
                 }
-                else if(e.data == _jsonObj.msgs.noad) { //HACK
+                else if(e.data == _jsonObj.msgs.noad) { //
                     ////I really saw it!  parent.postMessage("jxosm_noad_selectmediaJS417849795", "*");
                     _fireTrackingEvent('error', 'errorcode=303');
                     if (JX_PARTNER_TEST) {
@@ -262,24 +266,37 @@
                     //
                 } 
                 else if(e.data == _jsonObj.msgs.timeout) {
+                    //console.log(`___XXXXXX timeout received _isOpen=${_isOpen}`);
                     //console.log(`MIOW 3a timeout isOpen ${_isOpen}`);
                     //console.log(`MIOW 3b timeout ${_jsonObj.stackidx} < ${_jsonObj.stackdepth -1}`);
                     //if there is still other stuff under this in the waterfall, then it should get out and make way
                     if (_jsonObj.stackidx < _jsonObj.stackdepth -1) {
                         if (_isOpen) {
-                            //console.log(`MIOW 3c timeout isOpen ${_isOpen} so we are here?!`);
-                            _fireTrackingEvent('error', 'errorcode=301');
-                            _isOpen = false;
-                            _prepareGoNext(); //do all those unlisten and unobserve
-                            _fcnTriggerNextLayer(_syntheticCVList);
+                            if (_jsonObj.customfcns.hasAdHeuristic && _jsonObj.customfcns.hasAdHeuristic()) {
+                                ;
+                            }
+                            else {
+                                //console.log(`MIOW 3c timeout isOpen ${_isOpen} so we are here?!`);
+                                _fireTrackingEvent('error', 'errorcode=301');
+                                _isOpen = false;
+                                _prepareGoNext(); //do all those unlisten and unobserve
+                                _fcnTriggerNextLayer(_syntheticCVList);
+                            }
                         }
                     }
                 } 
-                /* else if(e.data == _jsonObj.msgs.hasad) {                    
+                else if(e.data == _jsonObj.msgs.hasad) {         
+                    //console.log("_______XXXX " + " msgs.hasad")
+           
                     //no use case now, block out first
-                    //if (_jsonObj.customfcns.hasad) {
-                        //_jsonObj.customfcns.hasad();
-                    //}
+                    if (_jsonObj.customfcns.hasad) {
+                        _jsonObj.customfcns.hasad();
+                    }
+                    _hasAdSignalled = true;//ok the partner says "has ad"
+                    // so we will not get rid of them even at the timeout.
+                    // we will wait for the CV and at the CV then we set a timeout.
+                    _clearSelfDestructTimer();
+                    // we can set the timeout, but only after the CV has happened.
                     //So far no partner really emit this thing
                     //those type that has a hasad indication
                     //we would also have set off a timer
@@ -287,7 +304,19 @@
                     /////if(_autoWaterfallTimer) {
                         /////clearTimeout(_autoWaterfallTimer);
                     //////}
-                }*/
+                }
+                else if (e.data == _jsonObj.msgs.cv) {
+                    //console.log("_______XXXX " + " msgs.cv")
+                    if (_hasAdSignalled && !_selfDestructTimer) {
+                        //console.log("_______XXXX " + " has signled but need self destruct.")
+                        //just to be sure -- if the ad never materialize at least we can ....
+                        //bail out!!
+                        if (_jsonObj.timeout > 0) 
+                            _doSelfDestructTimer(_jsonObj.timeout);
+                        // then we do the timer lah.
+                    }
+
+                }
             }
         };
         var _dbgprint = function(fcnname, partnerDbg = false) {
@@ -631,6 +660,22 @@
                 _stashTrackingEventMaybe('creativeView', _syntheticCVList);
 
         };
+        var _clearSelfDestructTimer = function() {
+            if (_selfDestructTimer) {
+                clearTimeout(_selfDestructTimer) ;
+                _selfDestructTimer = null;
+            }
+        };        
+        var _doSelfDestructTimer = function(msTimeout = 0) {
+            let timeout = msTimeout > 0 ? msTimeout: _jsonObj.timeout;
+            if (timeout > 0 &&  _jsonObj.stackidx < _jsonObj.stackdepth-1 
+                && _jsonObj.msgs.timeout) {
+                //console.log("______XXX SET TIME OUT !!!!!!!!");
+                _selfDestructTimer = setTimeout(function() {
+                    window.postMessage(_jsonObj.msgs.timeout, "*");    
+                }, _jsonObj.timeout);
+            }
+        };
         var _startAllHooks = function() {
             //---- MSG LISTENER :--------------------
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
@@ -641,6 +686,8 @@
             //---- SELF DESTRUCT TIMER: -------------------
             //if there is another item under in in the waterfall, then
             //set a self-destruct thing.
+            _doSelfDestructTimer();
+            /*
             if ( _jsonObj.stackidx < _jsonObj.stackdepth-1 
                 && _jsonObj.timeout > 0 
                 && _jsonObj.msgs.timeout) {
@@ -648,6 +695,7 @@
                     window.postMessage(_jsonObj.msgs.timeout, "*");    
                 }, _jsonObj.timeout);
             }
+            */
              //<--- triggerhouse
              if (_jsonObj.msgs.triggerhouse) {
                 setTimeout(function() {
@@ -726,6 +774,11 @@
                     //in addition, if layers 0, ..., N-1 the CV not yet fired, we also fire here.
                     //
                     _fireTrackingEvent('creativeView');
+                    if (_jsonObj.msgs && _jsonObj.msgs.cv) {
+                        setTimeout(function(){
+                            _msgListener({data: _jsonObj.msgs.cv});
+                        },10);
+                    }
                     //we can unobserve already if CV is fired:
                     if (!_jsonObj.floating) {
                         _fireMakeupTrackingEvent(_syntheticCVList);

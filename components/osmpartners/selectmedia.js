@@ -11,6 +11,19 @@ function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob)
     return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, makeNormalizedObj__);
 }
 
+function SMHasAdHeuristic() {
+    try {
+        let x = $('.osmplaceonsite #aniBox video').length;
+        console.log('tmp heuristic for a few days.');
+        if (x > 0) {
+            return true;
+        }
+    }
+    catch(e) {
+    }
+    return false;
+}
+
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     //The way SelectMedia works is that it just takes the DIV into which their script
     //was injected and then the script will create this aniplayer_selectJS640305376 div
@@ -47,6 +60,9 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         // rtjson.scriptselector = aNode.selector;
         rtjson.createslot = {
             diffscroll: false
+        };
+        rtjson.customfcns = {
+            hasAdHeuristic: SMHasAdHeuristic
         };
         rtjson.createslot.parent = aNode;
         //this old stupid one I did wrongly!
