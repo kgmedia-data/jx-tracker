@@ -5,8 +5,13 @@ const mpginfo = require('../components/basic/pginfo');
     if (window.abcdefgh) return;
     window.abcdefgh = 1;
 
+    const sendTypeClick_ = 1;
+    const sendTypeLoad_ = 2;
+    const sendTypeGeneral_ = 3;
+
     let MakeOneJxRecHelper = function(type, options, trackersBlock = null, tsRecReq = null, tsRecRes = null) {
-        var _actions = [];
+        var _actions = []; //those impression, cv, whatever stuff.
+        var _typeLoadActions = []; //load ready and error
         var _itemVis = [];
         var _options = null;
         var _recVersion = null;
@@ -34,24 +39,46 @@ const mpginfo = require('../components/basic/pginfo');
             widgetview_50pct: 0,
             widgetview_100pct: 0,
         }
+        var _behavioursFired = 0; //current policy is we only fire the behaviours stuff ONCE!
+                                  //so even with new info coming, we will not fire another batch
 
         var _creativeEventFired = {
             impression: 0,
             creativeView: 0,
         }
 
-        function _sendWhatWeHave(_msgBody = null) {
+        var _recoID = generateRecoID();
+
+        var _documentEvents = ['scroll', 'mousedown', 'mousemove', 'touchstart', 'touchmove', 'keydown', 'click'];
+        var _idleTimer;
+
+        // 
+        function _sendWhatWeHave(type = sendTypeGeneral_, msgBody0 = null) {
             if (!_trackerUrlBase) {
                 _trackerUrlBase = _makeTrackerBaseUrl(_basicInfo, null);
             }
             _trackerUrlBase += (_recVersion ? '&v=' + _recVersion: '');
             _recVersion = null; //else we keep on adding.
-            var msgBody = {
-                actions: _actions,
-                items: _itemVis
-            };
-            if (_msgBody) {
-                msgBody = _msgBody;
+            var msgBody = null;
+            if (type == sendTypeClick_ && msgBody0) {
+                msgBody = msgBody0;
+            }
+            else if (type == sendTypeLoad_) {
+                msgBody = {
+                    actions: _typeLoadActions
+                };
+            }
+            else { //general
+                if (!_behavioursFired) {
+                    _behavioursFired = 1;
+                    msgBody = {
+                        actions: _typeLoadActions.length > 0 ? _typeLoadActions.concat(_actions): _actions,
+                        items: _itemVis
+                    };
+                }
+                else {
+                    return;//dun send again...
+                }
             }
 
             if (msgBody.actions && msgBody.actions.length > 0) {
@@ -64,7 +91,16 @@ const mpginfo = require('../components/basic/pginfo');
                     try {
                         if (window.navigator.sendBeacon(_trackerUrlBase, JSON.stringify(msgBody))) {
                             // sendBeacon was successful!
-                            _actions = [];
+                            if (type == sendTypeLoad_) {
+                                _typeLoadActions.length = 0;
+                            }
+                            else if (type == sendTypeGeneral_) {
+                                _typeLoadActions.length = 0;
+                                _actions.length = 0;
+                            }
+
+                            // only clear the actions array when we call this _sendWhatWeHave function from the hooks (i.e _doPgExitHooks and __idleTimerHandler)
+                            //if (!_msgBody) _actions = [];
                             return;
                         }
                     } catch (e) {
@@ -78,7 +114,13 @@ const mpginfo = require('../components/basic/pginfo');
                             'Content-Type': 'text/plain'
                         }
                     }).then((function() {
-                        _actions = [];
+                        if (type == sendTypeLoad_) {
+                            _typeLoadActions.length = 0;
+                        }
+                        if (type == sendTypeGeneral_) {
+                            _typeLoadActions.length = 0;
+                            _actions.length = 0;
+                        }
                     }));
                 }
             }
@@ -93,6 +135,47 @@ const mpginfo = require('../components/basic/pginfo');
                 /* the page isn't being discarded, so it can be reused later */
                 _sendWhatWeHave();
             }, false);
+        }
+
+        function generateRecoID(placeholder) {
+          return placeholder
+            ? (placeholder ^ (_getRandomData() >> (placeholder / 4))).toString(
+                16
+              )
+            : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(
+                /[018]/g,
+                generateRecoID
+              );
+        }
+
+        /**
+         * Returns random data using the Crypto API if available and Math.random if not
+         * Method is from https://gist.github.com/jed/982883 like generateUUID, direct link https://gist.github.com/jed/982883#gistcomment-45104
+         */
+        function _getRandomData() {
+          if (window && window.crypto && window.crypto.getRandomValues) {
+            return crypto.getRandomValues(new Uint8Array(1))[0] % 16;
+          } else {
+            return Math.random() * 16;
+          }
+        }
+
+        function _resetTimer() {
+            clearTimeout(_idleTimer);
+            _idleTimerHandler();
+        }
+
+        function _idleTimerHandler() {
+            _idleTimer = setTimeout(function() {
+                _sendWhatWeHave();
+            }, 60000); // 1 minute
+        }
+
+        function _setIdleTimer() {
+            _idleTimerHandler();
+            _documentEvents.forEach(function(event) {
+                document.addEventListener(event, _resetTimer, true);
+            })
         }
 
         // collect the basic info needed to build the trackers URL
@@ -167,6 +250,7 @@ const mpginfo = require('../components/basic/pginfo');
                         trackerParams += '&' + prop + '=' + basicInfo[prop];
                 });
                 if (basicInfo.pageurl) trackerParams += '&page=' + decodeURIComponent(basicInfo.pageurl);
+                if (_recoID) trackerParams += '&reco_id=' + _recoID;
             }
             return trackerBaseUrl + '?' + trackerParams;
         }
@@ -336,7 +420,7 @@ const mpginfo = require('../components/basic/pginfo');
                                                 action: 'impression',
                                                 elapsedms: Date.now() - _loadedTimeMs
                                             });
-                                            _sendWhatWeHave();
+                                            // _sendWhatWeHave();
                                         }
                                     }
                                     clearInterval(interval);
@@ -359,14 +443,14 @@ const mpginfo = require('../components/basic/pginfo');
         FactoryJxRecHelper.prototype.clicked = function(itemIdx) {
             const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(itemIdx))
             if (idx > -1)  {
-                var _msgBody = {
+                var msgBody = {
                     actions: [{
                         action: 'click',
                         elapsedms: Date.now() - _loadedTimeMs
                     }],
                     items: [_itemVis[idx]]
                 };
-                _sendWhatWeHave(_msgBody);
+                _sendWhatWeHave(sendTypeClick_, msgBody);
     
                 if (_itemVis[idx].t === 'ad') {
                     _fireCreativeEvent(_itemVis[idx].trackers, 'click');
@@ -374,14 +458,12 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
         FactoryJxRecHelper.prototype.error = function(code = 0) {
-            var _msgBody = {
-                actions: [{
-                    action: 'error',
-                    elapsedms: Date.now() - _loadedTimeMs
-                }],
+            _typeLoadActions.push({
+                action: 'error',
+                elapsedms: Date.now() - _loadedTimeMs,
                 code: code
-            };
-            _sendWhatWeHave(_msgBody);
+            })
+            _sendWhatWeHave(sendTypeLoad_);
         }
         FactoryJxRecHelper.prototype.ready = function(version = null, trackersBlock = null, tsRecResp = null) {
             if (version) {
@@ -414,9 +496,10 @@ const mpginfo = require('../components/basic/pginfo');
             if (!_eventsFired.load) {
                 _eventsFired.load = 1;
                 console.log('#### load event')
-                _actions.push({
+                // fire the load event as soon as we have it
+                _typeLoadActions.push({
                     action: "load",
-                    y: Math.round(_widgetDiv.getBoundingClientRect().top)
+                    y: Math.round(_widgetDiv.getBoundingClientRect().top),
                 });
             }
             _doPgExitHooks();
@@ -433,15 +516,18 @@ const mpginfo = require('../components/basic/pginfo');
             if (!_eventsFired.ready) {
                 _eventsFired.ready = 1;
                 console.log('#### ready event')
-                _actions.push({
+                // fire the ready event as soon as we have it
+                _typeLoadActions.push({
                     action: "ready",
-                    elapsedms: Date.now() - _loadedTimeMs
+                    elapsedms: Date.now() - _loadedTimeMs,
                 });
+                _sendWhatWeHave(sendTypeLoad_);
             }
             if (trackersBlock && trackersBlock.items && trackersBlock.items.length > 0) {
                 _itemVis = trackersBlock.items;
             }
             _setVisibilityTrackingItems();
+            _setIdleTimer(); // setting up the idle timer
         }
 
         function FactoryJxRecHelper(type, options, trackersBlock, tsRecReq, tsRecResp) {
