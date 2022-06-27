@@ -423,14 +423,12 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
         FactoryJxRecHelper.prototype.error = function(code = 0) {
-            var _msgBody = {
-                actions: [{
-                    action: 'error',
-                    elapsedms: Date.now() - _loadedTimeMs
-                }],
+            _actions.push({
+                action: 'error',
+                elapsedms: Date.now() - _loadedTimeMs,
                 code: code
-            };
-            _sendWhatWeHave(_msgBody);
+            })
+            _sendWhatWeHave();
         }
         FactoryJxRecHelper.prototype.ready = function(version = null, trackersBlock = null, tsRecResp = null) {
             if (version) {
