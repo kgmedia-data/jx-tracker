@@ -47,7 +47,7 @@ const mpcommon              = modulesmgr.get('osmpartners/common');
             let rr = Math.floor(Math.random() * 1000) + 1;
             try {
                 let w = aNode.node.offsetWidth;
-                if (!isNaN(w)) {
+                if (isNaN(w)) {
                     w = 300;
                 }
                 if (w >  1) {
@@ -59,8 +59,14 @@ const mpcommon              = modulesmgr.get('osmpartners/common');
                     let pMaybe = aNode.node.parentNode;
                     if (pMaybe) {
                         w = pMaybe.offsetWidth;
-                        if (w <= 1) {
-                            w = 300;
+                        if (w == 1) {
+                            pMaybe = pMaybe.parentNode;
+                            if (pMaybe) {
+                                w = pMaybe.offsetWidth;
+                                if (w <= 1) {
+                                    w = 300;
+                                }
+                            }
                         }
                     }
                 }
