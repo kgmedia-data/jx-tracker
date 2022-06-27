@@ -139,7 +139,7 @@ const mpginfo = require('../components/basic/pginfo');
         function _setIdleTimer() {
             _idleTimerHandler();
             _documentEvents.forEach(function(event) {
-                window.addEventListener(event, _resetTimer, true);
+                document.addEventListener(event, _resetTimer, true);
             })
         }
 
@@ -464,13 +464,10 @@ const mpginfo = require('../components/basic/pginfo');
                 _eventsFired.load = 1;
                 console.log('#### load event')
                 // fire the load event as soon as we have it
-                var _msgBody = {
-                    actions: [{
-                        action: "load",
-                        y: Math.round(_widgetDiv.getBoundingClientRect().top)
-                    }],
-                };
-                _sendWhatWeHave(_msgBody);
+                _actions.push({
+                    action: "load",
+                    y: Math.round(_widgetDiv.getBoundingClientRect().top),
+                });
             }
             _doPgExitHooks();
         }
@@ -487,13 +484,11 @@ const mpginfo = require('../components/basic/pginfo');
                 _eventsFired.ready = 1;
                 console.log('#### ready event')
                 // fire the ready event as soon as we have it
-                var _msgBody = {
-                    actions: [{
-                        action: "ready",
-                        elapsedms: Date.now() - _loadedTimeMs
-                    }],
-                };
-                _sendWhatWeHave(_msgBody);
+                _actions.push({
+                    action: "ready",
+                    elapsedms: Date.now() - _loadedTimeMs,
+                });
+                _sendWhatWeHave();
             }
             if (trackersBlock && trackersBlock.items && trackersBlock.items.length > 0) {
                 _itemVis = trackersBlock.items;
