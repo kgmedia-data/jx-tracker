@@ -14,6 +14,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
     }
     rtjson.msgs = {
         //I stupid last time
+        cv: `jxosm_cv_teads_${pageId}` + `${pageId==126472?'x137811':''}`, //`jxosm_cv_teads`,
         hasad: `jxosm_hasad_teads_${pageId}` + `${pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
         noad: `jxosm_noad_teads_${pageId}` + `${pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
         imp: `jxosm_imp_teads_${pageId}` + `${pageId==126472?'x137811':''}`, //`jxosm_noad_teads`,
@@ -63,7 +64,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
          * really corresponds to something on the page.
          */
         rtjson.createslot = {
-            diffscroll: false
+            diffscroll: true
         };
         rtjson.createslot.parent = aNode;
         //this old stupid one I did wrongly!

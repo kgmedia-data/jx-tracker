@@ -33,8 +33,8 @@
     let coo = null; // the parsed cookies object
     try {
         let ls = window.localStorage;
-        let id =  ls.getItem('_jx');
-        let sid = ls.getItem('_jxs');
+        let id =  ls.getItem('_jxx');
+        let sid = ls.getItem('_jxxs');
         let cohort = ls.getItem('_jxcht');
         if (id) {
             //console.log(`### FROM LS1 ${id}`);
@@ -61,12 +61,12 @@
     if (!coo) {
       coo = getParsedCk_(document);
     }
-    if (coo['_jx'] !== undefined) {
-        ret.client_id = coo['_jx'];
+    if (coo['_jxx'] !== undefined) {
+        ret.client_id = coo['_jxx'];
         //console.log(`### FROM COOKIE1 ${ret.client_id}`);
     }
-    if (coo['_jxs'] !== undefined) {
-        ret.sid = coo['_jxs'];
+    if (coo['_jxxs'] !== undefined) {
+        ret.sid = coo['_jxxs'];
         //console.log(`### FROM COOKIE2 ${ret.sid}`);
     }
     return ret;
