@@ -120,6 +120,11 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         imp: `jxosm_imp_selectmedia${sid}`,
         timeout: `jxosm_timeout_selectmedia${sid}`
     };
+    if (!rtjson.floating) {
+        //in article they enabled this new kind of event ... so ...
+        //we can use it to determine whether to stop their tag or not.
+        rtjson.msgs.hasad = `jxosm_hasad_selectmedia${sid}`;
+    }
     //<--- triggerhouse:
     if (rtjson.floating && rtjson.stackidx == rtjson.stackdepth-2) {
         //this is the second last on the waterfall

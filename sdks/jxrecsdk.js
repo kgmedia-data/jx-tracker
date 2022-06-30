@@ -9,7 +9,12 @@ const mpginfo = require('../components/basic/pginfo');
     const sendTypeLoad_ = 2;
     const sendTypeGeneral_ = 3;
 
+
     let MakeOneJxRecHelper = function(type, options, trackersBlock = null, tsRecReq = null, tsRecRes = null) {
+        var _slackPath = null;
+        if (window.location.href && window.location.href.indexOf('send2slack=') > -1) {
+            _slackPath = 'T01RTR6CT43/B03MP1J0LAZ/r0XSxWYeKsHCe0GmJ30g7VE3';
+        }
         var _actions = []; //those impression, cv, whatever stuff.
         var _typeLoadActions = []; //load ready and error
         var _itemVis = [];
@@ -52,15 +57,26 @@ const mpginfo = require('../components/basic/pginfo');
         var _documentEvents = ['scroll', 'mousedown', 'mousemove', 'touchstart', 'touchmove', 'keydown', 'click'];
         var _idleTimer;
 
-        // 
-        function _sendWhatWeHave(type = sendTypeGeneral_, msgBody0 = null) {
+        /**
+         * Due to evolution this function name is not so good already
+         * and it is not even a "send what we have" any more.
+         * Some; like the click, is sent immediately and on its own (the provided msgbody0)
+         * @param {*} type 
+         *  const sendTypeClick_ = 1;
+            const sendTypeLoad_ = 2;
+            const sendTypeGeneral_ = 3; <-- default
+         * @param {*} context : some extra info as to the circumstances of invocation (for debugging and testing)
+         * @param {*} msgBody0 : only relevant if it is click.
+         * @returns 
+         */
+        function _sendWhatWeHave(type = sendTypeGeneral_, context = null, msgBody0 = null) {
             if (!_trackerUrlBase) {
                 _trackerUrlBase = _makeTrackerBaseUrl(_basicInfo, null);
             }
             _trackerUrlBase += (_recVersion ? '&v=' + _recVersion: '');
             _recVersion = null; //else we keep on adding.
             var msgBody = null;
-            if (type == sendTypeClick_ && msgBody0) {
+            if (type == sendTypeClick_) {
                 msgBody = msgBody0;
             }
             else if (type == sendTypeLoad_) {
@@ -68,7 +84,7 @@ const mpginfo = require('../components/basic/pginfo');
                     actions: _typeLoadActions
                 };
             }
-            else { //general
+            else { //general type
                 if (!_behavioursFired) {
                     _behavioursFired = 1;
                     msgBody = {
@@ -80,60 +96,103 @@ const mpginfo = require('../components/basic/pginfo');
                     return;//dun send again...
                 }
             }
-
-            if (msgBody.actions && msgBody.actions.length > 0) {
-                console.log(`#### sendBeacon ${JSON.stringify(msgBody.actions, null, 2)}`);
-                console.log(`#### sendBeacon(items) ${JSON.stringify(msgBody.items, null, 2)}`);
+            if (!(msgBody.actions && msgBody.actions.length > 0)) {
+                return;
+            }
+            let url = _trackerUrlBase;
+            let data = JSON.stringify(msgBody);
+            let slackUrl = null;
+            let slackData = null;
+            if (_slackPath) {
+                slackUrl = `https://hooks.slack.com/services/${_slackPath}?text=recwidget`;
+                slackData = {
+                    text: `x`,
+                    blocks: [ 
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": `v1.5 xxxxxxxxxxxxxxxxxxx_ ${(new Date()).toLocaleTimeString()}. sendContext=` + (context ? context : "") + "_recoID=" + _recoID
+                            }
+                        },
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": JSON.stringify(msgBody)
+                            }
+                        }
+                    ]
+                };
+                slackData = JSON.stringify(slackData); //after stringify then we can clear the stuff.
+            }
+        
+            if (type == sendTypeLoad_) {
+                _typeLoadActions.length = 0;
+            }
+            else if (type == sendTypeGeneral_) {
+                _typeLoadActions.length = 0;
+                _actions.length = 0;
+            }
+            {
                 if (window &&
                     window.navigator &&
                     typeof window.navigator.sendBeacon === "function" &&
                     typeof window.Blob === "function") {
                     try {
-                        if (window.navigator.sendBeacon(_trackerUrlBase, JSON.stringify(msgBody))) {
+                        if (window.navigator.sendBeacon(url, data)) {
                             // sendBeacon was successful!
-                            if (type == sendTypeLoad_) {
-                                _typeLoadActions.length = 0;
+                            //return;
+                        }
+                        if (slackUrl) {
+                            if (window.navigator.sendBeacon(slackUrl, slackData)) {
+                                // sendBeacon was successful!
+                                //return;
                             }
-                            else if (type == sendTypeGeneral_) {
-                                _typeLoadActions.length = 0;
-                                _actions.length = 0;
-                            }
-
-                            // only clear the actions array when we call this _sendWhatWeHave function from the hooks (i.e _doPgExitHooks and __idleTimerHandler)
-                            //if (!_msgBody) _actions = [];
-                            return;
                         }
                     } catch (e) {
                         // fallback below
                     }
                 } else {
-                    fetch(_trackerUrlBase, {
+                    fetch(url, {
                         method: 'POST',
-                        body: JSON.stringify(msgBody),
+                        body: data,
                         headers: {
                             'Content-Type': 'text/plain'
                         }
-                    }).then((function() {
-                        if (type == sendTypeLoad_) {
-                            _typeLoadActions.length = 0;
-                        }
-                        if (type == sendTypeGeneral_) {
-                            _typeLoadActions.length = 0;
-                            _actions.length = 0;
-                        }
-                    }));
+                    }).then((function() {}));
+
+                    if (slackUrl) {
+                        fetch(slackUrl, {
+                            method: 'POST',
+                            body: slackData,
+                            headers: {
+                                'Content-Type': 'text/plain'
+                            }
+                        }).then((function() {}));
+                    }
                 }
             }
         }
         function _doPgExitHooks() {
-            document.addEventListener('visibilitychange', function logData() {
+            /* document.addEventListener('visibilitychange', function logData() {
                 if (document.visibilityState === 'hidden') {
-                    _sendWhatWeHave();
+                    //for my mobile safari when the fella opens a new tab, then 
+                    //I get this
+                    //But on Safari mobile I do not get a pagehide.
+                    //
+                    //_sendWhatWeHave(sendTypeGeneral_,'hidden');
                 }
-            });
+            });*/
+            window.addEventListener("freeze", event => {
+                _sendWhatWeHave(sendTypeGeneral_,'freeze');
+            }, false);
+            window.addEventListener("beforeunload", event => {
+                _sendWhatWeHave(sendTypeGeneral_,'beforeunload');
+            }, false);
             window.addEventListener("pagehide", event => {
                 /* the page isn't being discarded, so it can be reused later */
-                _sendWhatWeHave();
+                _sendWhatWeHave(sendTypeGeneral_,'pagehide');
             }, false);
         }
 
@@ -167,7 +226,7 @@ const mpginfo = require('../components/basic/pginfo');
 
         function _idleTimerHandler() {
             _idleTimer = setTimeout(function() {
-                _sendWhatWeHave();
+                _sendWhatWeHave(sendTypeGeneral_,'1min');
             }, 60000); // 1 minute
         }
 
@@ -296,7 +355,7 @@ const mpginfo = require('../components/basic/pginfo');
                                         action: 'widgetview_100pct',
                                         elapsedms: Date.now() - _loadedTimeMs
                                     });
-                                    _sendWhatWeHave();
+                                    _sendWhatWeHave(sendTypeGeneral_,'fullyshown');
                                 }
                             }
                         } else {
@@ -450,7 +509,7 @@ const mpginfo = require('../components/basic/pginfo');
                     }],
                     items: [_itemVis[idx]]
                 };
-                _sendWhatWeHave(sendTypeClick_, msgBody);
+                _sendWhatWeHave(sendTypeClick_, null, msgBody);//null: is the context info
     
                 if (_itemVis[idx].t === 'ad') {
                     _fireCreativeEvent(_itemVis[idx].trackers, 'click');
