@@ -57,6 +57,9 @@ const mpginfo = require('../components/basic/pginfo');
         var _documentEvents = ['scroll', 'mousedown', 'mousemove', 'touchstart', 'touchmove', 'keydown', 'click'];
         var _idleTimer;
 
+        var _resizeObserver = null;
+        var _imagePromises = [];
+
         /**
          * Due to evolution this function name is not so good already
          * and it is not even a "send what we have" any more.
@@ -435,6 +438,9 @@ const mpginfo = require('../components/basic/pginfo');
             for (var i = 0; i < arrOfItems.length; i++) {
                 let oneRec = arrOfItems[i];
                 _setUpItem(oneRec.divid, oneRec.pos, oneRec.id, oneRec.type, oneRec.trackers);
+                if (oneRec.image_url) {
+                    _imagePromises.push(_imageLoadedPromise(oneRec.image_url));
+                }
             }
             
         }
@@ -528,10 +534,21 @@ const mpginfo = require('../components/basic/pginfo');
             if (version) {
                 _recVersion = version;
             }
-            _ready(trackersBlock, tsRecResp);
-        
-            console.log(`### calling _registerWidget`);
-            _registerWidget();
+            if (_imagePromises.length > 0) {
+                Promise.all(_imagePromises).then(function() {
+                    _ready(trackersBlock, tsRecResp);
+            
+                    console.log(`### calling _registerWidget`);
+                    _registerWidget();
+                }).catch(function(err) {
+                    console.log(`Unable to register the widget ${error.stack} ${error.message}`);
+                });
+            } else {
+                _ready(trackersBlock, tsRecResp);
+            
+                console.log(`### calling _registerWidget`);
+                _registerWidget();
+            }
         }
         FactoryJxRecHelper.prototype.jxUrlCleaner = function(url) {
             if (url && typeof url == 'string') {
@@ -543,6 +560,35 @@ const mpginfo = require('../components/basic/pginfo');
         }
         FactoryJxRecHelper.prototype.getJxUserInfo = function() {
             return _basicInfo;
+        }
+
+        function _startResizeObserver() {
+            if (_widgetDiv) {
+                _resizeObserver = new ResizeObserver(function(entries) {
+                    console.log('### height of widget is ', entries[0].contentRect.height)
+                    if (entries[0].contentRect.height > 600) {
+                        _resizeObserver.unobserve(_widgetDiv);
+                        console.log(`### calling _setVisibilityTrackingItems`);
+                        _setVisibilityTrackingItems();
+                        console.log(`### calling _registerWidget`);
+                        _registerWidget();                        
+                    }
+                });
+                _resizeObserver.observe(_widgetDiv);
+            }
+        }
+
+        function _imageLoadedPromise (imageUrl){
+            return new Promise((resolve, reject) => {
+                var newImg = new Image();
+                newImg.onload = function() {
+                    resolve();
+                }
+                newImg.onerror = function() {
+                    resolve();
+                }
+                newImg.src = imageUrl;
+            })
         }
 
         function _loaded(ts = null) {
@@ -562,6 +608,7 @@ const mpginfo = require('../components/basic/pginfo');
                 });
             }
             _doPgExitHooks();
+            // _startResizeObserver();
         }
 
         function _ready(trackersBlock, tsRecResp) {

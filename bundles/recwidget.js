@@ -164,30 +164,18 @@
         sponsored: 'jxrwgt-itm-sponsored'
     };
 
-    function getOriginalSizeImage (imageUrl, imgElm, imgWrapper, blockwidth){
+    function getOriginalSizeImage (imageUrl){
         return new Promise((resolve, reject) => {
-            imgElm.onload = function() {
-                const aspectRatio = imgElm.width / imgElm.height;
-                var wrapperHeight = blockwidth * defaultAR;
-                // imgWrapper.style.height = wrapperHeight + 'px';
-
-                imgElm.style.maxWidth = '100%';
-                imgElm.style.maxHeight = '100%';
-                if (aspectRatio > 1) {
-                    imgElm.style.width = blockwidth + 'px';
-                    imgElm.style.height = (blockwidth / aspectRatio) + 'px';
-                    imgWrapper.style.height = (blockwidth / aspectRatio) + 'px';
-                } else {
-                    imgElm.style.width = (wrapperHeight * aspectRatio) + 'px';
-                    imgElm.style.height = wrapperHeight + 'px';
-                    imgWrapper.style.height = wrapperHeight + 'px';
-                }
-                resolve();
+            var newImg = new Image();
+            newImg.onload = function() {
+                var height = newImg.height;
+                var width = newImg.width;
+                resolve({ width, height });
             }
-            imgElm.onerror = function() {
+            newImg.onerror = function() {
                 resolve(null);
             }
-            imgElm.src = imageUrl;
+            newImg.src = imageUrl;
         })
     }
 
@@ -200,14 +188,15 @@
         try {
         var items = resultObj.items;
         if (items.length > 0) {
-            const promises = items.slice(0, count).map(async function(item, index) {
+            items.slice(0, count).map(function(item, index) {
                 let divid = `recItem-${rand}-${index}`; 
                 widgetItemArr.push({
                     divid: divid,
                     id: jxRecHelper.jxUrlCleaner(item.url),
                     pos: index, //starts from 0
                     type: item.type,
-                    trackers: item.trackers
+                    trackers: item.trackers,
+                    image_url: item.img
                 });
 
                 /* note: We have this -rand- thing in the div id (this is just
@@ -219,51 +208,66 @@
                 var imgWrapper = createElement('div', null, null, [cssClasses.thumbnail_wrapper]);
                 var imgElm = createElement('img', null, null, [cssClasses.thumbnail]);
 
-                try {
-                    await getOriginalSizeImage(item.img, imgElm, imgWrapper, blockwidth);
-                    // imgElm.src = item.img;
-                    imgWrapper.appendChild(imgElm);
-    
-                    var categoryDiv = createElement('div', null, null, [cssClasses.category], item.type === 'ad' && widgetType !== 'normal' ? 'Sponsored' : item.category);
+                getOriginalSizeImage(item.img).then(function(obj) {
+                    if (obj.width && obj.height) {
+                        const aspectRatio = obj.width / obj.height;
+                        var wrapperHeight = blockwidth * defaultAR;
+                        // imgWrapper.style.height = wrapperHeight + 'px';
 
-                    var titleDiv = createElement('div', null, null, [cssClasses.title], item.title);
-
-                    if (widgetType === 'normal' && item.type === 'ad') {
-                        var sponsoredDiv = createElement('div', null, null, [cssClasses.sponsored], 'Sponsored');
-                        imgWrapper.appendChild(sponsoredDiv);
+                        imgElm.style.maxWidth = '100%';
+                        imgElm.style.maxHeight = '100%';
+                        if (aspectRatio > 1) {
+                            imgElm.style.width = blockwidth + 'px';
+                            imgElm.style.height = (blockwidth / aspectRatio) + 'px';
+                            imgWrapper.style.height = (blockwidth / aspectRatio) + 'px';
+                        } else {
+                            imgElm.style.width = (wrapperHeight * aspectRatio) + 'px';
+                            imgElm.style.height = wrapperHeight + 'px';
+                            imgWrapper.style.height = wrapperHeight + 'px';
+                        }
+                    } else {
+                        console.log('Unable to get the original size of the image');
                     }
-
-                    recItem.appendChild(imgWrapper);
-                    recItem.appendChild(categoryDiv);
-                    recItem.appendChild(titleDiv);
-
-                    widgetWrapper.appendChild(recItem);
-                    recItem.onclick = handleClick.bind(null, jxRecHelper, item.url, index);  
-                } catch (error) {
+                }).catch(function(error) {
                     console.log(`Unable to get the original size of the image ${error.stack} ${error.message}`);
-                } 
+                });
+
+                imgElm.src = item.img;
+                imgWrapper.appendChild(imgElm);
+
+                var categoryDiv = createElement('div', null, null, [cssClasses.category], item.type === 'ad' && widgetType !== 'normal' ? 'Sponsored' : item.category);
+
+                var titleDiv = createElement('div', null, null, [cssClasses.title], item.title);
+
+                if (widgetType === 'normal' && item.type === 'ad') {
+                    var sponsoredDiv = createElement('div', null, null, [cssClasses.sponsored], 'Sponsored');
+                    imgWrapper.appendChild(sponsoredDiv);
+                }
+
+                recItem.appendChild(imgWrapper);
+                recItem.appendChild(categoryDiv);
+                recItem.appendChild(titleDiv);
+
+                widgetWrapper.appendChild(recItem);
+                recItem.onclick = handleClick.bind(null, jxRecHelper, item.url, index);
+                
             });
-            Promise.all(promises).then(function() {
-                /***
-                 * JXRECSDK NOTES 3 of 5 - 
-                 * pass all the info about the items to the rec helper
-                 * each one is an object: ALL MANDATORY (check with Vincent.)
-                 *  id: div id of the item
-                 *  index of the item in the widget (starts from 0)
-                 *  url: click url of the item
-                 */
-                jxRecHelper.items(widgetItemArr);
-                 /***
-                 * JXRECSDK NOTES 4 of 5 - 
-                 * Call the ready() of the helper object when the recommendation 
-                 * results have been populated to the widget
-                 * (This will register the action=ready event)
-                 */ 
-                jxRecHelper.ready(resultObj.options.version);
-            }).catch(function() {
-                console.error("Error: failed to create the recommendation widget")
-                return;
-            });
+            /***
+             * JXRECSDK NOTES 3 of 5 - 
+             * pass all the info about the items to the rec helper
+             * each one is an object: ALL MANDATORY (check with Vincent.)
+             *  id: div id of the item
+             *  index of the item in the widget (starts from 0)
+             *  url: click url of the item
+             */
+            jxRecHelper.items(widgetItemArr);
+             /***
+             * JXRECSDK NOTES 4 of 5 - 
+             * Call the ready() of the helper object when the recommendation 
+             * results have been populated to the widget
+             * (This will register the action=ready event)
+             */ 
+            jxRecHelper.ready(resultObj.options.version);
         } else {
             jxRecHelper.error(204);
             console.error("Error: no recommendation items");
