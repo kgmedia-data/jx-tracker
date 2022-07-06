@@ -347,6 +347,52 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
 }
 }
 
+MakeOneCloseButton = function(divObjs, hooksMgr) {
+    var _jxCloseIconWrapper = null;
+    var _jxCloseIcon = null;
+    var _divObjs = null;
+    var _hooksMgr = null;
+
+    function FactoryOneCloseBtn(divObjs, hooksMgr) {
+        _divObjs = divObjs;
+        _hooksMgr = hooksMgr;
+    }
+    var _createCloseIcon = function() {
+        _jxCloseIconWrapper = document.createElement('a');
+        _jxCloseIconWrapper.href = 'javascript:void(0)';
+        _jxCloseIconWrapper.onclick = function(e) {
+            e.stopPropagation();
+            _hooksMgr.teardown();
+        }
+        _jxCloseIconWrapper.style.position = 'relative';
+        _jxCloseIconWrapper.style.top = '5px';
+        _jxCloseIconWrapper.style.margin = '5px 5px 10px';
+        _jxCloseIconWrapper.style.display = 'flex';
+        _jxCloseIconWrapper.style.justifyContent = 'flex-end';
+
+        _jxCloseIcon = document.createElement('img');
+        _jxCloseIcon.src = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/ic-close.png';
+        _jxCloseIcon.style.width = '20px';
+        _jxCloseIcon.style.height = '20px';
+        _jxCloseIconWrapper.appendChild(_jxCloseIcon);
+
+        _divObjs.outerDiv.insertBefore(_jxCloseIconWrapper, _divObjs.innerDiv);
+    }
+
+    FactoryOneCloseBtn.prototype.create = function() {
+        _createCloseIcon();
+    }
+    FactoryOneCloseBtn.prototype.show = function() {
+        if (_jxCloseIconWrapper) _jxCloseIconWrapper.style.display = 'flex';
+    }
+    FactoryOneCloseBtn.prototype.hide = function() {
+        if (_jxCloseIconWrapper) _jxCloseIconWrapper.style.display = 'none';
+    }
+
+    let closeBtn = new FactoryOneCloseBtn(divObjs, hooksMgr);
+    return closeBtn;   
+}
+
 //////(function() {
 
     const destContainerPrefix_ = 'jxifr_';
@@ -2384,6 +2430,7 @@ const thresholdDiff_ = 120;
         var _jxParams = null;
         var _jxContainer = null;
         
+        var _closeIcon = null;
         var _floatInst = null; //in the build that does not build in the float code, this will
                                //always be null.
                                //in the build that has float capability, this may be non-null
@@ -2561,6 +2608,8 @@ const thresholdDiff_ = 120;
                     normCrParams.clickurl, 
                     normCrParams.clicktrackerurl);
                 
+                if (!normCrParams.fixedHeight) _closeIcon = MakeOneCloseButton(divObjs, hooksMgr);
+                
                 hooksMgr.callHandleResize();
 
                 if (JX_FLOAT_COND_COMPILE) {
@@ -2589,9 +2638,11 @@ const thresholdDiff_ = 120;
                 let notifyFcn = function(vis, IRObj) {
                     if (_floatInst) { 
                         if (vis) { //the in-article slot is visible
+                            if (_closeIcon) _closeIcon.show();
                             _floatInst.stopFloat();
                         } else if (this.lastPgVis != 0) { //the page is not covered (lastPgVis != 0)
                             if (_floatInst.shouldFloat(this.firstViewed, vis)) {
+                                if (_closeIcon) _closeIcon.hide();
                                 _floatInst.startFloat(this.firstViewed, IRObj);
                             } 
                         }
@@ -2606,6 +2657,7 @@ const thresholdDiff_ = 120;
             })
             .then(function() {
                 boundPM2Creative('openshop');
+                if (_closeIcon) _closeIcon.create();
             })
             .catch(function() {
                 if (hooksMgr) hooksMgr.teardown();
