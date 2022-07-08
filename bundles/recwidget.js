@@ -196,6 +196,7 @@
                     pos: index, //starts from 0
                     type: item.type,
                     trackers: item.trackers,
+                    algo: item.a,
                     image_url: item.img
                 });
 
@@ -267,7 +268,7 @@
              * results have been populated to the widget
              * (This will register the action=ready event)
              */ 
-            jxRecHelper.ready(resultObj.options.version);
+            jxRecHelper.ready(resultObj.options);
         } else {
             jxRecHelper.error(204);
             console.error("Error: no recommendation items");

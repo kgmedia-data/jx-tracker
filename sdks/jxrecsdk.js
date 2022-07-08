@@ -52,13 +52,12 @@ const mpginfo = require('../components/basic/pginfo');
             creativeView: 0,
         }
 
-        var _recoID = generateRecoID();
+        var _recoID = null;
 
         var _documentEvents = ['scroll', 'mousedown', 'mousemove', 'touchstart', 'touchmove', 'keydown', 'click'];
         var _idleTimer;
-
-        var _resizeObserver = null;
         var _imagePromises = [];
+        var _imgLoadTimeout = 8000;
 
         /**
          * Due to evolution this function name is not so good already
@@ -200,15 +199,15 @@ const mpginfo = require('../components/basic/pginfo');
         }
 
         function generateRecoID(placeholder) {
-          return placeholder
-            ? (placeholder ^ (_getRandomData() >> (placeholder / 4))).toString(
-                16
-              )
-            : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(
-                /[018]/g,
-                generateRecoID
-              );
-        }
+            return placeholder
+              ? (placeholder ^ (_getRandomData() >> (placeholder / 4))).toString(
+                  16
+                )
+              : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(
+                  /[018]/g,
+                  generateRecoID
+                );
+          }
 
         /**
          * Returns random data using the Crypto API if available and Math.random if not
@@ -376,7 +375,7 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
         
-        function _setUpItem(itemId, itemIdx, page_url, type, trackers) {
+        function _setUpItem(itemId, itemIdx, page_url, type, trackers, algo) {
             if (!_readyTimeMs) _readyTimeMs = Date.now();
             const elm = document.getElementById(itemId);
             if (_registeredDivs.findIndex((x) => x.divId === itemId) < 0) {
@@ -400,6 +399,7 @@ const mpginfo = require('../components/basic/pginfo');
                     i: page_url,
                     s: "" + parseInt(elm.offsetWidth) + "x" + parseInt(elm.offsetHeight)
                 }
+                if (algo) _itemVisObj.a = algo;
                 if (trackers) _itemVisObj.trackers = trackers;
                 _itemVis.push(_itemVisObj);
             } else {
@@ -437,7 +437,7 @@ const mpginfo = require('../components/basic/pginfo');
             console.log(`### items being called`);
             for (var i = 0; i < arrOfItems.length; i++) {
                 let oneRec = arrOfItems[i];
-                _setUpItem(oneRec.divid, oneRec.pos, oneRec.id, oneRec.type, oneRec.trackers);
+                _setUpItem(oneRec.divid, oneRec.pos, oneRec.id, oneRec.type, oneRec.trackers, oneRec.algo);
                 if (oneRec.image_url) {
                     _imagePromises.push(_imageLoadedPromise(oneRec.image_url));
                 }
@@ -530,17 +530,20 @@ const mpginfo = require('../components/basic/pginfo');
             })
             _sendWhatWeHave(sendTypeLoad_);
         }
-        FactoryJxRecHelper.prototype.ready = function(version = null, trackersBlock = null, tsRecResp = null) {
-            if (version) {
-                _recVersion = version;
+        FactoryJxRecHelper.prototype.ready = function(options = null, trackersBlock = null, tsRecResp = null) {
+            if (options.version) {
+                _recVersion = options.version;
             }
+
+            _recoID = options.reco_id ? options.reco_id : generateRecoID();
+            
             if (_imagePromises.length > 0) {
                 Promise.all(_imagePromises).then(function() {
                     _ready(trackersBlock, tsRecResp);
             
                     console.log(`### calling _registerWidget`);
                     _registerWidget();
-                }).catch(function(err) {
+                }).catch(function(error) {
                     console.log(`Unable to register the widget ${error.stack} ${error.message}`);
                 });
             } else {
@@ -562,33 +565,32 @@ const mpginfo = require('../components/basic/pginfo');
             return _basicInfo;
         }
 
-        function _startResizeObserver() {
-            if (_widgetDiv) {
-                _resizeObserver = new ResizeObserver(function(entries) {
-                    console.log('### height of widget is ', entries[0].contentRect.height)
-                    if (entries[0].contentRect.height > 600) {
-                        _resizeObserver.unobserve(_widgetDiv);
-                        console.log(`### calling _setVisibilityTrackingItems`);
-                        _setVisibilityTrackingItems();
-                        console.log(`### calling _registerWidget`);
-                        _registerWidget();                        
-                    }
-                });
-                _resizeObserver.observe(_widgetDiv);
-            }
-        }
-
         function _imageLoadedPromise (imageUrl){
-            return new Promise((resolve, reject) => {
+            let timer = null;
+            const imgPromise = new Promise((resolve) => {
                 var newImg = new Image();
                 newImg.onload = function() {
+                    console.log('### image loaded ', imageUrl)
                     resolve();
                 }
                 newImg.onerror = function() {
                     resolve();
                 }
                 newImg.src = imageUrl;
-            })
+            });
+            return Promise.race([
+                new Promise((resolve) => {
+                    timer = setTimeout(() => {
+                        console.log('### timeout reached');
+                        resolve();
+                    }, _imgLoadTimeout);
+                    return timer;
+                }),
+                imgPromise.then((value) => {
+                    clearTimeout(timer);
+                    return value;
+                })
+            ]);
         }
 
         function _loaded(ts = null) {
