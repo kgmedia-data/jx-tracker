@@ -100,6 +100,56 @@
         }
         return null;
     }
+/*
+    var MakeOneCloseButton = function(outerDiv, innerDiv, tearDownFcn) {
+        var _wpr = null;
+        var _ico = null;
+        var _outerDiv = null;
+        var _innerDiv = null;
+        var _teardownFcn = null;
+        function FactoryOneCloseBtn(divObjs, hooksMgr) {
+            _outerDiv = outerDiv;
+            _innerDiv = innerDiv;
+            _teardownFcn = tearDownFcn;
+        }
+        var _createCloseIcon = function() {
+            _wpr = document.createElement('a');
+            _wpr.href = 'javascript:void(0)';
+            _wpr.onclick = function(e) {
+                e.stopPropagation();
+                _teardownFcn();
+            }
+            _wpr.style.position = 'relative';
+            _wpr.style.top = '5px';
+            _wpr.style.margin = '5px 5px 10px';
+            _wpr.style.display = 'flex';
+            _wpr.style.justifyContent = 'flex-end';
+    
+            _ico = document.createElement('img');
+            _ico.src = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/ic-close.png';
+            _ico.style.width = '20px';
+            _ico.style.height = '20px';
+            _ico.appendChild(_jxCloseIcon);
+    
+            _outerDiv.insertBefore(_wpr, _innerDiv);
+        }
+        FactoryOneCloseBtn.prototype.create = function() {
+            _createCloseIcon();
+        }
+        FactoryOneCloseBtn.prototype.show = function() {
+            if (_wpr) _wpr.style.display = 'flex';
+        }
+        FactoryOneCloseBtn.prototype.hide = function() {
+            if (_wpr) _wpr.style.display = 'none';
+        }
+        let closeBtn = new FactoryOneCloseBtn(outerDiv, innerDiv, tearDownFcn);
+        return closeBtn;   
+    }
+*/
+    // to be used when bound:
+    function ubnTearDown(node2Remove) {
+        node2Remove.parentNode.removeChild(node2Remove);
+    }
 
     /**
      * Factory function for OneOSMLayer: object to do 1 layer of waterfall handling
@@ -234,6 +284,10 @@
                     if (!_jsonObj.floating) {
                         _fireMakeupTrackingEvent(_syntheticCVList);
                     }
+                    // what should we close...?
+                    //let bnTearDown = ubnTearDown.bind(null, t);
+                    //MakeOneCloseButton(outerDiv, innerDiv, bnTearDown);
+    
                     _fireTrackingEvent('impression');
                 }
                 else if (e.data == _jsonObj.msgs.virtimp ) {
@@ -593,6 +647,7 @@
          * before we go to the next layer
          */
         var _prepareGoNext = function() {
+            return; //hack
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_prepareGoNext');
             }
@@ -1327,7 +1382,11 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            [ 'fixedheight','excludedheight','maxwidth','maxheight','gam','floating','floatparams','poverrides'].forEach(function(prop){
+            [ /* 'fixedheight','excludedheight', */
+              'maxwidth','maxheight','gam',
+              'floating','floatparams',
+              'closebutton',
+              'poverrides'].forEach(function(prop){
                 if (p[prop]) {
                     _commonCfg[prop] = p[prop];
                 }

@@ -348,8 +348,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
 }
 
 MakeOneCloseButton = function(divObjs, hooksMgr) {
-    var _jxCloseIconWrapper = null;
-    var _jxCloseIcon = null;
+    var _wpr = null;
+    var _ico = null;
     var _divObjs = null;
     var _hooksMgr = null;
 
@@ -358,35 +358,35 @@ MakeOneCloseButton = function(divObjs, hooksMgr) {
         _hooksMgr = hooksMgr;
     }
     var _createCloseIcon = function() {
-        _jxCloseIconWrapper = document.createElement('a');
-        _jxCloseIconWrapper.href = 'javascript:void(0)';
-        _jxCloseIconWrapper.onclick = function(e) {
+        _wpr = document.createElement('a');
+        _wpr.href = 'javascript:void(0)';
+        _wpr.onclick = function(e) {
             e.stopPropagation();
             _hooksMgr.teardown();
         }
-        _jxCloseIconWrapper.style.position = 'relative';
-        _jxCloseIconWrapper.style.top = '5px';
-        _jxCloseIconWrapper.style.margin = '5px 5px 10px';
-        _jxCloseIconWrapper.style.display = 'flex';
-        _jxCloseIconWrapper.style.justifyContent = 'flex-end';
+        _wpr.style.position = 'relative';
+        _wpr.style.top = '5px';
+        _wpr.style.margin = '5px 5px 10px';
+        _wpr.style.display = 'flex';
+        _wpr.style.justifyContent = 'flex-end';
 
-        _jxCloseIcon = document.createElement('img');
-        _jxCloseIcon.src = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/ic-close.png';
-        _jxCloseIcon.style.width = '20px';
-        _jxCloseIcon.style.height = '20px';
-        _jxCloseIconWrapper.appendChild(_jxCloseIcon);
+        _ico = document.createElement('img');
+        _ico.src = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/ic-close.png';
+        _ico.style.width = '20px';
+        _ico.style.height = '20px';
+        _wpr.appendChild(_ico);
 
-        _divObjs.outerDiv.insertBefore(_jxCloseIconWrapper, _divObjs.innerDiv);
+        _divObjs.outerDiv.insertBefore(_wpr, _divObjs.innerDiv);
     }
 
     FactoryOneCloseBtn.prototype.create = function() {
         _createCloseIcon();
     }
     FactoryOneCloseBtn.prototype.show = function() {
-        if (_jxCloseIconWrapper) _jxCloseIconWrapper.style.display = 'flex';
+        if (_wpr) _wpr.style.display = 'flex';
     }
     FactoryOneCloseBtn.prototype.hide = function() {
-        if (_jxCloseIconWrapper) _jxCloseIconWrapper.style.display = 'none';
+        if (_wpr) _wpr.style.display = 'none';
     }
 
     let closeBtn = new FactoryOneCloseBtn(divObjs, hooksMgr);
@@ -2659,7 +2659,8 @@ const thresholdDiff_ = 120;
                 boundPM2Creative('openshop');
                 if (_closeIcon) _closeIcon.create();
             })
-            .catch(function() {
+            .catch(function(ee) {
+                console.log(ee);
                 if (hooksMgr) hooksMgr.teardown();
                 if (_floatInst) _floatInst.cleanup();
                 if (remainingCreativesArr.length > 0){
@@ -2683,10 +2684,17 @@ const thresholdDiff_ = 120;
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
                 let p = _jxParams;
+
+                /////p.fixedheight = 0; //hack
+                /////p.excludedheight =0; //hack
+                
                 
                 if (p.excludedheight) {
                     p.excludedHeight = p.excludedheight;
                 }
+                // closebutton by default is off of course
+                // p.closebutton == 'never'
+
                 // Checking the parameters and adding parameters if needed
                 p.pgwidth = parseInt(p.pgwidth) || 0;
                 p.maxwidth = parseInt(p.maxwidth) || 0;
