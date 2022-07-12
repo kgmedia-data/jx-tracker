@@ -2564,7 +2564,7 @@ const thresholdDiff_ = 120;
                     
                 if (_jxParams.closebutton) {
                     let boundFcn = hooksMgr.teardown.bind(hooksMgr);
-                    let farCorner = (univmgr.getHeight() > 5 ? true: false);
+                    let farCorner = false; // (univmgr.getHeight() > 5 ? true: false);
                     _closeIcon = window.JxMakeOneCloseButton(
                         { outer: divObjs.outerDiv,
                           inner: divObjs.innerDiv,
