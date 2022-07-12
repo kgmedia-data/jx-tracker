@@ -195,7 +195,9 @@
                     id: jxRecHelper.jxUrlCleaner(item.url),
                     pos: index, //starts from 0
                     type: item.type,
-                    trackers: item.trackers
+                    trackers: item.trackers,
+                    algo: item.a,
+                    image_url: item.img
                 });
 
                 /* note: We have this -rand- thing in the div id (this is just
@@ -266,7 +268,7 @@
              * results have been populated to the widget
              * (This will register the action=ready event)
              */ 
-            jxRecHelper.ready(resultObj.options.version);
+            jxRecHelper.ready(resultObj.options);
         } else {
             jxRecHelper.error(204);
             console.error("Error: no recommendation items");

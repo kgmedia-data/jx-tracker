@@ -12,6 +12,9 @@ const mpginfo = require('../components/basic/pginfo');
 
     let MakeOneJxRecHelper = function(type, options, trackersBlock = null, tsRecReq = null, tsRecRes = null) {
         var _slackPath = null;
+        
+        //actually now not so necesssary...
+        var _readyBlkRun = false; // to control a certain piece of code not run twice
         if (window.location.href && window.location.href.indexOf('send2slack=') > -1) {
             _slackPath = 'T01RTR6CT43/B03MP1J0LAZ/r0XSxWYeKsHCe0GmJ30g7VE3';
         }
@@ -52,10 +55,12 @@ const mpginfo = require('../components/basic/pginfo');
             creativeView: 0,
         }
 
-        var _recoID = generateRecoID();
+        var _recoID = null;
 
         var _documentEvents = ['scroll', 'mousedown', 'mousemove', 'touchstart', 'touchmove', 'keydown', 'click'];
         var _idleTimer;
+        var _imagePromises = [];
+        var _imgLoadTimeout = 8000;
 
         /**
          * Due to evolution this function name is not so good already
@@ -197,15 +202,15 @@ const mpginfo = require('../components/basic/pginfo');
         }
 
         function generateRecoID(placeholder) {
-          return placeholder
-            ? (placeholder ^ (_getRandomData() >> (placeholder / 4))).toString(
-                16
-              )
-            : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(
-                /[018]/g,
-                generateRecoID
-              );
-        }
+            return placeholder
+              ? (placeholder ^ (_getRandomData() >> (placeholder / 4))).toString(
+                  16
+                )
+              : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(
+                  /[018]/g,
+                  generateRecoID
+                );
+          }
 
         /**
          * Returns random data using the Crypto API if available and Math.random if not
@@ -350,7 +355,7 @@ const mpginfo = require('../components/basic/pginfo');
                             if (idx === _items2Observe.length - 1) {
                                 if (!_eventsFired.widgetview_100pct) {
                                     _eventsFired.widgetview_100pct = 1;
-                                    console.log('#### widgetview_100pct event')
+                                    //console.log('#### widgetview_100pct event')
                                     _actions.push({
                                         action: 'widgetview_100pct',
                                         elapsedms: Date.now() - _loadedTimeMs
@@ -373,7 +378,7 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
         
-        function _setUpItem(itemId, itemIdx, page_url, type, trackers) {
+        function _setUpItem(itemId, itemIdx, page_url, type, trackers, algo) {
             if (!_readyTimeMs) _readyTimeMs = Date.now();
             const elm = document.getElementById(itemId);
             if (_registeredDivs.findIndex((x) => x.divId === itemId) < 0) {
@@ -397,6 +402,7 @@ const mpginfo = require('../components/basic/pginfo');
                     i: page_url,
                     s: "" + parseInt(elm.offsetWidth) + "x" + parseInt(elm.offsetHeight)
                 }
+                if (algo) _itemVisObj.a = algo;
                 if (trackers) _itemVisObj.trackers = trackers;
                 _itemVis.push(_itemVisObj);
             } else {
@@ -431,10 +437,13 @@ const mpginfo = require('../components/basic/pginfo');
         //}
 
         FactoryJxRecHelper.prototype.items = function(arrOfItems) {
-            console.log(`### items being called`);
+            //console.log(`### items being called`);
             for (var i = 0; i < arrOfItems.length; i++) {
                 let oneRec = arrOfItems[i];
-                _setUpItem(oneRec.divid, oneRec.pos, oneRec.id, oneRec.type, oneRec.trackers);
+                _setUpItem(oneRec.divid, oneRec.pos, oneRec.id, oneRec.type, oneRec.trackers, oneRec.algo);
+                if (oneRec.image_url) {
+                    _imagePromises.push(_imageLoadedPromise(oneRec.image_url));
+                }
             }
             
         }
@@ -455,7 +464,7 @@ const mpginfo = require('../components/basic/pginfo');
                             _isWidgetVisible = 1;
                             if (!_eventsFired.creativeView) {
                                 _eventsFired.creativeView = 1;
-                                console.log('#### creativeview event')
+                                //console.log('#### creativeview event')
                                 _actions.push({
                                     action: 'creativeview',
                                     elapsedms: Date.now() - _loadedTimeMs
@@ -463,7 +472,7 @@ const mpginfo = require('../components/basic/pginfo');
                             }
                             if (!_eventsFired.widgetview_50pct) {
                                 _eventsFired.widgetview_50pct = 1;
-                                console.log('#### widgetview_50pct event')
+                                //console.log('#### widgetview_50pct event')
                                 _actions.push({
                                     action: 'widgetview_50pct',
                                     elapsedms: Date.now() - _loadedTimeMs
@@ -474,7 +483,7 @@ const mpginfo = require('../components/basic/pginfo');
                                     if (_isWidgetVisible) {
                                         if (!_eventsFired.impression) {
                                             _eventsFired.impression = 1;
-                                            console.log('#### impression event')
+                                            //console.log('#### impression event')
                                             _actions.push({
                                                 action: 'impression',
                                                 elapsedms: Date.now() - _loadedTimeMs
@@ -524,14 +533,39 @@ const mpginfo = require('../components/basic/pginfo');
             })
             _sendWhatWeHave(sendTypeLoad_);
         }
-        FactoryJxRecHelper.prototype.ready = function(version = null, trackersBlock = null, tsRecResp = null) {
-            if (version) {
-                _recVersion = version;
+        FactoryJxRecHelper.prototype.ready = function(options = null, trackersBlock = null, tsRecResp = null) {
+            if (options.version) {
+                _recVersion = options.version;
             }
-            _ready(trackersBlock, tsRecResp);
-        
-            console.log(`### calling _registerWidget`);
-            _registerWidget();
+
+            _recoID = options.reco_id ? options.reco_id : generateRecoID();
+            
+            if (_imagePromises.length > 0) {
+                /* setTimeout(() => {
+                    if (!_readyBlkRun) {
+                        _readyBlkRun = true;
+                        _ready(trackersBlock, tsRecResp);
+                        console.log(`### calling _registerWidget`);
+                        _registerWidget();
+                    }
+                }, _imgLoadTimeout); */
+                Promise.all(_imagePromises).then(function() {
+                    if (!_readyBlkRun) {
+                        _readyBlkRun = true;
+                        _ready(trackersBlock, tsRecResp);
+                        //console.log(`### calling _registerWidget`);
+                        _registerWidget();
+                    }
+                }).catch(function(error) {
+                    console.log(`Unable to register the widget ${error.stack} ${error.message}`);
+                });
+            } else {
+                _readyBlkRun = true;
+                _ready(trackersBlock, tsRecResp);
+            
+                //console.log(`### calling _registerWidget`);
+                _registerWidget();
+            }
         }
         FactoryJxRecHelper.prototype.jxUrlCleaner = function(url) {
             if (url && typeof url == 'string') {
@@ -543,6 +577,34 @@ const mpginfo = require('../components/basic/pginfo');
         }
         FactoryJxRecHelper.prototype.getJxUserInfo = function() {
             return _basicInfo;
+        }
+
+        function _imageLoadedPromise (imageUrl){
+            let timer = null;
+            const imgPromise = new Promise((resolve) => {
+                var newImg = new Image();
+                newImg.onload = function() {
+                    //console.log('### image loaded ', imageUrl)
+                    resolve();
+                }
+                newImg.onerror = function() {
+                    resolve();
+                }
+                newImg.src = imageUrl;
+            });
+            return Promise.race([
+                new Promise((resolve) => {
+                    timer = setTimeout(() => {
+                        //console.log('### timeout reached');
+                        resolve();
+                    }, _imgLoadTimeout);
+                    return timer;
+                }),
+                imgPromise.then((value) => {
+                    clearTimeout(timer);
+                    return value;
+                })
+            ]);
         }
 
         function _loaded(ts = null) {
@@ -562,6 +624,7 @@ const mpginfo = require('../components/basic/pginfo');
                 });
             }
             _doPgExitHooks();
+            // _startResizeObserver();
         }
 
         function _ready(trackersBlock, tsRecResp) {
