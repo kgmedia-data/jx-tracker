@@ -119,7 +119,7 @@
      *            corner (Concern for this is the univeral elements being blocked)
      * @returns 
      */
-    var _MakeOneCloseButton = function(attachNodes, tearDownFcn, farCorner = true) {
+    var _MakeOneCloseButton = function(attachNodes, tearDownFcn, farCorner = false) {
         var _farCorner = farCorner;//whether to put the X at the far right corner or not. 
         var _wpr = null;
         var _ico = null;
