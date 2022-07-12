@@ -149,7 +149,7 @@
             }
     
             _ico = document.createElement('img');
-            _ico.src = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/ic-close.png';
+            _ico.src = 'https://creatives.jixie.media/osmclosebtn.png';
             _ico.style.width = '20px';
             _ico.style.height = '20px';
             _wpr.appendChild(_ico);
