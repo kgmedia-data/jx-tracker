@@ -100,16 +100,32 @@
         }
         return null;
     }
-/*
-    var MakeOneCloseButton = function(outerDiv, innerDiv, tearDownFcn) {
+
+    /**
+     * this is to add the close button. we try to be generic even though at the moment
+     * we "dare" not support a close button for non-jixie ads (real osm) since we don't
+     * know enough about their behaviour yet.
+     * 
+     * We add this as a window.JxMakeOneCloseButton so the renderer/core.js can use it
+     * 
+     * @param {*} attachNodes an object:
+     *    outer, inner (for farCorner true: the code will put the X as a child of outer, after inner)
+     *    actual (for farCorner false: the code will put the X in via appendChild) 
+     *   Currently this is still rather tailored towards the JIXIE ads. We might have to
+     *   redefine the fields here when we start to support the X for some partners.
+     * @param {*} tearDownFcn A function to call when the X is clicked on.
+     * @param {*} farCorner : boolean : whether the X button should be at the far right corner
+     *            of the osm slot (true) or else closely hugging the creative at the right top 
+     *            corner (Concern for this is the univeral elements being blocked)
+     * @returns 
+     */
+    var _MakeOneCloseButton = function(attachNodes, tearDownFcn, farCorner = true) {
+        var _farCorner = farCorner;//whether to put the X at the far right corner or not. 
         var _wpr = null;
         var _ico = null;
-        var _outerDiv = null;
-        var _innerDiv = null;
-        var _teardownFcn = null;
-        function FactoryOneCloseBtn(divObjs, hooksMgr) {
-            _outerDiv = outerDiv;
-            _innerDiv = innerDiv;
+        var _attachNodes = null;
+        function FactoryOneCloseBtn(attachNodes, tearDownFcn) {
+            _attachNodes = attachNodes;
             _teardownFcn = tearDownFcn;
         }
         var _createCloseIcon = function() {
@@ -119,19 +135,28 @@
                 e.stopPropagation();
                 _teardownFcn();
             }
-            _wpr.style.position = 'relative';
+            _wpr.style.position = _farCorner ? 'relative': 'absolute';
             _wpr.style.top = '5px';
-            _wpr.style.margin = '5px 5px 10px';
-            _wpr.style.display = 'flex';
-            _wpr.style.justifyContent = 'flex-end';
+
+            if (_farCorner) {
+                _wpr.style.margin = '5px 5px 10px';
+                _wpr.style.display = 'flex';
+                _wpr.style.justifyContent = 'flex-end';
+            }
+            else {
+                _wpr.style.right = '5px';
+                _wpr.style.zIndex = 999;
+            }
     
             _ico = document.createElement('img');
             _ico.src = 'https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/ic-close.png';
             _ico.style.width = '20px';
             _ico.style.height = '20px';
-            _ico.appendChild(_jxCloseIcon);
-    
-            _outerDiv.insertBefore(_wpr, _innerDiv);
+            _wpr.appendChild(_ico);
+            if (_farCorner)
+                _attachNodes.outer.insertBefore(_wpr, _attachNodes.inner);
+            else                
+                _attachNodes.actual.appendChild(_wpr);
         }
         FactoryOneCloseBtn.prototype.create = function() {
             _createCloseIcon();
@@ -142,14 +167,12 @@
         FactoryOneCloseBtn.prototype.hide = function() {
             if (_wpr) _wpr.style.display = 'none';
         }
-        let closeBtn = new FactoryOneCloseBtn(outerDiv, innerDiv, tearDownFcn);
+        let closeBtn = new FactoryOneCloseBtn(attachNodes, tearDownFcn);
         return closeBtn;   
     }
-*/
-    // to be used when bound:
-    function ubnTearDown(node2Remove) {
-        node2Remove.parentNode.removeChild(node2Remove);
-    }
+    window.JxMakeOneCloseButton = _MakeOneCloseButton;
+
+   
 
     /**
      * Factory function for OneOSMLayer: object to do 1 layer of waterfall handling
