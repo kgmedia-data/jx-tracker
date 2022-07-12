@@ -2384,6 +2384,7 @@ const thresholdDiff_ = 120;
         var _jxParams = null;
         var _jxContainer = null;
         
+        var _closeIcon = null;
         var _floatInst = null; //in the build that does not build in the float code, this will
                                //always be null.
                                //in the build that has float capability, this may be non-null
@@ -2560,6 +2561,17 @@ const thresholdDiff_ = 120;
                     normCrParams[u_], 
                     normCrParams.clickurl, 
                     normCrParams.clicktrackerurl);
+                    
+                if (_jxParams.closebutton) {
+                    let boundFcn = hooksMgr.teardown.bind(hooksMgr);
+                    _closeIcon = window.JxMakeOneCloseButton(
+                        { outer: divObjs.outerDiv,
+                          inner: divObjs.innerDiv,
+                          actual: divObjs.jxbnDiv
+                        },
+                        boundFcn
+                    );
+                }
                 
                 hooksMgr.callHandleResize();
 
@@ -2589,9 +2601,11 @@ const thresholdDiff_ = 120;
                 let notifyFcn = function(vis, IRObj) {
                     if (_floatInst) { 
                         if (vis) { //the in-article slot is visible
+                            if (_closeIcon) _closeIcon.show();
                             _floatInst.stopFloat();
                         } else if (this.lastPgVis != 0) { //the page is not covered (lastPgVis != 0)
                             if (_floatInst.shouldFloat(this.firstViewed, vis)) {
+                                if (_closeIcon) _closeIcon.hide();
                                 _floatInst.startFloat(this.firstViewed, IRObj);
                             } 
                         }
@@ -2606,8 +2620,10 @@ const thresholdDiff_ = 120;
             })
             .then(function() {
                 boundPM2Creative('openshop');
+                if (_closeIcon) _closeIcon.create();
             })
-            .catch(function() {
+            .catch(function(ee) {
+                console.log(ee);
                 if (hooksMgr) hooksMgr.teardown();
                 if (_floatInst) _floatInst.cleanup();
                 if (remainingCreativesArr.length > 0){
@@ -2635,6 +2651,7 @@ const thresholdDiff_ = 120;
                 if (p.excludedheight) {
                     p.excludedHeight = p.excludedheight;
                 }
+                
                 // Checking the parameters and adding parameters if needed
                 p.pgwidth = parseInt(p.pgwidth) || 0;
                 p.maxwidth = parseInt(p.maxwidth) || 0;
@@ -2646,6 +2663,16 @@ const thresholdDiff_ = 120;
                 if (p.fixedheight) {
                     p.fixedHeight = p.fixedheight;
                     p.maxheight = p.fixedheight;
+                    p.closebutton = false;
+                }
+                else {
+                    //check if closebutton is specified in the config obj
+                    if (['on', 'ON'].indexOf(p.closebutton) > -1) {
+                        p.closebutton = true;
+                    }
+                    else {
+                        p.closebutton = false
+                    }
                 }
                 //_jxParams.nested = parseInt(_jxParams.nested) || 0;
                 p.creativeid = parseInt(p.creativeid) || null;
