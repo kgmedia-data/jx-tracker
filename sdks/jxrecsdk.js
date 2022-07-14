@@ -359,7 +359,16 @@ const mpginfo = require('../components/basic/pginfo');
                                         action: 'widgetview_100pct',
                                         elapsedms: Date.now() - _loadedTimeMs
                                     });
-                                    _sendWhatWeHave(sendTypeGeneral_,'fullyshown');
+
+                                    // we need to wait for the impression to be in array of actions
+                                    if (_isWidgetVisible) {
+                                        var interval = setInterval(function() {
+                                            if (_eventsFired.impression) {
+                                                clearInterval(interval);
+                                                _sendWhatWeHave(sendTypeGeneral_,'fullyshown');
+                                            }
+                                        }, 100);
+                                    }
                                 }
                             }
                         } else {
