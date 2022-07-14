@@ -179,7 +179,13 @@
         })
     }
 
-    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper, count, widgetType) {
+    function augmentWithUtm(url, utm) {
+        if (utm) {
+            return url + (url.indexOf('?') > -1 ? '&': '?') + utm;
+        }
+        return url;
+    }
+    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper, count, widgetType, utm) {
         let widgetWrapper = document.createElement('div');
         widgetWrapper.className = `${recWrapperCls}${rand}`;
         widgetWrapper.classList.add(cssClasses.container);
@@ -197,7 +203,7 @@
                     type: item.type,
                     trackers: item.trackers,
                     algo: item.a,
-                    image_url: item.img
+                    img: item.img
                 });
 
                 /* note: We have this -rand- thing in the div id (this is just
@@ -250,7 +256,8 @@
                 recItem.appendChild(titleDiv);
 
                 widgetWrapper.appendChild(recItem);
-                recItem.onclick = handleClick.bind(null, jxRecHelper, item.url, index);
+                
+                recItem.onclick = handleClick.bind(null, jxRecHelper, augmentWithUtm(item.url, utm), index);
                 
             });
             /***
@@ -268,7 +275,7 @@
              * results have been populated to the widget
              * (This will register the action=ready event)
              */ 
-            jxRecHelper.ready(resultObj.options);
+            jxRecHelper.ready(resultObj.options.version, resultObj.options.reco_id);
         } else {
             jxRecHelper.error(204);
             console.error("Error: no recommendation items");
@@ -305,6 +312,9 @@
             };
             if (options.adpositions) {
                 this._options.adpositions = options.adpositions;
+            }
+            if (options.utm) {
+                this._options.utm = options.utm;
             }
             this._count = options.count || 6;
             this._widgetType = options.type || 'normal';
@@ -383,7 +393,7 @@
                 })
                 .then(function() {
                     // everything is ready (recommendation results, css):
-                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._count, thisObj._widgetType);
+                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._count, thisObj._widgetType, thisObj.utm);
                 })
                 .catch(function(error) {
                     console.log(`Unable to create recommendations widget ${error.stack} ${error.message}`);

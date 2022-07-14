@@ -10,12 +10,12 @@ const mpginfo = require('../components/basic/pginfo');
     const sendTypeGeneral_ = 3;
 
 
-    let MakeOneJxRecHelper = function(type, options, trackersBlock = null, tsRecReq = null, tsRecRes = null) {
+    let MakeOneJxRecHelper = function(type, options) {
         var _slackPath = null;
         
         //actually now not so necesssary...
         var _readyBlkRun = false; // to control a certain piece of code not run twice
-        if (window.location.href && window.location.href.indexOf('send2slack=') > -1) {
+        if (window.location.href && window.location.href.indexOf('send2slack') > -1) {
             _slackPath = 'T01RTR6CT43/B03MP1J0LAZ/r0XSxWYeKsHCe0GmJ30g7VE3';
         }
         var _actions = []; //those impression, cv, whatever stuff.
@@ -90,7 +90,7 @@ const mpginfo = require('../components/basic/pginfo');
                 };
             }
             else { //general type
-                if (!_behavioursFired) {
+                if (_actions.length > 0) { //!_behavioursFired) {
                     _behavioursFired = 1;
                     msgBody = {
                         actions: _typeLoadActions.length > 0 ? _typeLoadActions.concat(_actions): _actions,
@@ -180,20 +180,27 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
         function _doPgExitHooks() {
-            /* document.addEventListener('visibilitychange', function logData() {
+            
+            if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+            document.addEventListener('visibilitychange', function logData() {
+               
                 if (document.visibilityState === 'hidden') {
                     //for my mobile safari when the fella opens a new tab, then 
                     //I get this
                     //But on Safari mobile I do not get a pagehide.
                     //
-                    //_sendWhatWeHave(sendTypeGeneral_,'hidden');
+                    _sendWhatWeHave(sendTypeGeneral_,'hidden');
                 }
-            });*/
+            });
+            }
             window.addEventListener("freeze", event => {
                 _sendWhatWeHave(sendTypeGeneral_,'freeze');
             }, false);
             window.addEventListener("beforeunload", event => {
                 _sendWhatWeHave(sendTypeGeneral_,'beforeunload');
+            }, false);
+            window.addEventListener("unload", event => {
+                _sendWhatWeHave(sendTypeGeneral_,'unload');
             }, false);
             window.addEventListener("pagehide", event => {
                 /* the page isn't being discarded, so it can be reused later */
@@ -291,22 +298,14 @@ const mpginfo = require('../components/basic/pginfo');
         // we can build our own if the publisher use their own recommendation API
         // by getting the page information and ids information
         // but we can easily take the info to build the tracker URL if the publisher use Jixie recommendation API
-        function _makeTrackerBaseUrl(basicInfo, trackersBlock) {
-            let trackerBaseUrl;
+        function _makeTrackerBaseUrl(basicInfo) {
             let trackerParams;
-            if (trackersBlock && trackersBlock.baseURL) {
-                trackerBaseUrl = trackersBlock.baseURL;
-            }
-            else {
-                trackerBaseUrl = "https://traid.jixie.io/sync/recommendation";
-            }
+            let trackerBaseUrl = "https://traid.jixie.io/sync/recommendation";
+            
             // temporary:
             ///////trackerBaseUrl = "https://jx-id-trackers-deployslot.azurewebsites.net/sync/recommendation";
             
-            if (trackersBlock && trackersBlock.sharedParams) {
-                trackerParams = trackersBlock.sharedParams;
-            }
-            else {
+            {
                 // no choice then we make our own:
                 trackerParams = "s=" + basicInfo.system; //&v=mixed:0.9";
                 ['accountid', 'widget_id', 'client_id', 'session_id', 'cohort', 'partner_id'].forEach(function(prop) {
@@ -441,8 +440,8 @@ const mpginfo = require('../components/basic/pginfo');
             for (var i = 0; i < arrOfItems.length; i++) {
                 let oneRec = arrOfItems[i];
                 _setUpItem(oneRec.divid, oneRec.pos, oneRec.id, oneRec.type, oneRec.trackers, oneRec.algo);
-                if (oneRec.image_url) {
-                    _imagePromises.push(_imageLoadedPromise(oneRec.image_url));
+                if (oneRec.img) {
+                    _imagePromises.push(_imageLoadedPromise(oneRec.img));
                 }
             }
             
@@ -533,26 +532,16 @@ const mpginfo = require('../components/basic/pginfo');
             })
             _sendWhatWeHave(sendTypeLoad_);
         }
-        FactoryJxRecHelper.prototype.ready = function(options = null, trackersBlock = null, tsRecResp = null) {
-            if (options.version) {
-                _recVersion = options.version;
+        FactoryJxRecHelper.prototype.ready = function(version, reco_id = null) {
+            if (version) {
+                _recVersion = version;
             }
-
-            _recoID = options.reco_id ? options.reco_id : generateRecoID();
-            
+            _recoID = reco_id ? reco_id : generateRecoID();
             if (_imagePromises.length > 0) {
-                /* setTimeout(() => {
-                    if (!_readyBlkRun) {
-                        _readyBlkRun = true;
-                        _ready(trackersBlock, tsRecResp);
-                        console.log(`### calling _registerWidget`);
-                        _registerWidget();
-                    }
-                }, _imgLoadTimeout); */
                 Promise.all(_imagePromises).then(function() {
                     if (!_readyBlkRun) {
                         _readyBlkRun = true;
-                        _ready(trackersBlock, tsRecResp);
+                        _ready();
                         //console.log(`### calling _registerWidget`);
                         _registerWidget();
                     }
@@ -561,7 +550,7 @@ const mpginfo = require('../components/basic/pginfo');
                 });
             } else {
                 _readyBlkRun = true;
-                _ready(trackersBlock, tsRecResp);
+                _ready();
             
                 //console.log(`### calling _registerWidget`);
                 _registerWidget();
@@ -627,17 +616,17 @@ const mpginfo = require('../components/basic/pginfo');
             // _startResizeObserver();
         }
 
-        function _ready(trackersBlock, tsRecResp) {
+        function _ready() {
             
-            _trackerUrlBase = _makeTrackerBaseUrl(_basicInfo, trackersBlock);
+            _trackerUrlBase = _makeTrackerBaseUrl(_basicInfo);
 
-            _readyTimeMs = tsRecResp ? tsRecResp: Date.now();
+            //_readyTimeMs = tsRecResp ? tsRecResp: Date.now();
+            _readyTimeMs = Date.now();
             // fire the event.
             // collect the tracker items from the recommendation API
             // this is the case whereby the publisher use Jixie recommendation API
             if (!_eventsFired.ready) {
                 _eventsFired.ready = 1;
-                console.log('#### ready event')
                 // fire the ready event as soon as we have it
                 _typeLoadActions.push({
                     action: "ready",
@@ -645,36 +634,32 @@ const mpginfo = require('../components/basic/pginfo');
                 });
                 _sendWhatWeHave(sendTypeLoad_);
             }
-            if (trackersBlock && trackersBlock.items && trackersBlock.items.length > 0) {
-                _itemVis = trackersBlock.items;
-            }
+            //////if (trackersBlock && trackersBlock.items && trackersBlock.items.length > 0) {
+                /////_itemVis = trackersBlock.items;
+            /////}
             _setVisibilityTrackingItems();
             _setIdleTimer(); // setting up the idle timer
         }
 
-        function FactoryJxRecHelper(type, options, trackersBlock, tsRecReq, tsRecResp) {
+        function FactoryJxRecHelper(type, options) {
             _options = JSON.parse(JSON.stringify(options));
             if (type == 'simple') {
                 _loaded();
                 //later the caller will fire a ready
             }
-            else if (type == 'adv') {
-                _loaded(tsRecReq);
-                _ready(trackersBlock, tsRecResp);
-            }
+            //////else if (type == 'adv') {
+                // I guess we will get rid of this lah
+                ///////_loaded(tsRecReq);
+                //////_ready(trackersBlock, tsRecResp);
+            //////}
         }
-        let ret = new FactoryJxRecHelper(type, options, trackersBlock, tsRecReq, tsRecRes);
+        let ret = new FactoryJxRecHelper(type, options);
         return ret;
     }
     let MakeOneSimple = function(options) {
         return MakeOneJxRecHelper('simple', options);
     }
-    let MakeOneAdv = function(options, trackersBlock = null, tsRecReq = null, tsRecRes = null) {
-        return MakeOneJxRecHelper('adv', options, trackersBlock, tsRecReq, tsRecRes);
-    }
-
     window.jxRecMgr = {
-        createJxRecHelper: MakeOneSimple,
-        createJxRecHelperCon: MakeOneAdv
+        createJxRecHelper: MakeOneSimple
     }
 })();
