@@ -257,7 +257,7 @@
 
                 widgetWrapper.appendChild(recItem);
                 
-                recItem.onclick = handleClick.bind(null, jxRecHelper, augmentWithUtm(item.url, utm), index);
+                recItem.onclick = handleClick.bind(null, jxRecHelper, (item.type === 'ad' ? item.url : augmentWithUtm(item.url, utm)), index);
                 
             });
             /***
@@ -290,6 +290,8 @@
     const fileBase_ = 'https://scripts.jixie.media/';
     const _cssURL = fileBase_ + 'jxrecwidget.1.0.css';
     const _jxRecSdkURL = fileBase_ + 'jxrecsdk.1.0.min.js';
+    //const _jxRecSdkURL = "https://scripts.jixie.media/jxrecsdk.1.t.min.js";
+    
     const _rowsWidgetCssURL = fileBase_ + 'rows-widget.css';
     const _gridWidgetCssURL = fileBase_ + 'grid-widget.css';
     const _gridVertBarsWidgetCssURL = fileBase_ + 'grid-vert-bars-widget.css';
@@ -393,7 +395,7 @@
                 })
                 .then(function() {
                     // everything is ready (recommendation results, css):
-                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._count, thisObj._widgetType, thisObj.utm);
+                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._count, thisObj._widgetType, thisObj._options.utm);
                 })
                 .catch(function(error) {
                     console.log(`Unable to create recommendations widget ${error.stack} ${error.message}`);

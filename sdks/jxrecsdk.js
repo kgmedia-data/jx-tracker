@@ -15,8 +15,11 @@ const mpginfo = require('../components/basic/pginfo');
         
         //actually now not so necesssary...
         var _readyBlkRun = false; // to control a certain piece of code not run twice
-        if (window.location.href && window.location.href.indexOf('send2slack') > -1) {
+        if (window.location.href && window.location.href.indexOf('send2rwslack') > -1) {
             _slackPath = 'T01RTR6CT43/B03MP1J0LAZ/r0XSxWYeKsHCe0GmJ30g7VE3';
+        }
+        else if (window.location.href && window.location.href.indexOf('send2slack') > -1) {
+            _slackPath = 'T01RTR6CT43/B03MRT64MK5/YCh8WjoqoHZmkNpz6iumMgJe';
         }
         var _actions = []; //those impression, cv, whatever stuff.
         var _typeLoadActions = []; //load ready and error
@@ -47,8 +50,7 @@ const mpginfo = require('../components/basic/pginfo');
             widgetview_50pct: 0,
             widgetview_100pct: 0,
         }
-        var _behavioursFired = 0; //current policy is we only fire the behaviours stuff ONCE!
-                                  //so even with new info coming, we will not fire another batch
+        var _behavioursFired = 0; //not used.
 
         var _creativeEventFired = {
             impression: 0,
@@ -105,7 +107,17 @@ const mpginfo = require('../components/basic/pginfo');
                 return;
             }
             let url = _trackerUrlBase;
-            let data = JSON.stringify(msgBody);
+            let data = JSON.stringify(msgBody,(key, value) => {
+                // aiyo. the code also use the item array to put own stuff
+                // trackers object.
+                // then send also to the backend.
+                // then got thrown out by Panji's check!!
+                // I put in this patch first. Later ask fery to fix it properly.
+                if (key === "trackers") {
+                    return undefined;
+                }
+                return value;
+            });
             let slackUrl = null;
             let slackData = null;
             if (_slackPath) {
@@ -359,7 +371,16 @@ const mpginfo = require('../components/basic/pginfo');
                                         action: 'widgetview_100pct',
                                         elapsedms: Date.now() - _loadedTimeMs
                                     });
-                                    _sendWhatWeHave(sendTypeGeneral_,'fullyshown');
+
+                                    // we need to wait for the impression to be in array of actions
+                                    if (_isWidgetVisible) {
+                                        var interval = setInterval(function() {
+                                            if (_eventsFired.impression) {
+                                                clearInterval(interval);
+                                                _sendWhatWeHave(sendTypeGeneral_,'fullyshown');
+                                            }
+                                        }, 100);
+                                    }
                                 }
                             }
                         } else {
