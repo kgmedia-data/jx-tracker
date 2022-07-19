@@ -64,6 +64,10 @@ const mpginfo = require('../components/basic/pginfo');
         var _imagePromises = [];
         var _imgLoadTimeout = 8000;
 
+        var _impCountdown = 2000;
+        var _isTimerPaused = 0;
+        var _impInterval = null;
+
         /**
          * Due to evolution this function name is not so good already
          * and it is not even a "send what we have" any more.
@@ -360,27 +364,36 @@ const mpginfo = require('../components/basic/pginfo');
                                         }, 2000);
                                     }
                                 } else {
-                                    _itemsObserver.unobserve(entry.target);
-                                }
-                            }
-                            if (idx === _items2Observe.length - 1) {
-                                if (!_eventsFired.widgetview_100pct) {
-                                    _eventsFired.widgetview_100pct = 1;
-                                    //console.log('#### widgetview_100pct event')
-                                    _actions.push({
-                                        action: 'widgetview_100pct',
-                                        elapsedms: Date.now() - _loadedTimeMs
-                                    });
-
-                                    // we need to wait for the impression to be in array of actions
-                                    if (_isWidgetVisible) {
-                                        var interval = setInterval(function() {
-                                            if (_eventsFired.impression) {
-                                                clearInterval(interval);
-                                                _sendWhatWeHave(sendTypeGeneral_,'fullyshown');
+                                    if (idx === 0) {
+                                        if (!_eventsFired.creativeView) {
+                                            _eventsFired.creativeView = 1;
+                                            // console.log('#### creativeview event')
+                                            _actions.push({
+                                                action: 'creativeview',
+                                                elapsedms: Date.now() - _loadedTimeMs
+                                            });
+                                        }
+                                    } else if (idx === _items2Observe.length - 1) {
+                                        if (!_eventsFired.widgetview_100pct) {
+                                            _eventsFired.widgetview_100pct = 1;
+                                            //console.log('#### widgetview_100pct event')
+                                            _actions.push({
+                                                action: 'widgetview_100pct',
+                                                elapsedms: Date.now() - _loadedTimeMs
+                                            });
+        
+                                            // we need to wait for the impression to be in array of actions
+                                            if (_isWidgetVisible) {
+                                                var interval = setInterval(function() {
+                                                    if (_eventsFired.impression) {
+                                                        clearInterval(interval);
+                                                        _sendWhatWeHave(sendTypeGeneral_,'fullyshown');
+                                                    }
+                                                }, 100);
                                             }
-                                        }, 100);
+                                        }
                                     }
+                                    _itemsObserver.unobserve(entry.target);
                                 }
                             }
                         } else {
@@ -480,46 +493,43 @@ const mpginfo = require('../components/basic/pginfo');
                 }
                 _wrapperObserver = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
+                        if (entry.intersectionRatio > 0 && _eventsFired.creativeView) {
+                            if (!_eventsFired.impression) {
+                                _isTimerPaused = 0;
+                                _impInterval = setInterval(function() {
+                                    if (!_isTimerPaused) {
+                                        _impCountdown -= 100;
+                                        if (!_impCountdown) {
+                                            clearInterval(_impInterval);
+                                            _isTimerPaused = 1;
+                                            _eventsFired.impression = 1;
+                                            _actions.push({
+                                                action: 'impression',
+                                                elapsedms: Date.now() - _loadedTimeMs
+                                            });
+                                        }
+                                    }
+                                }, 100);
+                            }
+                        } else if (entry.intersectionRatio <= 0) {
+                            _isTimerPaused = 1;
+                        }
                         if (entry.intersectionRatio >= th) {
                             _isWidgetVisible = 1;
-                            if (!_eventsFired.creativeView) {
-                                _eventsFired.creativeView = 1;
-                                //console.log('#### creativeview event')
-                                _actions.push({
-                                    action: 'creativeview',
-                                    elapsedms: Date.now() - _loadedTimeMs
-                                });
-                            }
                             if (!_eventsFired.widgetview_50pct) {
                                 _eventsFired.widgetview_50pct = 1;
-                                //console.log('#### widgetview_50pct event')
+                                // console.log('#### widgetview_50pct event')
                                 _actions.push({
                                     action: 'widgetview_50pct',
                                     elapsedms: Date.now() - _loadedTimeMs
                                 });
                             }
-                            if (!_eventsFired.impression) {
-                                var interval = setInterval(function() {
-                                    if (_isWidgetVisible) {
-                                        if (!_eventsFired.impression) {
-                                            _eventsFired.impression = 1;
-                                            //console.log('#### impression event')
-                                            _actions.push({
-                                                action: 'impression',
-                                                elapsedms: Date.now() - _loadedTimeMs
-                                            });
-                                            // _sendWhatWeHave();
-                                        }
-                                    }
-                                    clearInterval(interval);
-                                }, 2000);
-                            }
-                        } else {
+                        }  else {
                             _isWidgetVisible = 0;
                         }
                     });
                 }, {
-                    threshold: th
+                    threshold: [0, th]
                 });
                 _wrapperObserver.observe(_widgetDiv);
             }
