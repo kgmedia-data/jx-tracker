@@ -198,7 +198,7 @@
                 let divid = `recItem-${rand}-${index}`; 
                 widgetItemArr.push({
                     divid: divid,
-                    id: jxRecHelper.jxUrlCleaner(item.url),
+                    id: item.type === 'ad' ? jxRecHelper.jxUrlCleaner(item.trackers.baseurl) : jxRecHelper.jxUrlCleaner(item.url),
                     pos: index, //starts from 0
                     type: item.type,
                     trackers: item.trackers,
