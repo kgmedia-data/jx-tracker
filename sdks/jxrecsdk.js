@@ -489,6 +489,7 @@ const mpginfo = require('../components/basic/pginfo');
             if (!_wrapperObserver) {
                 const elHeight = _widgetDiv.getBoundingClientRect().height;
 
+                var th = _defaultThreshold;
                 let thresholds = [];
                 let numSteps = 20;
 
@@ -498,10 +499,11 @@ const mpginfo = require('../components/basic/pginfo');
                     let ratio = i/numSteps;
                     if (elHeight > (window.innerHeight)) {
                         ratio = ((window.innerHeight * ratio) / elHeight);
+                        th = ((window.innerHeight * _defaultThreshold) / elHeight);
                     }
                     thresholds.push(ratio);
                 }                  
-                var th = _defaultThreshold;
+                
 
                 // The widget is too tall to ever hit the threshold - change threshold. this one is to achieve the 2nd condition
                 // if (elHeight > (window.innerHeight)) {
@@ -534,7 +536,7 @@ const mpginfo = require('../components/basic/pginfo');
                             _isWidgetVisible = 1;
                             if (!_eventsFired.widgetview_50pct) {
                                 _eventsFired.widgetview_50pct = 1;
-                                // console.log('#### widgetview_50pct event')
+                                //console.log('#### widgetview_50pct event')
                                 _actions.push({
                                     action: 'widgetview_50pct',
                                     elapsedms: Date.now() - _loadedTimeMs
