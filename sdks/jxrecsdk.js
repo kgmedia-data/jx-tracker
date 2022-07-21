@@ -59,7 +59,7 @@ const mpginfo = require('../components/basic/pginfo');
 
         var _recoID = null;
 
-        var _documentEvents = ['scroll', 'mousedown', 'mousemove', 'touchstart', 'touchmove', 'keydown', 'click'];
+        var _documentEvents = ['scroll', 'click'];
         var _idleTimer;
         var _imagePromises = [];
         var _imgLoadTimeout = 8000;
