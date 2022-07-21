@@ -351,7 +351,8 @@ const mpginfo = require('../components/basic/pginfo');
                                     _itemsObserver.unobserve(entry.target);
                                 }
                             }
-                        } else if (entry.intersectionRatio >= 1) {
+                        }
+                        if (entry.intersectionRatio >= 1) {
                             if (idx > -1) {
                                 _itemVis[idx].v = 1;
                                 if (_itemVis[idx].t === 'ad') {
