@@ -340,7 +340,18 @@ const mpginfo = require('../components/basic/pginfo');
                 _itemsObserver = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
                         const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(entry.target.dataset.index));
-                        if (entry.intersectionRatio >= 1) {
+                        if (entry.intersectionRatio >= 0.5) {
+                            if (idx === 0) {
+                                if (!_eventsFired.creativeView) {
+                                    _eventsFired.creativeView = 1;
+                                    _actions.push({
+                                        action: 'creativeview',
+                                        elapsedms: Date.now() - _loadedTimeMs
+                                    });
+                                    _itemsObserver.unobserve(entry.target);
+                                }
+                            }
+                        } else if (entry.intersectionRatio >= 1) {
                             if (idx > -1) {
                                 _itemVis[idx].v = 1;
                                 if (_itemVis[idx].t === 'ad') {
@@ -364,16 +375,7 @@ const mpginfo = require('../components/basic/pginfo');
                                         }, 2000);
                                     }
                                 } else {
-                                    if (idx === 0) {
-                                        if (!_eventsFired.creativeView) {
-                                            _eventsFired.creativeView = 1;
-                                            // console.log('#### creativeview event')
-                                            _actions.push({
-                                                action: 'creativeview',
-                                                elapsedms: Date.now() - _loadedTimeMs
-                                            });
-                                        }
-                                    } else if (idx === _items2Observe.length - 1) {
+                                    if (idx === _items2Observe.length - 1) {
                                         if (!_eventsFired.widgetview_100pct) {
                                             _eventsFired.widgetview_100pct = 1;
                                             //console.log('#### widgetview_100pct event')
@@ -393,8 +395,8 @@ const mpginfo = require('../components/basic/pginfo');
                                             }
                                         }
                                     }
-                                    _itemsObserver.unobserve(entry.target);
                                 }
+                                _itemsObserver.unobserve(entry.target);
                             }
                         } else {
                             if (_itemVis[idx].t === 'ad') {
@@ -403,7 +405,7 @@ const mpginfo = require('../components/basic/pginfo');
                         }
                     });
                 }, {
-                    threshold: 1
+                    threshold: [0.5, 1]
                 });
             }
             for (var i = 0; i < _items2Observe.length; i++) {
@@ -485,12 +487,25 @@ const mpginfo = require('../components/basic/pginfo');
         function _registerWidget() {
             if (!_wrapperObserver) {
                 const elHeight = _widgetDiv.getBoundingClientRect().height;
+
+                let thresholds = [];
+                let numSteps = 20;
+
+                thresholds.push(0);
+
+                for (let i=1.0; i<=numSteps; i++) {
+                    let ratio = i/numSteps;
+                    if (elHeight > (window.innerHeight)) {
+                        ratio = ((window.innerHeight * ratio) / elHeight);
+                    }
+                    thresholds.push(ratio);
+                }                  
                 var th = _defaultThreshold;
 
                 // The widget is too tall to ever hit the threshold - change threshold. this one is to achieve the 2nd condition
-                if (elHeight > (window.innerHeight)) {
-                    th = ((window.innerHeight * _defaultThreshold) / elHeight);
-                }
+                // if (elHeight > (window.innerHeight)) {
+                //     th = ((window.innerHeight * _defaultThreshold) / elHeight);
+                // }
                 _wrapperObserver = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
                         if (entry.intersectionRatio > 0 && _eventsFired.creativeView) {
@@ -529,7 +544,7 @@ const mpginfo = require('../components/basic/pginfo');
                         }
                     });
                 }, {
-                    threshold: [0, th]
+                    threshold: thresholds
                 });
                 _wrapperObserver.observe(_widgetDiv);
             }
