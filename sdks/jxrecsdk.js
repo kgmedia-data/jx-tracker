@@ -9,6 +9,26 @@ const mpginfo = require('../components/basic/pginfo');
     const sendTypeLoad_ = 2;
     const sendTypeGeneral_ = 3;
 
+    var ImpressionTimer = function(callback, delay) {
+        var timerId, start, remaining = delay;
+        this.pause = function() {
+            window.clearTimeout(timerId);
+            timerId = null;
+            remaining -= Date.now() - start;
+        };
+    
+        this.resume = function() {
+            if (timerId) {
+                return;
+            }
+    
+            start = Date.now();
+            timerId = window.setTimeout(callback, remaining);
+        };
+    
+        this.resume();
+    }
+
 
     let MakeOneJxRecHelper = function(type, options) {
         var _slackPath = null;
@@ -64,8 +84,6 @@ const mpginfo = require('../components/basic/pginfo');
         var _imagePromises = [];
         var _imgLoadTimeout = 8000;
 
-        var _impCountdown = 2000;
-        var _isTimerPaused = 0;
         var _impInterval = null;
 
         /**
@@ -336,21 +354,11 @@ const mpginfo = require('../components/basic/pginfo');
 
         function impressionHandler() {
             if (!_eventsFired.impression) {
-                _isTimerPaused = 0;
-                _impInterval = setInterval(function() {
-                    if (!_isTimerPaused) {
-                        _impCountdown -= 100;
-                        if (!_impCountdown) {
-                            clearInterval(_impInterval);
-                            _isTimerPaused = 1;
-                            _eventsFired.impression = 1;
-                            _actions.push({
-                                action: 'impression',
-                                elapsedms: Date.now() - _loadedTimeMs
-                            });
-                        }
-                    }
-                }, 100);
+                _eventsFired.impression = 1;
+                _actions.push({
+                    action: 'impression',
+                    elapsedms: Date.now() - _loadedTimeMs
+                });
             }
         }
 
@@ -374,7 +382,9 @@ const mpginfo = require('../components/basic/pginfo');
                                 var int = setInterval(function() {
                                     if (_eventsFired.creativeView) {
                                         clearInterval(int);
-                                        impressionHandler();
+                                        if (!_impInterval) {
+                                            _impInterval = new ImpressionTimer(impressionHandler, 2000)
+                                        }
                                     }
                                 }, 100)
                             }
@@ -539,10 +549,14 @@ const mpginfo = require('../components/basic/pginfo');
                         if (entry.intersectionRatio > 0) {
                             _isWidgetVisible = 1;
                             if (_eventsFired.creativeView) {
-                                impressionHandler();
+                                if (!_impInterval) {
+                                    _impInterval = new ImpressionTimer(impressionHandler, 2000)
+                                } else {
+                                    _impInterval.resume();
+                                }
                             }
                         } else if (entry.intersectionRatio <= 0) {
-                            _isTimerPaused = 1;
+                            if (_impInterval) _impInterval.pause();
                             _isWidgetVisible = 0;
                         }
                         if (entry.intersectionRatio >= th) {
