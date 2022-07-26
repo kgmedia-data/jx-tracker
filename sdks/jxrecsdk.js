@@ -470,7 +470,7 @@ const mpginfo = require('../components/basic/pginfo');
                     t: type ? type : "page",
                     p: itemIdx,
                     v: 0,
-                    i: page_url,
+                    i: page_url + "", //force it to be a string. (coz can be a creativeid which is numeric)
                     s: "" + parseInt(elm.offsetWidth) + "x" + parseInt(elm.offsetHeight)
                 }
                 if (algo) _itemVisObj.a = algo;
