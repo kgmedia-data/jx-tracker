@@ -5,8 +5,10 @@ pipelines:
   custom:
     production_rec_widget_sdk:
       - step:
+          ##when: ${} = "production_rec_widget_sdk"
           name: "build_step_PLS_CHECK_BRANCH_IS_production_rec_widget_sdk"
           script: 
+            - echo ${BITBUCKET_BRANCH}
             - npm install
             - npm install -g gulp
             # the stuff (AWS key and secret) will still be unresolved but with this pipeline
