@@ -5,10 +5,13 @@ pipelines:
   custom:
     production_rec_widget_sdk:
       - step:
-          name: "build_step_PLS_CHECK_BRANCH_IS_production_rec_widget_sdk"
+          name: "build"
           script: 
-            - echo ${BITBUCKET_BRANCH}
-            - if [ ! $BITBUCKET_BRANCH = "xxproduction_rec_widget_sdk" ]; then exit 1; fi
+            # in order that the yml file is the same for all the branches, it is then theoretically to
+            # run a custom pipeline (THIS ONE) while selecting branch to be production_osm
+            # So we have a check below to make sure it does not happen:
+            - echo "Paranoid Checking that this pipeline is really using branch production_rec_widget_sdk"
+            - if [ ! $BITBUCKET_BRANCH = "production_rec_widget_sdk" ]; then exit 1; fi
             - npm install
             - npm install -g gulp
             # the stuff (AWS key and secret) will still be unresolved but with this pipeline
@@ -22,7 +25,7 @@ pipelines:
           artifacts:  
             - dist/**
       - step:     
-          name: "push2s3_step_PLS_CHECK_BRANCH_IS_production_rec_widget_sdk"
+          name: "push2s3"
           trigger: manual
           script:
             - apt-get update -y && apt-get install awscli -y
@@ -37,8 +40,14 @@ pipelines:
 
     production_osm:
       - step:
-          name: "build_step_PLS_CHECK_BRANCH_IS_production_osm"
+          name: "build"
           script: 
+            # in order that the yml file is the same for all the branches, it is then theoretically to
+            # run a custom pipeline (THIS ONE) while selecting branch to be production_rec_widget_sdk
+            # So we have a check below to make sure it does not happen:
+            - echo "Paranoid Checking that this pipeline is really using branch production_osm"
+            - if [ ! $BITBUCKET_BRANCH = "production_osm" ]; then exit 1; fi
+                      
             - npm install
             - npm install -g gulp
             # the stuff (AWS key and secret) will still be unresolved but with this pipeline
@@ -52,7 +61,7 @@ pipelines:
           artifacts:  
             - dist/**
       - step:
-          name: "push2s3_step_PLS_CHECK_BRANCH_IS_production_osm"
+          name: "push2s3"
           trigger: manual
           script:
             - apt-get update -y && apt-get install awscli -y
