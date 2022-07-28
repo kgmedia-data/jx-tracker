@@ -50,7 +50,7 @@ pipelines:
             - apt-get update -y && apt-get install awscli -y
             - export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
             - export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-            - cd dist/**
+            - cd dist/bundles
             # Now to copy to AWS:
             #- aws s3 cp jxamp.min.js s3://jx-scripts/jxamp.min.xxx.js --acl public-read
             #- aws s3 cp jxfriendly.2.0.flt.min.js s3://jx-scripts/jxfriendly.2.0.flt.min.xxx.js --acl public-read
