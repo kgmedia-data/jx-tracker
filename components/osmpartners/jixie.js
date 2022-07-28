@@ -46,10 +46,35 @@ const mpcommon              = modulesmgr.get('osmpartners/common');
             /**/
             let rr = Math.floor(Math.random() * 1000) + 1;
             try {
+                let w = aNode.node.offsetWidth;
+                if (isNaN(w)) {
+                    w = 300;
+                }
+                if (w >  1) {
+                    //all good
+                }
+                else if (w == 1) {
+                    // those GAM 1x1 things ....
+                    // then the aNode.node is offsetWidth == 1
+                    let pMaybe = aNode.node.parentNode;
+                    if (pMaybe) {
+                        w = pMaybe.offsetWidth;
+                        if (w == 1) {
+                            pMaybe = pMaybe.parentNode;
+                            if (pMaybe) {
+                                w = pMaybe.offsetWidth;
+                                if (w <= 1) {
+                                    w = 300;
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 rtjson.scriptcfg = Object.assign({}, cfgObj, {
                     responsive: 1, 
                     container: `jxOutstream${instID}`, 
-                    pgwidth: aNode.node.offsetWidth ? aNode.node.offsetWidth: 300,
+                    pgwidth: w,
                     jsoncreativeobj64: dbjson.adparameters.jsonbase64
                 });
             }

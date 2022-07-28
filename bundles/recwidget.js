@@ -68,7 +68,7 @@
      */
     function fetchRecommendationsP(infoObj, jxUserInfo) {
         let s = '';
-        ["accountid","pageurl","widget_id","keywords","title"].forEach(function(pname) {
+        ["count", "adpositions","accountid","pageurl","widget_id","keywords","title"].forEach(function(pname) {
             if (infoObj[pname])
                 s += '&' + pname + '=' + encodeURIComponent(infoObj[pname]);
         });
@@ -160,7 +160,8 @@
         title: 'jxrwgt-itm-title-cl',
         container: 'jxrwgt-ctr-cl',
         category: 'jxrwgt-itm-cat-cl',
-        wrapper: 'jxrwgt-wrap-cl'
+        wrapper: 'jxrwgt-wrap-cl',
+        sponsored: 'jxrwgt-itm-sponsored'
     };
 
     function getOriginalSizeImage (imageUrl){
@@ -178,21 +179,31 @@
         })
     }
 
-    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper) {
+    function augmentWithUtm(url, utm) {
+        if (utm) {
+            return url + (url.indexOf('?') > -1 ? '&': '?') + utm;
+        }
+        return url;
+    }
+    function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper, count, widgetType, utm) {
         let widgetWrapper = document.createElement('div');
         widgetWrapper.className = `${recWrapperCls}${rand}`;
-        widgetWrapper.classList.add(cssClasses.container); 
+        widgetWrapper.classList.add(cssClasses.container);
         container.appendChild(widgetWrapper);
         let widgetItemArr = [];
         try {
         var items = resultObj.items;
         if (items.length > 0) {
-            items.map(function(item, index) {
+            items.slice(0, count).map(function(item, index) {
                 let divid = `recItem-${rand}-${index}`; 
                 widgetItemArr.push({
                     divid: divid,
-                    id: jxRecHelper.jxUrlCleaner(item.url),
-                    pos: index //starts from 0
+                    id: item.type === 'ad' ? item.id : jxRecHelper.jxUrlCleaner(item.url),
+                    pos: index, //starts from 0
+                    type: item.type,
+                    trackers: item.trackers,
+                    algo: item.a,
+                    img: item.img
                 });
 
                 /* note: We have this -rand- thing in the div id (this is just
@@ -206,15 +217,20 @@
 
                 getOriginalSizeImage(item.img).then(function(obj) {
                     if (obj.width && obj.height) {
+                        const aspectRatio = obj.width / obj.height;
                         var wrapperHeight = blockwidth * defaultAR;
-                        imgWrapper.style.height = wrapperHeight + 'px';
+                        // imgWrapper.style.height = wrapperHeight + 'px';
 
-                        if ((obj.width / obj.height) < 1) {
-                            imgElm.style.width = wrapperHeight * defaultAR + 'px';
-                            imgElm.style.height = '100%';
+                        imgElm.style.maxWidth = '100%';
+                        imgElm.style.maxHeight = '100%';
+                        if (aspectRatio > 1) {
+                            imgElm.style.width = blockwidth + 'px';
+                            imgElm.style.height = (blockwidth / aspectRatio) + 'px';
+                            imgWrapper.style.height = (blockwidth / aspectRatio) + 'px';
                         } else {
-                            imgElm.style.width = '100%';
-                            imgElm.style.height = '100%';
+                            imgElm.style.width = (wrapperHeight * aspectRatio) + 'px';
+                            imgElm.style.height = wrapperHeight + 'px';
+                            imgWrapper.style.height = wrapperHeight + 'px';
                         }
                     } else {
                         console.log('Unable to get the original size of the image');
@@ -225,16 +241,23 @@
 
                 imgElm.src = item.img;
                 imgWrapper.appendChild(imgElm);
-        
-                var categoryDiv = createElement('div', null, null, [cssClasses.category], item.category);
+
+                var categoryDiv = createElement('div', null, null, [cssClasses.category], item.type === 'ad' && widgetType !== 'normal' ? 'Sponsored' : item.category);
+
                 var titleDiv = createElement('div', null, null, [cssClasses.title], item.title);
+
+                if (widgetType === 'normal' && item.type === 'ad') {
+                    var sponsoredDiv = createElement('div', null, null, [cssClasses.sponsored], 'Sponsored');
+                    imgWrapper.appendChild(sponsoredDiv);
+                }
 
                 recItem.appendChild(imgWrapper);
                 recItem.appendChild(categoryDiv);
                 recItem.appendChild(titleDiv);
 
                 widgetWrapper.appendChild(recItem);
-                recItem.onclick = handleClick.bind(null, jxRecHelper, item.url, index);
+                
+                recItem.onclick = handleClick.bind(null, jxRecHelper, (item.type === 'ad' ? item.url : augmentWithUtm(item.url, utm)), index);
                 
             });
             /***
@@ -252,7 +275,7 @@
              * results have been populated to the widget
              * (This will register the action=ready event)
              */ 
-            jxRecHelper.ready(resultObj.options.algo + ":" + resultObj.options.version);
+            jxRecHelper.ready(resultObj.options.version, resultObj.options.reco_id);
         } else {
             jxRecHelper.error(204);
             console.error("Error: no recommendation items");
@@ -264,9 +287,14 @@
             console.log(err.stack);
         }
     }
-
-    const _cssURL = 'https://scripts.jixie.media/jxrecwidget.1.0.css';
-    const _jxRecSdkURL = 'https://scripts.jixie.media/jxrecsdk.1.0.min.js';
+    const fileBase_ = 'https://scripts.jixie.media/';
+    const _cssURL = fileBase_ + 'jxrecwidget.1.0.css';
+    const _jxRecSdkURL = fileBase_ + 'jxrecsdk.1.0.min.js';
+    //const _jxRecSdkURL = "https://scripts.jixie.media/jxrecsdk.1.t.min.js";
+    
+    const _rowsWidgetCssURL = fileBase_ + 'rows-widget.css';
+    const _gridWidgetCssURL = fileBase_ + 'grid-widget.css';
+    const _gridVertBarsWidgetCssURL = fileBase_ + 'grid-vert-bars-widget.css';
     
     class OneWidget {
         constructor(options) {
@@ -281,8 +309,17 @@
                 partner_cookie: options.partner_cookie,
                 container: options.container,
                 keywords: options.keywords,
-                title: options.title
+                title: options.title,
+                count: options.count || 6,
             };
+            if (options.adpositions) {
+                this._options.adpositions = options.adpositions;
+            }
+            if (options.utm) {
+                this._options.utm = options.utm;
+            }
+            this._count = options.count || 6;
+            this._widgetType = options.type || 'normal';
             this._blockwidth = Number(options.blockwidth) || 280;
             this._containerId = options.container;
             this._container = document.getElementById(this._containerId);
@@ -292,7 +329,21 @@
                 appendDefaultCSS(rand, this._blockwidth);
 
                 // just fire this request off (loadcss)
-                let promCSS = fetchCSSFileP(_cssURL); // if you css is loaded on the page already, 
+                let _cssToBeLoad = _cssURL;
+                switch (this._widgetType) {
+                    case 'grid':
+                        _cssToBeLoad = _gridWidgetCssURL;
+                        break;
+                    case 'grid-vert-bars':
+                        _cssToBeLoad = _gridVertBarsWidgetCssURL;
+                        break;
+                    case 'rows':
+                        _cssToBeLoad = _rowsWidgetCssURL;
+                        break;
+                    default:
+                        break;
+                }
+                let promCSS = fetchCSSFileP(_cssToBeLoad); // if you css is loaded on the page already, 
                                                       // then no need this
                 let promJXSDK = fetchJSFileP(_jxRecSdkURL); //kick off fetching of JX REC HELPER SDK
                 let thisObj = this;
@@ -344,7 +395,7 @@
                 })
                 .then(function() {
                     // everything is ready (recommendation results, css):
-                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj);
+                    createDisplay(thisObj._blockwidth, rand, thisObj._container, recResults, recHelperObj, thisObj._count, thisObj._widgetType, thisObj._options.utm);
                 })
                 .catch(function(error) {
                     console.log(`Unable to create recommendations widget ${error.stack} ${error.message}`);

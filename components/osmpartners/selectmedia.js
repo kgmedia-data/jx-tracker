@@ -11,6 +11,19 @@ function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, fixedHeightBlob)
     return mpcommon.packRTJsonObj(dbjson, instID, getPageSelectorFcn, fixedHeightBlob, makeNormalizedObj__);
 }
 
+function SMHasAdHeuristic() {
+    try {
+        let x = $('.osmplaceonsite #aniBox video').length;
+        console.log('tmp heuristic for a few days.');
+        if (x > 0) {
+            return true;
+        }
+    }
+    catch(e) {
+    }
+    return false;
+}
+
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     //The way SelectMedia works is that it just takes the DIV into which their script
     //was injected and then the script will create this aniplayer_selectJS640305376 div
@@ -42,7 +55,27 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         if (!aNode) {
             return false;
         }
-        rtjson.scriptselector = aNode.selector;
+        // we try this lah. we don't attach the script at a particular place
+        // just the standard way (under osmdiv). Then we specify to them what adslot to find
+        // rtjson.scriptselector = aNode.selector;
+        rtjson.createslot = {
+            diffscroll: false
+        };
+        rtjson.customfcns = {
+            hasAdHeuristic: SMHasAdHeuristic
+        };
+        rtjson.createslot.parent = aNode;
+        //this old stupid one I did wrongly!
+        let sslot = 'divid_jxosm_selectmedia';
+        rtjson.createslot.div = {
+            id: sslot,
+            css: `width:100%;`,
+            node: null
+        };
+        rtjson.visibilityslot = {
+            selector: `#${sslot}`,
+            node: null
+        };
     }
 
     //--------- The script/fragment to inject:
@@ -87,6 +120,11 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         imp: `jxosm_imp_selectmedia${sid}`,
         timeout: `jxosm_timeout_selectmedia${sid}`
     };
+    if (!rtjson.floating) {
+        //in article they enabled this new kind of event ... so ...
+        //we can use it to determine whether to stop their tag or not.
+        rtjson.msgs.hasad = `jxosm_hasad_selectmedia${sid}`;
+    }
     //<--- triggerhouse:
     if (rtjson.floating && rtjson.stackidx == rtjson.stackdepth-2) {
         //this is the second last on the waterfall

@@ -102,6 +102,79 @@
     }
 
     /**
+     * this is to add the close button. we try to be generic even though at the moment
+     * we "dare" not support a close button for non-jixie ads (real osm) since we don't
+     * know enough about their behaviour yet.
+     * 
+     * We add this as a window.JxMakeOneCloseButton so the renderer/core.js can use it
+     * 
+     * @param {*} attachNodes an object:
+     *    outer, inner (for farCorner true: the code will put the X as a child of outer, after inner)
+     *    actual (for farCorner false: the code will put the X in via appendChild) 
+     *   Currently this is still rather tailored towards the JIXIE ads. We might have to
+     *   redefine the fields here when we start to support the X for some partners.
+     * @param {*} tearDownFcn A function to call when the X is clicked on.
+     * @param {*} farCorner : boolean : whether the X button should be at the far right corner
+     *            of the osm slot (true) or else closely hugging the creative at the right top 
+     *            corner (Concern for this is the univeral elements being blocked)
+     * @returns 
+     */
+    var _MakeOneCloseButton = function(attachNodes, tearDownFcn, farCorner = false) {
+        var _farCorner = farCorner;//whether to put the X at the far right corner or not. 
+        var _wpr = null;
+        var _ico = null;
+        var _attachNodes = null;
+        function FactoryOneCloseBtn(attachNodes, tearDownFcn) {
+            _attachNodes = attachNodes;
+            _teardownFcn = tearDownFcn;
+        }
+        var _createCloseIcon = function() {
+            _wpr = document.createElement('a');
+            _wpr.href = 'javascript:void(0)';
+            _wpr.onclick = function(e) {
+                e.stopPropagation();
+                _teardownFcn();
+            }
+            _wpr.style.position = _farCorner ? 'relative': 'absolute';
+            _wpr.style.top = '5px';
+
+            if (_farCorner) {
+                _wpr.style.margin = '5px 5px 10px';
+                _wpr.style.display = 'flex';
+                _wpr.style.justifyContent = 'flex-end';
+            }
+            else {
+                _wpr.style.right = '5px';
+                _wpr.style.zIndex = 999;
+            }
+    
+            _ico = document.createElement('img');
+            _ico.src = 'https://creatives.jixie.media/osmclosebtn.png';
+            _ico.style.width = '20px';
+            _ico.style.height = '20px';
+            _wpr.appendChild(_ico);
+            if (_farCorner)
+                _attachNodes.outer.insertBefore(_wpr, _attachNodes.inner);
+            else                
+                _attachNodes.actual.appendChild(_wpr);
+        }
+        FactoryOneCloseBtn.prototype.create = function() {
+            _createCloseIcon();
+        }
+        FactoryOneCloseBtn.prototype.show = function() {
+            if (_wpr) _wpr.style.display = 'flex';
+        }
+        FactoryOneCloseBtn.prototype.hide = function() {
+            if (_wpr) _wpr.style.display = 'none';
+        }
+        let closeBtn = new FactoryOneCloseBtn(attachNodes, tearDownFcn);
+        return closeBtn;   
+    }
+    window.JxMakeOneCloseButton = _MakeOneCloseButton;
+
+   
+
+    /**
      * Factory function for OneOSMLayer: object to do 1 layer of waterfall handling
      */
 
@@ -148,6 +221,8 @@
         
         var _isOpen = false; //isOpen is true when the partner fragment has been injected and we (OSM) is still 
         //awaiting news of the outcome 
+
+        var _hasAdSignalled = false;
         
         //Initially we may not be able to find the element from DOM
         //So we try N number of times before giving up.
@@ -178,11 +253,16 @@
             //so that next time if we turn on the timeout thing
             //we won't kill it if an ad is waiting to be shown (not shown due to slot not in view)
           
+            //let e = {};
+            //e.data = e0.data;
+
             if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
+                
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_msgListener (e.data=${e.data})`);
                 }
 
+                
                 if (JX_PARTNER_TEST) {
                     //https://hooks.slack.com/services/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
                     if (true) {
@@ -216,6 +296,7 @@
                     //imp . 
                     //if no ad, then at least this trick helps to avoid the stupid 1 second
                     //black window showing up!
+                    //console.log(`MIOW 1a imps`);
                     if (_jsonObj.customfcns.imp) {
                         _jsonObj.customfcns.imp();
                     }
@@ -226,6 +307,10 @@
                     if (!_jsonObj.floating) {
                         _fireMakeupTrackingEvent(_syntheticCVList);
                     }
+                    // what should we close...?
+                    //let bnTearDown = ubnTearDown.bind(null, t);
+                    //MakeOneCloseButton(outerDiv, innerDiv, bnTearDown);
+    
                     _fireTrackingEvent('impression');
                 }
                 else if (e.data == _jsonObj.msgs.virtimp ) {
@@ -233,7 +318,7 @@
                     //it is still possible that later they say no ad leh.
                     _fireTrackingEvent('impression', 'imptype=virtual2');
                 }
-                else if(e.data == _jsonObj.msgs.noad) { //HACK
+                else if(e.data == _jsonObj.msgs.noad) { //
                     ////I really saw it!  parent.postMessage("jxosm_noad_selectmediaJS417849795", "*");
                     _fireTrackingEvent('error', 'errorcode=303');
                     if (JX_PARTNER_TEST) {
@@ -245,7 +330,8 @@
                     //if (_jsonObj.customfcns.noad) {
                     //    _jsonObj.customfcns.noad();
                     //}
-                    if(_isOpen) {
+                   /*  to build a special build for teads demo page  */
+                   if(_isOpen) {
                         _isOpen = false;
                         _prepareGoNext(); //do all those unlisten and unobserve
                         _fcnTriggerNextLayer(_syntheticCVList);
@@ -257,21 +343,37 @@
                     //
                 } 
                 else if(e.data == _jsonObj.msgs.timeout) {
+                    //console.log(`___XXXXXX timeout received _isOpen=${_isOpen}`);
+                    //console.log(`MIOW 3a timeout isOpen ${_isOpen}`);
+                    //console.log(`MIOW 3b timeout ${_jsonObj.stackidx} < ${_jsonObj.stackdepth -1}`);
                     //if there is still other stuff under this in the waterfall, then it should get out and make way
                     if (_jsonObj.stackidx < _jsonObj.stackdepth -1) {
                         if (_isOpen) {
-                            _fireTrackingEvent('error', 'errorcode=301');
-                            _isOpen = false;
-                            _prepareGoNext(); //do all those unlisten and unobserve
-                            _fcnTriggerNextLayer(_syntheticCVList);
+                            if (_jsonObj.customfcns.hasAdHeuristic && _jsonObj.customfcns.hasAdHeuristic()) {
+                                ;
+                            }
+                            else {
+                                //console.log(`MIOW 3c timeout isOpen ${_isOpen} so we are here?!`);
+                                _fireTrackingEvent('error', 'errorcode=301');
+                                _isOpen = false;
+                                _prepareGoNext(); //do all those unlisten and unobserve
+                                _fcnTriggerNextLayer(_syntheticCVList);
+                            }
                         }
                     }
                 } 
-                /* else if(e.data == _jsonObj.msgs.hasad) {                    
+                else if(e.data == _jsonObj.msgs.hasad) {         
+                    //console.log("_______XXXX " + " msgs.hasad")
+           
                     //no use case now, block out first
-                    //if (_jsonObj.customfcns.hasad) {
-                        //_jsonObj.customfcns.hasad();
-                    //}
+                    if (_jsonObj.customfcns.hasad) {
+                        _jsonObj.customfcns.hasad();
+                    }
+                    _hasAdSignalled = true;//ok the partner says "has ad"
+                    // so we will not get rid of them even at the timeout.
+                    // we will wait for the CV and at the CV then we set a timeout.
+                    _clearSelfDestructTimer();
+                    // we can set the timeout, but only after the CV has happened.
                     //So far no partner really emit this thing
                     //those type that has a hasad indication
                     //we would also have set off a timer
@@ -279,7 +381,19 @@
                     /////if(_autoWaterfallTimer) {
                         /////clearTimeout(_autoWaterfallTimer);
                     //////}
-                }*/
+                }
+                else if (e.data == _jsonObj.msgs.cv) {
+                    //console.log("_______XXXX " + " msgs.cv")
+                    if (_hasAdSignalled && !_selfDestructTimer) {
+                        //console.log("_______XXXX " + " has signled but need self destruct.")
+                        //just to be sure -- if the ad never materialize at least we can ....
+                        //bail out!!
+                        if (_jsonObj.timeout > 0) 
+                            _doSelfDestructTimer(_jsonObj.timeout);
+                        // then we do the timer lah.
+                    }
+
+                }
             }
         };
         var _dbgprint = function(fcnname, partnerDbg = false) {
@@ -327,6 +441,18 @@
             }
             
             let parentNode = null;
+            let cnHelper = null;
+            if(_jsonObj.createslot && _jsonObj.createslot.parent) {
+                let pN = (_jsonObj.createslot.parent.node ? 
+                    _jsonObj.createslot.parent.node : 
+                    getAnElt(_jsonObj.createslot.parent.selector)); //NOTE: was getUniqElt
+                cnHelper = pN.querySelector(".jxfhhelper");
+                if (cnHelper) {
+                    cnHelper.style.height = '1px'; //<-- when not used when make it like 0 height.
+                }
+            }
+
+
             /*
              * we do provide the functionality to create an adslot (of a certain div-id)
              * under a certain parent. but so far most of our partners we dun need go this route
@@ -348,7 +474,7 @@
                     let fh = _fcnVector.getCommonCfg().fixedheight;
                     let cnO = null;
                     if (fh && _jsonObj.createslot.diffscroll) { //we need to do fixed height.
-                        cnO = parentNode.querySelector(".jxfhhelper");
+                        cnO = cnHelper ? cnHelper: parentNode.querySelector(".jxfhhelper");
                         //under a given parentNode (there should only be 1, corr to the selector
                         //specified by the publisher), just at most 1 jx fixed height helper div then.
                         if (!cnO) { //make one then.
@@ -544,6 +670,7 @@
          * before we go to the next layer
          */
         var _prepareGoNext = function() {
+            return; //hack
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_prepareGoNext');
             }
@@ -611,6 +738,22 @@
                 _stashTrackingEventMaybe('creativeView', _syntheticCVList);
 
         };
+        var _clearSelfDestructTimer = function() {
+            if (_selfDestructTimer) {
+                clearTimeout(_selfDestructTimer) ;
+                _selfDestructTimer = null;
+            }
+        };        
+        var _doSelfDestructTimer = function(msTimeout = 0) {
+            let timeout = msTimeout > 0 ? msTimeout: _jsonObj.timeout;
+            if (timeout > 0 &&  _jsonObj.stackidx < _jsonObj.stackdepth-1 
+                && _jsonObj.msgs.timeout) {
+                //console.log("______XXX SET TIME OUT !!!!!!!!");
+                _selfDestructTimer = setTimeout(function() {
+                    window.postMessage(_jsonObj.msgs.timeout, "*");    
+                }, _jsonObj.timeout);
+            }
+        };
         var _startAllHooks = function() {
             //---- MSG LISTENER :--------------------
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
@@ -621,6 +764,8 @@
             //---- SELF DESTRUCT TIMER: -------------------
             //if there is another item under in in the waterfall, then
             //set a self-destruct thing.
+            _doSelfDestructTimer();
+            /*
             if ( _jsonObj.stackidx < _jsonObj.stackdepth-1 
                 && _jsonObj.timeout > 0 
                 && _jsonObj.msgs.timeout) {
@@ -628,6 +773,7 @@
                     window.postMessage(_jsonObj.msgs.timeout, "*");    
                 }, _jsonObj.timeout);
             }
+            */
              //<--- triggerhouse
              if (_jsonObj.msgs.triggerhouse) {
                 setTimeout(function() {
@@ -706,6 +852,11 @@
                     //in addition, if layers 0, ..., N-1 the CV not yet fired, we also fire here.
                     //
                     _fireTrackingEvent('creativeView');
+                    if (_jsonObj.msgs && _jsonObj.msgs.cv) {
+                        setTimeout(function(){
+                            _msgListener({data: _jsonObj.msgs.cv});
+                        },10);
+                    }
                     //we can unobserve already if CV is fired:
                     if (!_jsonObj.floating) {
                         _fireMakeupTrackingEvent(_syntheticCVList);
@@ -1244,12 +1395,21 @@
          */
         //we work on this modeldiv thing ...
         OneOSMWaterfall.prototype.init = function(p, qparams, loggerInst) {
+            if (_msWFInit) {  // then this is a repeated call of the init.
+                return;
+            }
+            _msWFInit = Date.now();
+
             _loggerInst = loggerInst;
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            ['fixedheight','excludedheight','maxwidth','maxheight','gam','floating','floatparams','poverrides'].forEach(function(prop){
+            [ /* 'fixedheight','excludedheight', */
+              'maxwidth','maxheight','gam',
+              'floating','floatparams',
+              'closebutton',
+              'poverrides'].forEach(function(prop){
                 if (p[prop]) {
                     _commonCfg[prop] = p[prop];
                 }
@@ -1271,7 +1431,6 @@
             //we do not abort at this stage even if dun have selectors
             //specified coz in theory it can be supplied per creative (tag)
 
-            _msWFInit = Date.now();
             _instID = "OSMWF_" + _msWFInit;
             _ctrID = "ctrid" + _msWFInit; //TODO REfers to the container for the injected CODE of the various partners
             let url = `https://${p.debug?'ad-rc':'content'}.jixie.io/v2/osm?source=osm`;
@@ -1285,7 +1444,7 @@
             }
             [   'unit', 'campaignid', 'creativeids',
                 'minwidth', 'maxheight', 'minheight', 'fixedheight',
-                'pageurl', 'domain', 'pagekeywords'].forEach(function(prop) {
+                'pageurl', 'domain', 'pagekeywords','pagetitle'].forEach(function(prop) {
                 if (p[prop])
                     url += '&' + prop + '=' + encodeURIComponent(p[prop]);
             });
@@ -1295,7 +1454,7 @@
                 mw = p.maxwidth;
             }
             let pNode = _getPgSelector();
-            if (pNode && pNode.node.offsetWidth) {
+            if (pNode && pNode.node.offsetWidth > 10) {
                 mw = pNode.node.offsetWidth;
             }
             if (mw) url += '&maxwidth=' +mw;
@@ -1353,8 +1512,9 @@
             //explicitly coz the page has no jQ...
             window.jxRetryFcn = function() {
                 if (window.jxsellib) {
-                    window.jxsellib = 0;
-                    wfInst.init(p, window.jxoutstreammgr.qparams, logInst);
+                    // you are doing this just to make sure not run twice bah.
+                    //window.jxsellib = 0;
+                    wfInst.init(p, window.jxoutstreammgr.qparams, logInst);// this init will only run once, so fear not.
                 }
                 else {
                     setTimeout(jxRetryFcn, 200);

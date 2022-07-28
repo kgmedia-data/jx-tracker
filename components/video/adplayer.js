@@ -512,6 +512,17 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
                 out.autoplay = false;
             }
         }
+        /*
+        20220621 comment:
+        so apparently (trying to recall why we did what...)
+        if vpaid, then we just let the vpaid JS handle the replay (auto or manual) so that stuff
+        is also in the adparameters (hmmm who put it there ah...) so here env.loop is none
+
+        if simid, then fery says cannot handle replay so we do the reply at this level then.
+        
+        As we do the content api - creatives we also should clear this stuff up!
+
+        */
         let simid = ((cr.url && cr.url.indexOf('simid') > -1) || cr.jxsimidurl);
         if (simid) {
             if (cr && cr.adparameters && cr.adparameters.loop) {
