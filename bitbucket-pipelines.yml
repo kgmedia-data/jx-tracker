@@ -1,9 +1,9 @@
 
 pipelines:
-  branches:
+  custom:
     production_rec_widget_sdk:
       - step:
-          name: "recommendation-sdk-and-widget"
+          name: "MUST_USE_WITH_BRANCH_production_rec_widget_sdk"
           image: node:12.18.0
           trigger: manual
           script: 
@@ -28,7 +28,7 @@ pipelines:
             - aws s3 cp jxrecsdk.1.0.min.js s3://jx-scripts/jxrecsdk.1.0.xxx.min.js --acl public-read
     production_osm:
       - step:
-          name: "frontend-scripts-excl-recommendation-sdk-widget"
+          name: "MUST_USE_WITH_BRANCH_production_osm"
           image: node:12.18.0
           trigger: manual
           script: 
