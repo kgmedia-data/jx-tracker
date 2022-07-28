@@ -77,7 +77,7 @@
                 s += '&' + pname + '=' + encodeURIComponent(jxUserInfo[pname]);
         });
         
-        let url = "https://recommendation.jixie.io/v1/recommendation?type=pages" + s;
+        let url = "https://recommendation.jixie.media/v1/recommendation?type=pages" + s;
         
         // TODO CORS 
         return new Promise((resolve, reject) => {
