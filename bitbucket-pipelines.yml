@@ -5,8 +5,7 @@ pipelines:
   custom:
     production_rec_widget_sdk:
       - step:
-          name: "MUST_USE_WITH_BRANCH_production_rec_widget_sdk"
-          trigger: manual
+          name: "build_step_PLS_CHECK_BRANCH_IS_production_rec_widget_sdk"
           script: 
             - npm install
             - npm install -g gulp
@@ -18,6 +17,12 @@ pipelines:
             # the config-key's content will not be used since we are not making the gulp step
             # to push anything to AWS. Just have something so that the gulpfile will not complain.
             - gulp PREP-PROD
+          artifacts:  
+            - dist/**
+      - step:     
+          name: "push2s3_step_PLS_CHECK_BRANCH_IS_production_rec_widget_sdk"
+          trigger: manual
+          script:
             - apt-get update -y && apt-get install awscli -y
             - export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
             - export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
@@ -27,9 +32,10 @@ pipelines:
             - cd ../sdks
             # Now to copy to AWS:
             - aws s3 cp jxrecsdk.1.0.min.js s3://jx-scripts/jxrecsdk.1.0.xxx.min.js --acl public-read
+
     production_osm:
       - step:
-          name: "MUST_USE_WITH_BRANCH_production_osm"
+          name: "build_step_PLS_CHECK_BRANCH_IS_production_osm"
           script: 
             - npm install
             - npm install -g gulp
@@ -44,7 +50,7 @@ pipelines:
           artifacts:  
             - dist/**
       - step:
-          name: "actual_push"
+          name: "push2s3_step_PLS_CHECK_BRANCH_IS_production_osm"
           trigger: manual
           script:
             - apt-get update -y && apt-get install awscli -y
@@ -52,12 +58,12 @@ pipelines:
             - export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
             - cd dist/bundles
             # Now to copy to AWS:
-            #- aws s3 cp jxamp.min.js s3://jx-scripts/jxamp.min.xxx.js --acl public-read
-            #- aws s3 cp jxfriendly.2.0.flt.min.js s3://jx-scripts/jxfriendly.2.0.flt.min.xxx.js --acl public-read
-            #- aws s3 cp jxfriendly.2.0.min.js s3://jx-scripts/jxfriendly.2.0.min.xxx.js --acl public-read
-            #- aws s3 cp jxosm.1.0.min.js s3://jx-scripts/jxfriendly.2.0.flt.min.xxx.js --acl public-read
+            - aws s3 cp jxamp.min.js s3://jx-scripts/jxamp.min.xxx.js --acl public-read
+            - aws s3 cp jxfriendly.2.0.flt.min.js s3://jx-scripts/jxfriendly.2.0.flt.min.xxx.js --acl public-read
+            - aws s3 cp jxfriendly.2.0.min.js s3://jx-scripts/jxfriendly.2.0.min.xxx.js --acl public-read
+            - aws s3 cp jxosm.1.0.min.js s3://jx-scripts/jxfriendly.2.0.flt.min.xxx.js --acl public-read
             - aws s3 cp jxhbrenderer.1.1.min.js s3://jx-scripts/jxhbrenderer.1.1.xxx.min.js --acl public-read
-            #- aws s3 cp jxvideoad.2.0.min.js s3://jx-scripts/jxvideoad.2.0.min.xxx.js --acl public-read
-            #- aws s3 cp jxvideocr.1.0.min.js s3://jx-scripts/jxvideocr.1.0.min.xxx.js --acl public-read
+            - aws s3 cp jxvideoad.2.0.min.js s3://jx-scripts/jxvideoad.2.0.min.xxx.js --acl public-read
+            - aws s3 cp jxvideocr.1.0.min.js s3://jx-scripts/jxvideocr.1.0.min.xxx.js --acl public-read
 
    
