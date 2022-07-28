@@ -24,6 +24,7 @@ pipelines:
             - gulp PREP-PROD
           artifacts:  
             - dist/**
+            - tests/**
       - step:     
           name: "push2s3"
           trigger: manual
@@ -37,6 +38,13 @@ pipelines:
             - cd ../sdks
             # Now to copy to AWS:
             - aws s3 cp jxrecsdk.1.0.min.js s3://jx-scripts/jxrecsdk.1.0.xxx.min.js --acl public-read
+            # ok we need to move the css to a proper place. but for now...
+            - cd ../../tests
+            # Now to copy to AWS:
+            - aws s3 cp grid-vert-bars-widget.css s3://jx-scripts/grid-vert-bars-widget.xxx.css --acl public-read
+            - aws s3 cp grid-widget.css s3://jx-scripts/grid-widget.xxx.css --acl public-read
+            - aws s3 cp rows-widget.css s3://jx-scripts/rows-widget.xxx.css --acl public-read
+            - aws s3 cp jxrecwidget.1.0.css s3://jx-scripts/jxrecwidget.1.0.xxx.css --acl public-read
 
     production_osm:
       - step:
