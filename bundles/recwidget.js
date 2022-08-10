@@ -77,7 +77,7 @@
                 s += '&' + pname + '=' + encodeURIComponent(jxUserInfo[pname]);
         });
         
-        let url = "https://recommendation.jixie.media/v1/recommendation?type=pages" + s;
+        let url = infoObj["endpoint"] + "/v1/recommendation?type=pages" + s;
         
         // TODO CORS 
         return new Promise((resolve, reject) => {
@@ -311,6 +311,7 @@
                 keywords: options.keywords,
                 title: options.title,
                 count: options.count || 6,
+                endpoint: options.endpoint || "https://recommendation.jixie.media",
             };
             if (options.adpositions) {
                 this._options.adpositions = options.adpositions;
