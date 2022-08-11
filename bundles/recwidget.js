@@ -68,7 +68,7 @@
      */
     function fetchRecommendationsP(infoObj, jxUserInfo) {
         let s = '';
-        ["count", "adpositions","accountid","pageurl","widget_id","keywords","title"].forEach(function(pname) {
+        ["count", "adpositions","accountid","pageurl","widget_id","keywords","title","date_published"].forEach(function(pname) {
             if (infoObj[pname])
                 s += '&' + pname + '=' + encodeURIComponent(infoObj[pname]);
         });
@@ -185,6 +185,19 @@
         }
         return url;
     }
+
+    function padTo2Digits(num) {
+        return num.toString().padStart(2, '0');
+    }
+      
+    function formatDate(date) {
+        return [
+            date.getFullYear(),
+            padTo2Digits(date.getMonth() + 1),
+            padTo2Digits(date.getDate()),
+        ].join('-');
+    }
+
     function createDisplay(blockwidth, rand, container, resultObj, jxRecHelper, count, widgetType, utm) {
         let widgetWrapper = document.createElement('div');
         widgetWrapper.className = `${recWrapperCls}${rand}`;
@@ -313,11 +326,17 @@
                 count: options.count || 6,
                 endpoint: options.endpoint || "https://recommendation.jixie.media",
             };
+            this.publishedDate = document.querySelector('meta[property="article:published_time"]') || document.querySelector('meta[name="content_PublishedDate"]') || undefined;
             if (options.adpositions) {
                 this._options.adpositions = options.adpositions;
             }
             if (options.utm) {
                 this._options.utm = options.utm;
+            }
+            if (options.date_published) {
+                this._options.date_published = options.date_published;
+            } else if (this.publishedDate && this.publishedDate.content) {
+                this._options.date_published = formatDate(new Date(this.publishedDate.content));
             }
             this._count = options.count || 6;
             this._widgetType = options.type || 'normal';
