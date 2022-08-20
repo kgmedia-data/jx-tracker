@@ -670,7 +670,6 @@
          * before we go to the next layer
          */
         var _prepareGoNext = function() {
-            return; //hack
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_prepareGoNext');
             }
@@ -1405,7 +1404,7 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            [ /* 'fixedheight','excludedheight', */
+            [ 'fixedheight','excludedheight',
               'maxwidth','maxheight','gam',
               'floating','floatparams',
               'closebutton',
