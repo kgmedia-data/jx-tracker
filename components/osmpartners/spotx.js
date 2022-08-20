@@ -51,9 +51,11 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
         //and ad_impression_function in their interfacing. So we just define (create) these functions
         //and let them be hooked up here then.
         ad_done_function: "spotxNoAd" + instID,
-        ad_impression_function: "spotxImp" + instID
+        ad_impression_function: "spotxImp" + instID,
+        ad_error_function: "spotxErr" + instID
     };
     let placing = dbjson.adparameters.placing;
+    
     let otherParams;
 
     let dividAd = `ctr${instID}`;
@@ -135,12 +137,16 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
     rtjson.scriptb = `
     ${divstr1}            
     <script type="text/javascript">
+        function spotxErr${instID}()  {
+            window.postMessage("${rtjson.msgs.noad}", "*");
+        }
         function spotxImp${instID}()  {
             window.postMessage("${rtjson.msgs.imp}", "*");
         }
         function spotxNoAd${instID}(adFound)  {
-            if(!adFound)  
+            if(!adFound) { 
                 window.postMessage("${rtjson.msgs.noad}", "*");
+            }
         }
         </script>
         <script type="text/javascript" src="//js.spotx.tv/easi/v1/${dbjson.adparameters.channel_id}.js" 
