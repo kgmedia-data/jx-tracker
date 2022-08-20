@@ -22,6 +22,8 @@ const mpsm          = require('../components/osmpartners/selectmedia');
 const mpteads       = require('../components/osmpartners/teads');
 const mpunruly      = require('../components/osmpartners/unruly');
 const mpr2b2        = require('../components/osmpartners/r2b2');
+const mpspotx       = require('../components/osmpartners/spotx');
+
 //const mpgpt         = require('../components/osmpartners/gptpassback');
 
 
@@ -110,7 +112,8 @@ function start(options) {
             selectmedia: mpsm,
             teads: mpteads,
             unruly: mpunruly,
-            r2b2: mpr2b2
+            r2b2: mpr2b2,
+            spotx: mpspotx
             //gptpassback: mpgpt
     });
     instMap.set(hashStr, osmInst);
