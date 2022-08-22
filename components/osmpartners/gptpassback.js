@@ -14,15 +14,18 @@
  */
 const modulesmgr            = require('../basic/modulesmgr');
 const mpcommon              = modulesmgr.get('osmpartners/common');
-
-function makeText_(adP, idBase, impMsg) {
+//            googletag.defineSlot('/19968336/header-bid-tag-0', [[300, 250], [300, 600]], 'div-gpt-ad-123456789-0').addService(googletag.pubads());
+//googletag.defineSlot('${adP.adUnitPath}', ${adP.szSizes}, 'jxdiv${idBase}').setTargeting('${adP.tgtKey}', ['${adP.tgtValue}']).addService(googletag.pubads());
+            
+function makeText_(adP, idBase, noadMsg, impMsg) {
+    let targetingClause = adP.tgtKey && adP.tgtValue ? `setTargeting('${adP.tgtKey}', ['${adP.tgtValue}']).`: '';
     return `
         window.googletag = window.googletag || {cmd: []};
         googletag.cmd.push(function() {
-            googletag.defineSlot('${adP.adUnitPath}', ${adP.szSizes}, 'jxdiv${idBase}').setTargeting('${adP.tgtKey}', ['${adP.tgtValue}']).addService(googletag.pubads());
+            googletag.defineSlot('${adP.adUnitPath}', ${adP.szSizes}, 'jxdiv${idBase}').${targetingClause}addService(googletag.pubads());
             googletag.pubads().addEventListener('slotRenderEnded', function(event) {
                 window.parent.document.getElementById('jxgptif${idBase}').height = (document.body.scrollHeight);
-                window.parent.postMessage('${impMsg}', '*');
+                window.parent.postMessage(event.isEmpty ? '${noadMsg}': '${impMsg}', '*');
             });                    
             googletag.enableServices();
             googletag.display('jxdiv${idBase}');
@@ -80,14 +83,16 @@ const aDivId = 'div-gpt-ad-1234567890123-0';
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, fixedHeightBlob) {
     //From the DB here doctored:
     let instID = rtjson.instID;
-    //dbjson.adparameters.szSizes = '[[300,600]]';//HACK
-    /*
-        adUnitPath: '/31800665/KOMPAS.COM/osmjixie', //<-- from retgt
+    /* dbjson.adparameters = { //'[[300,600]]';//HACK
+    
+//        adUnitPath: '/31800665/KOMPAS.COM/osmjixie', //<-- from retgt
+  //      googletag.defineSlot('/19968336/header-bid-tag-0', [[300, 250], [300, 600]], 'div-gpt-ad-123456789-0').addService(googletag.pubads());
+        adUnitPath: '/19968336/header-bid-tag-0',
         sxzSizes: '[[300,600],[300,250],[320,100]]',//<-- from retgt
         szSizes: '[[300,600]]',//<-- from retgt
-        tgtKey: 'Pos',//<-- from retgt
+        tgtKey: 'xPos',//<-- from retgt
         tgtValue: 'osmkompas',//<-- from retgt
-    */
+    }; */
     let aNode = mpcommon.getAdSlotAttachNode(dbjson, getPageSelectorFcn);
     if (!aNode) {
         return false;
@@ -108,7 +113,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, fixedHeightBlob
     //dbjson.adparameters.imp = 'jxosm_noad_gptpassback_' + instID;
     try {
         rtjson.scriptcfg = {
-            text: makeText_(dbjson.adparameters, instID, rtjson.msgs.imp),
+            text: makeText_(dbjson.adparameters, instID, rtjson.msgs.noad, rtjson.msgs.imp),
             idBase: instID
             
         };
@@ -116,7 +121,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, fixedHeightBlob
     catch(x) {
         console.log(x.stack);
     }
-    console.log(rtjson.scriptcfg.text);
+    //console.log(rtjson.scriptcfg.text);
     rtjson.visibilityslot = {
         selector: `#jxOutstream${instID}`,
         node: null
