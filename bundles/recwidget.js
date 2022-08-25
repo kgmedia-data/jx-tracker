@@ -338,6 +338,9 @@
             } else if (this.publishedDate && this.publishedDate.content) {
                 this._options.date_published = formatDate(new Date(this.publishedDate.content));
             }
+            if (options.customid) {
+                this._options.customid = options.customid;
+            }
             this._count = options.count || 6;
             this._widgetType = options.type || 'normal';
             this._blockwidth = Number(options.blockwidth) || 280;
