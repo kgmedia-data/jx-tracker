@@ -317,6 +317,7 @@ const mpginfo = require('../components/basic/pginfo');
                 }
                 if (options.system) newObj.system = options.system;
                 if (options.widget_id) newObj.widget_id = options.widget_id;
+                if (options.customid) newObj.customid = options.customid;
                 
                 let merged = Object.assign({}, ids, newObj);
                 return merged;
@@ -342,7 +343,7 @@ const mpginfo = require('../components/basic/pginfo');
             {
                 // no choice then we make our own:
                 trackerParams = "s=" + basicInfo.system; //&v=mixed:0.9";
-                ['accountid', 'widget_id', 'client_id', 'session_id', 'cohort', 'partner_id'].forEach(function(prop) {
+                ['accountid', 'widget_id', 'client_id', 'session_id', 'cohort', 'partner_id', 'customid'].forEach(function(prop) {
                     if (basicInfo[prop])
                         trackerParams += '&' + prop + '=' + basicInfo[prop];
                 });
