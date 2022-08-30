@@ -619,6 +619,7 @@
         let adsRenderingSettings = new google.ima.AdsRenderingSettings();
         //https://gist.github.com/i-like-robots/4d808f71c5602e0d6dfd320a37b24cb2
         if (_forVideoAdSDK) {
+            // seems to make the GAM tag not play at all. comment this out.!
             //adsRenderingSettings.enablePreloading = true;
         }
         // you must restore original state for mobile devices that recycle video element
@@ -756,7 +757,12 @@
         }*/
         _width = _container.offsetWidth;
 
-        _height = Math.round(_width*9/16); //_container.offsetHeight;
+        if (_container.offsetHeight < 3) {    
+            _height = Math.round(_width*9/16);
+        }
+        else {
+            _height = _container.offsetHeight;
+        }
         
         _adLoaderOutcome = "jxpending";
         _clearResizeListeners(); //paranoia

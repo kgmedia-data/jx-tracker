@@ -374,9 +374,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             signature: "jxvideoadsdk",
             //the queue name is '_' + signature + 'q';
             //so here it is _jxvideoadsdkq
-            //url: 'https://scripts.jixie.media/jxvideocr.1.0.min.js'
-            url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jxvideocr.1.0.min.js'
-            ////url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk-test.min.js'
+            url: 'https://scripts.jixie.media/jxvideocr.1.0.min.js'
        }
     };
     const visThreshold_ = 0.4;
@@ -2103,10 +2101,10 @@ const thresholdDiff_ = 120;
                 break;    
             case 'video': 
                 trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
-                /* if (! c.adparameters || c.adparameters.trusted) {
+                if (c.adparameters && c.adparameters.trusted) {
                     trusted = true;
                     out.crSig = jxScriptUrls_.video.signature
-                }*/
+                }
                 //console.log(`CCC##### sucked out the signature ${c.crSig}`);
                 out.adparameters = c; //<--- this is a special behaviour for video sdk stuff.
                 //the videoadsdk needs more than the adparameters but 1 level up (still need generate vast)
@@ -2730,15 +2728,6 @@ const thresholdDiff_ = 120;
                     //the other options are: always, creative (default)
                     //for those we would have kept the floatparams already.
                 }
-
-                p.floating = "always";
-        p.floatparams = {
-            "start": "init",
-            "position": "bottom-left",
-            "marginX": 3,
-            "marginY": 19,
-            "background": "transparent"
-        };
 
                 if (params.container) {
                     if (gIsFifs && p.doFloat) { //<--?
