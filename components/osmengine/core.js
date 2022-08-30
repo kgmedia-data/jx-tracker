@@ -319,8 +319,12 @@
                     _fireTrackingEvent('impression', 'imptype=virtual2');
                 }
                 else if(e.data == _jsonObj.msgs.noad) { //
-                    ////I really saw it!  parent.postMessage("jxosm_noad_selectmediaJS417849795", "*");
-                    _fireTrackingEvent('error', 'errorcode=303');
+                    if (_jsonObj.partner == 'jixie') {
+                        ; //fired by jixie itself e.g. vvasttag etc.
+                    }
+                    else {
+                        _fireTrackingEvent('error', 'errorcode=303');
+                    }
                     if (JX_PARTNER_TEST) {
                         //dun do anything
                         return;
