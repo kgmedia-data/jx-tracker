@@ -289,9 +289,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     }
     var _startFloat = function(firstViewed, IRObj) {
         if (_fP.position == 'top') {
-            // in case if the start is init. then we show with the floating first even if user scrolls down
+            // in case if the start is init or always. then we show with the floating first even if user scrolls down
             // then after the unit entered in-article mode, we can make it to not show when user scrolls up
-            if (!firstViewed && _fP.start == 'init') {
+            if (!firstViewed && (_fP.start == 'init' || _fP.start == 'always')) {
                 _setFloat();
             } else if (IRObj.boundingClientRect.top < 0) { // else if the start is viewed, we check if the unit's position is above the viewport
                 _setFloat();
@@ -303,7 +303,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     //if the floating is closed and the whatever is not yet in viewport then it is invisible
 
     var _stopFloat = function() {
-        if (_floating) {
+        if (_floating && _fP.start != 'always') {
             _floating = false;
 
             if (pp && pp.tagName == 'DIV') {
@@ -334,7 +334,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         return _floating;
     }
     FactoryOneFloating.prototype.shouldFloat = function(crViewed, visible) {
-        return (!_userClosed && ((_fP.start == "init" && !visible) || (_fP.start == "viewed" && crViewed && !visible)));
+        return (!_userClosed && (((_fP.start == "init" || _fP.start == 'always') && !visible) || (_fP.start == "viewed" && crViewed && !visible)));
     }
     FactoryOneFloating.prototype.stopFloat = function() {
         _stopFloat();
@@ -548,6 +548,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                 if (newPgVis == 1) {
                     if (lastVisVal == 1)
                         fire = 1;
+                    else if (this.floatInst && this.floatInst.isShowing()) 
+                        fire = 0;
                 }
                 else {
                     fire = 0;
@@ -2335,7 +2337,7 @@ const thresholdDiff_ = 120;
       HooksMgr.prototype.hookResize = function() {
         this.cxtFcns.addListener(this.allhooks, window, "resize", this.bf_resize);
       }
-      HooksMgr.prototype.hookVisChangeNotifiers = function(notifyFcn) {
+      HooksMgr.prototype.hookVisChangeNotifiers = function(notifyFcn, floatInst) {
         let o = {
             amp: (this.c.fixedHeight && this.cxtFcns.getType() == 'amp' ? 
                 { boundScrollEvent: this.bf_scroll } : null),
@@ -2343,7 +2345,8 @@ const thresholdDiff_ = 120;
             lastPgVis: -1,
             lastFired: -1,
             firstViewed: false,
-            notifyFcn: notifyFcn
+            notifyFcn: notifyFcn,
+            floatInst: floatInst,
         };   
         if (this.needcallresize) {
             // console.log(`!!!!!! ####need call resize is true so wire up the notifyFirstVisible`);
@@ -2646,7 +2649,7 @@ const thresholdDiff_ = 120;
                     let somethingVis = (this.lastPgVis == 0 ? 0: (vis ? true : (_floatInst ? _floatInst.isShowing(): false)));
                     boundPM2Creative(somethingVis ? 'jxvisible': 'jxnotvisible');
                 };
-                hooksMgr.hookVisChangeNotifiers(notifyFcn);
+                hooksMgr.hookVisChangeNotifiers(notifyFcn, _floatInst);
                 return prom3_evtSDKHandshake; 
             })
             .then(function() {
