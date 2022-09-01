@@ -293,7 +293,16 @@ const mpginfo = require('../components/basic/pginfo');
                 const pginfo = mpginfo.get();
                 let newObj = {};
                 let namedCookie = options.partner_cookie;
-                const ids = mids.get(namedCookie);
+                let ids = {};
+                try {
+                    // for now, for AMP we put like this.
+                    // we won't be able to get anything, but at least won't crash.
+                    // this mids it access window local storage and will crash for AMP..
+                    // 20220901 hot fix.
+                    ids = mids.get(namedCookie);
+                }
+                catch(e) {
+                }
                 if (namedCookie && ids && ids[namedCookie]) {
                     newObj.partner_id = ids[namedCookie];
                 }
