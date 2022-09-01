@@ -2679,6 +2679,14 @@ const thresholdDiff_ = 120;
          * let the frame info be passed to here by the code.
          * gam: default none, safeframe friendlyframe
          */
+        function _getParameterByName(name, url) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if(!results) return null;
+            if(!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
         function _assembleParams(params) {
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
@@ -2727,6 +2735,20 @@ const thresholdDiff_ = 120;
                     }
                     //the other options are: always, creative (default)
                     //for those we would have kept the floatparams already.
+                }
+                let pgurl = window.location.href;
+                if (pgurl && pgurl.includes('floatoverride=') ) {
+                    //20220901: for props. they say they want floating
+                    // but the page config no floating but dun want to change a few times
+                    // so we put in this flexible way (page url query params)
+                    // to tune until something all satisfied then we will ask them to put
+                    // into their config
+                    let tmpstr = _getParameterByName('floatoverride', pgurl);
+                    try {
+                        let o = JSON.parse(tmpstr);
+                        Object.assign(p, o);
+                    }
+                    catch(e) {}
                 }
 
                 if (params.container) {
