@@ -619,7 +619,8 @@
         let adsRenderingSettings = new google.ima.AdsRenderingSettings();
         //https://gist.github.com/i-like-robots/4d808f71c5602e0d6dfd320a37b24cb2
         if (_forVideoAdSDK) {
-            adsRenderingSettings.enablePreloading = true;
+            // seems to make the GAM tag not play at all. comment this out.!
+            //adsRenderingSettings.enablePreloading = true;
         }
         // you must restore original state for mobile devices that recycle video element
         // adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true; //?? TODO. dun understand
@@ -755,7 +756,13 @@
             adURL = `https://content.jixie.io/v1/video?maxnumcreatives=13&source=jxplayer&client_id=52471830-e2f4-11ea-b5e9-f301ddda9414&sid=1639439102-52471830-e2f4-11ea-b5e9-f301ddda9414&pageurl=https%3A%2F%2Fmegapolitan.kompas.com%2Fread%2F2021%2F05%2F28%2F05334261%2Fupdate-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257&domain=megapolitan.kompas.com&unit=1000114-qEgXGqRpBy&creativeid=` + cid;
         }*/
         _width = _container.offsetWidth;
-        _height = _container.offsetHeight;
+
+        if (_container.offsetHeight < 3) {    
+            _height = Math.round(_width*9/16);
+        }
+        else {
+            _height = _container.offsetHeight;
+        }
         
         _adLoaderOutcome = "jxpending";
         _clearResizeListeners(); //paranoia

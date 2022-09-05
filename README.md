@@ -7,14 +7,26 @@
 # What branches ??!
 - there is the master
 - there are currently 2 production branch that matters:
-    - production_videosdk (which is supposed to produce the file for this https://scripts.jixie.media/jxvideo.3.1.min.js)
-    - production_osm (which is supposed to produce everything else)
+    - production_rec_widget_sdk 
+    - production_osm 
 - sometimes there will be certain fixes based off the production_videosdk or production_osm branch
     - then after a while, I will manually introduce them to the master branch
+        means there are times when master, production_osm and production_rec_widget_sdk will be divergent. But after a while, they should all be equalized.
     - so that the master branch is the great superset. 
     - then merge master into e.g. production_videosdk (i.e. master = production_videosdk)
     - i.e. sometime the production_videosdk will deviate from master
     - however, periodically the master will be updated to have those changes
+
+# Deployment Method: MANUAL PIPELINE via bitbucket GUI:
+- to deploy the osm files (branch should be production_osm)
+    - visit bitbucket console - pipelines section
+    - choose the branch "production_osm"
+    - choose the pipeline: "custom: production_osm"
+
+- to deploy the widget files (branch should be production_rec_widget_sdk)
+    - visit bitbucket console - pipelines section
+    - choose the branch "production_rec_widget_sdk"
+    - choose the pipeline: "custom: production_rec_widget_sdk"
 
 
 # More info

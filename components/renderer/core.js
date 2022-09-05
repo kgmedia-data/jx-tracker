@@ -289,9 +289,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     }
     var _startFloat = function(firstViewed, IRObj) {
         if (_fP.position == 'top') {
-            // in case if the start is init. then we show with the floating first even if user scrolls down
+            // in case if the start is init or always. then we show with the floating first even if user scrolls down
             // then after the unit entered in-article mode, we can make it to not show when user scrolls up
-            if (!firstViewed && _fP.start == 'init') {
+            if (!firstViewed && (_fP.start == 'init' || _fP.start == 'always')) {
                 _setFloat();
             } else if (IRObj.boundingClientRect.top < 0) { // else if the start is viewed, we check if the unit's position is above the viewport
                 _setFloat();
@@ -303,7 +303,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     //if the floating is closed and the whatever is not yet in viewport then it is invisible
 
     var _stopFloat = function() {
-        if (_floating) {
+        if (_floating && _fP.start != 'always') {
             _floating = false;
 
             if (pp && pp.tagName == 'DIV') {
@@ -334,7 +334,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         return _floating;
     }
     FactoryOneFloating.prototype.shouldFloat = function(crViewed, visible) {
-        return (!_userClosed && ((_fP.start == "init" && !visible) || (_fP.start == "viewed" && crViewed && !visible)));
+        return (!_userClosed && (((_fP.start == "init" || _fP.start == 'always') && !visible) || (_fP.start == "viewed" && crViewed && !visible)));
     }
     FactoryOneFloating.prototype.stopFloat = function() {
         _stopFloat();
@@ -375,7 +375,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             //the queue name is '_' + signature + 'q';
             //so here it is _jxvideoadsdkq
             url: 'https://scripts.jixie.media/jxvideocr.1.0.min.js'
-            ///////url: 'https://jx-demo-creatives.s3-ap-southeast-1.amazonaws.com/osmtest/jx-app-videoadsdk-test.min.js'
        }
     };
     const visThreshold_ = 0.4;
@@ -547,6 +546,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                 if (newPgVis == 1) {
                     if (lastVisVal == 1)
                         fire = 1;
+                    else if (this.floatInst && this.floatInst.isShowing()) 
+                        fire = 0;
                 }
                 else {
                     fire = 0;
@@ -774,11 +775,21 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                     break;
                 case "jxsuppress":
                     break;
+                case "jxhasad":     
+                    let h = this.c.realheight;
+                    if (h) {
+                        if (this.handlers.jxchangeheight) {
+                            this.handlers.jxchangeheight(h, this.handlers.resize);
+                        }
+                    }    
+                    if (this.handlers[type]) {
+                        this.handlers[type]();
+                    }
+                    break;
                 case "jxloaded": //only used for untrusted
                     //for trusted, the old creatives dun need this sign to talk to the creative
                     //for trusted, the future creative will follow template/trustedscript.js
                     //and will not need this.
-                case "jxhasad":     
                 case "jxnoad":
                 case "jxadended":
                     if (this.handlers[type]) {
@@ -1091,6 +1102,13 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
      **/
     function __handleCreativeHeightChange(newH, cb) {
         let divObjs = this.divObjs;
+        if (this.c.realheight) {
+            // this is a temporary fix (to discuss with fery)
+            // this is for those thirdparty items that might not have an ad
+            // so we started with height 1. but once the has-ad signal comes
+            // we will do the real height.
+            newH = this.c.realheight;
+        }
         if (this.c.fixedHeight) {
             //console.log(`__handleCreativeHeightChange ${newH} CASE 1 ${divObjs.jxbnDiv.style.height}, ${divObjs.jxbnScaleDiv.style.height}`);
             divObjs.jxCoreElt.style.height = newH + 'px'; //seems to be ok.
@@ -1166,6 +1184,17 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
      * or html file)
      */
     function createMainContainer(divObjs, normCrParams) {
+        let adP = normCrParams.adparameters;
+        if (adP && adP.thirdpartytag && adP.subtype == 'vvasttag') {
+            // as we do not know whether there will be any ad at all, then
+            // we let the width go normal, but the height we force to almost 0;
+            // Otherwise, the slot could open up and then suddenly closes again.
+            // So later the jxvideocr (video-ad-sdk) will do the jxchangeheight
+            // when it also does it jxhasad.
+            // actually good to combine the 2 together.
+            normCrParams.realheight =  normCrParams.height;
+            normCrParams.height = 1;
+        }
         let id = divObjs.jxID;
         let jxmasterDiv = common.newDiv(divObjs.innerDiv, 'div', null, null, 'jxm_' + id);
         let jxbnDiv = common.newDiv(jxmasterDiv, 'div', null, null, 'jxb_' + id);
@@ -2072,7 +2101,7 @@ const thresholdDiff_ = 120;
                 break;    
             case 'video': 
                 trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
-                if (c.adparameters.trusted) {
+                if (c.adparameters && c.adparameters.trusted) {
                     trusted = true;
                     out.crSig = jxScriptUrls_.video.signature
                 }
@@ -2306,7 +2335,7 @@ const thresholdDiff_ = 120;
       HooksMgr.prototype.hookResize = function() {
         this.cxtFcns.addListener(this.allhooks, window, "resize", this.bf_resize);
       }
-      HooksMgr.prototype.hookVisChangeNotifiers = function(notifyFcn) {
+      HooksMgr.prototype.hookVisChangeNotifiers = function(notifyFcn, floatInst) {
         let o = {
             amp: (this.c.fixedHeight && this.cxtFcns.getType() == 'amp' ? 
                 { boundScrollEvent: this.bf_scroll } : null),
@@ -2314,7 +2343,8 @@ const thresholdDiff_ = 120;
             lastPgVis: -1,
             lastFired: -1,
             firstViewed: false,
-            notifyFcn: notifyFcn
+            notifyFcn: notifyFcn,
+            floatInst: floatInst,
         };   
         if (this.needcallresize) {
             // console.log(`!!!!!! ####need call resize is true so wire up the notifyFirstVisible`);
@@ -2617,7 +2647,7 @@ const thresholdDiff_ = 120;
                     let somethingVis = (this.lastPgVis == 0 ? 0: (vis ? true : (_floatInst ? _floatInst.isShowing(): false)));
                     boundPM2Creative(somethingVis ? 'jxvisible': 'jxnotvisible');
                 };
-                hooksMgr.hookVisChangeNotifiers(notifyFcn);
+                hooksMgr.hookVisChangeNotifiers(notifyFcn, _floatInst);
                 return prom3_evtSDKHandshake; 
             })
             .then(function() {
@@ -2632,6 +2662,10 @@ const thresholdDiff_ = 120;
                     //waterfall to next layer
                     next(jxContainer, remainingCreativesArr, next);
                 }
+                else {
+                    // if anybody is listening..
+                    window.postMessage("jxosm_noad_jixie", "*");
+                }
             })
             .finally(function() {
             });
@@ -2645,6 +2679,14 @@ const thresholdDiff_ = 120;
          * let the frame info be passed to here by the code.
          * gam: default none, safeframe friendlyframe
          */
+        function _getParameterByName(name, url) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if(!results) return null;
+            if(!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
         function _assembleParams(params) {
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
@@ -2693,6 +2735,20 @@ const thresholdDiff_ = 120;
                     }
                     //the other options are: always, creative (default)
                     //for those we would have kept the floatparams already.
+                }
+                let pgurl = window.location.href;
+                if (pgurl && pgurl.includes('floatoverride=') ) {
+                    //20220901: for props. they say they want floating
+                    // but the page config no floating but dun want to change a few times
+                    // so we put in this flexible way (page url query params)
+                    // to tune until something all satisfied then we will ask them to put
+                    // into their config
+                    let tmpstr = _getParameterByName('floatoverride', pgurl);
+                    try {
+                        let o = JSON.parse(tmpstr);
+                        Object.assign(p, o);
+                    }
+                    catch(e) {}
                 }
 
                 if (params.container) {

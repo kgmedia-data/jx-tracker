@@ -81,7 +81,10 @@ const mpcommon              = modulesmgr.get('osmpartners/common');
             catch(x) {
                 console.log(x.stack);
             }
-            rtjson.msgs = { abc: 1};
+            rtjson.msgs = { abc: 1, 
+                noad: 'jxosm_noad_jixie'
+            };
+            //open then close is a problem ah
                 //no need for jxosmcore_ later to create any div for ad.
                 //and not need for jxosmcore_ to monitor on any visibility as the JX itself will fire
                 //the right tracker events

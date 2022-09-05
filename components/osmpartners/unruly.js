@@ -77,12 +77,28 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
     //Unruly stuff must be put in iframe
     //else the fallback will not work.
     //that's why here we make a same-origin iframe
+    //
+    // A bit of the explanation about the iframe.setAttribute(....display:block) below which was added only 20220902
+    // It is because we got this complaint from kompas about this space at the bottom of the page
+    // (it is very noticeable against the kompas black page background)
+    // Even if we make the height=0 (it was 1; the unruly script will set it to 1 even if you put 0) actually there will 
+    // still be this 0.4mm (vertical span) of space due to this iframe (making the iframe border, margin etc none does not help)
+    // Then this stackoverflow says it is the display: ** that is the problem and should use
+    // display: block ...
+    // https://stackoverflow.com/questions/6735022/remove-the-extra-whitespace-surrounding-iframes
+    // So I added the display: block and it seems to help totally.
+    // (setting background-color: transparent does not work at all)
+        //From the aboev stackoverflow answer that I adopted:
+        //Having just seen your fiddle your issue is because you are using display:inline-block. This takes whitespace in your html into account. display:inline-block is notorious for being difficult and has dodgy browser support.
+        //Option 1: Try removing the white space in your html can sometimes sort the problem.
+        //Option 2: Using a different display property such as display:block will definitely sort the problem. Live example: http://jsfiddle.net/mM6AB/3/
+        //
     rtjson.scriptb =
         `<script>
             var cleanhtmlcode = '${cleanhtmlcode}';
             var iframe = document.createElement('iframe');
             document.body.appendChild(iframe);
-            iframe.setAttribute("style","height:1px !important;width:100% !important;");
+            iframe.setAttribute("style","display: block !important;height:1px !important;width:100% !important;");
             iframe.name = 'jxunrulyaux';
             iframe.contentWindow.document.open();
             iframe.contentWindow.document.write(
