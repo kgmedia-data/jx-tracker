@@ -80,8 +80,7 @@
         - osm (classic) - currently it loads ulite dyn. will change to "include" it
         - osm (amp)
         - univ full (means can play all kinds of stuff including the old players e.g. DM, YT, etc)
-        - jixie video SDK
-
+- There might be some remnants of jx video sdk but that thing has been moved into its own repo (jixie-player-sdk-for-web)
 
 * Version
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
