@@ -257,7 +257,8 @@
             //e.data = e0.data;
 
             if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
-                
+                console.log(`!!!! ATTENTION !!!!!!! felixads____ jxosm received message e.data is this:  ${e.data}`);
+
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_msgListener (e.data=${e.data})`);
                 }
