@@ -383,7 +383,7 @@ const mpginfo = require('../components/basic/pginfo');
                                 if (!_eventsFired.creativeView) {
                                     _eventsFired.creativeView = 1;
                                     _actions.push({
-                                        action: 'creativeview',
+                                        action: 'creativeView',
                                         elapsedms: Date.now() - _loadedTimeMs
                                     });
                                     _itemsObserver.unobserve(entry.target);
@@ -405,7 +405,7 @@ const mpginfo = require('../components/basic/pginfo');
                                 if (_itemVis[idx].t === 'ad') {
                                     _isCreativeVisible = 1;
                                     if (!_creativeEventFired.creativeView) {
-                                        _fireCreativeEvent(_itemVis[idx].trackers, 'creativeview');
+                                        _fireCreativeEvent(_itemVis[idx].trackers, 'creativeView');
                                         _creativeEventFired.creativeView = 1;
                                     }
 
