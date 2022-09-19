@@ -152,7 +152,40 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
         <script type="text/javascript" src="//js.spotx.tv/easi/v1/${dbjson.adparameters.channel_id}.js" 
         data-spotx_channel_id="${dbjson.adparameters.channel_id}"  
         ${attrStr} ></script>${divstr2}`;
-    //scriptb body formed -->
+    
+    let styles = dbjson.adparameters.forced_styles;
+    if (Array.isArray(styles)) {
+        //some publishers has some css rules that will make e.g. all the iframes inside 
+        //certain divs all become 'relative'.
+        //So we need to "fight back"
+        // Coz the spotx creatives a div and then an iframe inside their allocated container
+        // and the iframe must be absolute positioned
+        for (var i = 0; i < styles.length; i++) {
+            let sheet = document.createElement('style')
+            let exp = styles[i].replace(/%%DIVID%%/g, dividAd);
+            //let final = `#${dividAd} > div > iframe {position: absolute !important;}`;
+            sheet.innerHTML = exp;
+            document.body.appendChild(sheet);
+        }
+    }
+    /* does not work lah
+    var donedone = false;
+    setInterval(function(){ 
+        if (donedone) return;
+        try {
+        let x = document.getElementById(dividAd);
+        let y  = x.getElementsByTagName("iframe");
+        if (y && y.length) {
+            donedone = true;
+            //y[0].style="position:absolute !important";
+            y[0].style.position ="absolute !important";
+        }
+        }
+        catch(e) {
+            alert(e);
+        }
+    }, 5000);
+    */
     return true;
 }
 module.exports.makeNormalizedObj = makeNormalizedObj_;
