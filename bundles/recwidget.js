@@ -426,12 +426,43 @@
         }
     }
 
+    function getDiv(divid) {
+        let found = null;
+        try {
+            found = document.getElementById(divid);
+        }
+        catch (e) {}
+        return found;
+    }
+    var _retried = 0;
+    function start__(options) {
+        //yes for now I'd prefer it separate.
+        if (getDiv(options.container)) {
+            const newW = new OneWidget(options);
+            newW.kickOff();
+            return;
+        }
+        else {
+            if (_retried < 200) {
+                retried++;
+                setTimeout(function() {
+                    start__(options)
+                }, 500);
+            }
+        }
+    }
+
     // create a new instance of our widget based on the options
     function start_(options) {
-        // what we had not bothered to do is to maintain a map so that for a given
-        // destintation div the page do not call this twice
-        const newW = new OneWidget(options);
-        newW.kickOff();
+        if (getDiv(options.container)) {
+            const newW = new OneWidget(options);
+            newW.kickOff();
+        }
+        else {
+            setTimeout(function() {
+                start__(options)
+            }, 500);
+        }
     }
 
     //<--
