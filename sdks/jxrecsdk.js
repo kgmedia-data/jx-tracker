@@ -383,7 +383,7 @@ const mpginfo = require('../components/basic/pginfo');
                                 if (!_eventsFired.creativeView) {
                                     _eventsFired.creativeView = 1;
                                     _actions.push({
-                                        action: 'creativeView',
+                                        action: 'creativeview',
                                         elapsedms: Date.now() - _loadedTimeMs
                                     });
                                     _itemsObserver.unobserve(entry.target);
