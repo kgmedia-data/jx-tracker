@@ -444,7 +444,7 @@
         }
         else {
             if (_retried < 200) {
-                retried++;
+                _retried++;
                 setTimeout(function() {
                     start__(options)
                 }, 500);
