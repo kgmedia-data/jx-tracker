@@ -579,7 +579,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
 
     function fireTracker(trackers, action, extra = null) {
         if (trackers.actions) {
-            if (!trackers.actions.hasOwnProperty(action)) {
+            if (!trackers.actions.hasOwnProperty(action) && action != 'click') {
                 //console.log("#####WE ARE NOT MEANT TO EVER FIRE THIS!!!!!");
                 return;
             }
