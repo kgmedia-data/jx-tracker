@@ -789,12 +789,13 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                     }
                     break;
                 case "jxsuppress": {
-                    console.log("<--- WOO");
-                    console.log(this.c);
+                    //those iframe igeneric they will use our "SDK" 
+                    // it is a fake sdk coz it is just a minified snipplet which will POST a message
+                    // to THIS code!
+                    //https://jixie.atlassian.net/servicedesk/customer/portal/2/article/1855356947
                     if (this.c.trackers && this.c.trackers.actions) {
                         this.c.trackers.actions['clickonblur'] = 0; //no more chance to do
                     }
-                    console.log("<--- WOO----->");
                 }
                     break;
                 case "jxhasad":     
@@ -2212,8 +2213,9 @@ const thresholdDiff_ = 120;
                         if (c.adparameters && c.adparameters.jxeventssdk) {
                             //THIS STUFF NOT YET TESTED....
                             //We also announced this only supported for trusted case.
-                            c.noclickevents = true;
-                            sendTrackerActions = { creativeView: 1 };
+                            //c.noclickevents = true;
+                            sendTrackerActions = { creativeView: 1, impression: 1, clickonblur: 1};
+                            //sendTrackerActions = { creativeView: 1 };
                             out.adparameters = c.adparameters;
                         }
                         else {
@@ -2261,10 +2263,10 @@ const thresholdDiff_ = 120;
             }
             out.trackers = trackers;
         }
-        /* RIBBIT!!! */
+        
         if (c.adparameters && c.adparameters.jxeventssdk)
             out.jxeventssdk = 1;
-            /* */
+        
         //we no longer have this restrictions            
         //if (out.fixedHeight > 0) {
             //if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
