@@ -55,10 +55,11 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
         ad_error_function: "spotxErr" + instID
     };
     let placing = dbjson.adparameters.placing;
-    
     let otherParams;
-
     let dividAd = `ctr${instID}`;
+    let adserverParams = dbjson.adparameters.play;
+    if (!adserverParams) adserverParams = {};
+    
     
     //---- for spotx  we set up all these
     //instructional constructrs for the jxosmcore_ layer first.
@@ -87,6 +88,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
         if (!aNode) {
             return false;
         }
+        
         if (!aNode.node.id) {
             aNode.node.id = 'jxadslotparent_' + instID;
         }
@@ -106,6 +108,16 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
             selector: `#${dividAd}`,
             node: null
         };
+        //For in article better have some guideline to constrain the width
+        //else it will be very big esp for desktop
+        let width = 300;
+        if (aNode.node && !isNaN(aNode.node.offsetWidth)) {
+            width = aNode.node.offsetWidth;
+        }
+        if (width > 600) {
+            width = 600;
+        }
+        otherParams.content_width = width;
     }
     //--->
 
@@ -116,8 +128,6 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
     //Now we go generate the fragment/script, a bit more complicated than
     //other partners coz many things can be configured and difference
     //between inarticle and floating
-    let adserverParams = dbjson.adparameters.play;
-    if (!adserverParams) adserverParams = {};
     let attrStr = ``;
     const finalObj = Object.assign({}, comParams, otherParams, adserverParams);
     for (var prop in finalObj) {
@@ -128,6 +138,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
     /*
     {"adparameters": {"play": {"autoplay": 1, "ad_skippable": 1, "ad_skip_delay": 5, "media_transcoding": "low", "continue_out_of_view": 1}, "fixed": {"mobile": {"content_width": 300, "content_height": 168}, "desktop": {"content_width": 301, "content_height": 169}}, "placing": "fixed", "channel_id": 79391}}
     */
+    
     if (placing == 'fixed') {
         let szBlob = dbjson.adparameters.fixed; 
         //expected to look like the above... example json
