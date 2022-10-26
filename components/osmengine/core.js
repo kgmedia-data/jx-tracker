@@ -18,6 +18,7 @@
  * But these are combined (minified first, if needed) into 1 file for deployment
  */
 
+
 // (function() {
     //if(window.jxoutstreammgr) {
       //  return;
@@ -1373,8 +1374,32 @@
                 this.cNode.style.top = offset + 'px';
             }
         }
-       
-                        
+
+        //More and more cases of the destination item not being in the DOM when we
+        //look for it: turn the spin wait into a promise..
+        //<-- https://stackoverflow.com/questions/38213668/promise-retry-design-patterns
+        function rejectDelay(reason) {
+	        return new Promise(function(resolve, reject) {
+		        setTimeout(reject.bind(null, reason), 500); 
+	        });
+        }
+        function testok(pNode) {
+            if (pNode) return pNode;
+            throw null;
+        }
+        function createFindNodePromise(getNodeBySelectorFcn) {
+            var p = Promise.reject();
+            for(var i=0; i< 5; i++) {
+	            p = p.catch(getNodeBySelectorFcn).then(testok).catch(rejectDelay);
+            }
+            return p;
+        }
+        //p = p.then(processResult).catch(errorHandler);
+        //------>
+
+
+
+
         var _setScrollMgmt = function(doAttach, container, creativeNode) {
             if (!doAttach) {
                 _scrollObj.cNode = null;
@@ -1456,9 +1481,16 @@
             if (p.maxwidth) {
                 mw = p.maxwidth;
             }
+            let destNodeProm;
             let pNode = _getPgSelector();
-            if (pNode && pNode.node.offsetWidth > 10) {
-                mw = pNode.node.offsetWidth;
+            if (pNode) {
+                if (pNode && pNode.node.offsetWidth > 10) {
+                    mw = pNode.node.offsetWidth;
+                }
+                destNodeProm = Promise.resolve(pNode);
+            }
+            else {
+                destNodeProm = createFindNodePromise(_getPgSelector);
             }
             if (mw) url += '&maxwidth=' +mw;
             //-maxwidth->
@@ -1466,9 +1498,12 @@
             if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                 _dbgprint('_fire ad request');
             }
-            fetch(url, {
-                    method: 'GET',
-                    credentials: 'include'
+            destNodeProm
+                .then(function() {
+                    return fetch(url, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
                 })
                 .then((response) => response.json())
                 .then((responseJson) => {
