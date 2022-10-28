@@ -2824,6 +2824,23 @@ const thresholdDiff_ = 120;
                 if (ctr) {
                     _jxContainer = ctr;
                 }
+                else {
+                    //for the case of the universal snipplet served from GAM
+                    //there is no container specified.
+                    //then we just create a div and hang it onto the iframe body then.
+                    if (window!=window.top) { /* I'm in a frame! */ 
+                        // make sure it is not osm script but is universal script.
+                        if (window.jxuniv) {
+                            _jxContainer = document.createElement("div"); // create a parent div and append it to the body
+                            if (document.currentScript && document.currentScript.parentNode && document.currentScript.parentNode.nodeName.toLowerCase() != 'head') {
+                                document.currentScript.parentNode.appendChild(_jxContainer);
+                            } else {
+                                //console.log("JX - Defining the dock at the bottom of the body");
+                                document.body.appendChild(_jxContainer);
+                            }
+                        }
+                    }
+                }
             } else {
                 //For now we just quietly dun do anything then.
                 console.log("JX - Parameter is not an object");
@@ -2839,6 +2856,13 @@ const thresholdDiff_ = 120;
                 return;
             }
             //debugger;
+            //for the case of this core.js built into the jxosm script (jxosm.*.*), then
+            //if there is any JIXIE ad to render, it will be in the jsoncreativeobj64 already
+            // and no further talking to adserver. 
+
+            // It is the case of this core.js built into
+            // universal script  (jxfriendly.2.0. etc) that we still have not talked to adserver
+            // yet at this stage.
             let respBlob = null;
             if (_jxParams.jsoncreativeobj64) {
                 try {
