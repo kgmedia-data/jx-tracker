@@ -577,11 +577,26 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         }
     }
 
+    //if is blur tracker we only allow one.
+    //onblur click - at first is ok but if remove then not ok.
+
     function fireTracker(trackers, action, extra = null) {
-        if (trackers.actions) {
-            if (!trackers.actions.hasOwnProperty(action)) {
+        if (action == 'clickonblur') {
+            if (!trackers.actions['clickonblur']) {
+                //if value is 0 or property absent. then do not fire
+                //if jxsuppress had been sent by the creative,
+                //then trackers.actions['clickonblur'] would be zeroed.
                 //console.log("#####WE ARE NOT MEANT TO EVER FIRE THIS!!!!!");
                 return;
+            }
+            action = 'click';
+        }
+        else {
+            if (trackers.actions) {
+                if (!trackers.actions.hasOwnProperty(action) && action != 'click') {
+                    //console.log("#####WE ARE NOT MEANT TO EVER FIRE THIS!!!!!");
+                    return;
+                }
             }
         }
         //TODO : switch to Beacon!!
@@ -667,7 +682,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             }
             if (fire) {
                 this.lastFired = tsNow;
-                fireTracker(this.trackers, 'click');
+                fireTracker(this.trackers, 'clickonblur');
             }
 
         }
@@ -773,7 +788,15 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
 				        }
                     }
                     break;
-                case "jxsuppress":
+                case "jxsuppress": {
+                    //those iframe igeneric they will use our "SDK" 
+                    // it is a fake sdk coz it is just a minified snipplet which will POST a message
+                    // to THIS code!
+                    //https://jixie.atlassian.net/servicedesk/customer/portal/2/article/1855356947
+                    if (this.c.trackers && this.c.trackers.actions) {
+                        this.c.trackers.actions['clickonblur'] = 0; //no more chance to do
+                    }
+                }
                     break;
                 case "jxhasad":     
                     let h = this.c.realheight;
@@ -2078,16 +2101,33 @@ const thresholdDiff_ = 120;
                         out.json = JSON.parse(JSON.stringify(c));
                         break;
                     default: //igeneric
+                        /*
+                        20221024 I am making all iframe igeneric behave
+                        AS IF c.adparameter.jxeventssdk = 1;
+                        Then we no longer have the other iframe https://universal.jixie.io/iframe.1.2.html? path
+                        all will go to the below case which is "true"
+                        */
                         //e.g. the famous cid=29
                         //srcUrl = o.bUrl.iother;
                         //if it is SDK type (cid=1403, for example), then need to talk to it.
                         //and this type need to fire creative View also
                         //and also need to self fire a hasad.
                         let url ;
-                        if (c.adparameters && c.adparameters.jxeventssdk) {
-                            c.noclickevents = true;
+                        if (true) { //c.adparameters && c.adparameters.jxeventssdk) {
+                            //force lh
+                            if (!c.adparameters) { //bad
+                                c.adparameters = {}; //bad
+                            }//bad
+                            c.adparameters.jxeventssdk = 1; //bad
+                            //c.noclickevents = true;
                             url = c.url; //https://universal.jixie.io/iframe.1.1.html?'; //broker
-                            sendTrackerActions = { creativeView: 1 };
+                            sendTrackerActions = { 
+                                creativeView: 1,
+                                impression: 1,
+                                clickonblur: 1 //if the html file is integrated with our events SDK (it is just a snipplet
+                                //to pass message to this core.js), then it would have sent jxsuppress so we will
+                                //then set clickonblur to 0 (means no more chance to do that)
+                             };
                             assumeHasAd = true; //<== !!!
                             out.adparameters = c.adparameters;
                         }
@@ -2164,11 +2204,18 @@ const thresholdDiff_ = 120;
 </div>`;*/
                         assumeHasAd = true; //<== !!!
                         out[trusted? 'div':'iframe'] = { scriptbody: sbody };
+                        //force lh
+                        if (!c.adparameters) {
+                            c.adparameters = {};
+                        }
+                        c.adparameters.jxeventssdk = 1;
+
                         if (c.adparameters && c.adparameters.jxeventssdk) {
                             //THIS STUFF NOT YET TESTED....
                             //We also announced this only supported for trusted case.
-                            c.noclickevents = true;
-                            sendTrackerActions = { creativeView: 1 };
+                            //c.noclickevents = true;
+                            sendTrackerActions = { creativeView: 1, impression: 1, clickonblur: 1};
+                            //sendTrackerActions = { creativeView: 1 };
                             out.adparameters = c.adparameters;
                         }
                         else {
@@ -2216,8 +2263,10 @@ const thresholdDiff_ = 120;
             }
             out.trackers = trackers;
         }
+        
         if (c.adparameters && c.adparameters.jxeventssdk)
             out.jxeventssdk = 1;
+        
         //we no longer have this restrictions            
         //if (out.fixedHeight > 0) {
             //if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
@@ -2315,6 +2364,7 @@ const thresholdDiff_ = 120;
           this.msghandlers[e] = cb;
       }
       HooksMgr.prototype.hookBlur = function() {
+        
         let bf = __handleBlur.bind({divObjs:this.divObjs, trackers: this.trackers });
         this.cxtFcns.addListener(this.allhooks, window, "blur", bf);
       } 
@@ -2568,7 +2618,8 @@ const thresholdDiff_ = 120;
                 /**
                  * Set up on blur handler - ONLY IF needed
                  */
-                if (normCrParams.trackers && normCrParams.trackers.actions.click) {
+                if (normCrParams.trackers && 
+                    (normCrParams.trackers.actions.click || normCrParams.trackers.actions.clickonblur)) {
                     hooksMgr.hookBlur();
                 }
                 
@@ -2773,6 +2824,23 @@ const thresholdDiff_ = 120;
                 if (ctr) {
                     _jxContainer = ctr;
                 }
+                else {
+                    //for the case of the universal snipplet served from GAM
+                    //there is no container specified.
+                    //then we just create a div and hang it onto the iframe body then.
+                    if (window!=window.top) { /* I'm in a frame! */ 
+                        // make sure it is not osm script but is universal script.
+                        if (window.jxuniv) {
+                            _jxContainer = document.createElement("div"); // create a parent div and append it to the body
+                            if (document.currentScript && document.currentScript.parentNode && document.currentScript.parentNode.nodeName.toLowerCase() != 'head') {
+                                document.currentScript.parentNode.appendChild(_jxContainer);
+                            } else {
+                                //console.log("JX - Defining the dock at the bottom of the body");
+                                document.body.appendChild(_jxContainer);
+                            }
+                        }
+                    }
+                }
             } else {
                 //For now we just quietly dun do anything then.
                 console.log("JX - Parameter is not an object");
@@ -2788,6 +2856,13 @@ const thresholdDiff_ = 120;
                 return;
             }
             //debugger;
+            //for the case of this core.js built into the jxosm script (jxosm.*.*), then
+            //if there is any JIXIE ad to render, it will be in the jsoncreativeobj64 already
+            // and no further talking to adserver. 
+
+            // It is the case of this core.js built into
+            // universal script  (jxfriendly.2.0. etc) that we still have not talked to adserver
+            // yet at this stage.
             let respBlob = null;
             if (_jxParams.jsoncreativeobj64) {
                 try {
