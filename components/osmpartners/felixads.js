@@ -57,7 +57,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         }
         // we try this lah. we don't attach the script at a particular place
         // just the standard way (under osmdiv). Then we specify to them what adslot to find
-        // rtjson.scriptselector = aNode.selector;
+        rtjson.scriptselector = aNode.selector;
         rtjson.createslot = {
             diffscroll: false
         };
