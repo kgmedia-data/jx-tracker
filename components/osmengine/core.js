@@ -258,7 +258,8 @@
             //e.data = e0.data;
 
             if(typeof e.data == 'string' && e.data.startsWith('jxosm')) {
-                
+                /////console.log(`!!!! ATTENTION !!!!!!! felixads____ jxosm received message e.data is this:  ${e.data}`);
+
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_msgListener (e.data=${e.data})`);
                 }
@@ -642,6 +643,12 @@
             //events as needed. 
             if (!_jsonObj.trackers) return;
             if (_firedTrackers[action] === false) {
+                if (action == 'error' && _firedTrackers['impression']) {
+                    //some partners they try to play multiple ads. e.g. impactify
+                    //then dun let it fire an error (perhaps the second ad it failed to find)
+                    //if it already managed to fire an impression event. 
+                    return;
+                }
                 _firedTrackers[action] = true;
                 if (JX_SLACK_OR_CONSOLE_COND_COMPILE) {
                     _dbgprint(`_fireEvent (${action})`);
