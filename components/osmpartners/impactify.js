@@ -37,7 +37,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
             diffscroll: true
         };
         rtjson.createslot.parent = aNode;
-        let pageId = 'xx';
+        let pageId = 'default';
         let sslot = `divid_jxosm_impactify_${pageId}`;
         rtjson.createslot.div = {
             id: sslot,
