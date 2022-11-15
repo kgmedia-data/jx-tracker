@@ -19,7 +19,7 @@ modulesmgr.set('osmpartners/common',         mpcommon);
 
 const mpjixie       = require('../components/osmpartners/jixie');
 const mpsm          = require('../components/osmpartners/selectmedia');
-//const mpfelix       = require('../components/osmpartners/felixads');
+const mpfelix       = require('../components/osmpartners/felixads');
 const mpimpactify   = require('../components/osmpartners/impactify');
 const mpteads       = require('../components/osmpartners/teads');
 const mpunruly      = require('../components/osmpartners/unruly');
@@ -112,7 +112,7 @@ function start(options) {
     var osmInst = mosmcore.createInstance(merged, {
             jixie: mpjixie,
             selectmedia: mpsm,
-            //felixads: mpfelix,
+            felixads: mpfelix,
             teads: mpteads,
             unruly: mpunruly,
             r2b2: mpr2b2,
