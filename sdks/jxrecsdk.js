@@ -405,7 +405,7 @@ const mpginfo = require('../components/basic/pginfo');
                                 if (_itemVis[idx].t === 'ad') {
                                     _isCreativeVisible = 1;
                                     if (!_creativeEventFired.creativeView) {
-                                        _fireCreativeEvent(_itemVis[idx].trackers, 'creativeview');
+                                        _fireCreativeEvent(_itemVis[idx].trackers, 'creativeView');
                                         _creativeEventFired.creativeView = 1;
                                     }
 
