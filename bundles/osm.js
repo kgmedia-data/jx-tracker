@@ -19,6 +19,8 @@ modulesmgr.set('osmpartners/common',         mpcommon);
 
 const mpjixie       = require('../components/osmpartners/jixie');
 const mpsm          = require('../components/osmpartners/selectmedia');
+const mpfelix       = require('../components/osmpartners/felixads');
+const mpimpactify   = require('../components/osmpartners/impactify');
 const mpteads       = require('../components/osmpartners/teads');
 const mpunruly      = require('../components/osmpartners/unruly');
 const mpr2b2        = require('../components/osmpartners/r2b2');
@@ -110,10 +112,12 @@ function start(options) {
     var osmInst = mosmcore.createInstance(merged, {
             jixie: mpjixie,
             selectmedia: mpsm,
+            felixads: mpfelix,
             teads: mpteads,
             unruly: mpunruly,
             r2b2: mpr2b2,
-            spotx: mpspotx
+            spotx: mpspotx,
+            impactify: mpimpactify
             //gptpassback: mpgpt
     });
     instMap.set(hashStr, osmInst);
