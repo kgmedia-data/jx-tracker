@@ -2178,6 +2178,12 @@ const thresholdDiff_ = 120;
                         try {
                             //example is the amazon display ad.
                             sbody = atob(c.script);
+                            if (c.type == 'osm' && sbody && sbody.indexOf('googletag') > -1) {
+                                //in the interim. it seems for scripts the portal will make it 
+                                //trusted true (there is no chance to specify it in the GUI)
+                                //so for google GAM passback we force it to trusted to false here!
+                                trusted = false;
+                            }
                         }   
                         catch (err) {
                             //need to handle properly.
