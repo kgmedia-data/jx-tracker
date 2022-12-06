@@ -9,7 +9,6 @@
 
     <style>
     #some_div{
-      width:50%;
       margin-left:none;
     }
     #widgetDiv{
@@ -51,15 +50,48 @@
       window._jxvwidget.push({
         "accountid": "9262bf2590d558736cac4fff7978fcb1", 
         "container": "widgetDiv",
+        // "source": "reco",
+        "adpositions": 4,
+        // "source": "list",
+        "source": "collection",
+        "collection": 1002,
+        // "videos": [221865, 221823, 221826, 221830, 221827],
+        "widgetid": "1000150-hPH2xU3BEL",
+        "customid": "testcustomid123",
+        "count": 15,
+        // "title": "Hasil Liga Italia - Inter Milan Gagal Tendang AC Milan karena Pemain Keturunan Indonesia - Bolasport.com",
+        // "pageurl": "https://www.bolasport.com/read/312499495/hasil-liga-italia-inter-milan-gagal-tendang-ac-milan-karena-pemain-keturunan-indonesia",
         "floating": {
-
+          "width": 400,
+          "position": "top-left",
+          "marginX": 10,
+          "marginY": 20,
+        },
+        "endpoint": "https://recommendation-rc.jixie.media",
+        "player": {
+          "autoplay": "wifi",
+          //"ads": {
+          //"unit": "1000114-qEgXGqRpBy" //<--- need to be from outside
+          //},
+          "restrictions": {
+            "maxheight": 480,
+          },
+          "controls": {
+            "color": "red",
+            "backgroundcolor": "#1B63D4",
+            "bigplaybutton": "simple",
+            "font": "Roboto",
+          },
+          "soundindicator": {
+            "style": "timer",
+            "duration": 0,
+            "position": "bottom-right",
+            "text": "Click to unmute",
+          },
         }
-        //"ads": {
-         // "unit": "1000114-qEgXGqRpBy" 
-        //}
       });
   </script>
-  <script type="text/javascript" src="https://scripts.jixie.media/jxvwidget.1.0.min.js"></script>
+  <script type="text/javascript" src="https://jixie-creative-debug.s3.ap-southeast-1.amazonaws.com/universal-component/jxvwidget.1.0.min.js"></script>
    
   </body>
 </html>
