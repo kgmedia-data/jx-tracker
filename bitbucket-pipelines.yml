@@ -35,6 +35,7 @@ pipelines:
             - cd dist/bundles
             # Now to copy to AWS:
             - aws s3 cp jxrwidget.1.0.min.js s3://jx-scripts/jxrwidget.1.0.min.js --acl public-read
+            - aws s3 cp jxvwidget.1.0.min.js s3://jx-scripts/jxvwidget.1.0.min.js --acl public-read
             - cd ../sdks
             # Now to copy to AWS:
             - aws s3 cp jxrecsdk.1.0.min.js s3://jx-scripts/jxrecsdk.1.0.min.js --acl public-read

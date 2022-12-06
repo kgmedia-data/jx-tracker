@@ -80,6 +80,7 @@ function createObject_(options, ampIntegration) {
     var _pInst = null; //the actual playerWrapper object
     var _currIdx = -1; //current video index
     var _currVid = null; //current video id
+    var _videoAR = 0; // current video's aspect ratio
 
     //for the intersection observer and visibility observer stuff.
     var _obs = null;
@@ -764,6 +765,9 @@ function createObject_(options, ampIntegration) {
      }
      JXPlayerInt.prototype.loadPlaylistByPartnerId = function(param, playEndCB, forcePlatform) {
         _load(false, param, (playEndCB === undefined ? null: playEndCB), (forcePlatform === undefined ? null: forcePlatform));
+     }
+     JXPlayerInt.prototype.getRatio = function() {
+        return _videoAR;
      }
      /**
       * This is for internal testing use only: caller directly specifies a stream url.
@@ -1673,6 +1677,7 @@ function createObject_(options, ampIntegration) {
         _dbgL1VP++;
         
         _currVid = vData.id;
+        _videoAR = vData.ratio;
         _initEventsHelpers(vData, downgrade);  //per video
         
         let srcHLS = null;
