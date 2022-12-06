@@ -161,7 +161,7 @@ const supported_ = [
     {
         name: 'RECWIDGET', //name does not matter
         in: 'recwidget', //name of the file in bundles/ folder. So this one is bundles/osm.js
-        out: 'jxrwidget.1.a', //the built file is jxosm.1.0.min.js 
+        out: 'jxrwidget.1.0', //the built file is jxosm.1.0.min.js 
         floatable: 'no',
         signature: "window.jxwidget", 
         queue: "window._jxrwidget"
