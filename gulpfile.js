@@ -166,6 +166,14 @@ const supported_ = [
         signature: "window.jxwidget", 
         queue: "window._jxrwidget"
     }, 
+    {
+        name: 'RECVIDEOWIDGET', //name does not matter
+        in: 'recvwidget', //name of the file in bundles/ folder. So this one is bundles/osm.js
+        out: 'jxvwidget.1.0', //the built file is jxosm.1.0.min.js 
+        floatable: 'no',
+        signature: "window.jxvwidget", 
+        queue: "window._jxvwidget"
+    }, 
     //--------- NOT USED ACTIVITELY IN LIVE ----------------------->
 ];
   // 
