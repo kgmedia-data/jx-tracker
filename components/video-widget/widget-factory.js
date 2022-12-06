@@ -203,6 +203,7 @@ let MakeOneWidget_ = function (options) {
 
   var _playlistAPIBase =
     "https://jx-dam-api-express.azurewebsites.net/api/public/list?page=1&parts=metadata,thumbnails";
+  var _publicStreamAPIBase= "https://apidam.jixie.media/api/public/stream?metadata=full"
 
   const _playlistResponse = {
     response: "data",
@@ -442,6 +443,15 @@ let MakeOneWidget_ = function (options) {
    * @param {*} items
    */
   function _setVideoItems(items, resultObj) {
+    let version = '', recoID = null;
+    if (resultObj && resultObj.options) {
+      if (resultObj.options.version) {
+        version = resultObj.options.version;
+      }
+      if (resultObj.options.reco_id) {
+        recoID = resultObj.options.reco_id
+      }
+    }
     var vList = "";
     let widgetItemArr = [];
     items.forEach(function (item, index) {
@@ -451,7 +461,7 @@ let MakeOneWidget_ = function (options) {
         divid: divid,
         id: item.id,
         pos: index, //starts from 0
-        type: item.type ?? 'video',
+        type: item.type || 'video',
         trackers: item.trackers,
         algo: item.a,
       });
@@ -487,9 +497,36 @@ let MakeOneWidget_ = function (options) {
     addListener(_nextBtn, "click", _nextSlide);
 
     recHelperObj.items(widgetItemArr);
-    recHelperObj.ready(resultObj?.options?.version ?? '', resultObj?.options?.reco_id ?? null);
+    recHelperObj.ready(version, recoID);
 
     _playlistReadyResolve();
+  }
+
+  function _promiseCall(urlToCall) {
+    return new Promise(function(resolve, reject) {
+      var fetchOneVideo = new XMLHttpRequest();
+      fetchOneVideo.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          let response = JSON.parse(fetchOneVideo.responseText);
+          if (response.success) {
+            resolve({
+              id: response.data.video_id,
+              title: response.data.metadata.title,
+              thumbnails: response.data.metadata.thumbnail,
+              duration: response.data.metadata.duration,
+              createdon: response.data.metadata.uploadedon
+            });
+          } else {
+            reject(false);
+          }
+        }
+      };
+      fetchOneVideo.onerror = function() {
+        resolve(null);
+      }
+      fetchOneVideo.open("GET", urlToCall, true);
+      fetchOneVideo.send();
+    })
   }
 
   /**
@@ -500,14 +537,23 @@ let MakeOneWidget_ = function (options) {
    */
   function _getVideoList() {
     var retrievalURL = _playlistAPIBase;
+    if (_options.source === "list" && _options.videos) {
+      if (Array.isArray(options.videos) && _options.videos.length > 0) {
+        let promises = [];
+        _options.videos.map(function(videoID) {
+          promises.push(_promiseCall(_publicStreamAPIBase + "&video_id=" + videoID));
+        })
+        if (promises.length) {
+          Promise.all(promises).then(function(values){
+            _setVideoItems(values, null);
+          })
+        }
+        return;
+      }
+    }
     if (_options.source === "collection" && _options.collection) {
       retrievalURL += "&collection_ids=" + _options.collection;
       retrievalURL += "&limit=" + _options.count;
-    }
-    if (_options.source === "list" && _options.videos) {
-      if (Array.isArray(options.videos) && _options.videos.length > 0) {
-        retrievalURL += "&video_ids=" + _options.videos.join(",");
-      }
     }
     if (_options.source === "reco" && _options.title && _options.endpoint) {
       retrievalURL =
