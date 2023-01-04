@@ -1997,6 +1997,13 @@ const thresholdDiff_ = 120;
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
             doDiffScroll:       c.doDiffScroll
         };
+        //emergency fix problem
+        if (c.id == 3333) {
+            // not sure why the felix does not work with the differential scroll all of a sudden.
+            out.fixedHeight = 0;//
+            out.excludedheight = 0;// 
+            out.doDiffScroll = false;//
+        }
         // perhaps there will be nothing from server side.
         // just base on shape?
         // 
@@ -2761,6 +2768,7 @@ const thresholdDiff_ = 120;
                 }
                 p.maxheight = parseInt(p.maxheight) || 0;
                 
+
                 if (p.fixedheight) {
                     p.fixedHeight = p.fixedheight;
                     p.maxheight = p.fixedheight;
