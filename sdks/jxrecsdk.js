@@ -5,7 +5,8 @@ const mpginfo = require('../components/basic/pginfo');
     if (window.abcdefgh) return;
     window.abcdefgh = 1;
 
-    const sendTypeClick_ = 1;
+    //click, share, bkmark, hide
+    const sendTypeCSBH_ = 1;
     const sendTypeLoad_ = 2;
     const sendTypeGeneral_ = 3;
 
@@ -105,7 +106,7 @@ const mpginfo = require('../components/basic/pginfo');
             _trackerUrlBase += (_recVersion ? '&v=' + _recVersion: '');
             _recVersion = null; //else we keep on adding.
             var msgBody = null;
-            if (type == sendTypeClick_) {
+            if (type == sendTypeCSBH_) {
                 msgBody = msgBody0;
             }
             else if (type == sendTypeLoad_) {
@@ -210,6 +211,24 @@ const mpginfo = require('../components/basic/pginfo');
                             }
                         }).then((function() {}));
                     }
+                }
+            }
+        }
+        //click, share, bookmark and hide
+        function _CSBHCommon(itemIdx, action) {
+            const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(itemIdx))
+            if (idx > -1)  {
+                var msgBody = {
+                    actions: [{
+                        action: action,
+                        elapsedms: Date.now() - _loadedTimeMs
+                    }],
+                    items: [_itemVis[idx]]
+                };
+                _sendWhatWeHave(sendTypeCSBH_, null, msgBody);//null: is the context info
+    
+                if (_itemVis[idx].t === 'ad') {
+                    _fireCreativeEvent(_itemVis[idx].trackers, action);
                 }
             }
         }
@@ -591,21 +610,16 @@ const mpginfo = require('../components/basic/pginfo');
         // we would need to determine which item being clicked by the users
         // and map it as an object to be sent to the trackers URL
         FactoryJxRecHelper.prototype.clicked = function(itemIdx) {
-            const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(itemIdx))
-            if (idx > -1)  {
-                var msgBody = {
-                    actions: [{
-                        action: 'click',
-                        elapsedms: Date.now() - _loadedTimeMs
-                    }],
-                    items: [_itemVis[idx]]
-                };
-                _sendWhatWeHave(sendTypeClick_, null, msgBody);//null: is the context info
-    
-                if (_itemVis[idx].t === 'ad') {
-                    _fireCreativeEvent(_itemVis[idx].trackers, 'click');
-                }
-            }
+            _CSBHCommon(itemIdx, 'click');
+        }
+        FactoryJxRecHelper.prototype.shared = function(itemIdx) {
+            _CSBHCommon(itemIdx, 'share');
+        }
+        FactoryJxRecHelper.prototype.hidden = function(itemIdx) {
+            _CSBHCommon(itemIdx, 'hide');
+        }
+        FactoryJxRecHelper.prototype.bookmarked = function(itemIdx) {
+            _CSBHCommon(itemIdx, 'bkmark');
         }
         FactoryJxRecHelper.prototype.error = function(code = 0) {
             _typeLoadActions.push({
