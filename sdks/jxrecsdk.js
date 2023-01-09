@@ -87,6 +87,9 @@ const mpginfo = require('../components/basic/pginfo');
 
         var _impInterval = null;
 
+        var recResp = [];
+        var storageKey = "hidden_partner_ids";
+
         /**
          * Due to evolution this function name is not so good already
          * and it is not even a "send what we have" any more.
@@ -616,7 +619,15 @@ const mpginfo = require('../components/basic/pginfo');
             _CSBHCommon(itemIdx, 'share');
         }
         FactoryJxRecHelper.prototype.hidden = function(itemIdx) {
-            _CSBHCommon(itemIdx, 'hide');
+          _CSBHCommon(itemIdx, "hide");
+
+          if (recResp.length && recResp[itemIdx]) {
+            if (recResp[itemIdx]["page_partner_id"])
+              storeHiddenItems(
+                storageKey,
+                recResp[itemIdx]["page_partner_id"]
+              );
+          }
         }
         FactoryJxRecHelper.prototype.bookmarked = function(itemIdx) {
             _CSBHCommon(itemIdx, 'bkmark');
@@ -663,6 +674,76 @@ const mpginfo = require('../components/basic/pginfo');
         }
         FactoryJxRecHelper.prototype.getJxUserInfo = function() {
             return _basicInfo;
+        }
+        FactoryJxRecHelper.prototype.getHiddenItems = function() {
+            var hiddenItems = getHiddenItems(storageKey);
+            hiddenItems = hiddenItems ? hiddenItems.split(",") : [];
+            return hiddenItems;
+        }
+        FactoryJxRecHelper.prototype.getRecommendations = function ({
+          method = "get",
+          url,
+          data,
+          onSuccess,
+          onFailure,
+        }) {
+          return callRecommendationAPI({
+            method,
+            url,
+            data,
+            onSuccess,
+            onFailure,
+          });
+        };
+
+        function storeHiddenItems(name, value) {
+          var existing = getHiddenItems(name);
+          existing = existing ? existing.split(",") : [];
+          if (existing.findIndex(x => x === value.toString()) < 0) {
+            existing.push(value.toString());
+            localStorage.setItem(name, existing.join(","));
+          }
+        }
+
+        function getHiddenItems(name) {
+          return localStorage.getItem(name);
+        }
+
+        function callRecommendationAPI({
+          method = "get",
+          url,
+          data,
+          onSuccess,
+          onFailure,
+        }) {
+          return new Promise((resolve, reject) => {
+            if (!url) throw "No URL passed to the function";
+
+            let xhr = new XMLHttpRequest();
+            xhr.open(method.toUpperCase() || "GET", url);
+            xhr.onreadystatechange = function () {
+              if (
+                this.readyState == 4 &&
+                this.status >= 200 &&
+                this.status < 300
+              ) {
+                recResp = JSON.parse(xhr.response);
+                if (onSuccess) onSuccess(this.status, recResp);
+                resolve(recResp);
+              } else if (
+                (this.readyState == 4 && this.status < 200) ||
+                this.status >= 300
+              ) {
+                if (onFailure) onFailure(this.status, this.responseText);
+                resolve(null);
+              }
+            };
+            xhr.onerror = function () {
+              resolve(null);
+            };
+            if (data && typeof data === "string") return xhr.send(data);
+            xhr.send();
+          });
         }
 
         function _imageLoadedPromise (imageUrl){
