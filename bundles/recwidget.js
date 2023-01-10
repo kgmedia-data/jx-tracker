@@ -397,7 +397,8 @@
 
                     // this getJxUserInfo is an unpublished convenience the JX recommendation
                     // widget will call.
-                    return fetchRecommendationsP(basicInfo, recHelperObj.getJxUserInfo());
+                    return recHelperObj.getRecommendations();
+                    // return fetchRecommendationsP(basicInfo, recHelperObj.getJxUserInfo());
                 })
                 .then(function(resp) {
                     recResults = resp;       
