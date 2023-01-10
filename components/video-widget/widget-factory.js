@@ -136,9 +136,9 @@ let MakeOneFloatingWidget_ = function (parentContainer, container, options, play
    */
   function _getVideoHeight(_forceWidth = null) {
     let videoAR = 16 / 9;
-    if (_player && _player.getRatio) {
-      videoAR = _player.getRatio();
-    }
+    // if (_player && _player.getRatio) {
+    //   videoAR = _player.getRatio();
+    // }
     if (!_forceWidth) {
       return _playerContainer.offsetWidth / videoAR;
     } else {
@@ -304,8 +304,8 @@ let MakeOneWidget_ = function (options) {
       _player = JX.player(playerCfg);
     }
     _player.addListener("ready", function () {
-      if (_getVideoHeight())
-        _playerContainer.style.height = _getVideoHeight() + "px";
+      // if (_getVideoHeight())
+      //   _playerContainer.style.height = _getVideoHeight() + "px";
     });
     _player.addListener("videochange", cbOnVideoChanged);
 
