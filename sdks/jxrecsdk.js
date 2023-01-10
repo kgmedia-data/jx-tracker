@@ -88,7 +88,7 @@ const mpginfo = require('../components/basic/pginfo');
         var _impInterval = null;
 
         var recRespItems = [];
-        var STORAGE_KEY = "hidden_partner_ids";
+        var STORAGE_KEY = "jxrechidelist"; //"hidden_partner_ids";
         var STORAGE_LIMIT = 20;
 
         /**
