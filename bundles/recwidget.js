@@ -397,7 +397,14 @@
 
                     // this getJxUserInfo is an unpublished convenience the JX recommendation
                     // widget will call.
-                    return fetchRecommendationsP(basicInfo, recHelperObj.getJxUserInfo());
+                    if (recHelperObj.getRecommendations) {
+                        //in case it is still getting the old JS 
+                        //so we check here first. if the JS is the new one
+                        return recHelperObj.getRecommendations();
+                    }
+                    else {
+                        return fetchRecommendationsP(basicInfo, recHelperObj.getJxUserInfo());
+                    }
                 })
                 .then(function(resp) {
                     recResults = resp;       

@@ -31,7 +31,7 @@ function get_(options) {
     }
     // Something stupid here... what is in and what is out.
     // Getting the page information (URL and hostname and title) depending if friendly iFrame or not
-    var page = null, pagedomain = null, ttl = null, keywords = null, p_domain = null;
+    var page = null, pagedomain = null, ttl = null, keywords = null, p_domain = null, pagecategory = null;
     if (gIsFifs || !gIframe) {
         try {
             let win = gIsFifs ? window.top: window.self;
@@ -39,6 +39,10 @@ function get_(options) {
             pagedomain = win.location.hostname;
             ttl = win.document.title;
             keywords = win.document.querySelector('meta[name="keywords"]');
+            pagecategory = win.document.querySelector('meta[name="content_category"]');
+            if (pagecategory) {
+                pagecategory = pagecategory.content;
+            }
             if (!keywords && options && options.keywordsmeta) {
                 keywords = win.document.querySelector(`meta[name="${options.keywordsmeta}"]`);
             }
@@ -77,6 +81,7 @@ function get_(options) {
     if (pagedomain) ret.domain = pagedomain;
     if (page) ret.pageurl = page;
     if (keywords) ret.pagekeywords = keywords;
+    if (pagecategory) ret.pagecategory = pagecategory;
     if (ttl) ret.pagetitle = ttl;
 
     let qparams = (new window.URL(document.location)).searchParams;

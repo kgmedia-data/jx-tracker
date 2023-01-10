@@ -87,6 +87,10 @@ const mpginfo = require('../components/basic/pginfo');
 
         var _impInterval = null;
 
+        var recRespItems = [];
+        var STORAGE_KEY = "hidden_partner_ids";
+        var STORAGE_LIMIT = 20;
+
         /**
          * Due to evolution this function name is not so good already
          * and it is not even a "send what we have" any more.
@@ -329,6 +333,10 @@ const mpginfo = require('../components/basic/pginfo');
                     newObj.partner_id = options.partner_id;
                 }
                 newObj.type = "pages";
+                newObj.endpoint = "https://recommendation.jixie.media";
+                newObj.count = 6;
+                newObj.system = "jx";
+
                 if (options.title) newObj.title = options.title;
                 else if (pginfo.pagetitle) newObj.title = pginfo.pagetitle;
 
@@ -338,6 +346,9 @@ const mpginfo = require('../components/basic/pginfo');
                 if (options.pageurl) newObj.pageurl = options.pageurl;
                 else if (pginfo.pageurl) newObj.pageurl = pginfo.pageurl;
 
+                if (options.pagecategory) newObj.pagecategory = options.pagecategory;
+                else if (pginfo.pagecategory) newObj.pagecategory = pginfo.pagecategory;
+
                 if (options.accountid) newObj.accountid = options.accountid;
                 if (ids.sid) {
                     newObj.session_id = ids.sid;
@@ -346,6 +357,8 @@ const mpginfo = require('../components/basic/pginfo');
                 if (options.system) newObj.system = options.system;
                 if (options.widget_id) newObj.widget_id = options.widget_id;
                 if (options.customid) newObj.customid = options.customid;
+                if (options.endpoint) newObj.endpoint = options.endpoint;
+                if (options.count) newObj.count = options.count;
                 
                 let merged = Object.assign({}, ids, newObj);
                 return merged;
@@ -616,7 +629,12 @@ const mpginfo = require('../components/basic/pginfo');
             _CSBHCommon(itemIdx, 'share');
         }
         FactoryJxRecHelper.prototype.hidden = function(itemIdx) {
-            _CSBHCommon(itemIdx, 'hide');
+          _CSBHCommon(itemIdx, "hide");
+
+          if (recRespItems.length && recRespItems[itemIdx]) {
+            if (recRespItems[itemIdx]["page_partner_id"])
+              storeHiddenItems(recRespItems[itemIdx]["page_partner_id"]);
+          }
         }
         FactoryJxRecHelper.prototype.bookmarked = function(itemIdx) {
             _CSBHCommon(itemIdx, 'bkmark');
@@ -663,6 +681,95 @@ const mpginfo = require('../components/basic/pginfo');
         }
         FactoryJxRecHelper.prototype.getJxUserInfo = function() {
             return _basicInfo;
+        }
+        FactoryJxRecHelper.prototype.getRecommendations = function () {
+          return callRecommendationAPI();
+        };
+
+        function storeHiddenItems(value) {
+          var existing = localStorage.getItem(STORAGE_KEY);
+          existing = existing ? existing.split(",") : [];
+
+          /** check if the page_partner_id doesn't exist on the array */
+          if (existing.findIndex(x => x === value.toString()) < 0) {
+            /** 
+             * if doesn't exist then we can store it to the storage
+             * else we don't need to store the same page_partner_id
+            */ 
+            
+            /** 
+             * check if the existing array is lower than the limit
+             * then we can store it, else we replace the first index of the existing array
+            */ 
+            if (existing.length < STORAGE_LIMIT) existing.push(value.toString());
+            else existing[0] = value.toString();
+            localStorage.setItem(STORAGE_KEY, existing.join(","));
+          }
+        }
+
+        function callRecommendationAPI() {
+            let method = "GET";
+            let body = null;
+            let params = "";
+            [
+              "count",
+              "adpositions",
+              "accountid",
+              "pageurl",
+              "widget_id",
+              "keywords",
+              "title",
+              "date_published",
+              "client_id",
+              "session_id",
+              "cohort",
+              "pagecategory"
+            ].forEach(function (pname) {
+              if (_basicInfo[pname])
+                params +=
+                  "&" + pname + "=" + encodeURIComponent(_basicInfo[pname]);
+            });
+            
+            let url = _basicInfo["endpoint"] + "/v1/recommendation?type=pages" + params;
+
+            let existing = localStorage.getItem(STORAGE_KEY);
+            existing = existing ? existing.split(",") : [];
+
+            if (existing.length > 0) {
+                method = "POST";
+                body = {
+                    filter: {
+                        type: "partnerid",
+                        values: existing
+                    }
+                }
+                body = JSON.stringify(body);
+            }
+
+            return new Promise((resolve, reject) => {
+                let xhr = new XMLHttpRequest();
+                xhr.open(method, url);
+                xhr.onreadystatechange = function () {
+                if (
+                    this.readyState == 4 &&
+                    this.status >= 200 &&
+                    this.status < 300
+                ) {
+                    var recResp = JSON.parse(xhr.response);
+                    recRespItems = recResp.items;
+                    resolve(recResp);
+                } else if (
+                    (this.readyState == 4 && this.status < 200) ||
+                    this.status >= 300
+                ) {
+                    resolve(null);
+                }
+                };
+                xhr.onerror = function () {
+                    resolve(null);
+                };
+                xhr.send(body);
+            });
         }
 
         function _imageLoadedPromise (imageUrl){
