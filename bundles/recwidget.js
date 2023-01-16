@@ -402,7 +402,11 @@
                         //so we check here first. if the JS is the new one
                         return recHelperObj.getJxRecommendations();
                     }
-                    else {
+                    else if (recHelperObj.getRecommendations) {
+                        //for now have this . since the sdk js you get might not be the updated one.
+                        //we recently changed the api name
+                        return recHelperObj.getRecommendations();
+                    }else {
                         return fetchRecommendationsP(basicInfo, recHelperObj.getJxUserInfo());
                     }
                 })
