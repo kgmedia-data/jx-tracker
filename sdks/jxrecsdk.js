@@ -682,7 +682,7 @@ const mpginfo = require('../components/basic/pginfo');
         FactoryJxRecHelper.prototype.getJxUserInfo = function() {
             return _basicInfo;
         }
-        FactoryJxRecHelper.prototype.getRecommendations = function () {
+        FactoryJxRecHelper.prototype.getJxRecommendations = function () {
           return callRecommendationAPI();
         };
 
@@ -700,9 +700,9 @@ const mpginfo = require('../components/basic/pginfo');
             /** 
              * check if the existing array is lower than the limit
              * then we can store it, else we replace the first index of the existing array
-            */ 
-            if (existing.length < STORAGE_LIMIT) existing.push(value.toString());
-            else existing[0] = value.toString();
+            */
+            if (existing.length >= STORAGE_LIMIT) existing.shift();
+            existing.push(value.toString());
             localStorage.setItem(STORAGE_KEY, existing.join(","));
           }
         }
@@ -749,6 +749,7 @@ const mpginfo = require('../components/basic/pginfo');
             return new Promise((resolve, reject) => {
                 let xhr = new XMLHttpRequest();
                 xhr.open(method, url);
+                xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.onreadystatechange = function () {
                 if (
                     this.readyState == 4 &&
