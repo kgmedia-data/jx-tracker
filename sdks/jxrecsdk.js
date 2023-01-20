@@ -730,6 +730,12 @@ const mpginfo = require('../components/basic/pginfo');
         FactoryJxRecHelper.prototype.getJxUserInfo = function() {
             return _basicInfo;
         }
+
+        //Temporary but DO NOT REMOVE THE isGetJxRecWithParam if you don't understand it.
+        //Coz JX only widget and sdk are different files. 
+        //and there was a change of parameter typign for getJxRe during some stage
+        //that's why the widget calls this isGet... to be sure
+        FactoryJxRecHelper.prototype.isGetJxRecWithParam = true;
         FactoryJxRecHelper.prototype.getJxRecommendations = function (options) {
           return callRecommendationAPI(options);
         };

@@ -404,18 +404,16 @@
 
                     // this getJxUserInfo is an unpublished convenience the JX recommendation
                     // widget will call.
-                    if (recHelperObj.getJxRecommendations) {
-                        //in case it is still getting the old JS 
-                        //so we check here first. if the JS is the new one
+                    if (recHelperObj.getJxRecommendations && recHelperObj.isGetJxRecWithParam) {
+                       //coz the api param changed recently.
+                       //so we can only use the one that is the latest
+                       //so we check that the sdk we loaded actually IS THE ONE WHEREBY
+                       //the getJxRecommendations api takes an obj as param.
                         return recHelperObj.getJxRecommendations(thisObj._apiOptions);
                     }
-                    else if (recHelperObj.getRecommendations) {
-                        //for now have this . since the sdk js you get might not be the updated one.
-                        //we recently changed the api name
-                        return recHelperObj.getRecommendations(thisObj._apiOptions);
-                    }else {
+                    else {
+                        return null;
                     }
-                    return fetchRecommendationsP(basicInfo, recHelperObj.getJxUserInfo());
                 })
                 .then(function(resp) {
                     recResults = resp;       
