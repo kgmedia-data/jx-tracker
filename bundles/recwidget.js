@@ -331,6 +331,7 @@
                 title: options.title,
                 count: options.count || 6,
                 endpoint: options.endpoint || "https://recommendation.jixie.media",
+                algo: options.algo || "mixed"
             };
             this.publishedDate = document.querySelector('meta[property="article:published_time"]') || document.querySelector('meta[name="content_PublishedDate"]') || undefined;
             if (options.date_published) {

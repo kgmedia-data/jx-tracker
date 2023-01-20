@@ -363,6 +363,7 @@ const mpginfo = require('../components/basic/pginfo');
                 newObj.type = "pages";
                 newObj.endpoint = "https://recommendation.jixie.media";
                 newObj.count = 6;
+                newObj.algo = "mixed";
 
                 if (options.title) newObj.title = options.title;
                 else if (pginfo.pagetitle) newObj.title = pginfo.pagetitle;
@@ -380,6 +381,7 @@ const mpginfo = require('../components/basic/pginfo');
                 if (options.adpositions) newObj.adpositions = options.adpositions;
                 if (options.endpoint) newObj.endpoint = options.endpoint;
                 if (options.count) newObj.count = options.count;
+                if (options.algo) newObj.algo = options.algo;
                 
                 let merged = Object.assign({}, options, newObj);
                 return merged;
@@ -393,6 +395,7 @@ const mpginfo = require('../components/basic/pginfo');
             let newObj = Object.assign({}, _basicInfo, queryParamsObj)
             let params = "";
             [
+              "algo",
               "count",
               "adpositions",
               "accountid",
