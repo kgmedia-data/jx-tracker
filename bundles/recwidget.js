@@ -321,25 +321,32 @@
                 partner_id: options.partner_id,
                 partner_cookie: options.partner_cookie,
                 container: options.container,
+            };
+            if (options.utm) {
+                this._options.utm = options.utm;
+            }
+            
+            this._apiOptions = {
                 keywords: options.keywords,
                 title: options.title,
                 count: options.count || 6,
                 endpoint: options.endpoint || "https://recommendation.jixie.media",
+                algo: options.algo || "mixed"
             };
             this.publishedDate = document.querySelector('meta[property="article:published_time"]') || document.querySelector('meta[name="content_PublishedDate"]') || undefined;
-            if (options.adpositions) {
-                this._options.adpositions = options.adpositions;
-            }
-            if (options.utm) {
-                this._options.utm = options.utm;
-            }
             if (options.date_published) {
-                this._options.date_published = options.date_published;
+                this._apiOptions.date_published = options.date_published;
             } else if (this.publishedDate && this.publishedDate.content) {
-                this._options.date_published = formatDate(new Date(this.publishedDate.content));
+                this._apiOptions.date_published = formatDate(new Date(this.publishedDate.content));
             }
             if (options.customid) {
-                this._options.customid = options.customid;
+                this._apiOptions.customid = options.customid;
+            }
+            if (options.adpositions) {
+                this._apiOptions.adpositions = options.adpositions;
+            }
+            if (options.pagecategory) {
+                this._apiOptions.pagecategory = options.pagecategory;
             }
             this._count = options.count || 6;
             this._widgetType = options.type || 'normal';
@@ -392,22 +399,20 @@
                        */    
                     recHelperObj = jxRecMgr.createJxRecHelper(thisObj._options);
                     // now fire off the call to recommendation endpoint 
-                    let basicInfo = thisObj._options; //for now just use back the options obj 
+                    let basicInfo = Object.assign({}, thisObj._options, thisObj._apiOptions); //for now just use back the options obj 
                     // it has the pageurl and stuff.
 
                     // this getJxUserInfo is an unpublished convenience the JX recommendation
                     // widget will call.
-                    if (recHelperObj.getJxRecommendations) {
-                        //in case it is still getting the old JS 
-                        //so we check here first. if the JS is the new one
-                        return recHelperObj.getJxRecommendations();
+                    if (recHelperObj.getJxRecommendations && recHelperObj.isGetJxRecWithParam) {
+                       //coz the api param changed recently.
+                       //so we can only use the one that is the latest
+                       //so we check that the sdk we loaded actually IS THE ONE WHEREBY
+                       //the getJxRecommendations api takes an obj as param.
+                        return recHelperObj.getJxRecommendations(thisObj._apiOptions);
                     }
-                    else if (recHelperObj.getRecommendations) {
-                        //for now have this . since the sdk js you get might not be the updated one.
-                        //we recently changed the api name
-                        return recHelperObj.getRecommendations();
-                    }else {
-                        return fetchRecommendationsP(basicInfo, recHelperObj.getJxUserInfo());
+                    else {
+                        return null;
                     }
                 })
                 .then(function(resp) {

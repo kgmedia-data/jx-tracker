@@ -326,28 +326,16 @@ const mpginfo = require('../components/basic/pginfo');
                 }
                 catch(e) {
                 }
+                if (options.pageurl) newObj.pageurl = options.pageurl;
+                else if (pginfo.pageurl) newObj.pageurl = pginfo.pageurl;
+
                 if (namedCookie && ids && ids[namedCookie]) {
                     newObj.partner_id = ids[namedCookie];
                 }
                 else if (options.partner_id) {
                     newObj.partner_id = options.partner_id;
                 }
-                newObj.type = "pages";
-                newObj.endpoint = "https://recommendation.jixie.media";
-                newObj.count = 6;
                 newObj.system = "jx";
-
-                if (options.title) newObj.title = options.title;
-                else if (pginfo.pagetitle) newObj.title = pginfo.pagetitle;
-
-                if (options.keywords) newObj.keywords = options.keywords;
-                else if (pginfo.pagekeywords) newObj.keywords = pginfo.pagekeywords;
-
-                if (options.pageurl) newObj.pageurl = options.pageurl;
-                else if (pginfo.pageurl) newObj.pageurl = pginfo.pageurl;
-
-                if (options.pagecategory) newObj.pagecategory = options.pagecategory;
-                else if (pginfo.pagecategory) newObj.pagecategory = pginfo.pagecategory;
 
                 if (options.accountid) newObj.accountid = options.accountid;
                 if (ids.sid) {
@@ -357,8 +345,6 @@ const mpginfo = require('../components/basic/pginfo');
                 if (options.system) newObj.system = options.system;
                 if (options.widget_id) newObj.widget_id = options.widget_id;
                 if (options.customid) newObj.customid = options.customid;
-                if (options.endpoint) newObj.endpoint = options.endpoint;
-                if (options.count) newObj.count = options.count;
                 
                 let merged = Object.assign({}, ids, newObj);
                 return merged;
@@ -368,6 +354,68 @@ const mpginfo = require('../components/basic/pginfo');
                 // TODO
                 console.log("#### Error: error while extracting the options object");
             }
+        }
+
+        function _collectApiParams(options) {
+            try {
+                const pginfo = mpginfo.get();
+                let newObj = {};
+                newObj.type = "pages";
+                newObj.endpoint = "https://recommendation.jixie.media";
+                newObj.count = 6;
+                newObj.algo = "mixed";
+
+                if (options.title) newObj.title = options.title;
+                else if (pginfo.pagetitle) newObj.title = pginfo.pagetitle;
+
+                if (options.keywords) newObj.keywords = options.keywords;
+                else if (pginfo.pagekeywords) newObj.keywords = pginfo.pagekeywords;
+
+                if (options.pagecategory) newObj.pagecategory = options.pagecategory;
+                else if (pginfo.pagecategory) newObj.pagecategory = pginfo.pagecategory;
+
+                if (options.date_published) {
+                    newObj.date_published = options.date_published;
+                }
+
+                if (options.adpositions) newObj.adpositions = options.adpositions;
+                if (options.endpoint) newObj.endpoint = options.endpoint;
+                if (options.count) newObj.count = options.count;
+                if (options.algo) newObj.algo = options.algo;
+                
+                let merged = Object.assign({}, options, newObj);
+                return merged;
+            } catch (error) {
+                console.log("#### Error: error while generating the API params");
+            }
+        }
+
+        function _makeApiBaseUrl(configObj) {
+            let queryParamsObj = _collectApiParams(configObj)
+            let newObj = Object.assign({}, _basicInfo, queryParamsObj)
+            let params = "";
+            [
+              "algo",
+              "count",
+              "adpositions",
+              "accountid",
+              "pageurl",
+              "widget_id",
+              "keywords",
+              "title",
+              "date_published",
+              "client_id",
+              "session_id",
+              "cohort",
+              "pagecategory"
+            ].forEach(function (pname) {
+              if (newObj[pname])
+                params +=
+                  "&" + pname + "=" + encodeURIComponent(newObj[pname]);
+            });
+            
+            let url = newObj["endpoint"] + "/v1/recommendation?type=pages" + params;
+            return url;
         }
 
         // create the tracker URL to be called when firing the event
@@ -682,8 +730,14 @@ const mpginfo = require('../components/basic/pginfo');
         FactoryJxRecHelper.prototype.getJxUserInfo = function() {
             return _basicInfo;
         }
-        FactoryJxRecHelper.prototype.getJxRecommendations = function () {
-          return callRecommendationAPI();
+
+        //Temporary but DO NOT REMOVE THE isGetJxRecWithParam if you don't understand it.
+        //Coz JX only widget and sdk are different files. 
+        //and there was a change of parameter typign for getJxRe during some stage
+        //that's why the widget calls this isGet... to be sure
+        FactoryJxRecHelper.prototype.isGetJxRecWithParam = true;
+        FactoryJxRecHelper.prototype.getJxRecommendations = function (options) {
+          return callRecommendationAPI(options);
         };
 
         function storeHiddenItems(value) {
@@ -707,30 +761,10 @@ const mpginfo = require('../components/basic/pginfo');
           }
         }
 
-        function callRecommendationAPI() {
+        function callRecommendationAPI(options) {
             let method = "GET";
             let body = null;
-            let params = "";
-            [
-              "count",
-              "adpositions",
-              "accountid",
-              "pageurl",
-              "widget_id",
-              "keywords",
-              "title",
-              "date_published",
-              "client_id",
-              "session_id",
-              "cohort",
-              "pagecategory"
-            ].forEach(function (pname) {
-              if (_basicInfo[pname])
-                params +=
-                  "&" + pname + "=" + encodeURIComponent(_basicInfo[pname]);
-            });
-            
-            let url = _basicInfo["endpoint"] + "/v1/recommendation?type=pages" + params;
+            let url = _makeApiBaseUrl(options);
 
             let existing = localStorage.getItem(STORAGE_KEY);
             existing = existing ? existing.split(",") : [];
