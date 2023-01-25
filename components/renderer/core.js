@@ -1226,6 +1226,20 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         let jxbnFixedDiv = common.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
         let jxCoreElt = null;
 
+        let pixelUrl = 'https://traid.jixie.io/sync/ad?action=load&source=outstream';
+        if (normCrParams.trackers) {
+            pixelUrl = normCrParams.trackers.baseurl + '?' + normCrParams.trackers.parameters + '&action=load';
+        } else if (adP && adP.trackers) {
+            pixelUrl = adP.trackers.baseurl + '?' + adP.trackers.parameters + '&action=load';
+        }
+
+        let pixelElt = document.createElement('img');
+        pixelElt.src = pixelUrl;
+        pixelElt.style.cssText = 'width:1px;height:1px;';
+
+        let jxPixelDiv = common.newDiv(jxmasterDiv, 'div', null, null, 'jxp_' + id);
+        jxPixelDiv.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);height:1px;';
+        jxPixelDiv.appendChild(pixelElt);
 
         jxmasterDiv.style.position = 'relative';
         jxmasterDiv.style.margin = 'auto';
