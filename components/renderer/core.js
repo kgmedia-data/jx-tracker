@@ -1232,7 +1232,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             pixelElt.style.cssText = 'width:1px;height:1px;';
 
             let jxPixelDiv = common.newDiv(jxmasterDiv, 'div', null, null, 'jxp_' + id);
-            jxPixelDiv.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);height:1px;';
+            jxPixelDiv.style.cssText = 'position:absolute;top:0px;left:0px;height:1px;';
             jxPixelDiv.appendChild(pixelElt);
         }
         jxmasterDiv.style.position = 'relative';
