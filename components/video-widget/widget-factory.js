@@ -49,6 +49,9 @@ let MakeOneFloatingWidget_ = function (parentContainer, container, options, play
   var _floatClosed = false;
   var _observer = null;
   var styles = null;
+  var _firstViewed = false;
+
+  options.start = options.start || 'viewed';
 
   /**
    * Callback function that will be passed to the Intersection Observer API
@@ -59,9 +62,15 @@ let MakeOneFloatingWidget_ = function (parentContainer, container, options, play
    function _listenScroll(e) {
     e.forEach(function (x) {
       if (x.intersectionRatio >= IRThreshold_) {
+        if (!_firstViewed) _firstViewed = true;
         _stopFloat();
       } else {
-        _startFloat();
+        if (!_firstViewed) {
+          if (['init', 'always'].indexOf(options.start) > -1)
+          _startFloat();
+        } else {
+          _startFloat();
+        }
       }
     });
   }
@@ -127,9 +136,9 @@ let MakeOneFloatingWidget_ = function (parentContainer, container, options, play
    */
   function _getVideoHeight(_forceWidth = null) {
     let videoAR = 16 / 9;
-    if (_player && _player.getRatio) {
-      videoAR = _player.getRatio();
-    }
+    // if (_player && _player.getRatio) {
+    //   videoAR = _player.getRatio();
+    // }
     if (!_forceWidth) {
       return _playerContainer.offsetWidth / videoAR;
     } else {
@@ -141,9 +150,11 @@ let MakeOneFloatingWidget_ = function (parentContainer, container, options, play
    * Function to be called when users clicked on the close button to stop and close the floating mode
    */
   function _onCloseBtnClick() {
-    _floatClosed = true;
+    if (options.start !== 'always') {
+      _floatClosed = true;
+      if (_observer) _observer.disconnect();
+    }
     _stopFloat();
-    if (_observer) _observer.disconnect();
   }
 
   function FactoryOneFloatingWidget(parentContainer, container, options, playerInstance, styleObj) {
@@ -293,8 +304,8 @@ let MakeOneWidget_ = function (options) {
       _player = JX.player(playerCfg);
     }
     _player.addListener("ready", function () {
-      if (_getVideoHeight())
-        _playerContainer.style.height = _getVideoHeight() + "px";
+      // if (_getVideoHeight())
+      //   _playerContainer.style.height = _getVideoHeight() + "px";
     });
     _player.addListener("videochange", cbOnVideoChanged);
 
