@@ -10,6 +10,10 @@ function makeNormalizedObj_(dbjson, instID, getPageSelectorFcn, cfgBlob) {
 
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
     let appId = dbjson.adparameters.appId;
+    let style = dbjson.adparameters.style;
+    if (!style) {
+        style = 'static';
+    }
     if (!appId) { appId = 'jixie.io'; }
     let instID = rtjson.instID;
     rtjson.msgs = {
@@ -53,7 +57,7 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn, cfgBlob) {
              "appId": "${appId}",
               "container": "#${sslot}",
              "format": "screen",
-             "style": "static",
+             "style": "${style}",
              "onNoAd": function(){
                 parent.postMessage("${rtjson.msgs.noad}", "*");
              },
