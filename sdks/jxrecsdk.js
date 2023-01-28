@@ -5,7 +5,8 @@ const mpginfo = require('../components/basic/pginfo');
     if (window.abcdefgh) return;
     window.abcdefgh = 1;
 
-    const sendTypeClick_ = 1;
+    //click, share, bkmark, hide
+    const sendTypeCSBH_ = 1;
     const sendTypeLoad_ = 2;
     const sendTypeGeneral_ = 3;
 
@@ -86,6 +87,10 @@ const mpginfo = require('../components/basic/pginfo');
 
         var _impInterval = null;
 
+        var recRespItems = [];
+        var STORAGE_KEY = "jxrechidelist"; //"hidden_partner_ids";
+        var STORAGE_LIMIT = 20;
+
         /**
          * Due to evolution this function name is not so good already
          * and it is not even a "send what we have" any more.
@@ -105,7 +110,7 @@ const mpginfo = require('../components/basic/pginfo');
             _trackerUrlBase += (_recVersion ? '&v=' + _recVersion: '');
             _recVersion = null; //else we keep on adding.
             var msgBody = null;
-            if (type == sendTypeClick_) {
+            if (type == sendTypeCSBH_) {
                 msgBody = msgBody0;
             }
             else if (type == sendTypeLoad_) {
@@ -213,6 +218,24 @@ const mpginfo = require('../components/basic/pginfo');
                 }
             }
         }
+        //click, share, bookmark and hide
+        function _CSBHCommon(itemIdx, action) {
+            const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(itemIdx))
+            if (idx > -1)  {
+                var msgBody = {
+                    actions: [{
+                        action: action,
+                        elapsedms: Date.now() - _loadedTimeMs
+                    }],
+                    items: [_itemVis[idx]]
+                };
+                _sendWhatWeHave(sendTypeCSBH_, null, msgBody);//null: is the context info
+    
+                if (_itemVis[idx].t === 'ad') {
+                    _fireCreativeEvent(_itemVis[idx].trackers, action);
+                }
+            }
+        }
         function _doPgExitHooks() {
             
             if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
@@ -303,21 +326,16 @@ const mpginfo = require('../components/basic/pginfo');
                 }
                 catch(e) {
                 }
+                if (options.pageurl) newObj.pageurl = options.pageurl;
+                else if (pginfo.pageurl) newObj.pageurl = pginfo.pageurl;
+
                 if (namedCookie && ids && ids[namedCookie]) {
                     newObj.partner_id = ids[namedCookie];
                 }
                 else if (options.partner_id) {
                     newObj.partner_id = options.partner_id;
                 }
-                newObj.type = "pages";
-                if (options.title) newObj.title = options.title;
-                else if (pginfo.pagetitle) newObj.title = pginfo.pagetitle;
-
-                if (options.keywords) newObj.keywords = options.keywords;
-                else if (pginfo.pagekeywords) newObj.keywords = pginfo.pagekeywords;
-
-                if (options.pageurl) newObj.pageurl = options.pageurl;
-                else if (pginfo.pageurl) newObj.pageurl = pginfo.pageurl;
+                newObj.system = "jx";
 
                 if (options.accountid) newObj.accountid = options.accountid;
                 if (ids.sid) {
@@ -336,6 +354,68 @@ const mpginfo = require('../components/basic/pginfo');
                 // TODO
                 console.log("#### Error: error while extracting the options object");
             }
+        }
+
+        function _collectApiParams(options) {
+            try {
+                const pginfo = mpginfo.get();
+                let newObj = {};
+                newObj.type = "pages";
+                newObj.endpoint = "https://recommendation.jixie.media";
+                newObj.count = 6;
+                newObj.algo = "mixed";
+
+                if (options.title) newObj.title = options.title;
+                else if (pginfo.pagetitle) newObj.title = pginfo.pagetitle;
+
+                if (options.keywords) newObj.keywords = options.keywords;
+                else if (pginfo.pagekeywords) newObj.keywords = pginfo.pagekeywords;
+
+                if (options.pagecategory) newObj.pagecategory = options.pagecategory;
+                else if (pginfo.pagecategory) newObj.pagecategory = pginfo.pagecategory;
+
+                if (options.date_published) {
+                    newObj.date_published = options.date_published;
+                }
+
+                if (options.adpositions) newObj.adpositions = options.adpositions;
+                if (options.endpoint) newObj.endpoint = options.endpoint;
+                if (options.count) newObj.count = options.count;
+                if (options.algo) newObj.algo = options.algo;
+                
+                let merged = Object.assign({}, options, newObj);
+                return merged;
+            } catch (error) {
+                console.log("#### Error: error while generating the API params");
+            }
+        }
+
+        function _makeApiBaseUrl(configObj) {
+            let queryParamsObj = _collectApiParams(configObj)
+            let newObj = Object.assign({}, _basicInfo, queryParamsObj)
+            let params = "";
+            [
+              "algo",
+              "count",
+              "adpositions",
+              "accountid",
+              "pageurl",
+              "widget_id",
+              "keywords",
+              "title",
+              "date_published",
+              "client_id",
+              "session_id",
+              "cohort",
+              "pagecategory"
+            ].forEach(function (pname) {
+              if (newObj[pname])
+                params +=
+                  "&" + pname + "=" + encodeURIComponent(newObj[pname]);
+            });
+            
+            let url = newObj["endpoint"] + "/v1/recommendation?type=pages" + params;
+            return url;
         }
 
         // create the tracker URL to be called when firing the event
@@ -591,21 +671,21 @@ const mpginfo = require('../components/basic/pginfo');
         // we would need to determine which item being clicked by the users
         // and map it as an object to be sent to the trackers URL
         FactoryJxRecHelper.prototype.clicked = function(itemIdx) {
-            const idx = _itemVis.findIndex((item) => parseInt(item.p) === parseInt(itemIdx))
-            if (idx > -1)  {
-                var msgBody = {
-                    actions: [{
-                        action: 'click',
-                        elapsedms: Date.now() - _loadedTimeMs
-                    }],
-                    items: [_itemVis[idx]]
-                };
-                _sendWhatWeHave(sendTypeClick_, null, msgBody);//null: is the context info
-    
-                if (_itemVis[idx].t === 'ad') {
-                    _fireCreativeEvent(_itemVis[idx].trackers, 'click');
-                }
-            }
+            _CSBHCommon(itemIdx, 'click');
+        }
+        FactoryJxRecHelper.prototype.shared = function(itemIdx) {
+            _CSBHCommon(itemIdx, 'share');
+        }
+        FactoryJxRecHelper.prototype.hidden = function(itemIdx) {
+          _CSBHCommon(itemIdx, "hide");
+
+          if (recRespItems.length && recRespItems[itemIdx]) {
+            if (recRespItems[itemIdx]["page_partner_id"])
+              storeHiddenItems(recRespItems[itemIdx]["page_partner_id"]);
+          }
+        }
+        FactoryJxRecHelper.prototype.bookmarked = function(itemIdx) {
+            _CSBHCommon(itemIdx, 'bkmark');
         }
         FactoryJxRecHelper.prototype.error = function(code = 0) {
             _typeLoadActions.push({
@@ -649,6 +729,82 @@ const mpginfo = require('../components/basic/pginfo');
         }
         FactoryJxRecHelper.prototype.getJxUserInfo = function() {
             return _basicInfo;
+        }
+
+        //Temporary but DO NOT REMOVE THE isGetJxRecWithParam if you don't understand it.
+        //Coz JX only widget and sdk are different files. 
+        //and there was a change of parameter typign for getJxRe during some stage
+        //that's why the widget calls this isGet... to be sure
+        FactoryJxRecHelper.prototype.isGetJxRecWithParam = true;
+        FactoryJxRecHelper.prototype.getJxRecommendations = function (options) {
+          return callRecommendationAPI(options);
+        };
+
+        function storeHiddenItems(value) {
+          var existing = localStorage.getItem(STORAGE_KEY);
+          existing = existing ? existing.split(",") : [];
+
+          /** check if the page_partner_id doesn't exist on the array */
+          if (existing.findIndex(x => x === value.toString()) < 0) {
+            /** 
+             * if doesn't exist then we can store it to the storage
+             * else we don't need to store the same page_partner_id
+            */ 
+            
+            /** 
+             * check if the existing array is lower than the limit
+             * then we can store it, else we replace the first index of the existing array
+            */
+            if (existing.length >= STORAGE_LIMIT) existing.shift();
+            existing.push(value.toString());
+            localStorage.setItem(STORAGE_KEY, existing.join(","));
+          }
+        }
+
+        function callRecommendationAPI(options) {
+            let method = "GET";
+            let body = null;
+            let url = _makeApiBaseUrl(options);
+
+            let existing = localStorage.getItem(STORAGE_KEY);
+            existing = existing ? existing.split(",") : [];
+
+            if (existing.length > 0) {
+                method = "POST";
+                body = {
+                    filter: {
+                        type: "partnerid",
+                        values: existing
+                    }
+                }
+                body = JSON.stringify(body);
+            }
+
+            return new Promise((resolve, reject) => {
+                let xhr = new XMLHttpRequest();
+                xhr.open(method, url);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.onreadystatechange = function () {
+                if (
+                    this.readyState == 4 &&
+                    this.status >= 200 &&
+                    this.status < 300
+                ) {
+                    var recResp = JSON.parse(xhr.response);
+                    recRespItems = recResp.items;
+                    resolve(recResp);
+                } else if (
+                    (this.readyState == 4 && this.status < 200) ||
+                    this.status >= 300
+                ) {
+                    resolve(null);
+                }
+                };
+                xhr.onerror = function () {
+                    resolve(null);
+                };
+                xhr.send(body);
+            });
         }
 
         function _imageLoadedPromise (imageUrl){
