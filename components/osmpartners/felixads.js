@@ -58,6 +58,8 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
         // we try this lah. we don't attach the script at a particular place
         // just the standard way (under osmdiv). Then we specify to them what adslot to find
         rtjson.scriptselector = aNode.selector;
+        rtjson.scriptselector = '#divid_jxosm_felixads_' + sid;//hack
+
         rtjson.createslot = {
             diffscroll: false
         };
@@ -65,12 +67,42 @@ function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
             
         };
         rtjson.createslot.parent = aNode;
-        //this old stupid one I did wrongly!
+        //if the container is a DIV for GAM then it could be 1x1
+        //then we need to do some walking to figure out what width for the 
+        //thing. 
+        //so we walk up the divs to look at the surroundings then!
+        //this code should not be here but at a more generic level.
+        //Coz this is a characteristic need to GAM deployed partners scripts
+        //and it is not a felixads things.
+        //but tomorrow I am going on roadtrip. so at least put something here first.
         let sslot = 'divid_jxosm_felixads_' + sid;
-        console.log(`felixads____  jxosm will create div ${sslot} for felixads to put the ad`);
+        //console.log(`felixads____  jxosm will create div ${sslot} for felixads to put the ad`);
+        let mw = 1;
+        try {
+            let tmpNode = aNode.node;
+            let times = 0;
+            while (tmpNode && times <= 4) {
+                times++;
+                if (tmpNode.offsetWidth > 200) {//something real looking.
+                    mw = tmpNode.offsetWidth;
+                    break;
+                }
+                else {
+                    tmpNode = tmpNode.parentElement;
+                }
+            }
+        }
+        catch(eeee) {
+        }
+        if (mw > 200) {
+            mw = Math.round(mw);
+        }
+        else {
+            mw = 300;
+        }
         rtjson.createslot.div = {
             id: sslot,
-            css: `width:100%;`,
+            css: `position:relative;width:${mw}px;height:auto;`,
             node: null
         };
         rtjson.visibilityslot = {

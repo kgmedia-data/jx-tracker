@@ -1251,14 +1251,22 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             jxbnDiv.style.maxHeight = normCrParams.maxheight + 'px';
         }
         
-        jxbnDiv.style.height = normCrParams.height + 'px';
+        if (normCrParams.is1x1) {
+            jxbnDiv.style.height = '100%';
+        }
+        else {
+            jxbnDiv.style.height = normCrParams.height + 'px';
+        }
+        jxbnDiv.style.height = '100%';
         jxbnDiv.style.width = '100%';
-        jxbnFixedDiv.style.width = normCrParams.width + 'px';
-        jxbnFixedDiv.style.height = normCrParams.height + 'px';
-        jxbnScaleDiv.style.width = (normCrParams.width ) + 'px';
-        //jxbnScaleDiv.style.border = '1px solid black'; //renee
-        //jxbnScaleDiv.style.zIndex = 99999999;
-        jxbnScaleDiv.style.height = (normCrParams.height ) + 'px';
+        if (!normCrParams.is1x1) {
+            jxbnFixedDiv.style.width = normCrParams.width + 'px';
+            jxbnFixedDiv.style.height = normCrParams.height + 'px';
+            jxbnScaleDiv.style.width = (normCrParams.width ) + 'px';
+            //jxbnScaleDiv.style.border = '1px solid black'; //renee
+            //jxbnScaleDiv.style.zIndex = 99999999;
+            jxbnScaleDiv.style.height = (normCrParams.height ) + 'px';
+        }
 
         //differential scroll:
         /**
@@ -1289,15 +1297,25 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
          
         jxCoreElt.style.maxWidth = 'none !important'; 
         jxCoreElt.style.maxHeight = 'none !important';
+        if (!normCrParams.is1x1) {
         jxCoreElt.style.position = 'absolute';
+        }
+        else {
+            jxCoreElt.style.position = 'relative';
+        }
         jxCoreElt.style.left = '0';
         jxCoreElt.style.top = '0';
         jxCoreElt.style.backgroundColor = 'white';
         jxCoreElt.style.border = 'none';
         
-        jxCoreElt.style.width = normCrParams.width + 'px';
-        
-        jxCoreElt.style.height = normCrParams.height + 'px';
+        if (!normCrParams.is1x1) {
+            jxCoreElt.style.width = normCrParams.width + 'px';
+            jxCoreElt.style.height = normCrParams.height + 'px';
+        }
+        else {
+            jxCoreElt.style.width = '100%';
+            jxCoreElt.style.height = '100%';
+        }
 
         //at this stage it is unclear to me if we really need to remember all these things:
         divObjs.jxmasterDiv = jxmasterDiv;
@@ -1997,12 +2015,25 @@ const thresholdDiff_ = 120;
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
             doDiffScroll:       c.doDiffScroll
         };
+        if (c.type == 'osm' && c.subtype == 'script' && c.width == 1 && c.height == 1) {
+            out.is1x1 = true;
+            out.fixedHeight = 0;//
+            out.excludedheight = 0;// 
+            out.doDiffScroll = false;//
+            if (jxParams.maxwidth > 0) {
+                out.maxwidth = jxParams.maxwidth;
+            }
+            if (jxParams.maxheight > 0) {
+                out.maxheight = jxParams.maxheight;
+            }
+        }
+        //console.log(JSON.stringify(out, null, 2));
         // perhaps there will be nothing from server side.
         // just base on shape?
         // 
         if (JX_FLOAT_COND_COMPILE) {
             let device = (common.isMobile() ? 'mobile': 'desktop');
-            console.log(`context: ### ${jxParams.context}`);
+            //console.log(`context: ### ${jxParams.context}`);
             //for amp there is not floating:
             if (jxParams.context != 'amp' && 
                 (jxParams.floating == 'always' || jxParams.floating == 'creative' && c[u_] && c[u_].floating)) {
@@ -2761,6 +2792,7 @@ const thresholdDiff_ = 120;
                 }
                 p.maxheight = parseInt(p.maxheight) || 0;
                 
+
                 if (p.fixedheight) {
                     p.fixedHeight = p.fixedheight;
                     p.maxheight = p.fixedheight;
@@ -2874,6 +2906,7 @@ const thresholdDiff_ = 120;
                 try {
                     let json =  atob(_jxParams.jsoncreativeobj64);
                     if (json) {
+
                         json = JSON.parse(json);
                         respBlob = {
                             pre: 1,
