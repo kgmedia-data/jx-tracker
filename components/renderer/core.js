@@ -1226,7 +1226,15 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         let jxbnFixedDiv = common.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
         let jxCoreElt = null;
 
+        if (normCrParams.loadtrackerurl) {
+            let pixelElt = document.createElement('img');
+            pixelElt.src = normCrParams.loadtrackerurl;
+            pixelElt.style.cssText = 'width:1px;height:1px;';
 
+            let jxPixelDiv = common.newDiv(jxmasterDiv, 'div', null, null, 'jxp_' + id);
+            jxPixelDiv.style.cssText = 'position:absolute;top:0px;left:0px;height:1px;';
+            jxPixelDiv.appendChild(pixelElt);
+        }
         jxmasterDiv.style.position = 'relative';
         jxmasterDiv.style.margin = 'auto';
         jxbnDiv.style.position = 'relative';
@@ -1983,9 +1991,11 @@ const thresholdDiff_ = 120;
         let sendTrackerActions = null; 
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
         let clicktrackerurl = null;
+        let loadtrackerurl = null;
         if (trackers) {
             //need for universal mgr init:
             clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
+            loadtrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=load';
         }
 
         // Currently the likes of R2B2 they are not properly integrated with our OSM stack, so
@@ -2300,7 +2310,9 @@ const thresholdDiff_ = 120;
             }
             out.trackers = trackers;
         }
-        
+        if (loadtrackerurl) {
+            out.loadtrackerurl = loadtrackerurl;
+        }
         if (c.adparameters && c.adparameters.jxeventssdk)
             out.jxeventssdk = 1;
         
