@@ -684,6 +684,19 @@ const mpginfo = require('../components/basic/pginfo');
               storeHiddenItems(recRespItems[itemIdx]["page_partner_id"]);
           }
         }
+        FactoryJxRecHelper.prototype.unhide = function(itemIdx) {
+					if (recRespItems.length && recRespItems[itemIdx]) {
+						var value = recRespItems[itemIdx]["page_partner_id"];
+						if (value) {
+							var existing = localStorage.getItem(STORAGE_KEY);
+							existing = existing ? existing.split(",") : [];
+							if (existing.findIndex(x => x === value.toString()) > -1) {
+								var newValues = existing.filter(x => x !== value);
+								localStorage.setItem(STORAGE_KEY, newValues.join(","));
+							}
+						}
+					}
+        }
         FactoryJxRecHelper.prototype.bookmarked = function(itemIdx) {
             _CSBHCommon(itemIdx, 'bkmark');
         }
