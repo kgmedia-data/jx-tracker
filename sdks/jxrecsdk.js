@@ -356,6 +356,10 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
 
+        function padTo2Digits(num) {
+            return num.toString().padStart(2, '0');
+        }
+
         function formatDate(date) {
             return [
                 date.getFullYear(),
