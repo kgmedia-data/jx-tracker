@@ -356,8 +356,21 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
 
+        function padTo2Digits(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        function formatDate(date) {
+            return [
+                date.getFullYear(),
+                padTo2Digits(date.getMonth() + 1),
+                padTo2Digits(date.getDate()),
+            ].join('-');
+        }
+
         function _collectApiParams(options) {
             try {
+                let publishedDate = document.querySelector('meta[property="article:published_time"]') || document.querySelector('meta[name="content_PublishedDate"]') || undefined;
                 const pginfo = mpginfo.get();
                 let newObj = {};
                 newObj.type = "pages";
@@ -376,6 +389,8 @@ const mpginfo = require('../components/basic/pginfo');
 
                 if (options.date_published) {
                     newObj.date_published = options.date_published;
+                } else if (publishedDate && publishedDate.content) {
+                    newObj.date_published = formatDate(new Date(publishedDate.content));
                 }
 
                 if (options.adpositions) newObj.adpositions = options.adpositions;
