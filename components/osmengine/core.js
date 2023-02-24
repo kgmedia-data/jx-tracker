@@ -520,6 +520,10 @@
                         cn = getAnElt('#' + _jsonObj.createslot.div.id, parentNode);
                         if(!cn) {
                             cn = document.createElement("div");
+                            if (_jsonObj.createslot.div.siblingid) {
+                                let sibcn = document.createElement("div");
+                                cn.appendChild(sibcn);
+                            }
                             cn.id = _jsonObj.createslot.div.id;
                             if (_jsonObj.createslot.div.css) {
                                 cn.style.cssText = _jsonObj.createslot.div.css;
@@ -1440,7 +1444,7 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            [ 'fixedheight','excludedheight',
+            [ 'fixedheight','excludedheight', 'gamclicktracking',
               'maxwidth','maxheight','gam',
               'floating','floatparams',
               'closebutton',
