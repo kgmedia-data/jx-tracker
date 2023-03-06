@@ -1299,9 +1299,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             jxmasterDiv.style.height = "100%";
             jxbnDiv.style.height = "100%";
             jxbnScaleDiv.style.height = "auto";
-            jxbnScaleDiv.style.position = "absolute";
-            jxbnScaleDiv.style.inset = "0px";
-            jxbnScaleDiv.style.top = "0px"; //it will be changed upon some scrolling
+            // jxbnScaleDiv.style.position = "absolute";
+            // jxbnScaleDiv.style.inset = "0px";
+            // jxbnScaleDiv.style.top = "0px"; //it will be changed upon some scrolling
         }
         //--->
        
@@ -1606,7 +1606,13 @@ const thresholdDiff_ = 120;
         {
             //we set the top= offset only if it is different from last set.
             this.savedoffset = offset;
-            jxbnScaleDiv.style.top = offset +  'px'; 
+            let el = jxbnScaleDiv;
+            el.style.transform += " translateY("+offset+"px)";
+            var regex = /(translateY)(\(.*(?:px\)))/g;
+            if (el.style.transform.match(regex).length != -1) {
+                el.style.transform = el.style.transform.replace(regex, '$1(' + offset + 'px)'); // $1 is first capturing group which is "translateY"
+            }
+            //jxbnScaleDiv.style.top = offset +  'px'; 
         }
     }
 
