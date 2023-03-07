@@ -79,6 +79,7 @@ const mpginfo = require('../components/basic/pginfo');
         }
 
         var _recoID = null;
+        var _recoType = null;
 
         var _documentEvents = ['scroll', 'click'];
         var _idleTimer;
@@ -453,6 +454,7 @@ const mpginfo = require('../components/basic/pginfo');
                 });
                 if (basicInfo.pageurl) trackerParams += '&page=' + decodeURIComponent(basicInfo.pageurl);
                 if (_recoID) trackerParams += '&reco_id=' + _recoID;
+                if (_recoType) trackerParams += '&t=' + _recoType;
             }
             return trackerBaseUrl + '?' + trackerParams;
         }
@@ -727,7 +729,9 @@ const mpginfo = require('../components/basic/pginfo');
             if (version) {
                 _recVersion = version;
             }
-            _recoID = reco_id ? reco_id : generateRecoID();
+            if (!_recoID) {
+                _recoID = reco_id ? reco_id : generateRecoID();
+            }
             if (_imagePromises.length > 0) {
                 Promise.all(_imagePromises).then(function() {
                     if (!_readyBlkRun) {
@@ -819,6 +823,15 @@ const mpginfo = require('../components/basic/pginfo');
                     this.status < 300
                 ) {
                     var recResp = JSON.parse(xhr.response);
+                    // use the reco_id from the recommendation API response instead
+                    // if the publisher only use our SDK without the widget
+                    if (recResp.options && recResp.options.reco_id) {
+                        _recoID = recResp.options.reco_id;
+                    }
+                    if (recResp.options && recResp.options.t) {
+                        _recoType = recResp.options.t;
+                    }
+
                     recRespItems = recResp.items;
                     resolve(recResp);
                 } else if (
