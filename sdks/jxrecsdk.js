@@ -430,7 +430,8 @@ const mpginfo = require('../components/basic/pginfo');
               "session_id",
               "cohort",
               "pagecategory",
-              "sessionseg"
+              "sessionseg",
+              "page",
             ].forEach(function (pname) {
               if (newObj[pname])
                 params +=
