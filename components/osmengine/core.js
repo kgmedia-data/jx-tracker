@@ -1440,7 +1440,7 @@
                 _dbgprint('_init');
             }
             //pardon the bad variable naming for now. will fix
-            [ 'fixedheight','excludedheight',
+            [ 'fixedheight','excludedheight', 'gamclicktracking',
               'maxwidth','maxheight','gam',
               'floating','floatparams',
               'closebutton',
