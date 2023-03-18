@@ -79,6 +79,7 @@ const mpginfo = require('../components/basic/pginfo');
         }
 
         var _recoID = null;
+        var _recoType = null;
 
         var _documentEvents = ['scroll', 'click'];
         var _idleTimer;
@@ -356,8 +357,21 @@ const mpginfo = require('../components/basic/pginfo');
             }
         }
 
+        function padTo2Digits(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        function formatDate(date) {
+            return [
+                date.getFullYear(),
+                padTo2Digits(date.getMonth() + 1),
+                padTo2Digits(date.getDate()),
+            ].join('-');
+        }
+
         function _collectApiParams(options) {
             try {
+                let publishedDate = document.querySelector('meta[property="article:published_time"]') || document.querySelector('meta[name="content_PublishedDate"]') || undefined;
                 const pginfo = mpginfo.get();
                 let newObj = {};
                 newObj.type = "pages";
@@ -376,6 +390,8 @@ const mpginfo = require('../components/basic/pginfo');
 
                 if (options.date_published) {
                     newObj.date_published = options.date_published;
+                } else if (publishedDate && publishedDate.content) {
+                    newObj.date_published = formatDate(new Date(publishedDate.content));
                 }
 
                 if (options.adpositions) newObj.adpositions = options.adpositions;
@@ -438,6 +454,7 @@ const mpginfo = require('../components/basic/pginfo');
                 });
                 if (basicInfo.pageurl) trackerParams += '&page=' + decodeURIComponent(basicInfo.pageurl);
                 if (_recoID) trackerParams += '&reco_id=' + _recoID;
+                if (_recoType) trackerParams += '&t=' + _recoType;
             }
             return trackerBaseUrl + '?' + trackerParams;
         }
@@ -684,6 +701,19 @@ const mpginfo = require('../components/basic/pginfo');
               storeHiddenItems(recRespItems[itemIdx]["page_partner_id"]);
           }
         }
+        FactoryJxRecHelper.prototype.unhidden = function(itemIdx) {
+					if (recRespItems.length && recRespItems[itemIdx]) {
+						var value = recRespItems[itemIdx]["page_partner_id"];
+						if (value) {
+							var existing = localStorage.getItem(STORAGE_KEY);
+							existing = existing ? existing.split(",") : [];
+							if (existing.findIndex(x => x === value.toString()) > -1) {
+								var newValues = existing.filter(x => x !== value);
+								localStorage.setItem(STORAGE_KEY, newValues.join(","));
+							}
+						}
+					}
+        }
         FactoryJxRecHelper.prototype.bookmarked = function(itemIdx) {
             _CSBHCommon(itemIdx, 'bkmark');
         }
@@ -699,7 +729,9 @@ const mpginfo = require('../components/basic/pginfo');
             if (version) {
                 _recVersion = version;
             }
-            _recoID = reco_id ? reco_id : generateRecoID();
+            if (!_recoID) {
+                _recoID = reco_id ? reco_id : generateRecoID();
+            }
             if (_imagePromises.length > 0) {
                 Promise.all(_imagePromises).then(function() {
                     if (!_readyBlkRun) {
@@ -791,6 +823,15 @@ const mpginfo = require('../components/basic/pginfo');
                     this.status < 300
                 ) {
                     var recResp = JSON.parse(xhr.response);
+                    // use the reco_id from the recommendation API response instead
+                    // if the publisher only use our SDK without the widget
+                    if (recResp.options && recResp.options.reco_id) {
+                        _recoID = recResp.options.reco_id;
+                    }
+                    if (recResp.options && recResp.options.t) {
+                        _recoType = recResp.options.t;
+                    }
+
                     recRespItems = recResp.items;
                     resolve(recResp);
                 } else if (
