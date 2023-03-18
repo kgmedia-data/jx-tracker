@@ -579,7 +579,18 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
 
     //if is blur tracker we only allow one.
     //onblur click - at first is ok but if remove then not ok.
-
+    function fire3PTrackers(urls) {
+        if (urls && Array.isArray(urls) && urls.length > 0) {
+        fetch(urls[0], {
+            method: 'get',
+            mode: 'no-cors', // no-cors, *cors, same-origin
+            //credentials: 'include' 
+        })
+        .catch((ee) => {
+        });
+        }
+    }
+    
     function fireTracker(trackers, action, extra = null) {
         if (action == 'clickonblur') {
             if (!trackers.actions['clickonblur']) {
@@ -783,6 +794,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                         // and not our stuff.
                         let extra = (json.params && json.params.id ? 'clickid='+json.params.id: null);
                         fireTracker(this.c.trackers, 'click', extra);
+                        fire3PTrackers(this.c.gamclicktracking);
 				        if (json.params && json.params.url) {
 					        window.open(json.params.url)
 				        }
@@ -1079,6 +1091,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                 jxCoreElt.innerHTML = '<a style="border-bottom: none;" href="' + blob.image.clickurl + '" target="_blank"><img src="' + blob.image.url + '" class="jxImg"/></a>';
                 common.addListener(jxCoreElt, 'click', (e) => {
                     fireTracker(blob.image.trackers, 'click');
+                    //fire3PTrackers(this.c.gamclicktracking);
                 });
             }
             else if (blob.scripturl) {
@@ -1226,7 +1239,15 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         let jxbnFixedDiv = common.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
         let jxCoreElt = null;
 
+        if (normCrParams.loadtrackerurl) {
+            let pixelElt = document.createElement('img');
+            pixelElt.src = normCrParams.loadtrackerurl;
+            pixelElt.style.cssText = 'width:1px;height:1px;';
 
+            let jxPixelDiv = common.newDiv(jxmasterDiv, 'div', null, null, 'jxp_' + id);
+            jxPixelDiv.style.cssText = 'position:absolute;top:0px;left:0px;height:1px;';
+            jxPixelDiv.appendChild(pixelElt);
+        }
         jxmasterDiv.style.position = 'relative';
         jxmasterDiv.style.margin = 'auto';
         jxbnDiv.style.position = 'relative';
@@ -1278,9 +1299,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             jxmasterDiv.style.height = "100%";
             jxbnDiv.style.height = "100%";
             jxbnScaleDiv.style.height = "auto";
-            jxbnScaleDiv.style.position = "absolute";
-            jxbnScaleDiv.style.inset = "0px";
-            jxbnScaleDiv.style.top = "0px"; //it will be changed upon some scrolling
+            // jxbnScaleDiv.style.position = "absolute";
+            // jxbnScaleDiv.style.inset = "0px";
+            // jxbnScaleDiv.style.top = "0px"; //it will be changed upon some scrolling
         }
         //--->
        
@@ -1585,7 +1606,13 @@ const thresholdDiff_ = 120;
         {
             //we set the top= offset only if it is different from last set.
             this.savedoffset = offset;
-            jxbnScaleDiv.style.top = offset +  'px'; 
+            let el = jxbnScaleDiv;
+            el.style.transform += " translateY("+offset+"px)";
+            var regex = /(translateY)(\(.*(?:px\)))/g;
+            if (el.style.transform.match(regex).length != -1) {
+                el.style.transform = el.style.transform.replace(regex, '$1(' + offset + 'px)'); // $1 is first capturing group which is "translateY"
+            }
+            //jxbnScaleDiv.style.top = offset +  'px'; 
         }
     }
 
@@ -1983,9 +2010,11 @@ const thresholdDiff_ = 120;
         let sendTrackerActions = null; 
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
         let clicktrackerurl = null;
+        let loadtrackerurl = null;
         if (trackers) {
             //need for universal mgr init:
             clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
+            loadtrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=loadpixel';
         }
 
         // Currently the likes of R2B2 they are not properly integrated with our OSM stack, so
@@ -2015,6 +2044,9 @@ const thresholdDiff_ = 120;
             excludedHeight:     jxParams.excludedHeight ? jxParams.excludedHeight: 0,
             doDiffScroll:       c.doDiffScroll
         };
+        if (jxParams.gamclicktracking) {
+            out.gamclicktracking = jxParams.gamclicktracking;
+        }
         if (c.type == 'osm' && c.subtype == 'script' && c.width == 1 && c.height == 1) {
             out.is1x1 = true;
             out.fixedHeight = 0;//
@@ -2300,7 +2332,9 @@ const thresholdDiff_ = 120;
             }
             out.trackers = trackers;
         }
-        
+        if (loadtrackerurl) {
+            out.loadtrackerurl = loadtrackerurl;
+        }
         if (c.adparameters && c.adparameters.jxeventssdk)
             out.jxeventssdk = 1;
         
