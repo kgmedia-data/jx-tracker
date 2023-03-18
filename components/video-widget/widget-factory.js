@@ -563,7 +563,7 @@ let MakeOneWidget_ = function (options) {
       }
     }
     if (_options.source === "collection" && _options.collection) {
-      retrievalURL += "&collection_ids=" + _options.collection;
+      retrievalURL += "&collection_ids=" + _options.collection + "&accountid=" + _options.accountid;
       retrievalURL += "&limit=" + _options.count;
     }
     if (_options.source === "reco" && _options.title && _options.endpoint) {
