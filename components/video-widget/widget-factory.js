@@ -591,13 +591,14 @@ let MakeOneWidget_ = function (options) {
       });
     }
 
-    if (_videoHistory.length > 0) {
-      method = "POST";
-      body = {
-        history: _videoHistory
-      };
-      body = JSON.stringify(body);
-    }
+    /** Temporarily commented until the API fixed */
+    // if (_videoHistory.length > 0) {
+    //   method = "POST";
+    //   body = {
+    //     history: _videoHistory
+    //   };
+    //   body = JSON.stringify(body);
+    // }
 
     var fetchVideo = new XMLHttpRequest();
     fetchVideo.onreadystatechange = function () {
