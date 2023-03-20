@@ -91,6 +91,8 @@ const mpginfo = require('../components/basic/pginfo');
         var recRespItems = [];
         var STORAGE_KEY = "jxrechidelist"; //"hidden_partner_ids";
         var STORAGE_LIMIT = 20;
+        var SESSION_LIFETIME = 30; //Cookie's lifetime for sesison segment is 30 minutes
+        var SESSION_COOKIE_NAME = "_jxrecsessionseg"; //cookie's name of session segment
 
         /**
          * Due to evolution this function name is not so good already
@@ -407,8 +409,12 @@ const mpginfo = require('../components/basic/pginfo');
         }
 
         function _makeApiBaseUrl(configObj) {
-            let queryParamsObj = _collectApiParams(configObj)
-            let newObj = Object.assign({}, _basicInfo, queryParamsObj)
+            let queryParamsObj = _collectApiParams(configObj);
+            let newObj = Object.assign({}, _basicInfo, queryParamsObj);
+
+            let currentSessionSeg = getSessionSegment();
+            if (currentSessionSeg) newObj["sessionseg"] = currentSessionSeg;
+
             let params = "";
             [
               "algo",
@@ -423,7 +429,8 @@ const mpginfo = require('../components/basic/pginfo');
               "client_id",
               "session_id",
               "cohort",
-              "pagecategory"
+              "pagecategory",
+              "sessionseg"
             ].forEach(function (pname) {
               if (newObj[pname])
                 params +=
@@ -793,6 +800,19 @@ const mpginfo = require('../components/basic/pginfo');
           }
         }
 
+        /** Store the session segment to the cookie, this session segment will be retrieved from Reco API response */
+        function setSessionSegment(value) {
+            const maxAge = SESSION_LIFETIME*60; //cookie expiration
+            document.cookie = SESSION_COOKIE_NAME + "=" + value + "; max-age=" + maxAge + "; path=/;";
+        }
+
+        /** Getting the stored session segment on the cookie */
+        function getSessionSegment() {
+            var value = `; ${document.cookie}`;
+            var parts = value.split(`; ${SESSION_COOKIE_NAME}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
         function callRecommendationAPI(options) {
             let method = "GET";
             let body = null;
@@ -830,6 +850,17 @@ const mpginfo = require('../components/basic/pginfo');
                     }
                     if (recResp.options && recResp.options.t) {
                         _recoType = recResp.options.t;
+                    }
+
+                    // check if there is any sessionseg property from the Reco API's response
+                    if (recResp.options && recResp.options.sessionseg) {
+                        // and then we check if we already have the session segment stored on the cookie
+                        // if the cookie is expired or we didn't have it yet
+                        // then we can store the session segment to the cookie
+                        let currentSessionSeg = getSessionSegment(); // this will returns undefined if the cookie is expired or we didn't have it yet
+                        if (!currentSessionSeg) {
+                            setSessionSegment(recResp.options.sessionseg);
+                        }
                     }
 
                     recRespItems = recResp.items;
