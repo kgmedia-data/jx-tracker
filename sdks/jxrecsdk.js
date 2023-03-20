@@ -93,6 +93,7 @@ const mpginfo = require('../components/basic/pginfo');
         var STORAGE_LIMIT = 20;
         var SESSION_LIFETIME = 30; //Cookie's lifetime for sesison segment is 30 minutes
         var SESSION_COOKIE_NAME = "_jxrecsessionseg"; //cookie's name of session segment
+        var ARTICLES_HISTORY_KEY = "_jxpitems"; //"saved article IDs";
 
         /**
          * Due to evolution this function name is not so good already
@@ -822,14 +823,19 @@ const mpginfo = require('../components/basic/pginfo');
             let existing = localStorage.getItem(STORAGE_KEY);
             existing = existing ? existing.split(",") : [];
 
-            if (existing.length > 0) {
+            let articleHistory = localStorage.getItem(ARTICLES_HISTORY_KEY);
+            articleHistory = articleHistory ? JSON.parse(articleHistory) : [];
+
+            if (existing.length > 0 || articleHistory.length > 0) {
                 method = "POST";
-                body = {
-                    filter: {
+                body = {};
+                if (existing.length > 0) {
+                    body["filter"] = {
                         type: "partnerid",
                         values: existing
                     }
                 }
+                if (articleHistory.length > 0) body["history"] = articleHistory;
                 body = JSON.stringify(body);
             }
 

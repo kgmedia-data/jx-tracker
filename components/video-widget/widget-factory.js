@@ -7,6 +7,7 @@ const nextBtnID = "nextBtnWidget";
 const prevBtnID = "prevBtnWidget";
 const videoListID = "videoListWidget";
 const playerID = "player";
+const VIDEOS_HISTORY_KEY = "_jxVideoHist";
 
 var IRThreshold_ = 0.1;
 
@@ -547,7 +548,12 @@ let MakeOneWidget_ = function (options) {
    * and append the needed value as query parameters e.g collection_ids, video_ids, title, widgetid, etc
    */
   function _getVideoList() {
+    let method = "GET";
+    let body = null;
     var retrievalURL = _playlistAPIBase;
+    let _videoHistory = localStorage.getItem(VIDEOS_HISTORY_KEY);
+    _videoHistory = _videoHistory ? JSON.parse(_videoHistory) : [];
+
     if (_options.source === "list" && _options.videos) {
       if (Array.isArray(options.videos) && _options.videos.length > 0) {
         let promises = [];
@@ -584,6 +590,15 @@ let MakeOneWidget_ = function (options) {
         }
       });
     }
+
+    if (_videoHistory.length > 0) {
+      method = "POST";
+      body = {
+        history: _videoHistory
+      };
+      body = JSON.stringify(body);
+    }
+
     var fetchVideo = new XMLHttpRequest();
     fetchVideo.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
@@ -593,8 +608,8 @@ let MakeOneWidget_ = function (options) {
         }
       }
     };
-    fetchVideo.open("GET", retrievalURL, true);
-    fetchVideo.send();
+    fetchVideo.open(method, retrievalURL, true);
+    fetchVideo.send(body);
   }
 
   /**
