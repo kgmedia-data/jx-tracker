@@ -7,7 +7,7 @@ const nextBtnID = "nextBtnWidget";
 const prevBtnID = "prevBtnWidget";
 const videoListID = "videoListWidget";
 const playerID = "player";
-const VIDEOS_HISTORY_KEY = "_jxVideoHist";
+const VIDEOS_HISTORY_KEY = "_jxvidhist";
 
 var IRThreshold_ = 0.1;
 
