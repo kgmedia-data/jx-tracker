@@ -610,6 +610,7 @@ let MakeOneWidget_ = function (options) {
       }
     };
     fetchVideo.open(method, retrievalURL, true);
+    fetchVideo.setRequestHeader('Content-Type', 'application/json');
     fetchVideo.send(body);
   }
 
