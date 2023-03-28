@@ -810,9 +810,16 @@ const mpginfo = require('../components/basic/pginfo');
 
         /** Getting the stored session segment on the cookie */
         function getSessionSegment() {
-            var value = `; ${document.cookie}`;
-            var parts = value.split(`; ${SESSION_COOKIE_NAME}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
+            try {
+                var value = `; ${document.cookie}`;
+                var parts = value.split(`; ${SESSION_COOKIE_NAME}=`);
+                if (parts.length === 2) {
+                    return parts.pop().split(';').shift();
+                }
+            }
+            catch(e) {
+            }
+            return null;
         }
 
         function callRecommendationAPI(options) {
@@ -835,7 +842,12 @@ const mpginfo = require('../components/basic/pginfo');
                         values: existing
                     }
                 }
-                if (articleHistory.length > 0) body["history"] = articleHistory;
+                if (articleHistory.length > 0) { 
+                    if (articleHistory.length > 10) {
+                        articleHistory.length = 10;
+                    }
+                    body["history"] = articleHistory;
+                }
                 body = JSON.stringify(body);
             }
 

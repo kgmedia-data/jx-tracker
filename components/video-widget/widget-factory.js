@@ -592,7 +592,10 @@ let MakeOneWidget_ = function (options) {
     }
 
     /** Temporarily commented until the API fixed */
-    if (_videoHistory.length > 0) {
+    if (Array.isArray(_videoHistory) && _videoHistory.length > 0) {
+        if (_videoHistory.length > 10) {
+            _videoHistory.length = 10;
+        }
        method = "POST";
        body = {
          v_history: _videoHistory
