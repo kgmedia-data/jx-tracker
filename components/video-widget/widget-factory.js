@@ -592,13 +592,13 @@ let MakeOneWidget_ = function (options) {
     }
 
     /** Temporarily commented until the API fixed */
-    // if (_videoHistory.length > 0) {
-    //   method = "POST";
-    //   body = {
-    //     history: _videoHistory
-    //   };
-    //   body = JSON.stringify(body);
-    // }
+    if (_videoHistory.length > 0) {
+       method = "POST";
+       body = {
+         v_history: _videoHistory
+       };
+       body = JSON.stringify(body);
+    }
 
     var fetchVideo = new XMLHttpRequest();
     fetchVideo.onreadystatechange = function () {
