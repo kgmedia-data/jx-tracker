@@ -213,8 +213,8 @@ let MakeOneWidget_ = function (options) {
   var _options = null;
   var recHelperObj = null;
 
-  var _playlistAPIBase =
-    "https://jx-dam-api-express.azurewebsites.net/api/public/list?page=1&parts=metadata,thumbnails";
+  var _playlistAPIBase = "https://apidam.jixie.io/api/public/list?page=1&parts=metadata,thumbnails";
+    
   var _publicStreamAPIBase= "https://apidam.jixie.media/api/public/stream?metadata=full"
 
   const _playlistResponse = {
