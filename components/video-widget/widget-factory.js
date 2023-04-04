@@ -591,8 +591,9 @@ let MakeOneWidget_ = function (options) {
       });
     }
 
-    /** Temporarily commented until the API fixed */
-    if (Array.isArray(_videoHistory) && _videoHistory.length > 0) {
+    //if talk to our reco endpoint and if we have some history, then we need to send it
+    //but then has to be POST.
+    if (_options.source === "reco" && Array.isArray(_videoHistory) && _videoHistory.length > 0) {
         if (_videoHistory.length > 10) {
             _videoHistory.length = 10;
         }
