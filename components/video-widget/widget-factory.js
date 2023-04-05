@@ -7,6 +7,7 @@ const nextBtnID = "nextBtnWidget";
 const prevBtnID = "prevBtnWidget";
 const videoListID = "videoListWidget";
 const playerID = "player";
+const VIDEOS_HISTORY_KEY = "_jxvidhist";
 
 var IRThreshold_ = 0.1;
 
@@ -212,8 +213,8 @@ let MakeOneWidget_ = function (options) {
   var _options = null;
   var recHelperObj = null;
 
-  var _playlistAPIBase =
-    "https://jx-dam-api-express.azurewebsites.net/api/public/list?page=1&parts=metadata,thumbnails";
+  var _playlistAPIBase = "https://apidam.jixie.io/api/public/list?page=1&parts=metadata,thumbnails";
+    
   var _publicStreamAPIBase= "https://apidam.jixie.media/api/public/stream?metadata=full"
 
   const _playlistResponse = {
@@ -547,7 +548,12 @@ let MakeOneWidget_ = function (options) {
    * and append the needed value as query parameters e.g collection_ids, video_ids, title, widgetid, etc
    */
   function _getVideoList() {
+    let method = "GET";
+    let body = null;
     var retrievalURL = _playlistAPIBase;
+    let _videoHistory = localStorage.getItem(VIDEOS_HISTORY_KEY);
+    _videoHistory = _videoHistory ? JSON.parse(_videoHistory) : [];
+
     if (_options.source === "list" && _options.videos) {
       if (Array.isArray(options.videos) && _options.videos.length > 0) {
         let promises = [];
@@ -584,6 +590,20 @@ let MakeOneWidget_ = function (options) {
         }
       });
     }
+
+    //if talk to our reco endpoint and if we have some history, then we need to send it
+    //but then has to be POST.
+    if (_options.source === "reco" && Array.isArray(_videoHistory) && _videoHistory.length > 0) {
+        if (_videoHistory.length > 10) {
+            _videoHistory.length = 10;
+        }
+       method = "POST";
+       body = {
+         v_history: _videoHistory
+       };
+       body = JSON.stringify(body);
+    }
+
     var fetchVideo = new XMLHttpRequest();
     fetchVideo.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
@@ -593,8 +613,9 @@ let MakeOneWidget_ = function (options) {
         }
       }
     };
-    fetchVideo.open("GET", retrievalURL, true);
-    fetchVideo.send();
+    fetchVideo.open(method, retrievalURL, true);
+    fetchVideo.setRequestHeader('Content-Type', 'application/json');
+    fetchVideo.send(body);
   }
 
   /**
