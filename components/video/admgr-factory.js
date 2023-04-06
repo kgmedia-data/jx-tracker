@@ -96,6 +96,8 @@
     var _imaEvents = JSON.parse(JSON.stringify(imaEventsSeed_));
     var _aStartApiCalled = false;
     var _callOnceUponStarted = null;
+
+    var _cb = null;
     
     //what is this thing? 
     //It seems in the scenario whereby due to e.g. browser setting, the play failed (yes it is possible
@@ -482,6 +484,7 @@
         _pFcnVector.report('error', {errorcode: errcode}); 
         if (this.resolveFcn)
             this.resolveFcn("jxaderrored");
+        
         if (_leftoverEvents['triggerend']) {
             let errStr = null;
             delete _leftoverEvents['triggerend'];
@@ -501,6 +504,9 @@
                     _handleContentResumeReq();
                     //errStr = 'at7';
                 }
+                if (_cb) {
+                    _cb("jxaderrored");
+                }    
                 //else {
                   //  errStr = 'at4b';
                 //}
@@ -739,6 +745,7 @@
     }
 
     function _makeAdRequestCB(adURL, adXML, autoplayFlag, mutedFlag, callback) {
+        _cb = callback;
         let prom = _makeAdRequestP(adURL, adXML, autoplayFlag, mutedFlag);
         prom.then(function(val){
             callback(val);
