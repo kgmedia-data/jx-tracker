@@ -2660,6 +2660,7 @@ const thresholdDiff_ = 120;
                         //waterfall to next layer
                         next(jxContainer, remainingCreativesArr, next);
                     }
+                    window.postMessage("jxosm_noad_jixie", "*");
                 });
 
                 // FINALLY , WE INJECT THE CREATIVE'S NEEDED SCRIPTS AND STUFF!!!!
@@ -2851,7 +2852,6 @@ const thresholdDiff_ = 120;
 
                 let ctr = null;
 
-                
                 if (JX_FLOAT_COND_COMPILE) {
                     if (p.floating == 'never' || !p.floating) {
                         delete p.floatparams; //even if there is, delete.

@@ -280,6 +280,9 @@ function MakeOneInst_(containerId, data, config = null, eventsVector = null, not
             _context = 'ad';
             msg = 'jxhasad';
         }
+        else if (v == 'jxaderrored') {
+            msg = 'jxadended'; //we are going to end it!
+        }
         else if (v == 'jxaderrored' || v == 'jxnoad') {
             msg = 'jxnoad';
         }
