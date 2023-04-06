@@ -472,8 +472,8 @@
             adE = adErrorEvent.getError();
             if (adE) {
                 errcode = adE.getErrorCode();
-                //console.log(`##### 1.1 ${adE.getMessage()}`);
-                //console.log(`##### 1.2 ${adE.toString()}`);
+                console.log(`##_JX### 1.1 ${adE.getMessage()}`);
+                console.log(`##_JX### 1.2 ${adE.toString()}`);
                 /***** if (true) {
                     _harvestErrorInfo(adE);
                 }*****/
