@@ -265,9 +265,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         if (!_floating) {
             _floating = true;
 
-            if (pp && pp.tagName == 'DIV') {
-                pp.style.zIndex="2147483647"; // change the z-index to the higher value when floating
-            }
+            // if (pp && pp.tagName == 'DIV') {
+            //     pp.style.zIndex="2147483647"; // change the z-index to the higher value when floating
+            // }
 
             _ctr.classList.add(JXFloatingClsName);
             let sty = _ctr.style;
@@ -306,9 +306,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         if (_floating && _fP.start != 'always') {
             _floating = false;
 
-            if (pp && pp.tagName == 'DIV') {
-                pp.style.zIndex=savedZIndex; // change back the z-index to what it was
-            }
+            // if (pp && pp.tagName == 'DIV') {
+            //     pp.style.zIndex=savedZIndex; // change back the z-index to what it was
+            // }
 
             _ctr.classList.remove(JXFloatingClsName);
             _ctr.style.cssText = "";
