@@ -104,23 +104,44 @@ let MakeOneFloatingWidget_ = function (parentContainer, container, options, play
     s.height = _getVideoHeight() + "px";
   }
 
+  /**
+   * Return the computed value based on the user's input
+   * this will allow publishers to input string (supported both percentage and pixel value) or number
+   * accepted value can be e.g "50%", 400, "400", "400px"
+   * @param {string|number} value 
+   * @returns the computed value
+   */
+  function _getComputedValue(value) {
+    let newValue = null;
+    if (typeof value === "string") {
+      if (value.indexOf('%') > -1 || value.indexOf('px') > -1) {
+        newValue = value;
+      } else if (!isNaN(Number(value))) {
+        newValue = value + "px";
+      }
+    } else if (typeof value === "number") {
+      newValue = value.toString() + "px";
+    }
+    return newValue;
+  }
+
   function _setupFloat() {
     let pos = options.position
     let s = _playerContainer.style;
-    s.width = options.width.toString() + "px";
-    s.height = _getVideoHeight(options.width) + "px";
+    s.width = _getComputedValue(options.width);
+    s.height = _getVideoHeight(_playerContainer.getBoundingClientRect().width) + "px";
     if (["bottom-right","bottom-left","bottom"].includes(pos)) {
       s.top = "auto";
-      s.bottom = options.marginY + "px";
+      s.bottom = _getComputedValue(options.marginY);
     }
     else {
-      s.top = options.marginY + "px";
+      s.top = _getComputedValue(options.marginY);
       s.bottom = "auto"; 
     }
     if (["bottom-right","top-right"].includes(pos)) s.left = "auto"; 
-    if (["bottom-left","top-left"].includes(pos)) s.left = options.marginX + "px"; 
+    if (["bottom-left","top-left"].includes(pos)) s.left = _getComputedValue(options.marginX);
     if (["bottom-left", "top-left"].includes(pos)) s.right = "auto"; 
-    if (["bottom-right","bottom","top-right"].includes(pos)) s.right = options.marginX + "px";
+    if (["bottom-right","bottom","top-right"].includes(pos)) s.right = _getComputedValue(options.marginX);
     if (["bottom","top"].includes(pos)) {
       s.right = "0px";
       s.left = "0px";
