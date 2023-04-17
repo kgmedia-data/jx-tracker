@@ -1274,7 +1274,7 @@
             //but some partners they need to hang the script fragments somewhere else.
             let pCtr = getAnElt('#' + (p.managerdiv));
             if (!pCtr) {
-                throw new Error("no slot");
+                throw new Error("Cannot find managerdiv (rare. need developer attention");
                 //no do.
                 pCtr = getAnElt('body');
             }
@@ -1392,7 +1392,7 @@
         }
         function testok(pNode) {
             if (pNode) return pNode;
-            throw null;
+            throw new Error("Cannot find slot specified by selectors on the page");
         }
         function createFindNodePromise(getNodeBySelectorFcn) {
             var p = Promise.reject();
@@ -1527,6 +1527,7 @@
                         _startOneLayer();
                     }
                 }).catch((err) => {
+                    console.log(`_jxosm aborted (selectors: ${JSON.stringify(_pgSelectors)}). reason: ${err.message}`);
                     ////if (_sendDbg) { //second
                         ////sendTkr(_sendDbg, "noresponse",  JSON.stringify(err.stack));
                     ////}
