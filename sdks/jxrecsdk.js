@@ -825,7 +825,12 @@ const mpginfo = require('../components/basic/pginfo');
         function callRecommendationAPI(options) {
             let method = "GET";
             let body = null;
+            let additional = null;
             let url = _makeApiBaseUrl(options);
+            
+            if (options.hasOwnProperty("additional") && options.additional) {
+                additional = options.additional;
+            }
 
             let existing = localStorage.getItem(STORAGE_KEY);
             existing = existing ? existing.split(",") : [];
@@ -833,7 +838,7 @@ const mpginfo = require('../components/basic/pginfo');
             let articleHistory = localStorage.getItem(ARTICLES_HISTORY_KEY);
             articleHistory = articleHistory ? JSON.parse(articleHistory) : [];
 
-            if (existing.length > 0 || articleHistory.length > 0) {
+            if (existing.length > 0 || articleHistory.length > 0 || additional) {
                 method = "POST";
                 body = {};
                 if (existing.length > 0) {
@@ -847,6 +852,9 @@ const mpginfo = require('../components/basic/pginfo');
                         articleHistory.length = 10;
                     }
                     body["history"] = articleHistory;
+                }
+                if (additional) {
+                    body["additional"] = additional;
                 }
                 body = JSON.stringify(body);
             }
