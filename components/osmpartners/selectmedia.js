@@ -24,6 +24,13 @@ function SMHasAdHeuristic() {
     return false;
 }
 
+/**
+ * Refer to ./normalizedObj.md for details
+ * @param {*} dbjson the assets for the tag. expect to have some ids in the adparameters subject typically
+ * @param {*} rtjson partially filled normalized objects for us to add some
+ * more stuff specific to this partner
+ * @returns 
+ */
 function makeNormalizedObj__(dbjson, rtjson, getPageSelectorFcn) {
     //The way SelectMedia works is that it just takes the DIV into which their script
     //was injected and then the script will create this aniplayer_selectJS640305376 div
@@ -147,55 +154,7 @@ module.exports.name = 'selectmedia';
     - makeNormalizedObj (function)
         - returns an object which the osm core JS can use to inject selectmedia ad script etc
 
-        - the output object has the following properties
-        timeout (for SM we have a timeout set coz their tag normally would take minutes before wanting to
-            tell us that they have no ad; So we throw them out if still no ad after timeout sec)
-        partner (here it will be "teads")
-        trackers
-        stackidx
-        stackdepth
-        instID: 
-        valid: true/false
-
-        createslot: {  <-- for the osm core when creating the div for the script
-            parent: {
-                - the HTML element to attach the created slot to
-                node - if node is present, corejs uses code, else use selector
-                selector
-            },
-            div: { 
-                id: id to give to the div to create
-                css: any special css to add
-            }
-        }
-        
-        msgs : an object of the messages to expect from partner script to inform of
-            noad, hasad, impression   
-            core js uses this to map incoming messages to 'noad', 'imp' etc and act accordingly            
-        
-        customfcns  : {
-            inview <-- for unruly when the visibiltyslot comes inview we will run a function
-            (see the above code to see why)
-        }
-
-        visibilityslot : {
-            //the visilibyt measurement done by core.js , which container should it monitor?:
-            selector: 
-        }
-
-        scriptb: the script to inject (string)
-           a partner must have either scriptb or scriptcfg! Unruly case there is scriptb
-        scriptcfg: the module's runCreative function, if any, will be called with this cfg.
-
-        scriptdiv = {
-            inject the unruly script into a div of this id and style
-            id: 
-            style:
-        }
-        scriptselector - the selector to describe the parent to which to hang the script div
-
-        floating - boolean - float or not is not managed by us but by the partner. 
-           we just need to know for the sake of creative view events generation
+       Refer to ./normalizedObj.md for details
     
 * requires/dependencies:
     - none

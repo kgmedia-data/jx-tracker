@@ -1,3 +1,9 @@
+/**
+ * Bundle built to make Video Recommendation Widget
+ * 
+ * Documentation: refer to recvwidget.md file in this same dir
+ */
+
 (
     function() {
       const modulesmgr = require('../components/basic/modulesmgr');

@@ -1,6 +1,13 @@
 /**
  * The way to use require+browserify to really do components!
- * To be explained in detail
+ * 
+ * component so that we can have modules that implement a set of "interface functions"
+ * but can do different things depend on context
+ * It was more useful for the video/audio player (which were once in this repo..)
+ * 
+ * Allows us to re-use components and use mix and match to build bundles out of compoennts
+ * easiliy
+ * See those files in bundles/* to see how this modulesmgr is used.
  */
 var theMap_ = new Map();
 //console.log('modules manager run and we create the map object ONCE here');

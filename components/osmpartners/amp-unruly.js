@@ -1,4 +1,20 @@
+/**
+ * Our little system whereby each osm-amp partner implements a fixed
+ * set of functions for the upper layer to call (so the upper layer
+ * just do stuff generically no matter what partner you are)
+ *              THIS IS FOR PARNTER UNRULY
+ * See bottom of file
+ */
+
 const defaultPTimeout_ = -1;
+
+/**
+ * Refer to ./normalizedObj.md for details
+ * @param {*} dbjson the assets for the tag. expect to have some ids in the adparameters subject typically
+ * @param {*} rtjson partially filled normalized objects for us to add some
+ * more stuff specific to this partner
+ * @returns 
+ */
 
 function makeNormalizedObj_(
     dbjson
@@ -127,6 +143,13 @@ function inject_(siteId, msgs) {
     document.body.appendChild(s);
 }
 
+/**
+ * Refer to ./normalizedObj.md for details
+ * @param {*} dbjson the assets for the tag. expect to have some ids in the adparameters subject typically
+ * @param {*} rtjson partially filled normalized objects for us to add some
+ * more stuff specific to this partner
+ * @returns 
+ */
 function makeNormalizedObj__(dbjson, rtjson) {
     common_(rtjson);
     rtjson.msgs = {
@@ -161,18 +184,8 @@ module.exports.name = 'unruly';
     - makeNormalizedObj (function)
         - returns an object which the amp-core JS can use to inject unruly script etc
 
-        - the output object has the following properties
-        timeout (-1 means dun have any)
-        partner (here it will be "unruly")
-        trackers
-        stackidx
-        stackdepth
-        instID: 
-        valid: true/false
-        inject: a function to be called (by the amp-core) 
-        msgs : an object of the messages to expect from partner script to inform of
-            noad, hasad, impression   <-- this does not apply to jixie ads (since the ad already finalized when we reach this stage)
-        customfcns  - not used                
+        Refer to ./normalizedObj.md for details
+
     
 * requires/dependencies:
     - none

@@ -1,3 +1,10 @@
+/**
+ * Our little system whereby each osm-amp partner implements a fixed
+ * set of functions for the upper layer to call (so the upper layer
+ * just do stuff generically no matter what partner you are)
+ *              THIS IS FOR JIXIE's OWN HOSTED ADS
+ * See bottom of file
+ */
 const defaultPTimeout_ = -1;
 
 function makeNormalizedObj_({
@@ -49,6 +56,12 @@ function inject_(params) {
     }
 }
 
+/**
+ * Refer to ./normalizedObj.md for details
+ * @param {*} dbjson the assets for the tag. expect to have some ids in the adparameters subject typically
+ * @param {*} p jixie config (contains fixedheight and excludedheight params)
+ * @returns 
+ */
 function makeNormalizedObj_(dbjson, p) {
     let rtjson = {};
     common_(rtjson);
@@ -78,27 +91,8 @@ module.exports.name = 'jixie';
 * module.exports:
     - makeNormalizedObj (function)
         - returns an object which the amp-core JS can use to inject jixie ad etc
+        Refer to ./normalizedObj.md for details
 
-        - the output object has the following properties
-        timeout (-1 means dun have any)
-        partner (here it will be "jixie")
-        trackers
-        stackidx
-        stackdepth
-        instID: 
-        valid: true/false
-        inject: a function to be called (by the amp-core) 
-        msgs : an object of the messages to expect from partner script to inform of
-            noad
-            imp
-            virtimp
-            timeout
-            - this is not needed for jixie. Coz jixie sure has ad. 
-        customfcns : {
-          currently not used for amp
-        }
-     
-    
 * requires/dependencies:
     - none
 */

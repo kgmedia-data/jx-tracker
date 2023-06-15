@@ -20,26 +20,17 @@
             - renderer/univelements 
         
 ### snipplet and window variables
- -  window.jxuniversal , window.jxuniversal.init
+ -  window._jxuniv  
  - This is well known and well documented in the Confluence under the words "universal". 
 ```
-  var p ={
-							              maxwidth: 640, // set a maximum width
-							              unit: "62dfd0d28588b4a2ed791b90dda06fce",
-							              container: "jxOutstreamContainer", 
-							          };
-							         // We have a function waiting for the script to be loaded before initialsing it
-							          function jxdefer(p) {
-							               if (window.jxuniversal) {
-							                     window.jxuniversal.init(p);
-							               } else {
-							                     setTimeout(function() { jxdefer(p) }, 100);
-							               }
-							           }
-							           jxdefer(p);
-							      </script>
-          						  <!-- <script type="text/javascript" src="https://jx-creatives.s3-ap-southeast-1.amazonaws.com/universal-ad-unit/js/jxfriendly.1.3.js" defer></script> -->
-          						  <!-- <script type="text/javascript" src="../../js/jxfriendly.1.3.min.js" defer></script> -->
-          						  <script type="text/javascript" src="https://scripts.jixie.io/jxfriendly.1.3.min.js" defer></script>
-						        </div>```
+window._jxuniv = window._jxuniv || [];
+ window._jxuniv.push({
+     maxwidth: 640,
+     unit: "62dfd0d28588b4a2ed791b90dda06fce", // TO BE REPLACED WITH THE AD UNIT ID (HERE IT IS DEMO ONLY)
+     container: "jxOutstreamContainer",<-- DIV ID OF WHERE YOU WANT THE AD
+     creativeid: 1707,  <- if want to force a creativeid, sure
+ });
+ <script type = "text/javascript" src = "{script URL}" defer> </script> 
+ 
+```
    
