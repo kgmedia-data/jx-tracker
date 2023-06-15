@@ -1,8 +1,6 @@
 
 /**
- *  In development : meant to REPLACE the admgr-factory.js soon
- * and be shared by both the videosdk and the normal video-ad-sdk (jxvideo.1.4.min.js and
- * jxvideo.1.3.min.s)
+ *  ad manager component to make adrequest and play the ads
  **/
  const modulesmgr            = require('../basic/modulesmgr');
  const common                = modulesmgr.get('basic/common');

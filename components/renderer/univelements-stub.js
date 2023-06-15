@@ -1,3 +1,13 @@
+/**
+ * jixie (osm or universal unit) has this nothing-too-great-but-it-is-there
+ * feature.
+ * can show some words (title , description), logo stuff AROUND the ad
+ * A learn more button etc.
+ * This one is a DO NOTHING STUB
+ * So that the caller layer can be just generic and call this 
+ * For mix-n-matching building.
+ */
+
 let MakeOneUniversalMgr_ = function() {
     function FactoryOneUniveralMgr() {
     }
