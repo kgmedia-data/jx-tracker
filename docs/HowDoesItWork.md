@@ -36,6 +36,7 @@
         - So all the stuff (your constants, variables) in  your B.js - they can "live on" in the closure and get updated as the module.exported functions are called (An example is /basic/modulesmgr.js). Good thing is that they are in the closure and not accessible outside of it.
 
 * We go one step further! 
+    - SORRY - The example below is a bit outdated coz video player is taken out to be in its own repo...
     - To achieve a true mix and match, we introduce another concept of modules manager
     - e.g. Bundle 1 we build the typical video SDK, bundle 2 we need to build a special one with a very different sound indicator (peculiar to Publisher "Super" but a lot of code and styles)
     - If we look at the dependency tree it is like this (some details e.g. helpers object omitted):

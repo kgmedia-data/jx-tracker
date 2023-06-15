@@ -40,29 +40,15 @@
             - renderer/univelements (we use the -stub variant of it) <-- since in OSM we never has to show those Learn More stuff
         
 ### snipplet and window variables
- -  window.jxoutstreammgr , window.jxoutstreammgr.init
- - currently we also include a copy of the renderer inside and so 
- window.jxrenderer is also defined and expecting window.jxrenderer.init to be there.
+ -  window._jxosm
 ```
-<div id="osmdiv" style="display: none; visibility: hidden;">
-   <script>
-      var jxosmp ={
-          unit: "1000008-iT3q5Ci4Ry",
-          selectors: [".osmplaceonsite p:last"],
-          managerdiv: "osmdiv",
-          fixedheight: 400, //new parameter (note to Ridho 1 of 2)
-          excludedheight: 102 //new parameter (note to Ridho 2 of 2)
-      };
-      function jxOSMDefer(p) {
-            if (window.jxoutstreammgr) {
-                  window.jxoutstreammgr.init(p);
-            } else {
-                  setTimeout(function() { jxOSMDefer(p) }, 100);
-            }
-        }
-        jxOSMDefer(jxosmp);
-   </script>
-   <script type="text/javascript" src="https://scripts.jixie.io/jxosm.1.0.min.js" defer></script> 
-</div>
+<script>
+    window._jxosm = window._jxosm || [];
+    window._jxosm.push({
+      unit: "{osm ID}",
+      selectors: ["{selector1}"],
+    });
+</script> 
+<script type = "text/javascript" src = "{script URL}" defer> </script> 
 ```
    
