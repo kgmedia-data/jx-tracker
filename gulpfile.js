@@ -85,11 +85,11 @@ const supported_ = [
         signature: "window.jxoutstreammgr.init", //if the script is somehow loaded twice by the publisher
                                                  // the second time the script sees that window.jxoutstreammgr & the init
                                                  // is already defined, then it will not continue to run.
-        queue: "window._jxoutstreammgrq",
+        queue: "window._jxosm",
         //so there are 2 ways to deploy the unit.
         // Method 1 the traditional way of calling window.jxoutstreammgr.init (but need to spin wait until sure that 
         // the script is loaded)
-        // Method 2: the newer way of enqueueing to window._jxoutstreammgrq (queue)
+        // Method 2: the newer way of enqueueing to window.jx_osm (queue)
         liveall: ["https://scripts.jixie.io/jxosm.1.0.min.js"]
     },
     {
@@ -113,14 +113,6 @@ const supported_ = [
         livefull: ["https://scripts.jixie.media/jxhbrenderer.1.1.min.js"]
     },
     {
-        name: 'VIDEOPLAYER',
-        in: 'videosdk-v3',
-        out: 'jxvideo.3.1',
-        signature: "window.JX.player and window.JX.ampplayer",
-        //queue: not supported.
-        liveall: ["https://scripts.jixie.media/jxvideo.3.1.min.js"]
-    },  
-    {
         name: 'VIDEOP-AD-PLAYER',
         // use with our osm, new universal etc
         in: 'videoadsdk',
@@ -137,7 +129,7 @@ const supported_ = [
         out: 'jxfriendly.2.0',
         floatable: 'no',
         signature: "window.jxuniversal.init",
-        queue: "window._jxuniversalq",
+        queue: "window._jxuniv",
         liveall: ["https://scripts.jixie.io/jxfriendly.2.0.min.js"]
     },
     {
@@ -146,7 +138,7 @@ const supported_ = [
         out: 'jxfriendly.2.0.flt',
         floatable: 'yes',
         signature: "window.jxuniversal.init", //<--!!!
-        queue: "window._jxuniversalfltq",
+        queue: "window._jxuniv",
         liveall: ["https://scripts.jixie.io/jxfriendly.2.0.flt.min.js"]
     },
     {
