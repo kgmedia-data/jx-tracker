@@ -1,3 +1,11 @@
+/**
+ * Our little system whereby each osm-amp partner implements a fixed
+ * set of functions for the upper layer to call (so the upper layer
+ * just do stuff generically no matter what partner you are)
+ *                  THIS IS FOR PARNTER TEADS
+ * See bottom of file
+ */
+
 const defaultPTimeout_ = -1;
 
 function makeNormalizedObj_(
@@ -49,6 +57,13 @@ function inject_(pageId) {
     document.body.appendChild(s);
 }
 
+/**
+ * Refer to ./normalizedObj.md for details
+ * @param {*} dbjson the assets for the tag. expect to have some ids in the adparameters subject typically
+ * @param {*} rtjson partially filled normalized objects for us to add some
+ * more stuff specific to this partner
+ * @returns 
+ */
 function makeNormalizedObj__(dbjson, rtjson) {
     common_(rtjson);
     rtjson.msgs = {
@@ -70,24 +85,8 @@ module.exports.name = 'teads';
 * module.exports:
     - makeNormalizedObj (function)
         - returns an object which the amp-core JS can use to inject teads script etc
+    Refer to ./normalizedObj.md for details
 
-        - the output object has the following properties
-        timeout (-1 means dun have any)
-        partner (here it will be "teads")
-        trackers
-        stackidx
-        stackdepth
-        instID: 
-        valid: true/false
-        inject: a function to be called (by the amp-core) to inject teads stuff onto the page
-        msgs : an object of the messages to expect from partner script to inform of
-            noad
-            imp
-            virtimp (not all partners have this, Teads does not)
-            timeout
-        customfcn: {
-            not used for amp OSM
-        }    
 * requires/dependencies:
     - none
 */

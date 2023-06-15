@@ -1,3 +1,6 @@
+/**
+ * common helper function used througout the life of these scripts
+ */
 const modulesmgr            = require('../basic/modulesmgr');
 
 function MakeOneHelperObj_() {
@@ -10,23 +13,9 @@ function MakeOneHelperObj_() {
             return $1.toUpperCase().replace('-', '');
          });
     }
-    //DUNNO WHO CALL?
-    /*
-    FactoryOneHelper.prototype.ancestor = function(el, tagName) {
-        tagName = tagName.toLowerCase();
-        while (el && el.parentNode) {
-            el = el.parentNode;
-            if (el.tagName && el.tagName.toLowerCase() == tagName) {
-                return el;
-            }
-        }
-        return null;
-    }
-    */
-
+    
     /**
-     * May not be working perfectly yet. Still need to check to tweak
-     * But the goal is to centralize so that no matter how many JX video sdks and 
+     * the goal is to centralize so that no matter how many JX video sdks and 
      * how many videos on page. We only load this once.
      * @returns a promise for the loading. (which is resolved upon the onload event)
      */
@@ -148,7 +137,6 @@ module.exports = gH;
  Please just read the code to know what it tries to do. Too simple
 * module.exports:
     - toCamelCase function(str)
-    ////- ancestor function(el, tagName)
     - loadIMAScriptP function()
     - addListener  function(e, event, h)
     - removeListener function(e, event, h)
