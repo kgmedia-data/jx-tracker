@@ -397,6 +397,7 @@ const mpginfo = require('../components/basic/pginfo');
                     newObj.date_published = formatDate(new Date(publishedDate.content));
                 }
 
+                if (options.group) newObj.group = options.group;
                 if (options.adpositions) newObj.adpositions = options.adpositions;
                 if (options.endpoint) newObj.endpoint = options.endpoint;
                 if (options.count) newObj.count = options.count;
@@ -433,6 +434,7 @@ const mpginfo = require('../components/basic/pginfo');
               "pagecategory",
               "sessionseg",
               "page",
+              "group"
             ].forEach(function (pname) {
               if (newObj[pname])
                 params +=
