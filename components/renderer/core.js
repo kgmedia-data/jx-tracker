@@ -91,6 +91,81 @@ function addGAMNoAdNotifyMaybe(str) {
 
 var MakeOneFloatingUnit = function() { return null; };
 
+var MakeOneScroll = function(container, callback) {
+    var _container = null;
+    var _callback = null;
+    var _adCalled = false;
+
+    function FactoryOneScroll(container, callback) {
+        _container = container;
+        _callback = callback;
+
+        if (_container) {
+            // Attach the event handler to the scroll event
+            common.addListener(window, "scroll", checkAndLoadAd);
+
+            // Initial check when the function called
+            checkAndLoadAd();
+        }
+
+    }
+
+    // Get the user's current position on the page
+    var getUserPosition = function() {
+        return window.scrollY || document.documentElement.scrollTop;
+    }
+    
+    // Get the position of an element on the page
+    var getElementPosition = function(element) {
+        const rect = element.getBoundingClientRect();
+        return rect.top + getUserPosition();
+    }
+    
+    // Get the viewport height
+    var getViewportHeight = function() {
+        return window.innerHeight || document.documentElement.clientHeight;
+    }
+
+    var checkAndLoadAd = function() {
+        const userPosition = getUserPosition();
+        const elementTop = getElementPosition(_container);
+        const elementBottom = elementTop + _container.clientHeight;
+        const viewportHeight = getViewportHeight();
+
+        if ((userPosition < elementTop) && (userPosition >= (elementTop - viewportHeight))) {
+            console.log('#### OSM BEHAVIOUR CASE 1' , userPosition, elementTop, viewportHeight, elementTop - viewportHeight);
+            loadAd();
+        } else if ((userPosition > elementTop) && (userPosition <= (elementBottom + viewportHeight))) {
+            console.log('#### OSM BEHAVIOUR CASE 2' , userPosition, elementTop, viewportHeight, elementBottom + viewportHeight);
+            loadAd();
+        } else if ((userPosition >= elementTop) && (userPosition <= elementBottom)) {
+            console.log('#### OSM BEHAVIOUR CASE 3' , userPosition, elementTop, elementBottom);
+            loadAd();
+        }
+    }
+
+    var loadAd = function() {
+        if (!_adCalled) {
+            _adCalled = true;
+            if (_callback) {
+                _callback();
+            }
+            stopVisibilityListener();
+        }
+    }
+
+    var stopVisibilityListener = function() {
+        common.removeListener(window, "scroll", checkAndLoadAd);
+    }
+
+    FactoryOneScroll.prototype.stop = function() {
+        stopVisibilityListener();
+    }
+
+    let OneScroll = new FactoryOneScroll(container, callback);
+    return OneScroll;
+}
+
 if (JX_FLOAT_COND_COMPILE) {
 MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     const JXFloatingClsName = 'jxfloating';
@@ -2532,6 +2607,7 @@ const thresholdDiff_ = 120;
 
 
     var makeAdRenderer = function(params) {
+        var _scrollInst = null;
         var _jxParams = null;
         var _jxContainer = null;
         
@@ -2741,6 +2817,10 @@ const thresholdDiff_ = 120;
                         }
                     }
                 }
+
+                _scrollInst = MakeOneScroll(jxContainer, function() {
+                    console.log("#### LOAD DISPLAY AD HERE");
+                });
 
                 /**
                  *  if we do differential scrolling, then set up the listener
