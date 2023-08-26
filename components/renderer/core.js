@@ -132,13 +132,13 @@ var MakeOneScroll = function(container, callback) {
         const elementBottom = elementTop + _container.clientHeight;
         const viewportHeight = getViewportHeight();
 
-        if ((userPosition < elementTop) && (userPosition >= (elementTop - viewportHeight))) {
-            console.log('#### OSM BEHAVIOUR CASE 1' , userPosition, elementTop, viewportHeight, elementTop - viewportHeight);
+        if ((userPosition < elementTop) && (userPosition >= (elementTop - viewportHeight))) { // CASE 1: Load ad when user is about to see the OSM
+            console.log('#### OSM BEHAVIOUR CASE 1' , userPosition, elementTop, elementBottom, viewportHeight, elementTop - viewportHeight);
             loadAd();
-        } else if ((userPosition > elementTop) && (userPosition <= (elementBottom + viewportHeight))) {
-            console.log('#### OSM BEHAVIOUR CASE 2' , userPosition, elementTop, viewportHeight, elementBottom + viewportHeight);
+        } else if ((userPosition > elementTop) && (userPosition <= (elementBottom + viewportHeight))) { // CASE 2: Load ad when user is moving back towards the OSM
+            console.log('#### OSM BEHAVIOUR CASE 2' , userPosition, elementTop, elementBottom, viewportHeight, elementBottom + viewportHeight);
             loadAd();
-        } else if ((userPosition >= elementTop) && (userPosition <= elementBottom)) {
+        } else if ((userPosition >= elementTop) && (userPosition <= elementBottom)) { // CASE 3: Load ad when the OSM is already in viewport
             console.log('#### OSM BEHAVIOUR CASE 3' , userPosition, elementTop, elementBottom);
             loadAd();
         }
@@ -2819,7 +2819,7 @@ const thresholdDiff_ = 120;
                 }
 
                 _scrollInst = MakeOneScroll(jxContainer, function() {
-                    console.log("#### LOAD DISPLAY AD HERE");
+                    console.log("#### LOADING DISPLAY AD NOW ....");
                 });
 
                 /**
