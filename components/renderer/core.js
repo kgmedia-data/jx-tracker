@@ -118,9 +118,9 @@ function checkUPos(arg0, arg1) {
     return ok;
 }
 
-function makeViewProm(ctr) {
+function makeViewProm(ctr, resolveASAP = false) {
     //calling it unbound
-    if (checkUPos('1', ctr)) { return Promise.resolve(true); }
+    if (resolveASAP || checkUPos('1', ctr)) { return Promise.resolve(true); }
 
     //ok, currently not viewabile so cannot go next step yet. Set up scrollhandler then.
     let resFcn;
@@ -3062,12 +3062,6 @@ const thresholdDiff_ = 120;
             // universal script  (jxfriendly.2.0. etc) that we still have not talked to adserver
             // yet at this stage.
             let respBlob = null;
-            //OK we waterfall here already.
-            //But when we actually add the creative
-            //that is up to monitoring of viewability
-            //Hopefully HERE we already know the type
-            //Then we can defer or not defer.
-            //MIOW MIOW
             if (_jxParams.jsoncreativeobj64) {
                 try {
                     let json =  atob(_jxParams.jsoncreativeobj64);
@@ -3087,6 +3081,11 @@ const thresholdDiff_ = 120;
                 fetchedCreativesProm = Promise.resolve(respBlob);
             }
             else {
+                let tmp;
+                if (_jxParams.cmd) {
+                    tmp = _jxParams.cmd;
+                }
+                /* TEMPORARY dun think of this yet.
                 let subdomain = _jxParams.portal == 'dev' ? 'ad-dev':(_jxParams.debug?'ad-rc': 'ad');
                 let tmp = `https://${subdomain}.jixie.io/v1/universal?source=outstream`;
                 if (_jxParams.ids) {
@@ -3101,6 +3100,9 @@ const thresholdDiff_ = 120;
                         tmp += '&' + prop + '=' + _jxParams[prop];
                 });
                 if (_jxParams.amp) tmp += '&device=amp';
+                */
+               //Note that it is possible that there is nothing!
+
                 fetchedCreativesProm = fetchAdP(tmp);
             }
             //let adUrl = 'https://ad.jixie.io/v1/universal?source=sdk&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=800'; //1007|1005|800';
@@ -3125,13 +3127,8 @@ const thresholdDiff_ = 120;
                 console.log(creativesArr[0]);
                 */
                 if (creativesArr && creativesArr.length > 0) {
-                    //depends on the type of the creative.
-                    //if is display then we wait.
-                    //else we .... 
-                    console.log("MIOW MIOW MIOW WAITING _JX____1");
-                    makeViewProm(_jxContainer)
+                    makeViewProm(_jxContainer, creativesArr[0].type != 'display') 
                     .then(function(x) {
-                        console.log("MIOW MIOW MIOW NOW THEN YES OK _JX____2");
                         _startP(_jxContainer, creativesArr, _startP);
                     });
                 }
