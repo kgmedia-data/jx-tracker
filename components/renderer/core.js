@@ -91,6 +91,51 @@ function addGAMNoAdNotifyMaybe(str) {
 
 var MakeOneFloatingUnit = function() { return null; };
 
+//if this is a handler, then it will have a parameter.
+function checkUPos(arg0, arg1) {
+    //let ctr = this ? arg0: this.ctr; //if it is called in the unbound form, then arg0 is the container object
+    let ok = false;
+    let ctr = arg0 === '1' ? arg1 : this.ctr;
+    const uPos = window.scrollY || document.documentElement.scrollTop; //userPosition
+    const r = ctr.getBoundingClientRect();
+    const cTop = r.top + uPos;
+    const cBot = cTop + ctr.clientHeight;
+    const vpHt = window.innerHeight || document.documentElement.clientHeight;
+    if ((uPos < cTop) && (uPos >= (cTop - vpHt))) { // CASE 1: Load ad when user is about to see the OSM
+        ok = true;
+    } else if ((uPos > cTop) && (uPos <= (cBot + vpHt))) { // CASE 2: Load ad when user is moving back towards the OSM
+        //console.log('#### OSM BEHAVIOUR CASE 2' , userPosition, elementTop, elementBottom, viewportHeight, elementBottom + viewportHeight);
+        ok = true;
+    } else if ((uPos >= cTop) && (uPos <= cBot)) { // CASE 3: Load ad when the OSM is already in viewport
+        //console.log('#### OSM BEHAVIOUR CASE 3' , userPosition, elementTop, elementBottom);
+        ok = true;
+    }
+    if (ok && this.resFcn) { //then we know we are called in context of scroll handler.
+        //self unhooking:
+        this.resFcn(true); //resolve the promise!
+        common.removeListener(window, "scroll", this.fcnH);
+    }
+    return ok;
+}
+
+function makeViewProm(ctr) {
+    //calling it unbound
+    if (checkUPos('1', ctr)) { return Promise.resolve(true); }
+
+    //ok, currently not viewabile so cannot go next step yet. Set up scrollhandler then.
+    let resFcn;
+    let vProm =  new Promise(function(resolve) { resFcn = resolve; });
+    let o = {
+        ctr: ctr,
+        resFcn: resFcn
+    };
+    let boundH = checkUPos.bind(o);
+    o.fcnH = boundH;
+    common.addListener(window, "scroll", boundH);
+    return vProm;
+}
+
+/*
 var MakeOneScroll = function(container, callback) {
     var _container = null;
     var _callback = null;
@@ -125,7 +170,7 @@ var MakeOneScroll = function(container, callback) {
     var getViewportHeight = function() {
         return window.innerHeight || document.documentElement.clientHeight;
     }
-
+//MIOW MIOW 
     var checkAndLoadAd = function() {
         const userPosition = getUserPosition();
         const elementTop = getElementPosition(_container);
@@ -165,6 +210,7 @@ var MakeOneScroll = function(container, callback) {
     let OneScroll = new FactoryOneScroll(container, callback);
     return OneScroll;
 }
+*/
 
 if (JX_FLOAT_COND_COMPILE) {
 MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
@@ -2607,7 +2653,7 @@ const thresholdDiff_ = 120;
 
 
     var makeAdRenderer = function(params) {
-        var _scrollInst = null;
+        //var _scrollInst = null;
         var _jxParams = null;
         var _jxContainer = null;
         
@@ -2818,9 +2864,9 @@ const thresholdDiff_ = 120;
                     }
                 }
 
-                _scrollInst = MakeOneScroll(jxContainer, function() {
-                    console.log("#### LOADING DISPLAY AD NOW ....");
-                });
+                //_scrollInst = MakeOneScroll(jxContainer, function() {
+                  //  console.log("#### LOADING DISPLAY AD NOW ....");
+                //});
 
                 /**
                  *  if we do differential scrolling, then set up the listener
@@ -3016,6 +3062,12 @@ const thresholdDiff_ = 120;
             // universal script  (jxfriendly.2.0. etc) that we still have not talked to adserver
             // yet at this stage.
             let respBlob = null;
+            //OK we waterfall here already.
+            //But when we actually add the creative
+            //that is up to monitoring of viewability
+            //Hopefully HERE we already know the type
+            //Then we can defer or not defer.
+            //MIOW MIOW
             if (_jxParams.jsoncreativeobj64) {
                 try {
                     let json =  atob(_jxParams.jsoncreativeobj64);
@@ -3072,8 +3124,17 @@ const thresholdDiff_ = 120;
                 }
                 console.log(creativesArr[0]);
                 */
-                if (creativesArr && creativesArr.length > 0)
-                    _startP(_jxContainer, creativesArr, _startP);
+                if (creativesArr && creativesArr.length > 0) {
+                    //depends on the type of the creative.
+                    //if is display then we wait.
+                    //else we .... 
+                    console.log("MIOW MIOW MIOW WAITING _JX____1");
+                    makeViewProm(_jxContainer)
+                    .then(function(x) {
+                        console.log("MIOW MIOW MIOW NOW THEN YES OK _JX____2");
+                        _startP(_jxContainer, creativesArr, _startP);
+                    });
+                }
             });
         }
         
