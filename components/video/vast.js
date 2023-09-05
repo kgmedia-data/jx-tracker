@@ -21,7 +21,7 @@
 
    const vastOpener_ = '<?xml version="1.0" encoding="UTF-8"?><VAST xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vast.xsd" version="3.0">\n';
    const vastCloser_ = '</VAST>';
-   const actionNames_ = ["start", "firstQuartile", "midpoint", "thirdQuartile", "complete", "skip", "mute", "unmute", "rewind", "pause", "resume", "fullscreen", "creativeView"];
+   const actionNames_ = ["loaded", "start", "firstQuartile", "midpoint", "thirdQuartile", "complete", "skip", "mute", "unmute", "rewind", "pause", "resume", "fullscreen", "creativeView"];
 
    /**
     * output blobs for tracking, for impression, for click, for error to insert into the main vast body
