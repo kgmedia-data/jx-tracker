@@ -2014,7 +2014,9 @@ const thresholdDiff_ = 120;
         if (trackers) {
             //need for universal mgr init:
             clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
-            loadtrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=loadpixel';
+            if (c.type != 'video') {
+                loadtrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=loadpixel';
+            }
         }
 
         // Currently the likes of R2B2 they are not properly integrated with our OSM stack, so
