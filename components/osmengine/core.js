@@ -1251,28 +1251,32 @@
                     //this could be jixie placeholder for HB then.
                     //we might need something to actually fill this in then.
                     //can be no ad also
-                    if (thisCr.subtype == 'deferhb') {
+                    if (thisCr.cmd) { ///////subtype == 'deferhb') {
                         //deferred hb so this is just a url to call to trigger a server-side auction.
-                        fetch(thisCr.url, {
+                        fetch(thisCr.cmd, {
                             method: 'GET',
                             credentials: 'include'
                         })
                         .then((response) => response.json())
                         .then((responseJson) => {
-                            thisCr = responseJson.creatives.length ? responseJson.creatives[0]: _creativesArray.shift();
-                            //need to fill the partner also.
-                            let oneLayerInst = new OneOSMLayer(partner, _msWFInit, _ctrID, _loggerInst, _fcnVector);
-                            oneLayerInst.init(
-                                thisCr,
-                                syntheticCVList,
-                                _startOneLayer);
+                            //add these things into our array of creatives
+                            _creativesArray.push.apply(_creativesArray, responseJson.creatives);
+                            thisCr = _creativesArray.shift();
+                            if (thisCr) {
+                                let oneLayerInst = new OneOSMLayer(_partners[thisCr.subtype], _msWFInit, _ctrID, _loggerInst, _fcnVector);
+                                oneLayerInst.init(
+                                    thisCr,
+                                    syntheticCVList,
+                                    _startOneLayer);
+                                }
+                            else {
+                                _bottomReached = true
+                            }
                         });
                     }
                     else {
-                        let partner = _partners[thisCr.subtype];
                         //access fixed height and other parameters.
-                        
-                        let oneLayerInst = new OneOSMLayer(partner, _msWFInit, _ctrID, _loggerInst, _fcnVector);
+                        let oneLayerInst = new OneOSMLayer(_partners[thisCr.subtype], _msWFInit, _ctrID, _loggerInst, _fcnVector);
                         oneLayerInst.init(
                             thisCr,
                             syntheticCVList,
