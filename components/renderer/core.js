@@ -90,9 +90,9 @@ function addGAMNoAdNotifyMaybe(str) {
 */
 
 var MakeOneFloatingUnit = function() { return null; };
-
+/*
 //if this is a handler, then it will have a parameter.
-function checkUPos(arg0, arg1) {
+function checkUPosX(arg0, arg1) {
     //let ctr = this ? arg0: this.ctr; //if it is called in the unbound form, then arg0 is the container object
     let ok = false;
     let ctr = arg0 === '1' ? arg1 : this.ctr;
@@ -120,7 +120,7 @@ function checkUPos(arg0, arg1) {
 
 function makeViewProm(ctr, resolveASAP = false) {
     //calling it unbound
-    if (resolveASAP || checkUPos('1', ctr)) { return Promise.resolve(true); }
+    if (resolveASAP || checkUPosX('1', ctr)) { return Promise.resolve(true); }
 
     //ok, currently not viewabile so cannot go next step yet. Set up scrollhandler then.
     let resFcn;
@@ -129,11 +129,12 @@ function makeViewProm(ctr, resolveASAP = false) {
         ctr: ctr,
         resFcn: resFcn
     };
-    let boundH = checkUPos.bind(o);
+    let boundH = checkUPosX.bind(o);
     o.fcnH = boundH;
     common.addListener(window, "scroll", boundH);
     return vProm;
 }
+*/
 
 /*
 var MakeOneScroll = function(container, callback) {
@@ -3129,10 +3130,10 @@ const thresholdDiff_ = 120;
                 console.log(creativesArr[0]);
                 */
                 if (creativesArr && creativesArr.length > 0) {
-                    makeViewProm(_jxContainer, creativesArr[0].type != 'display') 
-                    .then(function(x) {
+                    //////makeViewProm(_jxContainer, creativesArr[0].type != 'display') 
+                    /////.then(function(x) {
                         _startP(_jxContainer, creativesArr, _startP);
-                    });
+                    //////});
                 }
             });
         }
