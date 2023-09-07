@@ -90,128 +90,6 @@ function addGAMNoAdNotifyMaybe(str) {
 */
 
 var MakeOneFloatingUnit = function() { return null; };
-/*
-//if this is a handler, then it will have a parameter.
-function checkUPosX(arg0, arg1) {
-    //let ctr = this ? arg0: this.ctr; //if it is called in the unbound form, then arg0 is the container object
-    let ok = false;
-    let ctr = arg0 === '1' ? arg1 : this.ctr;
-    const uPos = window.scrollY || document.documentElement.scrollTop; //userPosition
-    const r = ctr.getBoundingClientRect();
-    const cTop = r.top + uPos;
-    const cBot = cTop + ctr.clientHeight;
-    const vpHt = window.innerHeight || document.documentElement.clientHeight;
-    if ((uPos < cTop) && (uPos >= (cTop - vpHt))) { // CASE 1: Load ad when user is about to see the OSM
-        ok = true;
-    } else if ((uPos > cTop) && (uPos <= (cBot + vpHt))) { // CASE 2: Load ad when user is moving back towards the OSM
-        //console.log('#### OSM BEHAVIOUR CASE 2' , userPosition, elementTop, elementBottom, viewportHeight, elementBottom + viewportHeight);
-        ok = true;
-    } else if ((uPos >= cTop) && (uPos <= cBot)) { // CASE 3: Load ad when the OSM is already in viewport
-        //console.log('#### OSM BEHAVIOUR CASE 3' , userPosition, elementTop, elementBottom);
-        ok = true;
-    }
-    if (ok && this.resFcn) { //then we know we are called in context of scroll handler.
-        //self unhooking:
-        this.resFcn(true); //resolve the promise!
-        common.removeListener(window, "scroll", this.fcnH);
-    }
-    return ok;
-}
-
-function makeViewProm(ctr, resolveASAP = false) {
-    //calling it unbound
-    if (resolveASAP || checkUPosX('1', ctr)) { return Promise.resolve(true); }
-
-    //ok, currently not viewabile so cannot go next step yet. Set up scrollhandler then.
-    let resFcn;
-    let vProm =  new Promise(function(resolve) { resFcn = resolve; });
-    let o = {
-        ctr: ctr,
-        resFcn: resFcn
-    };
-    let boundH = checkUPosX.bind(o);
-    o.fcnH = boundH;
-    common.addListener(window, "scroll", boundH);
-    return vProm;
-}
-*/
-
-/*
-var MakeOneScroll = function(container, callback) {
-    var _container = null;
-    var _callback = null;
-    var _adCalled = false;
-
-    function FactoryOneScroll(container, callback) {
-        _container = container;
-        _callback = callback;
-
-        if (_container) {
-            // Attach the event handler to the scroll event
-            common.addListener(window, "scroll", checkAndLoadAd);
-
-            // Initial check when the function called
-            checkAndLoadAd();
-        }
-
-    }
-
-    // Get the user's current position on the page
-    var getUserPosition = function() {
-        return window.scrollY || document.documentElement.scrollTop;
-    }
-    
-    // Get the position of an element on the page
-    var getElementPosition = function(element) {
-        const rect = element.getBoundingClientRect();
-        return rect.top + getUserPosition();
-    }
-    
-    // Get the viewport height
-    var getViewportHeight = function() {
-        return window.innerHeight || document.documentElement.clientHeight;
-    }
-//MIOW MIOW 
-    var checkAndLoadAd = function() {
-        const userPosition = getUserPosition();
-        const elementTop = getElementPosition(_container);
-        const elementBottom = elementTop + _container.clientHeight;
-        const viewportHeight = getViewportHeight();
-
-        if ((userPosition < elementTop) && (userPosition >= (elementTop - viewportHeight))) { // CASE 1: Load ad when user is about to see the OSM
-            console.log('#### OSM BEHAVIOUR CASE 1' , userPosition, elementTop, elementBottom, viewportHeight, elementTop - viewportHeight);
-            loadAd();
-        } else if ((userPosition > elementTop) && (userPosition <= (elementBottom + viewportHeight))) { // CASE 2: Load ad when user is moving back towards the OSM
-            console.log('#### OSM BEHAVIOUR CASE 2' , userPosition, elementTop, elementBottom, viewportHeight, elementBottom + viewportHeight);
-            loadAd();
-        } else if ((userPosition >= elementTop) && (userPosition <= elementBottom)) { // CASE 3: Load ad when the OSM is already in viewport
-            console.log('#### OSM BEHAVIOUR CASE 3' , userPosition, elementTop, elementBottom);
-            loadAd();
-        }
-    }
-
-    var loadAd = function() {
-        if (!_adCalled) {
-            _adCalled = true;
-            if (_callback) {
-                _callback();
-            }
-            stopVisibilityListener();
-        }
-    }
-
-    var stopVisibilityListener = function() {
-        common.removeListener(window, "scroll", checkAndLoadAd);
-    }
-
-    FactoryOneScroll.prototype.stop = function() {
-        stopVisibilityListener();
-    }
-
-    let OneScroll = new FactoryOneScroll(container, callback);
-    return OneScroll;
-}
-*/
 
 if (JX_FLOAT_COND_COMPILE) {
 MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
@@ -2656,7 +2534,6 @@ const thresholdDiff_ = 120;
 
 
     var makeAdRenderer = function(params) {
-        //var _scrollInst = null;
         var _jxParams = null;
         var _jxContainer = null;
         
@@ -2866,10 +2743,6 @@ const thresholdDiff_ = 120;
                         }
                     }
                 }
-
-                //_scrollInst = MakeOneScroll(jxContainer, function() {
-                  //  console.log("#### LOADING DISPLAY AD NOW ....");
-                //});
 
                 /**
                  *  if we do differential scrolling, then set up the listener
@@ -3084,11 +2957,6 @@ const thresholdDiff_ = 120;
                 fetchedCreativesProm = Promise.resolve(respBlob);
             }
             else {
-                let tmp;
-                if (_jxParams.cmd) {
-                    tmp = _jxParams.cmd;
-                }
-                /* TEMPORARY dun think of this yet.
                 let subdomain = _jxParams.portal == 'dev' ? 'ad-dev':(_jxParams.debug?'ad-rc': 'ad');
                 let tmp = `https://${subdomain}.jixie.io/v1/universal?source=outstream`;
                 if (_jxParams.ids) {
@@ -3103,9 +2971,6 @@ const thresholdDiff_ = 120;
                         tmp += '&' + prop + '=' + _jxParams[prop];
                 });
                 if (_jxParams.amp) tmp += '&device=amp';
-                */
-               //Note that it is possible that there is nothing!
-
                 fetchedCreativesProm = fetchAdP(tmp);
             }
             //let adUrl = 'https://ad.jixie.io/v1/universal?source=sdk&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=800'; //1007|1005|800';
@@ -3129,12 +2994,8 @@ const thresholdDiff_ = 120;
                 }
                 console.log(creativesArr[0]);
                 */
-                if (creativesArr && creativesArr.length > 0) {
-                    //////makeViewProm(_jxContainer, creativesArr[0].type != 'display') 
-                    /////.then(function(x) {
-                        _startP(_jxContainer, creativesArr, _startP);
-                    //////});
-                }
+                if (creativesArr && creativesArr.length > 0)
+                    _startP(_jxContainer, creativesArr, _startP);
             });
         }
         
