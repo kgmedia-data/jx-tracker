@@ -17,7 +17,8 @@
  * - jxosmpartners_.js (partner specific stuff)
  * But these are combined (minified first, if needed) into 1 file for deployment
  */
-
+const modulesmgr                = require('../basic/modulesmgr');
+const common                    = modulesmgr.get('basic/common');
 
 // (function() {
     //if(window.jxoutstreammgr) {
@@ -1149,6 +1150,66 @@
 
 
     //===================================================
+    //if this is a handler, then it will have a parameter.
+    function checkUPos(arg0, arg1) {
+        //console.log("__JX__ in cb");
+        //let ctr = this ? arg0: this.ctr; //if it is called in the unbound form, then arg0 is the container object
+        let ok = false;
+        let ctr = arg0 === '1' ? arg1 : this.ctr;
+        const uPos = window.scrollY || document.documentElement.scrollTop; //userPosition
+        const r = ctr.getBoundingClientRect();
+        const cTop = r.top + uPos;
+        const cBot = cTop + ctr.clientHeight;
+        const vpHt = window.innerHeight || document.documentElement.clientHeight;
+
+        ///if (uPos < cTop) {
+           /// console.log(">>__JX__ if scrolldown can see me");
+        ///}
+        ///else if (uPos > cTop) {
+           /// console.log(">>__JX__ if scrollup can see me");
+        ///}
+        if ((uPos < cTop) && (uPos >= (cTop - vpHt))) { // CASE 1: Load ad when user is about to see the OSM
+            ////console.log("__JX__ if scrolldown can see me SOON");
+            ok = true;
+        } else if ((uPos > cTop) && (uPos <= (cBot + vpHt))) { // CASE 2: Load ad when user is moving back towards the OSM
+            ////console.log("__JX__ if scrollup can see me SOON");
+            //console.log('#### OSM BEHAVIOUR CASE 2' , userPosition, elementTop, elementBottom, viewportHeight, elementBottom + viewportHeight);
+            ok = true;
+        } else if ((uPos >= cTop) && (uPos <= cBot)) { // CASE 3: Load ad when the OSM is already in viewport
+            ////console.log("__JX__ perfectly in");
+            //console.log('#### OSM BEHAVIOUR CASE 3' , userPosition, elementTop, elementBottom);
+            ok = true;
+        }
+        if (ok && this.resFcn) { //then we know we are called in context of scroll handler.
+            //self unhooking:
+            /////console.log("__JX__ unhooking AND RESOLVING");
+            this.resFcn(null); //resolve the promise!
+            common.removeListener(window, "scroll", this.fcnH);
+        }
+        return ok;
+    }
+
+    function makeViewProm(ctr, resolveASAP = false) {
+        //calling it unbound
+        if (resolveASAP || checkUPos('1', ctr)) { 
+            ////console.log("__JX JUST SIMPLY RESOLVE RIGHT AWAY ");
+            return Promise.resolve(true); 
+        }
+
+        //ok, currently not viewabile so cannot go next step yet. Set up scrollhandler then.
+        let resFcn;
+        let vProm =  new Promise(function(resolve) { resFcn = resolve; });
+        let o = {
+            ctr: ctr,
+            resFcn: resFcn
+        };
+        let boundH = checkUPos.bind(o);
+        o.fcnH = boundH;
+        common.addListener(window, "scroll", boundH);
+        return vProm;
+    }
+
+    //===================================================
     /**
      * 
      */
@@ -1185,6 +1246,8 @@
                 _loggerInst.prPDbgStr(`__OSMWaterfall f=${fcnname}`, -1); // called on ${_instID}`);
             }
         };
+        //var OneOSMLayer = FactoryOneOSMLayer();
+
         //for some tag, "where" to show the ad is hardwired into the e.g. ad partner
         //console.But for some, the tag dunno where to stick the ad into.
         //JXOSM also is getting this info in the "p" passed into it..
@@ -1235,24 +1298,108 @@
             }
             if(_creativesArray.length > 0) {
                 try {
+                    let thisCr = _creativesArray.shift();//yes it is right to shift it.
+                    //console.log(`__JX_ after popping ${_creativesArray.length} left.`);
+                    //console.log(`thisCr. ___JX_ subtype=${thisCr.subtype}`);
+                    let prom;
+                    if ((thisCr.subtype == 'jixie' && thisCr.vw) || thisCr.cmd) {
+                        //console.log(`__JX__ WE MEED TO DO THAT VIEW STUFF.`);
+                        //case 1 this is a concrete jiixe (usually display) creative. we are supposed to wait until unit is near viewport, then trigger it
+                        let tmp = _fcnVector.getPgSelector().node;
+                        prom = makeViewProm(tmp, false)
+                        if (thisCr.cmd) {
+                            //The viewability promise is created above already, but we have another thing to wait on
+                            //calling the adserver to do HB:
+                            prom = prom
+                            .then(function(dummy) {
+                                //console.log(`__JX__ IMPORTANT KEY POINT REACHED GOING TO CALL FETCH FOR CMD NOW.`);
+                                return fetch(thisCr.cmd, {
+                                    method: 'GET',
+                                    credentials: 'include'
+                                })
+                            })
+                            .then((response) => response.json());
+                        }
+                    }
+                    else {
+                        prom = Promise.resolve(null); //promise already ok
+                    }
+                    //ok now the promise chain:
+                    prom
+                    .then(function(data) {
+                        //console.log(`__JX__ IMPORTANT KEY POINT REACHED ${data ? 'has data': 'no data'}`);
+                        if (data && typeof data == 'object') {
+                            console.log("<__JX ____ data ");
+                            console.log(JSON.stringify(data, null, 2));
+                            console.log("__JX ____ data >");
+                            //more stuff to add to the waterfall:
+                            _creativesArray.push.apply(_creativesArray, data.creatives);
+                            thisCr = _creativesArray.shift();
+                        }
+                        if (thisCr) {
+                            let OneOSMLayer = FactoryOneOSMLayer();
+                            let oneLayerInst = new OneOSMLayer(_partners[thisCr.subtype], _msWFInit, _ctrID, _loggerInst, _fcnVector);
+                            oneLayerInst.init(
+                                thisCr,
+                                syntheticCVList,
+                                _startOneLayer);
+                            }
+                        else {
+                            _bottomReached = true
+                        }
+                    });
+                }
+                catch(er) {
+
+                }
+                /*****
+                 *  try {
+                    
                     let OneOSMLayer = FactoryOneOSMLayer();
                     //we should pass in the partner info bah.
-                    let thisCr = _creativesArray.shift();
-                    let partner = _partners[thisCr.subtype];
-
-                    //access fixed height and other parameters.
-                    
-                    let oneLayerInst = new OneOSMLayer(partner, _msWFInit, _ctrID, _loggerInst, _fcnVector);
-                    oneLayerInst.init(
-                        thisCr,
-                        syntheticCVList,
-                        _startOneLayer);
+                    let thisCr = _creativesArray.shift();//yes it is right to shift it.
+                    if (thisCr.cmd) { 
+                        //deferred hb so this is just a url to call to trigger a server-side auction.
+                        let tmp = _fcnVector.getPgSelector().node;
+                        makeViewProm(tmp, false)
+                        .then(function(dummy) {
+                            return fetch(thisCr.cmd, {
+                                method: 'GET',
+                                credentials: 'include'
+                            })
+                        })
+                        .then((response) => response.json())
+                        .then((responseJson) => {
+                            //add these things into our array of creatives
+                            _creativesArray.push.apply(_creativesArray, responseJson.creatives);
+                            thisCr = _creativesArray.shift();
+                            if (thisCr) {
+                                let oneLayerInst = new OneOSMLayer(_partners[thisCr.subtype], _msWFInit, _ctrID, _loggerInst, _fcnVector);
+                                oneLayerInst.init(
+                                    thisCr,
+                                    syntheticCVList,
+                                    _startOneLayer);
+                                }
+                            else {
+                                _bottomReached = true
+                            }
+                        });
+                    }
+                    else {
+                        //access fixed height and other parameters.
+                        let oneLayerInst = new OneOSMLayer(_partners[thisCr.subtype], _msWFInit, _ctrID, _loggerInst, _fcnVector);
+                        oneLayerInst.init(
+                            thisCr,
+                            syntheticCVList,
+                            _startOneLayer);
+                    }
                 }
                 catch (er) {
                     ////if (_sendDbg) {
                         ////sendTkr(_sendDbg, "exception", JSON.stringify(er.stack));
                     ////}
                 }
+                *****/
             } else {
                 _bottomReached = true;
             }
