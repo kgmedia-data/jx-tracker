@@ -1,9 +1,9 @@
 /**
- * This piece of code is to be called by the various front end scripts
- * e.g. video, osm.
- * so they have to just COPY this....
- * 
- * For video player, for osm etc
+    * exports a few functions to get the user's id info
+    * from first party cookie/local storage
+    */
+/**
+ * In the near future we will switch to this
  */ 
  
 

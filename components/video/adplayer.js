@@ -1,7 +1,6 @@
 /**
  * a component used to build the JS that will play a video ad (universal unit)
  * and standalone 
- * i.e. plays the role of jxvideo1.3.min.js and jxvideo1.4.mins.js
  */
 const modulesmgr            = require('../basic/modulesmgr');
 const common                = modulesmgr.get('basic/common');

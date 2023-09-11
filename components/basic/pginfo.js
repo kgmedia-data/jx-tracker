@@ -1,5 +1,7 @@
 /*
- * basic services .. TODO the GAM pageinfo thing.
+ * basic services .. 
+ * to get some basic info about the page.
+ * needed for analytics and for making the ad call
  */
 var gIsUFif = false;
 var gIframe = false;

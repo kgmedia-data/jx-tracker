@@ -397,6 +397,7 @@ const mpginfo = require('../components/basic/pginfo');
                     newObj.date_published = formatDate(new Date(publishedDate.content));
                 }
 
+                if (options.group) newObj.group = options.group;
                 if (options.adpositions) newObj.adpositions = options.adpositions;
                 if (options.endpoint) newObj.endpoint = options.endpoint;
                 if (options.count) newObj.count = options.count;
@@ -433,6 +434,7 @@ const mpginfo = require('../components/basic/pginfo');
               "pagecategory",
               "sessionseg",
               "page",
+              "group"
             ].forEach(function (pname) {
               if (newObj[pname])
                 params +=
@@ -711,17 +713,21 @@ const mpginfo = require('../components/basic/pginfo');
           }
         }
         FactoryJxRecHelper.prototype.unhidden = function(itemIdx) {
-					if (recRespItems.length && recRespItems[itemIdx]) {
-						var value = recRespItems[itemIdx]["page_partner_id"];
-						if (value) {
-							var existing = localStorage.getItem(STORAGE_KEY);
-							existing = existing ? existing.split(",") : [];
-							if (existing.findIndex(x => x === value.toString()) > -1) {
-								var newValues = existing.filter(x => x !== value);
-								localStorage.setItem(STORAGE_KEY, newValues.join(","));
-							}
-						}
-					}
+            try {
+                if (recRespItems.length && recRespItems[itemIdx]) {
+                    var value = recRespItems[itemIdx]["page_partner_id"];
+                    if (value) {
+                        var existing = localStorage.getItem(STORAGE_KEY);
+                        existing = existing ? existing.split(",") : [];
+                        if (existing.findIndex(x => x === value.toString()) > -1) {
+                            var newValues = existing.filter(x => x !== value);
+                            localStorage.setItem(STORAGE_KEY, newValues.join(","));
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log(`Unable to store data to Local Storage: ${error.stack} ${error.message}`);
+            }
         }
         FactoryJxRecHelper.prototype.bookmarked = function(itemIdx) {
             _CSBHCommon(itemIdx, 'bkmark');
@@ -782,24 +788,28 @@ const mpginfo = require('../components/basic/pginfo');
         };
 
         function storeHiddenItems(value) {
-          var existing = localStorage.getItem(STORAGE_KEY);
-          existing = existing ? existing.split(",") : [];
+            try {
+                var existing = localStorage.getItem(STORAGE_KEY);
+                existing = existing ? existing.split(",") : [];
 
-          /** check if the page_partner_id doesn't exist on the array */
-          if (existing.findIndex(x => x === value.toString()) < 0) {
-            /** 
-             * if doesn't exist then we can store it to the storage
-             * else we don't need to store the same page_partner_id
-            */ 
-            
-            /** 
-             * check if the existing array is lower than the limit
-             * then we can store it, else we replace the first index of the existing array
-            */
-            if (existing.length >= STORAGE_LIMIT) existing.shift();
-            existing.push(value.toString());
-            localStorage.setItem(STORAGE_KEY, existing.join(","));
-          }
+                /** check if the page_partner_id doesn't exist on the array */
+                if (existing.findIndex(x => x === value.toString()) < 0) {
+                    /** 
+                     * if doesn't exist then we can store it to the storage
+                     * else we don't need to store the same page_partner_id
+                    */ 
+                    
+                    /** 
+                     * check if the existing array is lower than the limit
+                     * then we can store it, else we replace the first index of the existing array
+                    */
+                    if (existing.length >= STORAGE_LIMIT) existing.shift();
+                    existing.push(value.toString());
+                    localStorage.setItem(STORAGE_KEY, existing.join(","));
+                }
+            } catch (error) {
+                console.log(`Unable to store data to Local Storage: ${error.stack} ${error.message}`);
+            }
         }
 
         /** Store the session segment to the cookie, this session segment will be retrieved from Reco API response */
@@ -832,11 +842,18 @@ const mpginfo = require('../components/basic/pginfo');
                 additional = options.additional;
             }
 
-            let existing = localStorage.getItem(STORAGE_KEY);
-            existing = existing ? existing.split(",") : [];
+            let existing = [];
+            let articleHistory = [];
 
-            let articleHistory = localStorage.getItem(ARTICLES_HISTORY_KEY);
-            articleHistory = articleHistory ? JSON.parse(articleHistory) : [];
+            try {
+                existing = localStorage.getItem(STORAGE_KEY);
+                existing = existing ? existing.split(",") : [];
+
+                articleHistory = localStorage.getItem(ARTICLES_HISTORY_KEY);
+                articleHistory = articleHistory ? JSON.parse(articleHistory) : [];
+            } catch (error) {
+                console.log(`Unable to read data from Local Storage: ${error.stack} ${error.message}`);
+            }
 
             if (existing.length > 0 || articleHistory.length > 0 || additional) {
                 method = "POST";

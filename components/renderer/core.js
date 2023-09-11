@@ -1,39 +1,16 @@
 DO_NOT_REMOVE_GULPBUILD_REPLACE_FLOAT_COND_COMPILE
-
-/*
-    video and banner+video types
-    -put our video js-script in IFRAME
-    -wait for jxloaded message
-    -postMessage(adparameters)
-    -wait for jxhasad etc message
-    -postMessage(jxvisible etc) - creatives fires the trackers, not us
-
-    DPA
-    -inject the template HTML in IFRAME
-    -wait for jxloaded message
-    -postMessage(adparameters)
-    -wait for jxhasad etc message
-    -postMessage(jxvisible etc) - creatives fires the trackers, not us
-
-    simple display image
-    -we just stick in the image into the DOM (DIV), but we hook onload, onerror and talk to self using events on the div
-    -wait for jxhasad etc event
-    -call our own handler upon jxvisible (we fire trackers)
-    
-    display script fragment (can be injected into DIV or IFRAME)
-    -we just stick the fragment into the DOM
-    -we fake jxhasad
-    -call our own handler upon jxvisible (we fire trackers)
-
-    player script (can be injected into DIV or IFRAME)
-    -stick the script into the DOM 
-    -these older generation of stuff they are all talk using arguments or query params
-        (for trusted, they use query param to the script url, for IFRAME
-            they seem to use the jxuni_p injected into the iframe)
-    -wait for jxhasad etc event or message
-    -we postMessage (& dispatchEvents too) for jxvisibile etc.
-
-    */
+/**
+ * The most complex of the osm which is the renderering
+ * 
+ * need to get the config parameters from page . page contracints
+ * the creative 
+ * then create those needed DIVs on the page
+ * inject the creative
+ * some are capable to say "no ad", some are surely have ad
+ * some need our help to fire analytics events (e.g. impressions) some do not
+ * All these were captured using json obj so that the engine knows what to do.
+ * 
+ */
 
 
 //for the new trusted creatives to talk to us.
@@ -66,29 +43,10 @@ const common                    = modulesmgr.get('basic/common');
 const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 const u_ = "universal";
 
-/*
-function addGAMNoAdNotifyMaybe(str) {
-    //also need to give it some time to act ah.
-    //means we fire the has ad after a while.
-    //Note instead of jxnoad, we do adended which will trigger a teardown
-    //for this type we always assume hasad to start with (normCrParams.assumeAsAd), 
-    //so it will be weird to fire jxnoad
-    if (str.includes("<script") && str.includes("googletag.pubads()")) {
-        var script = new DOMParser().parseFromString(str, "text/html");
-        var t = `googletag.pubads().addEventListener('slotRenderEnded', function(event) {
-                if (event.isEmpty) {
-                    var id = event.slot.getSlotElementId();
-                    parent.postMessage('jxadended', '*');
-                }
-            });
-            `;
-        script.querySelector("script").innerHTML = t.concat(script.querySelector("script").innerHTML);
-        return script.querySelector("script").outerHTML;
-    }
-    return str;
-}
-*/
-
+/**
+ * object for handling floating (make the unit float and unflloat based on rules)
+ * @returns 
+ */
 var MakeOneFloatingUnit = function() { return null; };
 
 if (JX_FLOAT_COND_COMPILE) {
@@ -136,13 +94,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         let ar = elt.offsetWidth/elt.offsetHeight;
         
         //set to all the reasonable values first: 
-        /*
-        params.maxwidth = params.maxwidth || (common.isMobile() ? 200:600);
-        params.maxheight = params.maxheight || (common.isMobile() ? 300:400);
-        //translate it into maxwidth also: if whatever from the maxheight is stricter, then update the maxwidht
-        let tmp = ar*params.maxheight;
-        if (tmp < params.maxwidth) params.maxwidth = tmp; 
-        */
         params.position = params.position || 'bottom-right';
         params.marginX = params.hasOwnProperty('marginX') ? params.marginX : 10;
         params.marginY = params.marginY || 0;
@@ -1783,93 +1734,6 @@ const thresholdDiff_ = 120;
         ////--- NEW CODE --->
 
 
-        
-
-        //none renderer, creative
-        if (false) { //block it out:
-        if (scaling != 'none') {
-            // if it is not responsive, then crMaxW and crMinW = width of creative
-            // ditto for height, nothing much to further calculate then:
-            let u = crDetails[u_]; 
-            //make the max W and H specified in the creative be consistent
-            //with aspect ratio
-            let maxW = u && u.maxwidth ? u.maxwidth: 0;
-            let maxH = u && u.maxheight ? u.maxheight: 0;
-            if (maxW && maxH) { //if both are given, then make sure they are
-                //consistent with AR.
-                let AR1 = maxW/maxH;
-                if (AR1 > crAR) {
-                    maxW = maxH*crAR;
-                }
-                else {
-                    maxH = maxW/crAR;
-                }
-            }
-            else if (maxW) {
-                //if one is given, make sure the other is set per AR.
-                maxH = maxW/crAR;
-            }
-            else if (maxH) {
-                //if one is given, make sure the other is set per AR.
-                maxW = maxH*crAR;
-            }
-    
-            // Same drill but for the MIN w and h:
-            let minW = u && u.minwidth ? u.minwidth: 0;
-            let minH = u && u.minheight ? u.minheight: 0;
-            if (minW && minH) {
-                let AR1 = minW/minH;
-                if (AR1 > crAR) {
-                    minW = minH*crAR;
-                }
-                else {
-                    minH = minW/crAR;
-                }
-            }
-            else if (minW) {
-                minH = minW/crAR;
-            }
-            else if (minH) {
-                minW = minH*crAR;
-            }
-            //
-            if (!maxW) {
-                maxW = bigWidth_;
-                maxH = bigHeight_;//dun care AR for such.
-            }
-            //now maxW, maxH, minW, minH are all set to intentional values//
-    
-            //Now revisit how to set crMaxW, ... etc:
-            //responsive=true, and go smaller is always technically possible 
-            //so whateverso we can lower the crMinH crMinW ...
-            if (minH  < crMinH) {
-                crMinH = minH;
-            }
-            if (minW  < crMinW) {
-                crMinW = minW;
-            }
-            //whether we can go higher ... that one is a technical thing which only
-            //the creative can do, if they choose to:
-            if (cr.scaling == 'creative' || cr.scaling == 'renderer') {
-                if (maxW > crMaxW) {
-                    crMaxW = maxW;
-                }
-                if (maxH > crMaxH) {
-                    crMaxH = maxH;
-                }
-            }
-        }
-          
-        // the precache should add the properties
-        //{
-            //crMaxW, crMinW, crMaxH, crMinH, crAR, ? width, height
-        //}
-        //--->
-        if (!crMaxW) crMaxW = bigWidth_;
-        if (!crMaxH) crMaxH = bigHeight_;
-        }//if (false) block
-
-
         return {
             aspectratio:    crAR,
             width:          w, //for video will be 0
@@ -1880,15 +1744,23 @@ const thresholdDiff_ = 120;
             minheight:      crMinH 
         };
     }
-     function doSizeMgmt(params, cr) {
-         //debugger;
-        let crSizeRange = creativeSizeRangeRepair(cr);
-        //console.log(crSizeRange);
-        //console.log("^^ repaired sizes of adserver response above^^");
-        //console.log(".........................................");
-        //console.log(params);
-        //console.log("^^ jxParams above^^");
 
+    /**
+     * considering the page parameters and the creative's properties (
+     * e.g. aspect ratio) to work 
+     * out a few final needed properties and add it to the creative
+     * 
+     * @param {*} params config params from page 
+     * (potentially have fixedheight, width, height, maxwidth, maxheight, pgwidth)
+     * @param {*} cr 
+     * cr is changed and 
+     * width height maxwidth maxheight properties will be set properly
+     * based on all constraints
+     * there is also doDiffScroll boolean that will be set
+     */
+     function doSizeMgmt(params, cr) {
+        let crSizeRange = creativeSizeRangeRepair(cr);
+        
         let w_ = params.width ? params.width: 640; 
         let h_ = params.height ? params.height: 360;
         let mw_ = params.maxwidth ? params.maxwidth: 0;
@@ -2253,26 +2125,6 @@ const thresholdDiff_ = 120;
                         catch (err) {
                             //need to handle properly.
                         } //TODO
-                        //GAM type is able to detect no ad.
-/* sbody = `<script src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
-<div id='div-gpt-ad-12345-0'>
-  <script>
-    window.googletag = window.googletag || {cmd: []};
-    googletag.cmd.push(function() {
-        googletag.defineSlot('/31800665/KOMPAS.COM_Mobile_AMP/osmjixie', [[300,600],[300,250],[320,100]], 'div-gpt-ad-12345-0').setTargeting('Pos',['osmkompas']).addService(googletag.pubads());
-        googletag.pubads().addEventListener('slotRenderEnded', function(event) {
-            if (event.isEmpty) {
-                parent.postMessage('jxadended', '*');
-                return;
-            }
-            parent.postMessage('jxmsg::' + JSON.stringify({'type': 'size',params: {'height': window.document.body.scrollHeight}}), '*');
-        }); 
-        googletag.pubads().set('page_url', 'https://amp.kompas.com/megapolitan/read/2021/05/28/05334261/update-27-mei-bertambah-15-kasus-covid-19-di-tangsel-kini-totalnya-11257');
-        googletag.enableServices();
-        googletag.display('div-gpt-ad-12345-0'); 
-    });
-  </script>
-</div>`;*/
                         assumeHasAd = true; //<== !!!
                         out[trusted? 'div':'iframe'] = { scriptbody: sbody };
                         //force lh
@@ -2340,22 +2192,10 @@ const thresholdDiff_ = 120;
         if (c.adparameters && c.adparameters.jxeventssdk)
             out.jxeventssdk = 1;
         
-        //we no longer have this restrictions            
-        //if (out.fixedHeight > 0) {
-            //if we have fixed height, then we need to set the nested to be -1. so the learn more and info button won't be shown
-            //this is the just the only solution for now, coz I still can't find the way to support this kind of buttons when we are moving the creative within the window
-         //   out.nested = -1;
-        //}
         if (c[u_]) {
             out[u_] = c[u_];//??
         }
-        /* just for ease of local testing: */
-        /* out[u_] = {
-            "title":"OSM demo video",
-        "thumbnail":"https://creatives.jixie.media/MN168F6uZj/459/1708/mnc_youtube.jpg",
-        "description":"This is a demo video for testing OSM solution from Jixie."
-         };
-         */
+    
         
         
         out.assumeHasAd = assumeHasAd;

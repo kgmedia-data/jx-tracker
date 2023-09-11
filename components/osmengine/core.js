@@ -24,16 +24,7 @@ const common                    = modulesmgr.get('basic/common');
     //if(window.jxoutstreammgr) {
       //  return;
     //}
-    /** earlier we added this for the case our this OSM script runs inside iframe
-     * (associated with GAM) but turns out not necessary. 
-     * function defaultSelector(selector) {
-        //for use in GAM scenarios.
-        let ans = document.getElementById( selector.replace("#", ""));
-        if (ans) {
-            return [ans];
-        }
-        return null;
-    }**/
+   
 
     injectCssRules();//it will be run only once.
 

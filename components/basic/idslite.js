@@ -1,3 +1,13 @@
+   /**
+    * exports a few functions to get the user's id info
+    * from first party cookie/local storage
+    */
+
+   /**
+    * parse the cookie into an object (keys and values)
+    * @param {*} doc 
+    * @returns 
+    */
    
    function getParsedCk_(doc) {
      var coo = {};

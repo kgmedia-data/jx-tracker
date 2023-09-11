@@ -68,7 +68,7 @@
      */
     function fetchRecommendationsP(infoObj, jxUserInfo) {
         let s = '';
-        ["count", "adpositions","accountid","pageurl","widget_id","keywords","title","date_published"].forEach(function(pname) {
+        ["count", "adpositions","accountid","pageurl","widget_id","keywords","title","date_published", "group"].forEach(function(pname) {
             if (infoObj[pname])
                 s += '&' + pname + '=' + encodeURIComponent(infoObj[pname]);
         });
@@ -338,6 +338,9 @@
                 this._apiOptions.date_published = options.date_published;
             } else if (this.publishedDate && this.publishedDate.content) {
                 this._apiOptions.date_published = formatDate(new Date(this.publishedDate.content));
+            }
+            if (options.group) {
+                this._apiOptions.group = options.group;
             }
             if (options.customid) {
                 this._apiOptions.customid = options.customid;

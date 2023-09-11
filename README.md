@@ -62,3 +62,39 @@
 
 
 ## For Rationale please read docs/HowDoesItWork.md
+
+/*
+/*
+    video and banner+video types
+    -put our video js-script in IFRAME
+    -wait for jxloaded message
+    -postMessage(adparameters)
+    -wait for jxhasad etc message
+    -postMessage(jxvisible etc) - creatives fires the trackers, not us
+
+    DPA
+    -inject the template HTML in IFRAME
+    -wait for jxloaded message
+    -postMessage(adparameters)
+    -wait for jxhasad etc message
+    -postMessage(jxvisible etc) - creatives fires the trackers, not us
+
+    simple display image
+    -we just stick in the image into the DOM (DIV), but we hook onload, onerror and talk to self using events on the div
+    -wait for jxhasad etc event
+    -call our own handler upon jxvisible (we fire trackers)
+    
+    display script fragment (can be injected into DIV or IFRAME)
+    -we just stick the fragment into the DOM
+    -we fake jxhasad
+    -call our own handler upon jxvisible (we fire trackers)
+
+    player script (can be injected into DIV or IFRAME)
+    -stick the script into the DOM 
+    -these older generation of stuff they are all talk using arguments or query params
+        (for trusted, they use query param to the script url, for IFRAME
+            they seem to use the jxuni_p injected into the iframe)
+    -wait for jxhasad etc event or message
+    -we postMessage (& dispatchEvents too) for jxvisibile etc.
+
+    */
