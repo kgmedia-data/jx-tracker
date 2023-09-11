@@ -10,31 +10,22 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "aws-sdk": "^2.1397.0",
     "browserify": "^16.5.2",
-    "chalk": "^0.5.1",
     "gulp": "^4.0.2",
     "gulp-append-prepend": "^1.0.9",
     "gulp-concat": "^2.6.1",
     "gulp-if": "^3.0.0",
     "gulp-rename": "^2.0.0",
-    "gulp-replace": "^1.1.4",
-    "gulp-noop": "^1.0.1",
+    "gulp-replace": "^1.0.0",
     "gulp-rimraf": "^1.0.0",
-    "gulp-s3-publish": "^3.0.0",
+    "gulp-s3": "^0.11.0",
     "gulp-terser": "^1.4.1",
     "gulp-uglify": "^3.0.2",
+    "gulp-util": "^3.0.8",
     "uglify-es": "^3.3.9",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0",
     "wordwrap": "^1.0.0"
   },
-  "overrides": {
-    "chokidar": "3.5.3",
-    "glob-parent": "6.0.2",
-    "semver": "7.5.4",
-    "unset-value": "2.0.1",
-    "terser": "5.18.2"
-
-  }
+  "dependencies": {}
 }

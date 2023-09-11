@@ -54,19 +54,32 @@ const supported_ = [
   var rename = require('gulp-rename');
   var pump = require('pump');
   var clean = require('gulp-rimraf');
-  var gutil = require('gulp-util');
+  var noop = require("gulp-noop");
   var source = require('vinyl-source-stream');
   var buffer = require('vinyl-buffer');
   var browserify = require('browserify');
   var minify = composer(uglifyjs, console); 
   var gulpif = require('gulp-if');
   var argv = require('yargs').argv;
-  var s3 = require('gulp-s3');
+  var { upload } = require('gulp-s3-publish');
+  var AWS = require("aws-sdk");
   const chalk = require('chalk');
   const defaultWidth_ = 200;
   const defaultPadChar = ' ';
   const wrap = require('wordwrap')(5, 100);
   var config = null;
+  
+  let nodeJSVersion = process.version;
+  if (!nodeJSVersion.startsWith('v16.')) {
+    console.log(`* * * * * * * * * * * * * * * * * * * * * * * * * * * * *`);
+    console.log(`Currently requires to be run in node v16 (Suggest: v16.15.1)`);
+    console.log(`What is really important is the npm we need a version 8+ to handle the overrides section in package.json.`);
+    console.log(`This is due to gulp bringing in vulnerables.`);
+    console.log(`Till we have the new build system, we use overrides in package.json to force the better packages to be used.`);
+    console.log(`* * * * * * * * * * * * * * * * * * * * * * * * * * * * *`);
+    process.exit();
+  }
+
   
   // Important: even the gulp tasks are generated dynamically from this array
   // so if there is a new bundle, then you will need to add to this array here.
@@ -89,7 +102,7 @@ const supported_ = [
         //so there are 2 ways to deploy the unit.
         // Method 1 the traditional way of calling window.jxoutstreammgr.init (but need to spin wait until sure that 
         // the script is loaded)
-        // Method 2: the newer way of enqueueing to window.jx_osm (queue)
+        // Method 2: the newer way of enqueueing to window._jxoutstreammgrq (queue)
         liveall: ["https://scripts.jixie.io/jxosm.1.0.min.js"]
     },
     {
@@ -112,6 +125,7 @@ const supported_ = [
         //this is set as a repository variable in the jixie_retargeting_engine repo:
         livefull: ["https://scripts.jixie.media/jxhbrenderer.1.1.min.js"]
     },
+   
     {
         name: 'VIDEOP-AD-PLAYER',
         // use with our osm, new universal etc
@@ -187,32 +201,33 @@ const supported_ = [
   
   // <-- this one is for copying those test files (not the real prod) onto s3.
     var configKeys = require("./config-keys")(); //PLEASE SEE THIS FILE config-keys-seed.js is commited though
-    console.log(configKeys);
-    console.log("-----");
-    var config_aws = {
-        key: configKeys.awsKey,
-        secret: configKeys.awsSecret,
-        bucket: configKeys.awsBucket,
-        region: configKeys.awsRegion
-    };
+    AWS.config.update({
+        region: 'ap-southeast-1',
+        accessKeyId: configKeys.awsKey,
+        secretAccessKey: configKeys.awsSecret
+    });
+    const client = new AWS.S3();
+
     var testFilesPath_    = configKeys.testFilesPath;
   
     const s3_options = {
         "dev": {
-            headers: {
-                'x-amz-acl': 'public-read'
-            },
+            bucket: configKeys.awsBucket,
             uploadPath: testFilesPath_,
-            failOnError: true
+            putObjectParams: {
+                ACL: 'public-read'
+            }
         },
         "prod": {
-            headers: {
-                'x-amz-acl': 'public-read'
-            },
+            bucket: configKeys.awsBucket,
             uploadPath: testFilesPath_,
-            failOnError: true
+            failOnError: true,
+            putObjectParams: {
+                ACL: 'public-read'
+            }
         }
     };
+    //console.log(JSON.stringify(s3_options.dev, null, 2));
   // -- this one is for copying those test files (not the real prod) onto s3. -->
 
 
@@ -239,7 +254,7 @@ function doCore_(inname, outname, floatable = 'na') {
         .pipe(gulpif((floatable == 'yes' || floatable == 'no'), replace(floatPatternStub,   floatable == 'yes' ? floatPatternTurnOn: floatPatternTurnOff)))
         .pipe(gulpif(config.minify, minify(minifyOptions)))
         .on('error', function(err) {
-            gutil.log(gutil.colors.red('[Error]'), err.toString());
+            //gutil.log(gutil.colors.red('[Error]'), err.toString());
         })
         .pipe(gap.prependText('(function(){'))
         .pipe(gap.appendText('})();'))
@@ -250,8 +265,8 @@ function doCore_(inname, outname, floatable = 'na') {
             extname: '.min.js'
         })))
         .pipe(gulp.dest('dist'))
-        //.s3(config_aws, s3_options.dev)
-        .pipe(gutil.noop())
+        /////////.pipe(upload(client, s3_options.dev))
+        .pipe(noop())
     }
  
   
@@ -298,7 +313,7 @@ function doCore_(inname, outname, floatable = 'na') {
   gulp.task('UPLOAD_TESTFILES', function(cb) {
     pump([
             gulp.src(['dist/sdks/*.js', 'dist/bundles/*.js', 'tests/*.json', 'tests/*.html', 'tests/*.css']), //, 'tests/jxrwidget.1.0.min.js']),
-            gulpif(true, s3(config_aws, s3_options.dev))
+            gulpif(true, upload(client, s3_options.dev))
         ],
         cb
     );
