@@ -8,12 +8,12 @@ if (window.jxhbuniversal && window.jxhbuniversal.hbinit) {
 }
 const modulesmgr                    = require('../components/basic/modulesmgr');
 
-const common                        = require('../components/basic/common');
+const common                        = require('../components/basic/commonsmall');
 modulesmgr.set('basic/common',     common);
 
-const univelements                  = require('../components/renderer/univelements-stub');
-modulesmgr.set('renderer/univelements',         univelements);
-const mrenderer                     = require('../components/renderer/core');
+//////const univelements                  = require('../components/renderer/univelements-stub');
+//////modulesmgr.set('renderer/univelements',         univelements);
+const mrenderer                     = require('../components/renderer/corehb');
 
 function start_(options) {
     //the adserver will put in the config object
