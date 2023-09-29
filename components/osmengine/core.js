@@ -1329,9 +1329,6 @@ const common                    = modulesmgr.get('basic/common');
                     .then(function(data) {
                         //console.log(`__JX__ IMPORTANT KEY POINT REACHED ${data ? 'has data': 'no data'}`);
                         if (data && typeof data == 'object') {
-                            console.log("<__JX ____ data ");
-                            console.log(JSON.stringify(data, null, 2));
-                            console.log("__JX ____ data >");
                             //more stuff to add to the waterfall:
                             _creativesArray.push.apply(_creativesArray, data.creatives);
                             thisCr = _creativesArray.shift();

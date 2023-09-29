@@ -40,13 +40,14 @@ window.jxrenderercore = {
 
 const modulesmgr                = require('../basic/modulesmgr');
 const common                    = modulesmgr.get('basic/common');
-const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
+////////const MakeOneUniversalMgr       = modulesmgr.get('renderer/univelements');
 const u_ = "universal";
 
 /**
  * object for handling floating (make the unit float and unflloat based on rules)
  * @returns 
  */
+/*
 var MakeOneFloatingUnit = function() { return null; };
 
 if (JX_FLOAT_COND_COMPILE) {
@@ -57,7 +58,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     var _univmgr = null;
     var _fP = null; //params
     var _closeBtn = null;
-    var _closeBtnP = null;
     var _ctr = null;//container
     var _parentCtr = null;//parent container
     var _placeholderDiv = null; //placeholder. acc to fery, needed for non fixed height
@@ -150,7 +150,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         //-->
 
         _fP = params;
-        _closeBtnP = params.closeButton;
 
         _fP.width = _fP.maxwidth < elt.offsetWidth ? _fP.maxwidth: elt.offsetWidth;
         _fP.height = _fP.width/ar;
@@ -173,27 +172,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         common.acss(stylesArr, JXFloatingStyleID);
 
         _closeBtn = document.createElement('a');
-        
-        if (_closeBtnP && _closeBtnP.icon) {
-            _closeBtn = document.createElement('img');
-            _closeBtn.src = _closeBtnP.icon;
-
-            _closeBtn.style.maxHeight = "24px";
-            _closeBtn.style.maxWidth = "24px";
-        }
-
-        if (_closeBtnP.marginX) {
-            if (["bottom","top"].includes(_fP.position)) {
-                _closeBtn.style.right = _closeBtnP.marginX + "px";
-                _closeBtn.style.left = "auto";
-            }
-            if (["bottom-left","top-left"].includes(_fP.position)) _closeBtn.style.right = _closeBtnP.marginX + "px";
-            if (["bottom-right","top-right"].includes(_fP.position)) _closeBtn.style.left = _closeBtnP.marginX + "px";
-        }
-        if (_closeBtnP.marginY) {
-            _closeBtn.style.top = _closeBtnP.marginY + "px";
-        }
-
         _closeBtn.className = cbn_;
         if (_fP.position.indexOf('left') > -1) _closeBtn.classList.add('left');
         _closeBtn.onclick = function() {
@@ -321,6 +299,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
 }
 }
 
+*/
 //////(function() {
 
     const destContainerPrefix_ = 'jxifr_';
@@ -343,6 +322,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     }//while
     if (gIframe && !gIsUFif) gIsFifs = true;
    
+    /* NVR
     const jxScriptUrls_ = {
         video: {
             signature: "jxvideoadsdk",
@@ -351,6 +331,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             url: 'https://scripts.jixie.media/jxvideocr.1.0.min.js'
        }
     };
+    */
     const visThreshold_ = 0.4;
    
     /**
@@ -360,6 +341,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
      *  handleNoAd, handleHasAd, setupVisChangeNotifiers, clearVisChangeNotifiers
      */
     const fcnVectorsByContext_ = {
+    /* NVR    
     'amp' :  {
         getType: function() {return 'amp';},
         handleNoAd: function() {
@@ -392,6 +374,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             })
         }
     },//end of amp group
+    */
     //non AMP:
     'default': {
         getType: function() {return 'default';},
@@ -405,17 +388,22 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             allhooks.push({ t: document, e: 'visibilitychange', f: boundCB});
         },
         addListener: function(allhooks, target, event, boundCB) {
-            if (['jxfloat', 'jxdocked','jxhasad','jxnoad','message','blur','scroll','resize'].indexOf(event) > -1) {
+            //NVR TODOTODO
+            if ([////////////'jxfloat', 'jxdocked',
+                'jxhasad','jxnoad','message','blur'
+                ///////,'scroll','resize'
+                ].indexOf(event) > -1) {
                 if (event == 'scroll') {
                     target = top;
                 }
                 common.addListener(target, event, boundCB);    
                 allhooks.push({ t: target, e: event, f:boundCB});
-                if (event == 'scroll' || event == 'resize') {
+                /* NVR if (event == 'scroll' || event == 'resize') {
                     boundCB();
-                }
+                }*/
             }
         },
+        //NVR TODO perhaps then nothing
         removeListener: function(allhooks, target, event, boundCB) {
             if (['scroll'].indexOf(event) > -1) {
                 if (event == 'scroll') {
@@ -429,7 +417,9 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                 if (l.e == 'intersection') {
                     l.f.unobserve(l.t); //an unlisten function
                 }
-                if (['jxhasad','jxhasnoad', 'message','blur','scroll','resize','visibilitychange'].indexOf(l.e) > -1) {
+                if (['jxhasad','jxhasnoad', 'message','blur',
+                    //NVR 'scroll','resize',
+                    'visibilitychange'].indexOf(l.e) > -1) {
                     common.removeListener(l.t, l.e, l.f);
                 }
             })
@@ -450,8 +440,6 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
          * 
          * @param {*} param 
          */
-        //it is equivalent ...
-
     function __combiVisibilityChange(param, secondParam) {
         if (!this.hasOwnProperty('lastVisVal')) {
             //not initialized yet
@@ -555,6 +543,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
 
     //if is blur tracker we only allow one.
     //onblur click - at first is ok but if remove then not ok.
+    /* NVR
     function fire3PTrackers(urls) {
         if (urls && Array.isArray(urls) && urls.length > 0) {
         fetch(urls[0], {
@@ -566,6 +555,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         });
         }
     }
+    */
     
     function fireTracker(trackers, action, extra = null) {
         if (action == 'clickonblur') {
@@ -587,16 +577,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             }
         }
         //TODO : switch to Beacon!!
-        let url;
-        if (trackers.hbvimp && action == 'impression') {
-            // the headerbidding result served thru OSM. we need to fire the viewable impression
-            // it is modelled using the usual jixie tracker impression events (coz it is being viewable
-            // for a number of seconds)
-            url = trackers.hbvimp;
-        }
-        else {
-            url = trackers.baseurl + '?' + trackers.parameters + '&action='+action + (extra ? '&'+extra: '');
-        }
+        let url = trackers.baseurl + '?' + trackers.parameters + '&action='+action + (extra ? '&'+extra: '');
         fetch(url, {
             method: 'get',
             credentials: 'include' 
@@ -779,7 +760,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                         // and not our stuff.
                         let extra = (json.params && json.params.id ? 'clickid='+json.params.id: null);
                         fireTracker(this.c.trackers, 'click', extra);
-                        fire3PTrackers(this.c.gamclicktracking);
+                        //NVR no gam lah fire3PTrackers(this.c.gamclicktracking);
 				        if (json.params && json.params.url) {
 					        window.open(json.params.url)
 				        }
@@ -952,12 +933,14 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
      * @param {*} adTagUrl 
      * @returns 
      */
+    /* NVR
     function fetchAdP(adTagUrl) {
         return fetch(adTagUrl, {
             method: 'GET',
             credentials: 'include'
         }).then((response) => response.json());
     }
+    */
 
     /**
      * it will take general object normCrParams (normalized creative parameters)
@@ -991,6 +974,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                 // Once I switch to this following way, then I start to see the mp4 (at least those from bunny cdn since disk caching
                 // is configured) being FROM DISK CACHE. 
                 // Don't quite understand why yet.
+                /* NVR
                 var jxinter = window.setInterval(function() {
                     // put inside function 
                     var jxiframeDoc = jxCoreElt.contentDocument || jxCoreElt.contentWindow.document;
@@ -1002,8 +986,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                         jxiframeDoc.body.appendChild(ns);
                     }
                 },500);
+                */
             }
             else if (blob.scripturl && blob.jxuni_p) {
+                /* NVR
                 //console.log(`Type iframe | script | using jxuni_p`);
                 //Our older stuff like the player scripts come here:
                 //those that are not "trusted"
@@ -1033,8 +1019,10 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                         jxnewDiv.appendChild(jxjs);
                     }
                 },500);
+                */
             }
             else if (blob.scriptbody) {
+                /* NVR
                 //console.log(`Type iframe | scriptBody`);
                 //the other untrusted scripts. 
                 //These are typically not jixie stuff. but things like DFP script
@@ -1054,6 +1042,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                 //how to generate creativeView, impression, click?
                 //if this thing is third party, then it is unable to do its own events.
                 //this is characteristic of third party!!
+                */
             }
             jxCoreElt.name = jxCoreElt.id;
         }
@@ -1091,15 +1080,19 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                 //hardcoded ...
                 //but if we dun have that then bye bye.
                 //also that script has a clash of variables with the test page urlParams.
+                /* NVR
                 let jxjs = document.createElement('script');
                 jxjs.src = blob.scripturl;
                 jxCoreElt.appendChild(jxjs);
+                */
             }
             else if (blob.scriptbody) {
+                /* NVR
                 //console.log(`Type div | scriptBody`);
                 let range = document.createRange();
                 range.setStart(jxCoreElt, 0);
                 jxCoreElt.appendChild(range.createContextualFragment(blob.scriptbody));
+                */
             }
         }
         divObjs.jxbnFixedDiv.appendChild(jxCoreElt);
@@ -1121,6 +1114,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     /**
      * called as bound function . See comment above "START OF : POSITION AND SIZE MANIPULATION FUNCTIONS."
      **/
+    /* NVR
     function __handleCreativeHeightChange(newH, cb) {
         let divObjs = this.divObjs;
         if (this.c.realheight) {
@@ -1148,6 +1142,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         }
         setTimeout(cb, 2);
     }
+    */
 
     /**
      * called as bound function . See comment above "START OF : POSITION AND SIZE MANIPULATION FUNCTIONS."
@@ -1346,6 +1341,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
      * (coz the width aspect of it might still be challenged and therefore still require 
      * scaling)
      */    
+    /* NVR
     function __handleResize() {
         // here we think of all the constraints and get the height of the universal elements.
         //total fixed height.
@@ -1362,15 +1358,15 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             c.creativeH = c.height;
             return;
         }
-        /*
-            Renee new idea:
-            suppose the maxwidth and maxheight given is not useful.
-            i.e. practically it is more restricted.
-            e.g. 300x600 creative
-            actual possible is this:
-            250 is the real maxwidth --> 250x500
-            400 is the real maxheight --> 200x400 --> this is the real possible.
-        */
+        
+        //    Renee new idea:
+          //  suppose the maxwidth and maxheight given is not useful.
+            //i.e. practically it is more restricted.
+            //e.g. 300x600 creative
+            //actual possible is this:
+            //250 is the real maxwidth --> 250x500
+            //400 is the real maxheight --> 200x400 --> this is the real possible.
+        
         let ratio;
         if (JX_FLOAT_COND_COMPILE) {
             ratio = jxbnDiv.offsetWidth/c.width;
@@ -1429,16 +1425,17 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
                     jxbnDiv.style.height = newH + 'px';
                 }
                 break;
-            /*  REMOVE FOR NOW WE MIGHT NOT SUPPORT
-            case 'iframe': // we just resize the width of the different elements
-                this.divObjs.jxbnFixedDiv.style.width = jxbnDiv.offsetWidth + 'px';
-                jxbnScaleDiv.style.width = jxbnDiv.offsetWidth + 'px';
-                this.divObjs.jxCoreElt.style.width = jxbnDiv.offsetWidth + 'px';
-                break;
-            */                
+            //  REMOVE FOR NOW WE MIGHT NOT SUPPORT
+            //case 'iframe': // we just resize the width of the different elements
+              //  this.divObjs.jxbnFixedDiv.style.width = jxbnDiv.offsetWidth + 'px';
+                //jxbnScaleDiv.style.width = jxbnDiv.offsetWidth + 'px';
+                //this.divObjs.jxCoreElt.style.width = jxbnDiv.offsetWidth + 'px';
+                //break;
+                        
         }
         return true;
      }
+     */
 
     /**
      * called as bound function . See comment above "START OF : POSITION AND SIZE MANIPULATION FUNCTIONS."
@@ -1466,6 +1463,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     // e.g. if fixedHeight is 400px, and if the height of the univ element is 90,
     // then really the bnDiv we need to constrain it to 400-90
     // this is related to the implementation of the fixedHeight/diff scroll mechanism.
+    /* NVR
     function __handleUnivHeight(height) {
         if (height == 0) {
             //univ has nothing ...
@@ -1494,7 +1492,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             }
             catch(e){}
         }
-    }
+    } */
 
 // For Differential scroll (fixeHeight)
 // This logic of this differential you can find in docs/
@@ -1505,6 +1503,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
 // if the difference is < this threshold, then we dun bother
 // else such little movements is just ridiculous
 //
+/* NVR
 const thresholdDiff_ = 120;     
      function __handleScrollEvent(event, windowHeight = null, BCR = null) {
         if (this.floatmgr && this.floatmgr.isShowing()) {
@@ -1600,7 +1599,7 @@ const thresholdDiff_ = 120;
             //jxbnScaleDiv.style.top = offset +  'px'; 
         }
     }
-
+*/
     
     /**
      * called as bound function . See comment above "START OF : POSITION AND SIZE MANIPULATION FUNCTIONS."
@@ -1619,11 +1618,11 @@ const thresholdDiff_ = 120;
      const bigWidth_ = 999;
      const bigHeight_ = 999;
 
-     function noDiffScroll(cr) {
+     /* NVR function noDiffScroll(cr) {
          if (cr[u_] && cr[u_].hasOwnProperty('diffscroll') &&
          !cr[u_].diffscroll) return true;
         return cr.type == 'video' || cr.subtype == 'video+banner';
-    }
+    }*/
 
     /**
      * Note: This will be put at adserver side soon. Then client side no need
@@ -1632,6 +1631,7 @@ const thresholdDiff_ = 120;
      * @returns 
      */
      function creativeSizeRangeRepair(cr) {
+        /* NVR
          let scaling = 'none';
          if (cr.assets && cr.assets[u_]) {
             scaling = cr.assets[u_].scaling;
@@ -1707,12 +1707,7 @@ const thresholdDiff_ = 120;
             h = 0;
         }
         // Reminder that so for video : w and h are both set to 0 at this stage:
-        /*
-        let crMaxW = w;
-        let crMinW = w;
-        let crMaxH = h;
-        let crMinH = h;
-        */
+       
         let crMaxW = 0;
         let crMinW = 0;
         let crMaxH = 0;
@@ -1777,6 +1772,10 @@ const thresholdDiff_ = 120;
             maxheight:      crMaxH,
             minheight:      crMinH 
         };
+        */
+       return {
+        //NEED TO DO PROPERLY
+       };
     }
 
     /**
@@ -1793,6 +1792,7 @@ const thresholdDiff_ = 120;
      * there is also doDiffScroll boolean that will be set
      */
      function doSizeMgmt(params, cr) {
+        /*** NVR
         let crSizeRange = creativeSizeRangeRepair(cr);
         
         let w_ = params.width ? params.width: 640; 
@@ -1863,12 +1863,15 @@ const thresholdDiff_ = 120;
         cr.doDiffScroll = doDiffScroll;
         //console.log(`#### # # # # # ${w_} ${h_} ${mw_} ${mh_}`);
         //console.log("^^ w h mw mh ^^");
+        */
     }
 
+    /* NVR
     function sanitizeTitle(t){
         if (!t) return "";
         return  t.normalize('NFD').replace(/[^a-zA-Z0-9\s]/g, '').replace(/[\u0300-\u036f]/g, '').replace(/[.,\/#!$%\^&\*;:{}=\-_`~()"]/g,'');
     }
+    */
 
     /**
      * For the case of OSM the response event is to be fired by us here
@@ -1876,13 +1879,14 @@ const thresholdDiff_ = 120;
      * which a bit troublesome for osm engine to handle ... A bit hacky lah ... aaah
      * @param {*} c 
      */
-
+    /* NVR
     function fireOSMResponseMaybe(c) {
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
         if (trackers && trackers.parameters && trackers.parameters.indexOf('source=osm')>-1) {
             fireTracker(trackers, 'response');
         }
     }
+    */
 
     /**
      * From every kind of creative supported we just extract a few common values
@@ -1914,20 +1918,14 @@ const thresholdDiff_ = 120;
         //so WE HERE need to do it.
         //let doBasicTrackers = false; //later may become true, depends on the type of creative.
         let sendTrackerActions = null; 
-
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
         let clicktrackerurl = null;
         let loadtrackerurl = null;
-        if (trackers) { 
-            if (trackers.hbvimp) { //headerbidding viewable impression event (OSM-hb ads)
-                c.noclickevents = true;
-            }
-            else {
-                //need for universal mgr init:
-                clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
-                if (c.type != 'video') {
-                    loadtrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=loadpixel';
-                }
+        if (trackers) {
+            //need for universal mgr init:
+            clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
+            if (c.type != 'video') {
+                loadtrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=loadpixel';
             }
         }
 
@@ -1936,11 +1934,13 @@ const thresholdDiff_ = 120;
         // the thing is they actually better to follow the width of the container
         // It is better for such stuff to really occupy the full width of the article
         //So here we do just that.
+        /* NVR
         if (!isNaN(jxParams.fixedHeight) && c[u_] && c[u_].scaling == 'article') {
             c.width = jxParams.maxwidth-1;
             c.height = jxParams.maxheight-1;
             c[u_].scaling = 'none';
         }
+        */
         //ok I know what is the problem.
         //width and height supposed to be the perceived height of the creative.
         doSizeMgmt(jxParams, c);
@@ -1961,6 +1961,7 @@ const thresholdDiff_ = 120;
         if (jxParams.gamclicktracking) {
             out.gamclicktracking = jxParams.gamclicktracking;
         }
+        /* NVR
         if (c.type == 'osm' && c.subtype == 'script' && c.width == 1 && c.height == 1) {
             out.is1x1 = true;
             out.fixedHeight = 0;//
@@ -1973,11 +1974,13 @@ const thresholdDiff_ = 120;
                 out.maxheight = jxParams.maxheight;
             }
         }
+        */
         //console.log(JSON.stringify(out, null, 2));
         // perhaps there will be nothing from server side.
         // just base on shape?
         // 
         if (JX_FLOAT_COND_COMPILE) {
+            /* NVR
             let device = (common.isMobile() ? 'mobile': 'desktop');
             //console.log(`context: ### ${jxParams.context}`);
             //for amp there is not floating:
@@ -2005,18 +2008,18 @@ const thresholdDiff_ = 120;
                 tmp.floating = jxParams.floating;
                 tmp.adtype = c.type;
                 out.floatParams = tmp;
-            }
+            } */
         }
 
         let trusted = (c.adparameters && c.adparameters.trusted ? true: false);
             //Their common characteristics: all to be in iframe.
             //then need a jxOutstream injected into the iframe as well.    
-            const playerUrls_ = {
+            /* NVR const playerUrls_ = {
                 video: 'https://scripts.jixie.media/jxplayerbridge.1.1.min.js?', 
                 pyoutube: 'https://scripts.jixie.media/jxyoutubebridge.1.0.min.js', 
                 pdailymotion: 'https://scripts.jixie.media/jxplayerdm.1.4.1.js?', 
                 pivs: 'https://scripts.jixie.media/jxplayerivs.1.2.min.js?'
-            };
+            };*/
         let assumeHasAd = false;
 
         /**
@@ -2036,34 +2039,8 @@ const thresholdDiff_ = 120;
          * The renderer will be able to pass it then.
          */
         switch (c.type) {
-            case 'player': {
-                let surl;
-                switch (c.subtype) {
-                    //page info etc also need to do properly.
-                    case 'pyoutube':
-                    case 'pdailymotion':
-                    case 'pivs':
-                        // the naked scripts all work in iframe only:
-                        surl = playerUrls_[c.subtype];
-                        out['iframe'] = { scripturl: surl, jxuni_p: JSON.parse(JSON.stringify(c)) };
-                        break;
-                    case 'pscript':
-                        //But this thing is so funny.
-                        //If it is DIV, then it get from adparameters.
-                        //If it is IFRAME then it get from the jxuni_p...so funny.
-                        //This is just a big mess
-                        surl = (!c.script ? c.url: c.script);
-                        surl += (surl.indexOf('?') != -1 ? '&': '?') + 'trackers=' + btoa(JSON.stringify(c.trackers));
-                        if (c.adparameters) surl += '&adparameters=' + btoa(JSON.stringify(c.adparameters));
-                        // add missing pagetitle property
-                        surl += '&pagetitle=' + btoa(sanitizeTitle(jxParams.pagetitle));
-                        // add missing pagekeywords property
-                        if (jxParams.pagekeywords) surl += '&pagekeywords=' + btoa((jxParams.pagekeywords));
-                        //should we also add those stuff from jxParams to the blob
-                        out[trusted? 'div':'iframe'] = { scripturl: surl, jxuni_p: JSON.parse(JSON.stringify(c)) };
-                        // add missing pagetitle property and pagekeywords
-                }//inner switch
-                }
+            case 'player': 
+                //NVR deleted
                 break;
             case 'iframe':
                 switch (c.subtype) {
@@ -2108,39 +2085,18 @@ const thresholdDiff_ = 120;
                             assumeHasAd = true; //<== !!!
                             out.adparameters = c.adparameters;
                         }
-                        else {
-                            url = 'https://universal.jixie.io/iframe.1.2.html?'; //broker
-                            url += 'creative=' + btoa(JSON.stringify(c)) + '&trackers=' + btoa(JSON.stringify(c.trackers));
-                        }
+                        /////else {
+                            /////url = 'https://universal.jixie.io/iframe.1.2.html?'; //broker
+                            ///////url += 'creative=' + btoa(JSON.stringify(c)) + '&trackers=' + btoa(JSON.stringify(c.trackers));
+                        /////}
                         out['iframe'] = { url: url };
                         break;
                 }
                 break;    
+                //deleted
+                break;    
             case 'video': 
-                trusted = false; //our video sdk will operate in friendly iframe most most most of the time.
-                if (c.adparameters && c.adparameters.trusted) {
-                    trusted = true;
-                    out.crSig = jxScriptUrls_.video.signature
-                }
-                //console.log(`CCC##### sucked out the signature ${c.crSig}`);
-                out.adparameters = c; //<--- this is a special behaviour for video sdk stuff.
-                //the videoadsdk needs more than the adparameters but 1 level up (still need generate vast)
-                //this c blob contains a property adparameters                 
-                if (!c.adparameters) { 
-                    //case of third party tag; for vast generation
-                    c.adparameters = { trackers: JSON.parse(JSON.stringify(c.trackers)) };
-                }
-                if (jxParams.jxsimidurl) {
-                    //forcing to do SIMID
-                    out.adparameters.jxsimidurl = jxParams.jxsimidurl;
-                }
-                //only those that are managed by us have this property
-                delete out.adparameters.trackers;
-                
-                out[trusted ? 'div': 'iframe'] = { 
-                    scripturl: jxScriptUrls_.video.url
-                };
-                //for this type we will use postMessage to post the adparameters.
+                //deleted
                 break;
             case 'display':
             case 'osm':    //type=display,subtype=script AND type=osm,subtype=script are technically same thing. 
@@ -2171,7 +2127,7 @@ const thresholdDiff_ = 120;
                         if (!c.adparameters) {
                             c.adparameters = {};
                         }
-                        c.adparameters.jxeventssdk = 1; 
+                        c.adparameters.jxeventssdk = 1;
 
                         if (c.adparameters && c.adparameters.jxeventssdk) {
                             //THIS STUFF NOT YET TESTED....
@@ -2183,11 +2139,7 @@ const thresholdDiff_ = 120;
                         }
                         else {
                             sendTrackerActions = { creativeView: 1, impression: 1};
-                        }
-                        if (trackers.hbvimp) {
-                            trackers.time2imp = 1000;
-                            sendTrackerActions = { impression: 1};
-                        }
+                       }
                         break;
                     default: //can be either simple image or DPA (html). Still have to figure out...
                         if (c.type == 'osm') {
@@ -2220,6 +2172,7 @@ const thresholdDiff_ = 120;
         }//switch
         //console.log(JSON.stringify(out, null, 2));
         if (sendTrackerActions && trackers) {
+            //tracker local var set earlier in the function
             trackers = JSON.parse(JSON.stringify(trackers));
             trackers.actions = sendTrackerActions; 
             if (!c.noclickevents) {
@@ -2235,9 +2188,9 @@ const thresholdDiff_ = 120;
         if (c.adparameters && c.adparameters.jxeventssdk)
             out.jxeventssdk = 1;
         
-        if (c[u_]) {
+        /* NVR if (c[u_]) {
             out[u_] = c[u_];//??
-        }
+        }*/
     
         
         
@@ -2282,8 +2235,12 @@ const thresholdDiff_ = 120;
         this.msghandlers = {};
 
         this.bf_cleanup = __cleanup.bind({divObjs:this.divObjs, c: this.c });
+        /* NVR
         this.bf_heightchange = __handleCreativeHeightChange.bind({divObjs:this.divObjs, c: this.c});
+        */
+        /* NVR
         this.bf_resize = __handleResize.bind({divObjs:this.divObjs, c: this.c });
+        */
         /* this.bf_scroll = __handleScrollEvent.bind({
             univmgr:        univmgr,
             savedoffset:    0,
@@ -2292,11 +2249,14 @@ const thresholdDiff_ = 120;
             c:              this.c
         });*/ 
         this.msghandlers['jxadended'] = this.bf_cleanup;
+        /* NVR
         this.msghandlers['jxchangeheight'] =  this.bf_heightchange;
         this.msghandlers['resize'] = this.bf_resize;
+        */
         this.bf_processCrEvtsMgs = __handleCrEvtsMsgs.bind({ 
             divObjs: this.divObjs, c: this.c, handlers: this.msghandlers });
       }
+      /* NVR
       HooksMgr.prototype.callHandleResize = function(mode) {
           let success = this.bf_resize();
           if (success) {
@@ -2309,6 +2269,7 @@ const thresholdDiff_ = 120;
               // console.log(`!!!!!! ####need call resize is true`);
           }
       }
+      */
       HooksMgr.prototype.getPM2CreativeFcn = function(mode) {
         if (mode == 'jxeventssdk') return __pm2JxEvtsSDKWithMsgs.bind({divObjs:this.divObjs, c: this.c});
         if (mode == 'self') return __pm2Self.bind({divObjs:this.divObjs, c: this.c});
@@ -2324,6 +2285,7 @@ const thresholdDiff_ = 120;
         let bf = __handleBlur.bind({divObjs:this.divObjs, trackers: this.trackers });
         this.cxtFcns.addListener(this.allhooks, window, "blur", bf);
       } 
+      /* NVR
       HooksMgr.prototype.hookDifferentialScroll = function(univmgr, floatmgr) {
             this.bf_scroll = __handleScrollEvent.bind({
                 univmgr:        univmgr,
@@ -2335,6 +2297,7 @@ const thresholdDiff_ = 120;
             });
             this.cxtFcns.addListener(this.allhooks, null, "scroll", this.bf_scroll);
       }
+      */
       //HooksMgr.prototype.unhookDifferentialScroll = function() {
         //this.cxtFcns.removeListener(this.allhooks, null, "scroll", this.bf_scroll);
       //}
@@ -2389,6 +2352,7 @@ const thresholdDiff_ = 120;
        * @param {*} fixedheight 
        * @returns 
        */
+      /*** NVR
       function ampReqSize(resolveFcn, x,y, fixedheight) {
           //here the fixedheight is our current height of the unit
           if (y == 1) {
@@ -2414,6 +2378,7 @@ const thresholdDiff_ = 120;
               resolveFcn("fixedheight");
           });
       }
+      */
 
 
     var makeAdRenderer = function(params) {
@@ -2433,7 +2398,7 @@ const thresholdDiff_ = 120;
          *  handles 1 level of the waterfall                     
          */
         var _startP = function(jxContainer, remainingCreativesArr, next) {
-            let univmgr = MakeOneUniversalMgr();
+            ///////NVR let univmgr = MakeOneUniversalMgr();
             let instId = "jx_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
         
             let cxtFcns = fcnVectorsByContext_[_jxParams.context];
@@ -2441,16 +2406,17 @@ const thresholdDiff_ = 120;
                 cxtFcns = fcnVectorsByContext_.default;
             }
             let cr = remainingCreativesArr.shift();
-            fireOSMResponseMaybe(cr);
+            //NVR fireOSMResponseMaybe(cr);
 
             // MOST IMPORTANT CALL. THE NORMALIZED PARAMS OF THE CREATIVE: 
             let normCrParams = getNormalizedCreativeParams(_jxParams, cr);
 
-            let ampReqSizeAnsResolveFcn     = null;
+            /* NVR let ampReqSizeAnsResolveFcn     = null;
             let prom_ampReqSizeAns  = (_jxParams.context != 'amp' ?
                         Promise.resolve(null):
                         new Promise(function(resolve) { ampReqSizeAnsResolveFcn = resolve; }));
-            if (_jxParams.context == 'amp') {               
+            */
+            /* NVR if (_jxParams.context == 'amp') {               
                 //with AMP we can actually request for more real estate (particularly vertical.)
                 //this one we will see the outcome, then we decide how to create the container
                 //Whether AMP grant us the request usu depeneds on where we are in the viewport
@@ -2459,7 +2425,7 @@ const thresholdDiff_ = 120;
                 //In that case (if we dun get the vertical height we desire), then we will do 
                 //fixedheight (differential scrolling)
                 ampReqSize(ampReqSizeAnsResolveFcn, _jxParams.pgwidth, normCrParams.height, normCrParams.fixedHeight);
-            }
+            }*/
 
             
 
@@ -2473,17 +2439,18 @@ const thresholdDiff_ = 120;
             let boundPM2Creative        = null;
             let divObjs                 = null;
 
-            prom_ampReqSizeAns.then(function(reqSizeAns) {
-                if (reqSizeAns == 'full') {
+            //NVR prom_ampReqSizeAns.
+            Promise.resolve(null).then(function(reqSizeAns) {
+                /* NVR if (reqSizeAns == 'full') {
                     //then we remove the fixed height stuff!
                     delete normCrParams.fixedHeight;
-                }
+                }*/
                 // This will create all the needed DIVs. And we are going to insert the
                 // creative in a bit. but before that , set up the needed listens first
                 divObjs = createOuterContainer(instId, jxContainer, normCrParams);
                 createMainContainer(divObjs, normCrParams);//these can be called earlier too
 
-                hooksMgr = new HooksMgr(jxContainer, normCrParams, divObjs, cxtFcns, univmgr);
+                hooksMgr = new HooksMgr(jxContainer, normCrParams, divObjs, cxtFcns); //, univmgr);
 
                 //
                 //STEPS:
@@ -2592,14 +2559,15 @@ const thresholdDiff_ = 120;
                  * Set up resize handlers
                  */
                 hooksMgr.hookResize();
-                
+                /* NVR
                 univmgr.init(divObjs.jxmasterDiv, //attachNode
                     __handleUnivHeight.bind({fixedHeight: normCrParams.fixedHeight, divObjs: divObjs}),
                     _jxParams, 
                     normCrParams[u_], 
                     normCrParams.clickurl, 
                     normCrParams.clicktrackerurl);
-                    
+                */
+               /* NVR     
                 if (_jxParams.closebutton) {
                     let boundFcn = hooksMgr.teardown.bind(hooksMgr);
                     let farCorner = false; // (univmgr.getHeight() > 5 ? true: false);
@@ -2612,10 +2580,11 @@ const thresholdDiff_ = 120;
                         farCorner
                     );
                 }
+                */
                 
-                hooksMgr.callHandleResize();
+                /* NVR hooksMgr.callHandleResize(); */
 
-                if (JX_FLOAT_COND_COMPILE) {
+                /* NVR if (JX_FLOAT_COND_COMPILE) {
                     if (normCrParams.floatParams) {
                         try {
                         _floatInst = MakeOneFloatingUnit(jxContainer, normCrParams.floatParams, divObjs, function() {
@@ -2625,21 +2594,21 @@ const thresholdDiff_ = 120;
                             console.log(x.stack);
                         }
                     }
-                }
+                }*/
 
                 /**
                  *  if we do differential scrolling, then set up the listener
                  */
-                if (normCrParams.doDiffScroll) {
+                /* NVR if (normCrParams.doDiffScroll) {
                     hooksMgr.hookDifferentialScroll(univmgr, _floatInst);
-                }
+                }*/
           
                 /**
                  * visibility detection (for AMP, the differential scrolling depends on same callback
                  * mechanism as the visibility stuff)
                  */
                 let notifyFcn = function(vis, IRObj) {
-                    if (_floatInst) { 
+                    /* NVR if (_floatInst) { 
                         if (vis) { //the in-article slot is visible
                             if (_closeIcon) _closeIcon.show();
                             _floatInst.stopFloat();
@@ -2649,7 +2618,8 @@ const thresholdDiff_ = 120;
                                 _floatInst.startFloat(this.firstViewed, IRObj);
                             } 
                         }
-                    } 
+                    } */
+                    //NVR NOTE: THIS WILL DIE BELOW
                     //if the page is covered (lastPgVis == 0), then nothing is visible then:
                     //somethingVis: either at the original inarticle position, or the floating.
                     let somethingVis = (this.lastPgVis == 0 ? 0: (vis ? true : (_floatInst ? _floatInst.isShowing(): false)));
@@ -2660,20 +2630,20 @@ const thresholdDiff_ = 120;
             })
             .then(function() {
                 boundPM2Creative('openshop');
-                if (_closeIcon) _closeIcon.create();
+                /* NVR if (_closeIcon) _closeIcon.create(); */
             })
             .catch(function(ee) {
                 console.log(ee);
                 if (hooksMgr) hooksMgr.teardown();
-                if (_floatInst) _floatInst.cleanup();
-                if (remainingCreativesArr.length > 0){
+                /* NVR if (_floatInst) _floatInst.cleanup(); */
+                /* NVR if (remainingCreativesArr.length > 0){
                     //waterfall to next layer
                     next(jxContainer, remainingCreativesArr, next);
                 }
                 else {
                     // if anybody is listening..
                     window.postMessage("jxosm_noad_jixie", "*");
-                }
+                } */
             })
             .finally(function() {
             });
@@ -2687,6 +2657,8 @@ const thresholdDiff_ = 120;
          * let the frame info be passed to here by the code.
          * gam: default none, safeframe friendlyframe
          */
+        /* 
+        NVR 
         function _getParameterByName(name, url) {
             name = name.replace(/[\[\]]/g, '\\$&');
             var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
@@ -2695,11 +2667,14 @@ const thresholdDiff_ = 120;
             if(!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
+        */
         function _assembleParams(params) {
             if (params !== undefined && typeof params === 'object' && params !== null) {
                 _jxParams = JSON.parse(JSON.stringify(params));
                 let p = _jxParams;
-                
+
+
+                /******* NVR
                 if (p.excludedheight) {
                     p.excludedHeight = p.excludedheight;
                 }
@@ -2735,8 +2710,10 @@ const thresholdDiff_ = 120;
                 //_jxParams.height = parseInt(_jxParams.height) || 360;
                 p.campaignid = parseInt(p.campaignid) || null;
 
+                ******/
                 let ctr = null;
 
+                /***** NVR
                 if (JX_FLOAT_COND_COMPILE) {
                     if (p.floating == 'never' || !p.floating) {
                         delete p.floatparams; //even if there is, delete.
@@ -2758,6 +2735,7 @@ const thresholdDiff_ = 120;
                     }
                     catch(e) {}
                 }
+                */
 
                 if (params.container) {
                     if (gIsFifs && p.doFloat) { //<--?
@@ -2774,18 +2752,21 @@ const thresholdDiff_ = 120;
                         }
                     }
                 } 
+                /*** NVR
                 if (p.context != 'amp' && gIsUFif) {
                     p.fixedHeight = 0; //We will not be able to do the differential scroll
                     p.excludedHeight = 0; 
                 }
+                */
                 if (ctr) {
                     _jxContainer = ctr;
                 }
                 else {
+                    /****** NVR
                     //for the case of the universal snipplet served from GAM
                     //there is no container specified.
                     //then we just create a div and hang it onto the iframe body then.
-                    if (window!=window.top) { /* I'm in a frame! */ 
+                    if (window!=window.top) { // I'm in a frame! 
                         // make sure it is not osm script but is universal script.
                         if (window.jxuniv) {
                             _jxContainer = document.createElement("div"); // create a parent div and append it to the body
@@ -2796,7 +2777,7 @@ const thresholdDiff_ = 120;
                                 document.body.appendChild(_jxContainer);
                             }
                         }
-                    }
+                    }*/
                 }
             } else {
                 //For now we just quietly dun do anything then.
@@ -2825,61 +2806,36 @@ const thresholdDiff_ = 120;
                 try {
                     let json =  atob(_jxParams.jsoncreativeobj64);
                     if (json) {
-
                         json = JSON.parse(json);
-                        respBlob = {
-                            pre: 1,
-                            creatives: [json]
-                        };
+                        _startP(_jxContainer, [json], _startP);
+                        //respBlob = {
+                          //  pre: 1,
+                            //creatives: [json]
+                        //};
                     }
                 }
                 catch(err) {  }
             }
+            //FIX IT FIRST TO DO 
+            //_startP(_jxContainer, creativesArr, _startP);
+            /* NVR
             let fetchedCreativesProm = null;
             if (respBlob && respBlob.creatives) {
                 fetchedCreativesProm = Promise.resolve(respBlob);
             }
             else {
-                let subdomain = _jxParams.portal == 'dev' ? 'ad-dev':(_jxParams.debug?'ad-rc': 'ad');
-                let tmp = `https://${subdomain}.jixie.io/v1/universal?source=outstream`;
-                if (_jxParams.ids) {
-                    for (var prop in _jxParams.ids) {
-                        tmp += '&' + prop + '=' + _jxParams.ids[prop];
-                    }
-                }
-                [   'unit', 'deltaassets64', 'creativeid',
-                    'pageurl', 'domain', 'pagekeywords',
-                    'maxwidth', 'minwidth', 'maxheight', 'minheight', 'fixedheight'].forEach(function(prop) {
-                    if (_jxParams[prop])
-                        tmp += '&' + prop + '=' + _jxParams[prop];
-                });
-                if (_jxParams.amp) tmp += '&device=amp';
-                fetchedCreativesProm = fetchAdP(tmp);
+                //NVR
             }
-            //let adUrl = 'https://ad.jixie.io/v1/universal?source=sdk&domain=travel.kompas.com&pageurl=https%3A%2F%2Ftravel.kompas.com%2Fread%2F2021%2F06%2F16%2F180106127%2Ftraveloka-dan-citilink-gelar-promo-diskon-tiket-pesawat-20-persen&width=546&client_id=72356cf0-d22c-11eb-81b0-7bc2c799acca&sid=1625728274-72356cf0-d22c-11eb-81b0-7bc2c799acca&creativeid=800'; //1007|1005|800';
             fetchedCreativesProm
             .then(function(responseBlob) {
                 let creativesArr;
                 if (true || responseBlob.pre) {
                     creativesArr = responseBlob.creatives;
                 }
-                /* else {
-                    //just to try the waterfalling :
-                    let x = JSON.parse(JSON.stringify(responseBlob.creatives[0]));
-                    let y = JSON.parse(JSON.stringify(responseBlob.creatives[0]));
-                    x.url = 'https://creatives.b-cdn.net/80c8a13725c68736d9faf7e5858d51f1/360/1174/VCBL_GIF%20-%20Mario%20Russellino.gif';
-                    x.width = 320;
-                    x.height = 100;
-                    x.id = 1174;
-                    creativesArr = [
-                        x, y
-                    ];
-                }
-                console.log(creativesArr[0]);
-                */
                 if (creativesArr && creativesArr.length > 0)
                     _startP(_jxContainer, creativesArr, _startP);
             });
+            */
         }
         
         
