@@ -8,12 +8,12 @@ if (window.jxhbuniversal && window.jxhbuniversal.hbinit) {
 }
 const modulesmgr                    = require('../components/basic/modulesmgr');
 
-const common                        = require('../components/basic/common');
+const common                        = require('../components/basic/commonsmall');
 modulesmgr.set('basic/common',     common);
 
-const univelements                  = require('../components/renderer/univelements-stub');
-modulesmgr.set('renderer/univelements',         univelements);
-const mrenderer                     = require('../components/renderer/core');
+//////const univelements                  = require('../components/renderer/univelements-stub');
+//////modulesmgr.set('renderer/univelements',         univelements);
+const mrenderer                     = require('../components/renderer/corehb');
 
 function start_(options) {
     //the adserver will put in the config object
@@ -51,6 +51,20 @@ whereby the p is an object like this:
 };
 */
 
+/* FROM OSM CODE
+var JxOSMQ = function () {
+    this.push = function () {
+        for (var i = 0; i < arguments.length; i++) try {
+            if (Array.isArray(arguments[i]) && arguments[i][0] == 'init') {
+                start(arguments[i][1]);    
+            }
+            else 
+                start(arguments[i]);
+        } catch (e) {}
+    }
+};
+
+*/
 var JxEventsQ = function () {
     this.push = function () {
         for (var i = 0; i < arguments.length; i++) try {
