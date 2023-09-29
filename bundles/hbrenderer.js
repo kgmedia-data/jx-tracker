@@ -51,20 +51,6 @@ whereby the p is an object like this:
 };
 */
 
-/* FROM OSM CODE
-var JxOSMQ = function () {
-    this.push = function () {
-        for (var i = 0; i < arguments.length; i++) try {
-            if (Array.isArray(arguments[i]) && arguments[i][0] == 'init') {
-                start(arguments[i][1]);    
-            }
-            else 
-                start(arguments[i]);
-        } catch (e) {}
-    }
-};
-
-*/
 var JxEventsQ = function () {
     this.push = function () {
         for (var i = 0; i < arguments.length; i++) try {
