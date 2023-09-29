@@ -3,10 +3,9 @@
  * 
  * Documentation: refer to hbrenderer.md in this same dir
  */
- if (window.jxhbuniversal && window.jxhbuniversal.hbinit) {
+if (window.jxhbuniversal && window.jxhbuniversal.hbinit) {
     return;
 }
-
 const modulesmgr                    = require('../components/basic/modulesmgr');
 
 const common                        = require('../components/basic/common');
@@ -38,8 +37,33 @@ window.jxhbuniversal = {
 //this is a now-common design-pattern so that the code calling us
 //can just call us without checking if our script is loaded yet.
 /*
-window.jxhbrendererq = window.jxhbrendererq || [];
-window.jxhbrendererq.push('init', p);
+window._jxhbrendererq = window._jxhbrendererq || [];
+window._jxhbrendererq.push(p);
+
+whereby the p is an object like this:
+{ 
+    tsjsrun: Date.now(), 
+    responsive: 1, 
+    nested: -1,
+     maxwidth: 640, 
+      container: "jxoutstream${rannum}",
+       jsoncreativeobj64: "${hbresponse64}"
+};
+*/
+
+/* FROM OSM CODE
+var JxOSMQ = function () {
+    this.push = function () {
+        for (var i = 0; i < arguments.length; i++) try {
+            if (Array.isArray(arguments[i]) && arguments[i][0] == 'init') {
+                start(arguments[i][1]);    
+            }
+            else 
+                start(arguments[i]);
+        } catch (e) {}
+    }
+};
+
 */
 var JxEventsQ = function () {
     this.push = function () {
@@ -52,16 +76,20 @@ var JxEventsQ = function () {
                     );
                 }
             }
+            else {
+                start_(arguments[i]);
+            }
         } catch (e) {}
     }
 };
-
+//let's build a version 2 then.
 const ourSigQ = '_jxhbrendererq';
 var _old_eventsq = window[ourSigQ];
 window[ourSigQ] = new JxEventsQ(); //actually no need object, just cloned from some website's snipplet .. :-)
 // execute all of the queued up events - apply() turns the array entries into individual arguments
-if (_old_eventsq)
+if (_old_eventsq) {
     window[ourSigQ].push.apply(window[ourSigQ], _old_eventsq);
+}
 
 //Notes to self:
 /*
