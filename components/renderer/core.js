@@ -427,6 +427,8 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
          * 
          * @param {*} param 
          */
+        //it is equivalent ...
+
     function __combiVisibilityChange(param, secondParam) {
         if (!this.hasOwnProperty('lastVisVal')) {
             //not initialized yet
@@ -562,7 +564,16 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             }
         }
         //TODO : switch to Beacon!!
-        let url = trackers.baseurl + '?' + trackers.parameters + '&action='+action + (extra ? '&'+extra: '');
+        let url;
+        if (trackers.hbvimp && action == 'impression') {
+            // the headerbidding result served thru OSM. we need to fire the viewable impression
+            // it is modelled using the usual jixie tracker impression events (coz it is being viewable
+            // for a number of seconds)
+            url = trackers.hbvimp;
+        }
+        else {
+            url = trackers.baseurl + '?' + trackers.parameters + '&action='+action + (extra ? '&'+extra: '');
+        }
         fetch(url, {
             method: 'get',
             credentials: 'include' 
@@ -1880,14 +1891,20 @@ const thresholdDiff_ = 120;
         //so WE HERE need to do it.
         //let doBasicTrackers = false; //later may become true, depends on the type of creative.
         let sendTrackerActions = null; 
+
         let trackers = c.trackers ? c.trackers: ( c.adparameters.trackers ? c.adparameters.trackers: null);
         let clicktrackerurl = null;
         let loadtrackerurl = null;
-        if (trackers) {
-            //need for universal mgr init:
-            clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
-            if (c.type != 'video') {
-                loadtrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=loadpixel';
+        if (trackers) { 
+            if (trackers.hbvimp) { //headerbidding viewable impression event (OSM-hb ads)
+                c.noclickevents = true;
+            }
+            else {
+                //need for universal mgr init:
+                clicktrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=click';
+                if (c.type != 'video') {
+                    loadtrackerurl = trackers.baseurl + '?' + trackers.parameters + '&action=loadpixel';
+                }
             }
         }
 
@@ -2131,7 +2148,7 @@ const thresholdDiff_ = 120;
                         if (!c.adparameters) {
                             c.adparameters = {};
                         }
-                        c.adparameters.jxeventssdk = 1;
+                        c.adparameters.jxeventssdk = 1; 
 
                         if (c.adparameters && c.adparameters.jxeventssdk) {
                             //THIS STUFF NOT YET TESTED....
@@ -2143,7 +2160,11 @@ const thresholdDiff_ = 120;
                         }
                         else {
                             sendTrackerActions = { creativeView: 1, impression: 1};
-                       }
+                        }
+                        if (trackers.hbvimp) {
+                            trackers.time2imp = 1000;
+                            sendTrackerActions = { impression: 1};
+                        }
                         break;
                     default: //can be either simple image or DPA (html). Still have to figure out...
                         if (c.type == 'osm') {
@@ -2176,7 +2197,6 @@ const thresholdDiff_ = 120;
         }//switch
         //console.log(JSON.stringify(out, null, 2));
         if (sendTrackerActions && trackers) {
-            //tracker local var set earlier in the function
             trackers = JSON.parse(JSON.stringify(trackers));
             trackers.actions = sendTrackerActions; 
             if (!c.noclickevents) {
