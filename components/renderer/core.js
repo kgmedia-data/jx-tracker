@@ -182,7 +182,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             _closeBtn.style.maxWidth = "24px";
         }
 
-        if (_closeBtnP.marginX) {
+        if (_closeBtnP && _closeBtnP.marginX) {
             if (["bottom","top"].includes(_fP.position)) {
                 _closeBtn.style.right = _closeBtnP.marginX + "px";
                 _closeBtn.style.left = "auto";
@@ -190,7 +190,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
             if (["bottom-left","top-left"].includes(_fP.position)) _closeBtn.style.right = _closeBtnP.marginX + "px";
             if (["bottom-right","top-right"].includes(_fP.position)) _closeBtn.style.left = _closeBtnP.marginX + "px";
         }
-        if (_closeBtnP.marginY) {
+        if (_closeBtnP && _closeBtnP.marginY) {
             _closeBtn.style.top = _closeBtnP.marginY + "px";
         }
 
