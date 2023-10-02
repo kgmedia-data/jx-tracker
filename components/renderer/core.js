@@ -57,6 +57,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
     var _univmgr = null;
     var _fP = null; //params
     var _closeBtn = null;
+    var _closeBtnP = null;
     var _ctr = null;//container
     var _parentCtr = null;//parent container
     var _placeholderDiv = null; //placeholder. acc to fery, needed for non fixed height
@@ -149,6 +150,7 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         //-->
 
         _fP = params;
+        _closeBtnP = params.closeButton;
 
         _fP.width = _fP.maxwidth < elt.offsetWidth ? _fP.maxwidth: elt.offsetWidth;
         _fP.height = _fP.width/ar;
@@ -171,6 +173,27 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         common.acss(stylesArr, JXFloatingStyleID);
 
         _closeBtn = document.createElement('a');
+        
+        if (_closeBtnP) {
+            if (_closeBtnP.icon) {
+                _closeBtn = document.createElement('img');
+                _closeBtn.src = _closeBtnP.icon;
+                _closeBtn.style.maxHeight = "24px";
+                _closeBtn.style.maxWidth = "24px";
+            }
+            if (_closeBtnP.marginX) {
+                if (["bottom","top"].includes(_fP.position)) {
+                    _closeBtn.style.right = _closeBtnP.marginX + "px";
+                    _closeBtn.style.left = "auto";
+                }
+                if (["bottom-left","top-left"].includes(_fP.position)) _closeBtn.style.right = _closeBtnP.marginX + "px";
+                if (["bottom-right","top-right"].includes(_fP.position)) _closeBtn.style.left = _closeBtnP.marginX + "px";
+            }
+            if (_closeBtnP.marginY) {
+                _closeBtn.style.top = _closeBtnP.marginY + "px";
+            }
+        }
+
         _closeBtn.className = cbn_;
         if (_fP.position.indexOf('left') > -1) _closeBtn.classList.add('left');
         _closeBtn.onclick = function() {
