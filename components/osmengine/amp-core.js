@@ -353,7 +353,8 @@ function fetchAdP(adTagUrl) {
 function createInstance_(p, partners) {
     gParams = p;
     ampOneOffInit_();
-    let url = `https://${p.debug?'ad-rc':'ad'}.jixie.io/v2/osm?source=osm`;
+    //let url = `https://${p.debug?'ad-rc':'ad'}.jixie.io/v2/osm?source=osm`;
+    let url = `https://content.jixie.io/v2/osm?source=osm`;
     ['amp_client_id','client_id', 'unit', 'sid', 'creativeids', 'creativeid'].forEach(function(prop) {
         if (p[prop])
             url += '&' + prop + '=' + p[prop];
