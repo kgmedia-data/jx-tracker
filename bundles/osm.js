@@ -76,7 +76,7 @@ function start(options) {
     if (instMaybe) {
         return;
     }
-    const ids = mids.get();
+    const ids = mids.get(null, options);
     //check if the options has the keywords.
     
     

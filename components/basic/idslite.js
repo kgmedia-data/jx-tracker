@@ -38,7 +38,7 @@
   * If the cookie entry for creative (i.e. _jxcid) is not there, then cid property is null
   */
     
-   function get_(namedCookie = null) {
+   function get_(namedCookie = null, options = null) {
     let ret = {};
     let coo = null; // the parsed cookies object
     try {
@@ -65,21 +65,41 @@
             //console.log(`### FROM COOKIE1 ${ret.client_id}`);
           }
         }
-        if (id || sid || cohort) return ret; //i.e. LS is working.
+        /////if (id || sid || cohort) return ret; //i.e. LS is working.
+
+        if (!coo) {
+            coo = getParsedCk_(document);
+        }
+        if (coo['_jxx'] !== undefined) {
+            ret.client_id = coo['_jxx'];
+            //console.log(`### FROM COOKIE1 ${ret.client_id}`);
+        }
+        if (coo['_jxxs'] !== undefined) {
+            ret.sid = coo['_jxxs'];
+            //console.log(`### FROM COOKIE2 ${ret.sid}`);
+        }
+        //but that one is to be configured right?
+        //soon we need the esha and the psha
+        //esha and psha lah
+
+        ['_jxtoko', '_jxifo', '_jxtdid', '__uid2_advertising_token'].forEach(function(n) {
+            ret[n] = coo[n];
+        });
+        if (options) {
+            let tmp;
+            if (options.sha256mail_cookie) {
+                tmp = coo[options.sha256mail_cookie];
+                if (tmp) { ret.esha = tmp; }
+            }
+            if (options.sha256phone_cookie) {
+                tmp = coo[options.sha256phone_cookie];
+                if (tmp) { ret.psha = tmp; }
+            }
+        }
+        return ret;
     }
     catch(e) {}
-    if (!coo) {
-      coo = getParsedCk_(document);
-    }
-    if (coo['_jxx'] !== undefined) {
-        ret.client_id = coo['_jxx'];
-        //console.log(`### FROM COOKIE1 ${ret.client_id}`);
-    }
-    if (coo['_jxxs'] !== undefined) {
-        ret.sid = coo['_jxxs'];
-        //console.log(`### FROM COOKIE2 ${ret.sid}`);
-    }
-    return ret;
+        return {};
    }
    module.exports.get = get_;
 
