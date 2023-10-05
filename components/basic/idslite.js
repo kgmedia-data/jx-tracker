@@ -83,7 +83,9 @@
         //esha and psha lah
 
         ['_jxtoko', '_jxifo', '_jxtdid', '__uid2_advertising_token'].forEach(function(n) {
-            ret[n] = coo[n];
+            if (coo[n]) {
+                ret[n] = coo[n];
+            }
         });
         if (options) {
             let tmp;
