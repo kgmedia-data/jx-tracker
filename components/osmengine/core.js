@@ -1603,7 +1603,7 @@ const common                    = modulesmgr.get('basic/common');
 
             _instID = "OSMWF_" + _msWFInit;
             _ctrID = "ctrid" + _msWFInit; //TODO REfers to the container for the injected CODE of the various partners
-            let url = `https://${p.debug?'ad-rc':'content'}.jixie.io/v2/osm?source=osm`;
+            let url = `https://${p.debug?'ad-rc':'content'}.jixie.io/v2/osm?osmwn=1&source=osm`;
             if (p.ids) {
                 // this one is already appropriately named.
                 // as this comes from our own ids module.

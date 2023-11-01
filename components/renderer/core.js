@@ -1223,16 +1223,16 @@ MakeOneFloatingUnit = function(container, params, divObjs, dismissCB, univmgr) {
         let jxbnScaleDiv = common.newDiv(jxbnDiv, 'div', null, null, 'jxbs_' + id);
         let jxbnFixedDiv = common.newDiv(jxbnScaleDiv, 'div', null, null, 'jxbf_' + id);
         let jxCoreElt = null;
-
-        if (normCrParams.loadtrackerurl) {
-            let pixelElt = document.createElement('img');
-            pixelElt.src = normCrParams.loadtrackerurl;
-            pixelElt.style.cssText = 'width:1px;height:1px;';
-
-            let jxPixelDiv = common.newDiv(jxmasterDiv, 'div', null, null, 'jxp_' + id);
-            jxPixelDiv.style.cssText = 'position:absolute;top:0px;left:0px;height:1px;';
-            jxPixelDiv.appendChild(pixelElt);
-        }
+        ['loadtrackerurl', 'wnotice'].forEach(function(fd, idx) {
+            if (normCrParams[fd]) {
+                let pixelElt = document.createElement('img');
+                pixelElt.src = normCrParams[fd];
+                pixelElt.style.cssText = 'width:1px;height:1px;';
+                let jxPixelDiv = common.newDiv(jxmasterDiv, 'div', null, null, 'jxp_' + idx + '_'+ id);
+                jxPixelDiv.style.cssText = 'position:absolute;top:0px;left:0px;height:1px;';
+                jxPixelDiv.appendChild(pixelElt);
+            }
+        });
         jxmasterDiv.style.position = 'relative';
         jxmasterDiv.style.margin = 'auto';
         jxbnDiv.style.position = 'relative';
@@ -2231,6 +2231,11 @@ const thresholdDiff_ = 120;
         }
         if (loadtrackerurl) {
             out.loadtrackerurl = loadtrackerurl;
+        }
+        if (c.wnotice) {
+            //this will occur if this is OSM showing a "hb" jixie hosted (i.e.
+            //contract-based jixie-hosted e.g. image or DPA)
+            out.wnotice = c.wnotice;
         }
         if (c.adparameters && c.adparameters.jxeventssdk)
             out.jxeventssdk = 1;
