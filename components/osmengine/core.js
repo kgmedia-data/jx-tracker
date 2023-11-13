@@ -1329,9 +1329,6 @@ const common                    = modulesmgr.get('basic/common');
                     .then(function(data) {
                         //console.log(`__JX__ IMPORTANT KEY POINT REACHED ${data ? 'has data': 'no data'}`);
                         if (data && typeof data == 'object') {
-                            console.log("<__JX ____ data ");
-                            console.log(JSON.stringify(data, null, 2));
-                            console.log("__JX ____ data >");
                             //more stuff to add to the waterfall:
                             _creativesArray.push.apply(_creativesArray, data.creatives);
                             thisCr = _creativesArray.shift();
@@ -1606,7 +1603,7 @@ const common                    = modulesmgr.get('basic/common');
 
             _instID = "OSMWF_" + _msWFInit;
             _ctrID = "ctrid" + _msWFInit; //TODO REfers to the container for the injected CODE of the various partners
-            let url = `https://${p.debug?'ad-rc':'content'}.jixie.io/v2/osm?source=osm`;
+            let url = `https://${p.debug?'ad-rc':'content'}.jixie.io/v2/osm?osmwn=1&source=osm`;
             if (p.ids) {
                 // this one is already appropriately named.
                 // as this comes from our own ids module.

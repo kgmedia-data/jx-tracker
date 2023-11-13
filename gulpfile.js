@@ -121,11 +121,21 @@ const supported_ = [
         out: 'jxhbrenderer.1.1',
         floatable: 'no',
         signature: "window.jxhbuniversal.hbinit",
-        queue: "jxhbrendererq", 
+        queue: "_jxhbrendererq", 
         //this is set as a repository variable in the jixie_retargeting_engine repo:
         livefull: ["https://scripts.jixie.media/jxhbrenderer.1.1.min.js"]
     },
    
+    {
+        name: 'HBRENDERER-LITE',
+        in: 'hbrenderer-lite',
+        out: 'jxhbrenderer.2.0',
+        floatable: 'no',
+        signature: "window.jxhbuniversal.hbinit",
+        queue: "_jxhbrendererq", 
+        //this is set as a repository variable in the jixie_retargeting_engine repo:
+        livefull: ["https://scripts.jixie.media/jxhbrenderer.2.0.min.js"]
+    },
     {
         name: 'VIDEOP-AD-PLAYER',
         // use with our osm, new universal etc
