@@ -1,4 +1,0 @@
-        srcHLS = 'https://jixie-dam-assets.s3-ap-southeast-1.amazonaws.com/testHLSErrorRenee1/testVideo/master.m3u8'; //HACK BAD
-        srcHLS = 'https://jixie-dam-assets.s3-ap-southeast-1.amazonaws.com/testHLSErrorRenee2/testVideo/master.m3u8'; //HACK BAD
-        srcFallback = 'https://creative-ivstream.ivideosmart.com/3001004/954006/3001004-954006_240a.mp4'; //HACK bad.
-        
